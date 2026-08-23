@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "title": "broken-boxes — sizes wrong on purpose",
+  "root": {
+    "type": "stack",
+    "direction": "column",
+    "gap": 16,
+    "align": "start",
+    "children": [
+      {
+        "type": "block",
+        "id": "control",
+        "label": "Control block: correctly sized, must not be touched.",
+        "width": 360
+      },
+      {
+        "type": "block",
+        "id": "too-short",
+        "label": "This block is given a fixed height far too small for its label, so the text runs out of the bottom and lands on whatever is below it.",
+        "width": 360,
+        "height": 44
+      },
+      {
+        "type": "block",
+        "id": "nowrap-narrow",
+        "label": "SELECT * FROM figures WHERE id = 42",
+        "width": 190,
+        "wrap": "none"
+      },
+      {
+        "type": "block",
+        "id": "nowrap-hopeless",
+        "label": "an unbreakable label so long that growing its box three times over still will not contain it",
+        "width": 150,
+        "wrap": "none"
+      }
+    ]
+  }
+}
