@@ -1,0 +1,63 @@
+{
+  "version": 1,
+  "title": "Depth of field",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 620,
+    "height": 360,
+    "children": [
+      {
+        "type": "block",
+        "id": "far",
+        "label": "Background context",
+        "x": 40,
+        "y": 40,
+        "width": 220,
+        "effect": "recede",
+        "role": "muted"
+      },
+      {
+        "type": "block",
+        "id": "mid",
+        "label": "Supporting detail",
+        "x": 40,
+        "y": 180,
+        "width": 220,
+        "effect": "ghost",
+        "role": "default"
+      },
+      {
+        "type": "block",
+        "id": "near",
+        "label": "The thing being discussed",
+        "x": 330,
+        "y": 90,
+        "width": 240,
+        "effect": ["raised-3", "emphasis"],
+        "role": "primary"
+      },
+      {
+        "type": "block",
+        "id": "note",
+        "label": "Grain and bevel",
+        "x": 330,
+        "y": 240,
+        "width": 240,
+        "effect": ["printed", "etched"],
+        "role": "accent"
+      }
+    ],
+    "connectors": [
+      {
+        "from": "mid",
+        "to": "near",
+        "arrow": "end",
+        "effect": "emphasis"
+      }
+    ]
+  }
+}

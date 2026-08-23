@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "title": "Elevation ladder",
+  "canvas": {
+    "padding": 48,
+    "vignette": 0.25
+  },
+  "root": {
+    "type": "stack",
+    "direction": "column",
+    "gap": 20,
+    "align": "stretch",
+    "children": [
+      {
+        "type": "block",
+        "id": "flat",
+        "label": "Flat — no effect",
+        "width": 320,
+        "role": "default"
+      },
+      {
+        "type": "block",
+        "id": "raised-1",
+        "label": "raised-1 — a card off the page",
+        "width": 320,
+        "effect": "raised-1",
+        "role": "default"
+      },
+      {
+        "type": "block",
+        "id": "raised-2",
+        "label": "raised-2 — a layer above",
+        "width": 320,
+        "effect": "raised-2",
+        "role": "default"
+      },
+      {
+        "type": "block",
+        "id": "raised-3",
+        "label": "raised-3 — floating",
+        "width": 320,
+        "effect": "raised-3",
+        "role": "primary"
+      },
+      {
+        "type": "block",
+        "id": "seated",
+        "label": "seated — occlusion, no cast shadow",
+        "width": 320,
+        "effect": "seated",
+        "role": "default"
+      }
+    ]
+  }
+}
