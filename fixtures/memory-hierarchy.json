@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "title": "The memory hierarchy, by latency",
+  "canvas": { "padding": 56, "vignette": 0.35 },
+  "root": {
+    "type": "stack",
+    "direction": "column",
+    "gap": 14,
+    "align": "stretch",
+    "children": [
+      {
+        "type": "block",
+        "id": "l1",
+        "label": "L1 cache reference   ·   0.5 ns",
+        "width": 460,
+        "role": "primary",
+        "effect": ["raised-3", "emphasis"]
+      },
+      {
+        "type": "block",
+        "id": "l2",
+        "label": "L2 cache reference   ·   7 ns   ·   14× L1",
+        "width": 460,
+        "role": "primary",
+        "effect": "raised-3"
+      },
+      {
+        "type": "block",
+        "id": "ram",
+        "label": "Main memory reference   ·   100 ns   ·   200× L1",
+        "width": 460,
+        "role": "default",
+        "effect": "raised-2"
+      },
+      {
+        "type": "block",
+        "id": "ssd",
+        "label": "Random 4 KB read from SSD   ·   150 µs",
+        "width": 460,
+        "role": "default",
+        "effect": "raised-1"
+      },
+      {
+        "type": "block",
+        "id": "datacentre",
+        "label": "Round trip within the same datacentre   ·   500 µs",
+        "width": 460,
+        "role": "default",
+        "effect": "seated"
+      },
+      {
+        "type": "block",
+        "id": "seek",
+        "label": "Disk seek   ·   10 ms   ·   20 million × L1",
+        "width": 460,
+        "role": "muted",
+        "effect": "ghost"
+      },
+      {
+        "type": "block",
+        "id": "atlantic",
+        "label": "Packet California → Netherlands → California   ·   150 ms",
+        "width": 460,
+        "role": "muted",
+        "effect": "recede"
+      }
+    ]
+  }
+}
