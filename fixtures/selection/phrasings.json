@@ -1,0 +1,125 @@
+{
+  "note": "Twenty request phrasings with hand-annotated predicate vectors. CI tests the vector -> outcome half deterministically. The phrasing -> vector half needs a model and is a script, not a test. These annotations and the rule table share an author: CI checks self-consistency between two artefacts from one hand, not correctness against an external standard.",
+  "cases": [
+    {
+      "phrasing": "draw our microservice call graph as a subway map",
+      "predicates": { "structure": ["graph"], "idiom": ["substrate"] },
+      "expect": { "outcome": "single", "chosen": ["graph"] },
+      "why": "A substrate constrains how it is drawn, not what it is. The graph survives; stacked blocks are refused."
+    },
+    {
+      "phrasing": "show the org chart for the platform team",
+      "predicates": { "structure": ["hierarchy"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["mindmap"] },
+      "why": "A tree is also a graph, so both fire; the evidence overlaps, so this is one figure and not a composition."
+    },
+    {
+      "phrasing": "cross-section of a lithium cell with each layer labelled",
+      "predicates": { "structure": ["scene"], "idiom": ["cross-section", "annotated"] },
+      "expect": { "outcome": "single", "chosen": ["annotated-figure"] },
+      "why": "A scene refuses the graph preset outright, however well boxes and arrows would render."
+    },
+    {
+      "phrasing": "deployment topology with callouts explaining the failover path",
+      "predicates": { "structure": ["graph"], "idiom": ["annotated"] },
+      "expect": { "outcome": "compose", "chosen": ["graph", "annotated-figure"] },
+      "why": "Two candidates clear the floor on disjoint evidence — it is genuinely two things."
+    },
+    {
+      "phrasing": "p99 latency over the last thirty days",
+      "predicates": { "structure": ["series"], "idiom": ["chart"] },
+      "expect": { "outcome": "single", "chosen": ["chart"] },
+      "why": "A series with a scale, asked for as a chart: the chart preset now serves this directly rather than refusing it."
+    },
+    {
+      "phrasing": "the four stages of our onboarding, one after another",
+      "predicates": { "structure": ["graph"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["graph"] },
+      "why": "Ordered stages with transitions are a graph; plain flow adds nothing that outranks it."
+    },
+    {
+      "phrasing": "list the six services we run, no relationships needed",
+      "predicates": { "structure": ["set"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["labelled-blocks"] },
+      "why": "An unordered set with no relations is the plain case, and the plain case must stay reachable."
+    },
+    {
+      "phrasing": "mind map of everything we know about the incident",
+      "predicates": { "structure": ["hierarchy"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["mindmap"] },
+      "why": "Single-rooted hierarchy; the mindmap outranks the general graph."
+    },
+    {
+      "phrasing": "floor plan of the office with the fire exits marked",
+      "predicates": { "structure": ["scene"], "idiom": ["substrate", "annotated"] },
+      "expect": { "outcome": "single", "chosen": ["annotated-figure"] },
+      "why": "Scene plus annotation; the substrate refuses blocks and the scene refuses the graph."
+    },
+    {
+      "phrasing": "how the request flows from the load balancer to the database",
+      "predicates": { "structure": ["graph"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["graph"] },
+      "why": "The honest flowchart case. Defaulting to a graph is only wrong when the content is not one."
+    },
+    {
+      "phrasing": "anatomy of the engine block with the parts called out",
+      "predicates": { "structure": ["scene"], "idiom": ["annotated"] },
+      "expect": { "outcome": "single", "chosen": ["annotated-figure"] },
+      "why": "The figure class no competitor serves, and the reason the repertoire exists."
+    },
+    {
+      "phrasing": "our dependency tree, showing what pulls in what",
+      "predicates": { "structure": ["hierarchy", "graph"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["graph"] },
+      "why": "Asserting BOTH hierarchy and graph means it is not a strict tree — dependency graphs have diamonds. The general graph is correct; this fixture originally expected mindmap and the rule table was right to disagree."
+    },
+    {
+      "phrasing": "the state machine for an order, including the cancelled path",
+      "predicates": { "structure": ["graph"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["graph"] },
+      "why": "States and transitions are a graph in the plainest sense."
+    },
+    {
+      "phrasing": "a labelled diagram of the water cycle over a landscape",
+      "predicates": { "structure": ["scene"], "idiom": ["substrate", "annotated"] },
+      "expect": { "outcome": "single", "chosen": ["annotated-figure"] },
+      "why": "A substrate under a scene; the graph is refused even though evaporation and rainfall are arrows."
+    },
+    {
+      "phrasing": "compare the three storage tiers side by side",
+      "predicates": { "structure": ["set"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["labelled-blocks"] },
+      "why": "A comparison with no relations between the items is still a set."
+    },
+    {
+      "phrasing": "market share by vendor as a pie chart",
+      "predicates": { "structure": [], "idiom": ["pie"] },
+      "expect": { "outcome": "none", "chosen": [], "unknown": ["idiom:pie"] },
+      "why": "The chart preset shipped bars only: a wedge is not a box, so 'pie' is not in the idiom vocabulary and nothing favours any preset. This is now the out-of-repertoire case 'none' is reachable from, in the chart preset's own honest boundary rather than the whole idiom being unserved."
+    },
+    {
+      "phrasing": "the network topology drawn over a map of the campus",
+      "predicates": { "structure": ["graph"], "idiom": ["substrate"] },
+      "expect": { "outcome": "single", "chosen": ["graph"] },
+      "why": "Second substrate case; confirms the idiom constrains rather than restructures."
+    },
+    {
+      "phrasing": "show the memory layout of this struct, field by field, with byte offsets",
+      "predicates": { "structure": ["linear-extent"], "idiom": ["cross-section"] },
+      "expect": { "outcome": "single", "chosen": ["annotated-figure"], "unknown": ["structure:linear-extent"] },
+      "why": "Deliberately outside the vocabulary's centre. A packed linear extent has no structure value, so it surfaces as an unknown predicate instead of being forced into the nearest wrong bucket."
+    },
+    {
+      "phrasing": "an annotated schematic of the signal path through the amplifier",
+      "predicates": { "structure": ["graph", "scene"], "idiom": ["annotated"] },
+      "expect": { "outcome": "single", "chosen": ["annotated-figure"] },
+      "why": "Scene disqualifies the graph outright even though the content is also a graph; disqualification beats weight."
+    },
+    {
+      "phrasing": "just show me the three inputs and the one output",
+      "predicates": { "structure": ["set"], "idiom": ["plain-flow"] },
+      "expect": { "outcome": "single", "chosen": ["labelled-blocks"] },
+      "why": "The smallest possible request must not escalate into a graph."
+    }
+  ]
+}
