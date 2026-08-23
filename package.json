@@ -1,0 +1,46 @@
+{
+  "name": "prancheta",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A drafting board for agents: correct, complex figures from code.",
+  "license": "MIT",
+  "bin": {
+    "prancheta": "./src/cli.ts",
+    "prancheta-mcp": "./src/mcp/server.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "render": "node src/cli.ts render",
+    "test": "node --test \"tests/*.test.ts\"",
+    "typecheck": "tsc --noEmit",
+    "check:independent": "node scripts/check-independent.ts",
+    "check:fonts-travel": "node scripts/check-fonts-travel.ts outline && node scripts/check-fonts-travel.ts embed",
+    "mcp": "node src/mcp/server.ts",
+    "gen:views": "node scripts/gen-views.ts",
+    "gen:rules": "node scripts/gen-rule-reference.ts",
+    "gen:effects": "node scripts/gen-effect-reference.ts",
+    "gen:palette": "node scripts/gen-palette-reference.ts",
+    "gen:shapes": "node scripts/gen-shape-reference.ts",
+    "check:views": "node scripts/gen-views.ts --check",
+    "check:refs": "node scripts/gen-rule-reference.ts --check && node scripts/gen-effect-reference.ts --check && node scripts/gen-palette-reference.ts --check && node scripts/gen-shape-reference.ts --check",
+    "check:docs": "npm run check:views && npm run check:refs",
+    "check:root-clean": "node scripts/check-root-clean.ts --check",
+    "check:all": "npm run typecheck && npm run test && npm run check:docs && npm run check:root-clean",
+    "validate": "npm run check:all"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@resvg/resvg-js": "^2.6.2",
+    "@types/opentype.js": "^1.3.10",
+    "elkjs": "^0.12.0",
+    "opentype.js": "^2.0.0",
+    "playwright": "^1.56.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  }
+}
