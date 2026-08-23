@@ -1,0 +1,85 @@
+{
+  "preset": "annotated-figure",
+  "title": "lithium cell, cross-section",
+  "width": 620,
+  "height": 340,
+  "parts": [
+    {
+      "id": "case",
+      "x": 210,
+      "y": 60,
+      "width": 200,
+      "height": 220,
+      "radius": 10,
+      "role": "muted"
+    },
+    {
+      "id": "cathode",
+      "x": 226,
+      "y": 76,
+      "width": 168,
+      "height": 54,
+      "label": "Cathode",
+      "role": "warning"
+    },
+    {
+      "id": "separator",
+      "x": 226,
+      "y": 140,
+      "width": 168,
+      "height": 56,
+      "label": "Separator"
+    },
+    {
+      "id": "anode",
+      "x": 226,
+      "y": 206,
+      "width": 168,
+      "height": 54,
+      "label": "Anode",
+      "role": "primary"
+    },
+    {
+      "id": "terminal",
+      "x": 286,
+      "y": 26,
+      "width": 48,
+      "height": 34,
+      "role": "accent"
+    }
+  ],
+  "callouts": [
+    {
+      "text": "Positive terminal",
+      "at": {
+        "x": 20,
+        "y": 20
+      },
+      "points": "terminal"
+    },
+    {
+      "text": "Lithium metal oxide",
+      "at": {
+        "x": 460,
+        "y": 80
+      },
+      "points": "cathode"
+    },
+    {
+      "text": "Porous membrane keeps the electrodes apart",
+      "at": {
+        "x": 460,
+        "y": 156
+      },
+      "points": "separator"
+    },
+    {
+      "text": "Graphite, holds the ions when charged",
+      "at": {
+        "x": 20,
+        "y": 240
+      },
+      "points": "anode"
+    }
+  ]
+}

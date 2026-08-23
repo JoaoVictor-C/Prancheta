@@ -1,0 +1,20 @@
+{
+  "preset": "graph",
+  "title": "ingest pipeline",
+  "direction": "RIGHT",
+  "nodes": [
+    { "id": "queue", "label": "Ingest queue", "role": "primary" },
+    { "id": "parse", "label": "Parser" },
+    { "id": "enrich", "label": "Enrichment worker" },
+    { "id": "store", "label": "Object store" },
+    { "id": "index", "label": "Search index" },
+    { "id": "dlq", "label": "Dead letter queue", "role": "warning" }
+  ],
+  "edges": [
+    { "from": "queue", "to": "parse" },
+    { "from": "parse", "to": "enrich" },
+    { "from": "enrich", "to": "store" },
+    { "from": "enrich", "to": "index" },
+    { "from": "parse", "to": "dlq", "dashed": true }
+  ]
+}

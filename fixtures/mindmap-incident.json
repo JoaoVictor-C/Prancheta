@@ -1,0 +1,14 @@
+{
+  "preset": "mindmap",
+  "title": "incident review",
+  "shape": "tree",
+  "root": {
+    "label": "Checkout outage",
+    "children": [
+      { "label": "Trigger", "children": [ { "label": "Config push at 14:02" }, { "label": "No canary stage" } ] },
+      { "label": "Detection", "children": [ { "label": "Customer report" }, { "label": "Alert fired 9 min late" } ] },
+      { "label": "Impact", "children": [ { "label": "38 min degraded" }, { "label": "Card payments only" } ] },
+      { "label": "Fix", "children": [ { "label": "Rollback" }, { "label": "Canary now mandatory" } ] }
+    ]
+  }
+}
