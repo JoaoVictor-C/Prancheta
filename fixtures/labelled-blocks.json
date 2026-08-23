@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "title": "labelled-blocks — worst-case labels",
+  "root": {
+    "type": "stack",
+    "direction": "column",
+    "gap": 16,
+    "align": "stretch",
+    "children": [
+      {
+        "type": "block",
+        "id": "one-word",
+        "label": "Ingest",
+        "width": 340
+      },
+      {
+        "type": "block",
+        "id": "long-sentence",
+        "label": "This label is a single sentence of sixty-plus characters, long enough that it must wrap across several lines inside its box.",
+        "width": 340
+      },
+      {
+        "type": "block",
+        "id": "cjk",
+        "label": "这是一段用来测试换行与基线对齐的中文标签，字数足够多以便强制换行。",
+        "width": 340
+      },
+      {
+        "type": "block",
+        "id": "unbreakable-url",
+        "label": "https://example.com/a/very/long/path/that/contains/no/spaces/at/all?and=a&query=string",
+        "width": 340
+      },
+      {
+        "type": "stack",
+        "id": "narrow-row",
+        "direction": "row",
+        "gap": 16,
+        "align": "stretch",
+        "children": [
+          {
+            "type": "block",
+            "id": "narrow-left",
+            "label": "Narrow column, centered",
+            "width": 162,
+            "textAlign": "center"
+          },
+          {
+            "type": "block",
+            "id": "narrow-right",
+            "label": "Antidisestablishmentarianism",
+            "width": 162,
+            "textAlign": "end"
+          }
+        ]
+      }
+    ]
+  }
+}

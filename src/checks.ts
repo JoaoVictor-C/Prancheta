@@ -1,0 +1,789 @@
+/**
+ * Geometric checks.
+ *
+ * Deterministic, cheap, and model-free. They answer "is this figure
+ * *malformed*", not "is this figure *right*" — semantic checks (does the arrow
+ * point the correct way, is anything invented or missing) need a model in the
+ * loop and are worth nothing while labels still overflow their boxes.
+ *
+ * Every failure carries structured overflow numbers, not just prose, because
+ * the repair engine has to act on them and parsing English back out of a
+ * message would be absurd.
+ */
+
+import type {
+  ConstraintToggles,
+  LaidOutFigure,
+  PlacedBox,
+  PlacedConnector,
+  PlacedText,
+  Rect,
+} from "./ir/types.ts";
+import { resolveConstraints } from "./ir/types.ts";
+import { polylineIntersectsBox } from "./layout/connectors.ts";
+import { inkBounds, isEmpty as bleedIsEmpty, unionRects } from "./effects/bleed.ts";
+import type { Bleed } from "./effects/bleed.ts";
+import { containsPoint } from "./geometry/shapes.ts";
+import { WCAG_AA_NORMAL, contrastRatio, isTransparent } from "./colour/contrast.ts";
+import {
+  DICHROMACY_KINDS,
+  MIN_DISTINGUISHABLE_DISTANCE,
+  simulatedDistance,
+} from "./colour/colourblind.ts";
+
+export type CheckId =
+  // Core checks: the core computed the geometry, so these are exact.
+  | "text-fits-box"
+  | "label-within-shape"
+  | "text-clear-of-other-boxes"
+  | "content-within-canvas"
+  | "connector-clear-of-boxes"
+  | "boxes-do-not-overlap"
+  | "effect-within-canvas"
+  | "contrast-sufficient"
+  | "categorical-colours-distinguishable"
+  | "tick-labels-do-not-collide"
+  | "constraints-satisfied"
+  // Module checks (decision 0005). Named apart WHERE THE METHOD DIFFERS: a
+  // foreign SVG has no content boxes and no wrapped line boxes, so a check
+  // called text-fits-box would promise something it cannot deliver.
+  // content-within-canvas is deliberately absent from this list — same method,
+  // same meaning, so it keeps its name in both worlds.
+  | "module-ids-resolve"
+  | "module-geometry-agrees"
+  | "module-label-within-feature"
+  | "module-labels-do-not-collide"
+  | "module-labels-clear-of-strokes";
+
+export type Overflow = {
+  /** Positive numbers only; each is how far past that edge the content went. */
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
+export type Check = {
+  id: CheckId;
+  target: string;
+  /**
+   * "not-applicable" is a real third state, not a polite pass. A check that
+   * examined zero elements has verified nothing, and reporting that as a pass
+   * reads as coverage — the exact trap M3's dangling-reference test fell into.
+   */
+  status: "pass" | "fail" | "not-applicable";
+  /** How many elements this check actually examined. Zero means it proved nothing. */
+  examined?: number;
+  detail?: string;
+  /** Present on failures the repair engine can act on. */
+  overflow?: Overflow;
+  /** The node a repair should edit. */
+  ownerId?: string;
+};
+
+/** Sub-pixel noise is not a defect; a rounded coordinate can land half a pixel out. */
+export const EPSILON = 0.5;
+
+export function runChecks(figure: LaidOutFigure): Check[] {
+  const boxes = new Map<string, PlacedBox>();
+  for (const element of figure.elements) {
+    if (element.kind === "box") boxes.set(element.id, element);
+  }
+
+  // Decision 0010. A relaxed constraint reports "not-applicable" with the
+  // toggle named, never "pass": a figure that was excused and a figure that
+  // was sound must not read the same way in a manifest.
+  const toggles = resolveConstraints({ constraints: figure.constraints });
+
+  const checks: Check[] = [];
+  for (const element of figure.elements) {
+    if (element.kind === "text") {
+      checks.push(textFitsBox(element, boxes));
+      checks.push(labelWithinShape(element, boxes));
+      checks.push(textClearOfOtherBoxes(element, boxes));
+    } else if (element.kind === "connector") {
+      checks.push(
+        toggles.allowConnectorCrossing
+          ? relaxed("connector-clear-of-boxes", element.id, "allowConnectorCrossing")
+          : connectorClearOfBoxes(element, boxes),
+      );
+    }
+  }
+  checks.push(
+    ...(toggles.allowOverlap
+      ? [relaxed("boxes-do-not-overlap", "figure", "allowOverlap")]
+      : boxesDoNotOverlap(boxes)),
+  );
+  checks.push(contentWithinCanvas(figure));
+  checks.push(effectWithinCanvas(figure));
+  checks.push(...contrastSufficient(figure, boxes));
+  checks.push(categoricalColoursDistinguishable(boxes));
+  checks.push(tickLabelsDoNotCollide(figure));
+  checks.push(constraintsSatisfied(figure));
+  return checks;
+}
+
+/**
+ * A check the figure asked to stand down (decision 0010).
+ *
+ * Reported as "not-applicable" and never as "pass", and it names the toggle
+ * that excused it. The distinction is the whole point: a manifest that said
+ * "pass" here would claim the figure had been examined and found sound, when
+ * in fact it was not examined at all.
+ */
+function relaxed(id: CheckId, target: string, toggle: keyof ConstraintToggles & string): Check {
+  return {
+    id,
+    target,
+    status: "not-applicable",
+    detail: `not applicable: canvas.constraints.${toggle} is on, so this constraint was not enforced`,
+  };
+}
+
+/**
+ * Two boxes may nest, but they may not partially overlap.
+ *
+ * In flow layout this was unreachable — siblings cannot collide. Absolute
+ * scenes make it reachable, and it is exactly what a repair can cause: growing
+ * a layer of a cross-section to fit its label pushes it into the layer below,
+ * fixing one defect by creating another. Containment is deliberate structure
+ * (a case holds its parts); partial overlap never is.
+ */
+function boxesDoNotOverlap(boxes: Map<string, PlacedBox>): Check[] {
+  const entries = [...boxes.values()];
+  const pairs = (entries.length * (entries.length - 1)) / 2;
+
+  // Fewer than two boxes means no pair could be resolved at all. Reporting
+  // that as a pass would be a vacuous pass — the same standard decision 0005
+  // imposes on modules, applied to the core so it is not held to a looser one.
+  if (pairs === 0) {
+    return [
+      {
+        id: "boxes-do-not-overlap",
+        target: "figure",
+        status: "not-applicable",
+        examined: 0,
+        detail: "not applicable: fewer than two boxes, so no pair could overlap",
+      },
+    ];
+  }
+
+  // Sweep along x instead of walking all n(n-1)/2 pairs. A box leaves the
+  // active list once its right edge is behind the sweep line, and everything
+  // still to come starts at or after that line — so the pairs the sweep never
+  // forms are exactly those whose x intervals are disjoint, which *proves*
+  // they cannot intersect rather than declining to look at them.
+  //
+  // Every pair is still resolved. The distinction the detail line reports is
+  // between a pair resolved by the sweep's geometry and one resolved by an
+  // explicit test; it is not the difference between checked and skipped.
+  const ordered = entries
+    .map((box, index) => ({ index, rect: rectOf(box) }))
+    .sort((a, b) => a.rect.x - b.rect.x || a.index - b.index);
+
+  const failures: [number, number][] = [];
+  const active: typeof ordered = [];
+  let tested = 0;
+
+  for (const current of ordered) {
+    let keep = 0;
+    for (let i = 0; i < active.length; i += 1) {
+      const other = active[i]!;
+      // Exactly the condition `intersects` uses on this axis, so a box is
+      // dropped only when it cannot intersect `current` — nor anything after
+      // it, since the sweep line only moves right.
+      if (other.rect.x + other.rect.width > current.rect.x + EPSILON) {
+        active[keep] = other;
+        keep += 1;
+      }
+    }
+    active.length = keep;
+
+    for (const other of active) {
+      tested += 1;
+      if (!intersects(current.rect, other.rect)) continue;
+      if (contains(current.rect, other.rect) || contains(other.rect, current.rect)) continue;
+      failures.push(
+        other.index < current.index
+          ? [other.index, current.index]
+          : [current.index, other.index],
+      );
+    }
+    active.push(current);
+  }
+
+  if (failures.length > 0) {
+    // Reported in the boxes' own order, not the sweep's, so the output does
+    // not depend on how the comparison happened to be organised.
+    failures.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    return failures.map(([i, j]) => ({
+      id: "boxes-do-not-overlap" as const,
+      target: entries[i]!.id,
+      status: "fail" as const,
+      detail: `overlaps ${entries[j]!.id} without containing it`,
+    }));
+  }
+
+  return [
+    {
+      id: "boxes-do-not-overlap",
+      target: "figure",
+      status: "pass",
+      examined: pairs,
+      detail: `resolved ${pairs} pair(s); ${tested} needed an overlap test`,
+    },
+  ];
+}
+
+function rectOf(box: PlacedBox): Rect {
+  return { x: box.x, y: box.y, width: box.width, height: box.height };
+}
+
+/**
+ * A connector may touch the two boxes it joins and nothing else. A line that
+ * runs through an unrelated box is the third documented defect (after text
+ * overflow and collision) and the one a reader misreads rather than notices:
+ * it looks like a connection that was never claimed.
+ */
+function connectorClearOfBoxes(connector: PlacedConnector, boxes: Map<string, PlacedBox>): Check {
+  const endpoints = [connector.fromId, connector.toId].filter(
+    (id): id is string => id !== null,
+  );
+  const endpointRects = endpoints
+    .map((id) => boxes.get(id))
+    .filter((box): box is PlacedBox => box !== undefined)
+    .map((box) => ({ x: box.x, y: box.y, width: box.width, height: box.height }));
+
+  const crossed: string[] = [];
+  for (const [id, box] of boxes) {
+    if (endpoints.includes(id)) continue;
+    const rect = { x: box.x, y: box.y, width: box.width, height: box.height };
+    // A container necessarily lies between a callout and a part inside it. On a
+    // cross-section every leader line crosses the outer case, and reporting that
+    // would fail every well-formed annotated figure. Enclosure is structure,
+    // not collision — the same guard the text check needs for nesting.
+    if (endpointRects.some((endpoint) => contains(rect, endpoint))) continue;
+    if (polylineIntersectsBox(connector.points, box)) crossed.push(id);
+  }
+  return crossed.length === 0
+    ? { id: "connector-clear-of-boxes", target: connector.id, status: "pass" }
+    : {
+        id: "connector-clear-of-boxes",
+        target: connector.id,
+        status: "fail",
+        detail: `connector passes through ${crossed.join(", ")}, which it does not join`,
+      };
+}
+
+/** Does every line of a label sit inside its own block's content box? */
+function textFitsBox(text: PlacedText, boxes: Map<string, PlacedBox>): Check {
+  const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
+  if (!owner) {
+    return {
+      id: "text-fits-box",
+      target: text.id,
+      status: "pass",
+      detail: "no owning box; nothing to overflow",
+    };
+  }
+  const overflow = overflowOf(unionOf(text.lines.map((line) => line.box)), owner.content);
+  if (!overflow) return { id: "text-fits-box", target: text.id, status: "pass" };
+
+  const worst = text.lines
+    .filter((line) => overflowOf(line.box, owner.content) !== null)
+    .map((line) => `"${truncate(line.text)}"`);
+  return {
+    id: "text-fits-box",
+    target: text.id,
+    status: "fail",
+    ownerId: owner.id,
+    overflow,
+    detail: `${worst.length} line(s) overflow ${owner.id} — ${describe(overflow)}: ${worst.join(", ")}`,
+  };
+}
+
+/**
+ * Does every corner of every line sit inside the actual SHAPE drawn in its
+ * owner's box, not just inside the box's bounding rectangle?
+ *
+ * text-fits-box answers the bounding-box question and stops there — a label
+ * centred in a diamond can pass it while its corners already sit outside the
+ * diamond's slanted sides. Not-applicable for "rect" (or an unset shape):
+ * text-fits-box already answers exactly that question for a rectangle, and a
+ * second check reporting the same pass/fail would be noise, not coverage.
+ */
+function labelWithinShape(text: PlacedText, boxes: Map<string, PlacedBox>): Check {
+  const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
+  const shape = owner?.shape ?? "rect";
+  if (!owner || shape === "rect") {
+    return {
+      id: "label-within-shape",
+      target: text.id,
+      status: "not-applicable",
+      detail: owner ? "rect shape; text-fits-box already covers this" : "no owning box",
+    };
+  }
+
+  const box = { x: owner.x, y: owner.y, width: owner.width, height: owner.height };
+  const outside: string[] = [];
+  for (const line of text.lines) {
+    const corners = [
+      { x: line.box.x, y: line.box.y },
+      { x: line.box.x + line.box.width, y: line.box.y },
+      { x: line.box.x, y: line.box.y + line.box.height },
+      { x: line.box.x + line.box.width, y: line.box.y + line.box.height },
+    ];
+    if (corners.some((corner) => !containsPoint(shape, box, corner))) {
+      outside.push(`"${truncate(line.text)}"`);
+    }
+  }
+
+  return outside.length === 0
+    ? { id: "label-within-shape", target: text.id, status: "pass", examined: text.lines.length }
+    : {
+        id: "label-within-shape",
+        target: text.id,
+        status: "fail",
+        examined: text.lines.length,
+        ownerId: owner.id,
+        detail: `${outside.length} line(s) fall outside ${owner.id}'s ${shape} shape: ${outside.join(", ")}`,
+      };
+}
+
+/**
+ * A label that escapes its own box usually lands on top of a neighbour. That
+ * is the defect a reader actually notices, so it is worth reporting separately
+ * from the containment failure that caused it.
+ */
+function textClearOfOtherBoxes(text: PlacedText, boxes: Map<string, PlacedBox>): Check {
+  const bounds = unionOf(text.lines.map((line) => line.box));
+  const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
+  const ownerRect =
+    owner === undefined
+      ? undefined
+      : { x: owner.x, y: owner.y, width: owner.width, height: owner.height };
+
+  const collided: string[] = [];
+  for (const [id, box] of boxes) {
+    if (id === text.ownerId) continue;
+    const rect = { x: box.x, y: box.y, width: box.width, height: box.height };
+    // An ancestor necessarily encloses its descendant's label. Once blocks can
+    // nest (M2), reporting that as a collision would fire on every well-formed
+    // nested figure, so containment of the owner is treated as ancestry.
+    if (ownerRect !== undefined && contains(rect, ownerRect)) continue;
+    if (intersects(bounds, rect)) collided.push(id);
+  }
+  return collided.length === 0
+    ? { id: "text-clear-of-other-boxes", target: text.id, status: "pass" }
+    : {
+        id: "text-clear-of-other-boxes",
+        target: text.id,
+        status: "fail",
+        ownerId: text.ownerId ?? undefined,
+        detail: `label overlaps ${collided.join(", ")}`,
+      };
+}
+
+/**
+ * Does every effect's ink land on the canvas?
+ *
+ * A shadow is ink, and ink outside the canvas is not drawn. This is the check
+ * that stops the effects layer from being decoration: a glow sheared off flat
+ * by the figure's own edge is a defect with a number attached, reported like
+ * any overflow and repaired by the same loop — here by growing the canvas
+ * padding, since the element itself is exactly where it should be.
+ *
+ * Kept apart from content-within-canvas rather than folded into it, and for
+ * the reason decision 0005 gives about naming: the two answer different
+ * questions. One says an element is off the page, which is a layout failure.
+ * This one says an element is on the page and its halo is not, which is a
+ * framing failure, and the repairs differ accordingly.
+ */
+function effectWithinCanvas(figure: LaidOutFigure): Check {
+  const canvas: Rect = { x: 0, y: 0, width: figure.width, height: figure.height };
+  const clipped: string[] = [];
+  let worst: Overflow = { left: 0, top: 0, right: 0, bottom: 0 };
+  let examined = 0;
+
+  for (const element of figure.elements) {
+    const bleed: Bleed | undefined = element.bleed;
+    if (bleed === undefined || bleedIsEmpty(bleed)) continue;
+    examined += 1;
+    const overflow = overflowOf(inkBounds(ownBounds(element), bleed), canvas);
+    if (!overflow) continue;
+    clipped.push(`${element.id} ${describe(overflow)}`);
+    worst = {
+      left: Math.max(worst.left, overflow.left),
+      top: Math.max(worst.top, overflow.top),
+      right: Math.max(worst.right, overflow.right),
+      bottom: Math.max(worst.bottom, overflow.bottom),
+    };
+  }
+
+  if (examined === 0) {
+    return {
+      id: "effect-within-canvas",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no element carries an effect that reaches past its own bounds",
+    };
+  }
+  return clipped.length === 0
+    ? {
+        id: "effect-within-canvas",
+        target: "figure",
+        status: "pass",
+        examined,
+        detail: `examined ${examined} element(s) with effect bleed`,
+      }
+    : {
+        id: "effect-within-canvas",
+        target: "figure",
+        status: "fail",
+        examined,
+        overflow: worst,
+        detail: clipped.join("; "),
+      };
+}
+
+/** An element's own bounds, before any effect is taken into account. */
+function ownBounds(element: LaidOutFigure["elements"][number]): Rect {
+  if (element.kind === "box") {
+    return { x: element.x, y: element.y, width: element.width, height: element.height };
+  }
+  if (element.kind === "connector") {
+    return unionRects(
+      element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
+    );
+  }
+  return unionRects(element.lines.map((line) => line.box));
+}
+
+function contentWithinCanvas(figure: LaidOutFigure): Check {
+  const canvas: Rect = { x: 0, y: 0, width: figure.width, height: figure.height };
+  const escaped: string[] = [];
+  for (const element of figure.elements) {
+    const box =
+      element.kind === "box"
+        ? { x: element.x, y: element.y, width: element.width, height: element.height }
+        : element.kind === "connector"
+          ? unionOf(
+              element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
+            )
+          : unionOf(element.lines.map((line) => line.box));
+    const overflow = overflowOf(box, canvas);
+    if (overflow) escaped.push(`${element.id} ${describe(overflow)}`);
+  }
+  return escaped.length === 0
+    ? {
+        id: "content-within-canvas",
+        target: "figure",
+        status: figure.elements.length === 0 ? "not-applicable" : "pass",
+        examined: figure.elements.length,
+        detail:
+          figure.elements.length === 0
+            ? "not applicable: the figure has no elements"
+            : `examined ${figure.elements.length} element(s)`,
+      }
+    : {
+        id: "content-within-canvas",
+        target: "figure",
+        status: "fail",
+        detail: escaped.join("; "),
+      };
+}
+
+/**
+ * Is every label readable against what it actually sits on? (decision 0007)
+ *
+ * One check per text element, the same granularity text-fits-box uses,
+ * because a contrast defect is a property of one label against one
+ * background, not of the figure as a whole. A label whose owner has a
+ * transparent fill (the callout role) is compared against the canvas colour
+ * instead -- that is genuinely what a reader sees behind it, detected by
+ * alpha rather than by matching the literal string "transparent" (a
+ * transparent CSS colour normalises to `rgba(0, 0, 0, 0)` by the time this
+ * runs) -- and a label whose colours cannot be parsed at all (a raw CSS
+ * colour name never seen from a real render) is reported not-applicable for
+ * that element specifically rather than silently skipped, so "nothing was
+ * wrong" and "nothing could be checked" never look the same in the
+ * manifest.
+ */
+function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check[] {
+  const texts = figure.elements.filter((element): element is PlacedText => element.kind === "text");
+  if (texts.length === 0) {
+    return [
+      {
+        id: "contrast-sufficient",
+        target: "figure",
+        status: "not-applicable",
+        examined: 0,
+        detail: "not applicable: the figure has no text",
+      },
+    ];
+  }
+
+  return texts.map((text) => {
+    const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
+    const background =
+      owner === undefined || isTransparent(owner.fill) ? figure.background : owner.fill;
+    const ratio = contrastRatio(text.fill, background);
+
+    if (ratio === null) {
+      return {
+        id: "contrast-sufficient",
+        target: text.id,
+        status: "not-applicable",
+        detail: `not applicable: "${text.fill}" or "${background}" is not a colour this check understands`,
+      };
+    }
+
+    const rounded = Math.round(ratio * 100) / 100;
+    return ratio >= WCAG_AA_NORMAL
+      ? {
+          id: "contrast-sufficient",
+          target: text.id,
+          status: "pass",
+          examined: 1,
+          detail: `${rounded}:1 against ${background}`,
+        }
+      : {
+          id: "contrast-sufficient",
+          target: text.id,
+          status: "fail",
+          examined: 1,
+          detail: `${rounded}:1 against ${background}, below the ${WCAG_AA_NORMAL}:1 WCAG AA threshold for normal text`,
+        };
+  });
+}
+
+/**
+ * Do the colours in a declared category still look different to a colourblind
+ * reader? (decision 0007)
+ *
+ * Grouped, not per-element, because the question is inherently about a SET:
+ * "series" only means something once there are at least two colours claiming
+ * to be told apart. A group of one is not a comparison and is reported
+ * not-applicable rather than a vacuous pass.
+ */
+function categoricalColoursDistinguishable(boxes: Map<string, PlacedBox>): Check {
+  const groups = new Map<string, PlacedBox[]>();
+  for (const box of boxes.values()) {
+    if (box.categoryGroup === undefined) continue;
+    const bucket = groups.get(box.categoryGroup);
+    if (bucket) bucket.push(box);
+    else groups.set(box.categoryGroup, [box]);
+  }
+
+  const comparableGroups = [...groups.values()].filter((members) => members.length >= 2);
+  if (comparableGroups.length === 0) {
+    return {
+      id: "categorical-colours-distinguishable",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no categoryGroup has two or more members to compare",
+    };
+  }
+
+  const failures: string[] = [];
+  let pairs = 0;
+  for (const members of comparableGroups) {
+    for (let i = 0; i < members.length; i += 1) {
+      for (let j = i + 1; j < members.length; j += 1) {
+        const a = members[i]!;
+        const b = members[j]!;
+        for (const kind of DICHROMACY_KINDS) {
+          pairs += 1;
+          const distance = simulatedDistance(a.fill, b.fill, kind);
+          if (distance === null) continue; // unparsable colour; not this check's problem
+          if (distance < MIN_DISTINGUISHABLE_DISTANCE) {
+            failures.push(
+              `${a.id} and ${b.id} (group "${a.categoryGroup}") are only ${Math.round(distance)} apart under ${kind}`,
+            );
+          }
+        }
+      }
+    }
+  }
+
+  return failures.length === 0
+    ? {
+        id: "categorical-colours-distinguishable",
+        target: "figure",
+        status: "pass",
+        examined: pairs,
+        detail: `compared ${pairs} pair(s) across ${comparableGroups.length} categorical group(s)`,
+      }
+    : {
+        id: "categorical-colours-distinguishable",
+        target: "figure",
+        status: "fail",
+        examined: pairs,
+        detail: failures.join("; "),
+      };
+}
+
+export function overflowOf(inner: Rect, outer: Rect): Overflow | null {
+  const left = outer.x - inner.x;
+  const top = outer.y - inner.y;
+  const right = inner.x + inner.width - (outer.x + outer.width);
+  const bottom = inner.y + inner.height - (outer.y + outer.height);
+  const overflow: Overflow = {
+    left: Math.max(0, left),
+    top: Math.max(0, top),
+    right: Math.max(0, right),
+    bottom: Math.max(0, bottom),
+  };
+  const worst = Math.max(overflow.left, overflow.top, overflow.right, overflow.bottom);
+  return worst > EPSILON ? overflow : null;
+}
+
+export function describe(overflow: Overflow): string {
+  const parts: string[] = [];
+  if (overflow.left > EPSILON) parts.push(`left by ${fmt(overflow.left)}px`);
+  if (overflow.top > EPSILON) parts.push(`top by ${fmt(overflow.top)}px`);
+  if (overflow.right > EPSILON) parts.push(`right by ${fmt(overflow.right)}px`);
+  if (overflow.bottom > EPSILON) parts.push(`bottom by ${fmt(overflow.bottom)}px`);
+  return `overflows ${parts.join(" and ")}`;
+}
+
+export function unionOf(rects: Rect[]): Rect {
+  return unionRects(rects);
+}
+
+/** Does `outer` fully enclose `inner`? Used to recognise an ancestor box. */
+function contains(outer: Rect, inner: Rect): boolean {
+  return (
+    outer.x <= inner.x + EPSILON &&
+    outer.y <= inner.y + EPSILON &&
+    outer.x + outer.width >= inner.x + inner.width - EPSILON &&
+    outer.y + outer.height >= inner.y + inner.height - EPSILON
+  );
+}
+
+function intersects(a: Rect, b: Rect): boolean {
+  return (
+    a.x < b.x + b.width - EPSILON &&
+    a.x + a.width > b.x + EPSILON &&
+    a.y < b.y + b.height - EPSILON &&
+    a.y + a.height > b.y + EPSILON
+  );
+}
+
+function fmt(value: number): string {
+  return String(Math.round(value * 10) / 10);
+}
+
+export function truncate(value: string): string {
+  return value.length <= 32 ? value : `${value.slice(0, 32)}…`;
+}
+
+/**
+ * Tick labels on axes should not overlap (M8, stage 5, step 26).
+ *
+ * Applies only to text elements marked as axis ticks (by metadata or naming
+ * convention). Not all text is a tick — most labels are box labels, connector
+ * labels, or titles. This check is only applicable when the figure declares
+ * tick labels, which it does by setting a metadata flag or following a naming
+ * pattern (e.g., id starts with "tick-").
+ *
+ * For now, returns not-applicable — full implementation comes with axis support
+ * in chart preset (step 27). The check is added now so the CheckId type is
+ * complete and repair.ts can reference it.
+ */
+function tickLabelsDoNotCollide(figure: LaidOutFigure): Check {
+  const tickLabels: PlacedText[] = [];
+
+  for (const element of figure.elements) {
+    if (element.kind === "text") {
+      // Identify tick labels by id pattern (temporary heuristic until metadata exists)
+      if (element.id.startsWith("tick-") || element.id.includes("-tick-")) {
+        tickLabels.push(element);
+      }
+    }
+  }
+
+  if (tickLabels.length < 2) {
+    return {
+      id: "tick-labels-do-not-collide",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no axis tick labels found",
+    };
+  }
+
+  // Check pairwise collisions
+  const collisions: string[] = [];
+  for (let i = 0; i < tickLabels.length; i++) {
+    for (let j = i + 1; j < tickLabels.length; j++) {
+      const a = tickLabels[i]!;
+      const b = tickLabels[j]!;
+
+      // Union of all line boxes for each text element
+      const aBox = unionOf(a.lines.map((line) => line.box));
+      const bBox = unionOf(b.lines.map((line) => line.box));
+
+      if (intersects(aBox, bBox)) {
+        collisions.push(`${a.id} overlaps ${b.id}`);
+      }
+    }
+  }
+
+  if (collisions.length > 0) {
+    return {
+      id: "tick-labels-do-not-collide",
+      target: "figure",
+      status: "fail",
+      examined: tickLabels.length,
+      detail: `${collisions.length} collision(s): ${collisions.slice(0, 3).join(", ")}${collisions.length > 3 ? "..." : ""}`,
+    };
+  }
+
+  return {
+    id: "tick-labels-do-not-collide",
+    target: "figure",
+    status: "pass",
+    examined: tickLabels.length,
+    detail: `checked ${tickLabels.length} tick label(s), no collisions`,
+  };
+}
+
+/**
+ * Constraints satisfied (M10, stage 6, step 33).
+ *
+ * Verifies that all declared constraints (align, distribute, keepClear, sameSize,
+ * anchor) are satisfied for the current element positions. This check drives
+ * translation repair: when it fails, step 34's repair loop can move boxes
+ * (within their budgets) to satisfy the constraints.
+ *
+ * For now, returns not-applicable — figures don't yet declare constraints in
+ * their spec. The check exists so the repair loop (step 34) can reference it.
+ */
+function constraintsSatisfied(figure: LaidOutFigure): Check {
+  // TODO: Extract constraints from figure spec when constraint vocabulary is
+  // integrated into FigureSpec (step 31 added the types, but not the field).
+  const constraints: any[] = [];
+
+  if (constraints.length === 0) {
+    return {
+      id: "constraints-satisfied",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no constraints declared",
+    };
+  }
+
+  // When constraints exist, check them using isConstraintSatisfied from
+  // src/constraints/types.ts and report violations.
+  return {
+    id: "constraints-satisfied",
+    target: "figure",
+    status: "pass",
+    examined: constraints.length,
+    detail: `checked ${constraints.length} constraint(s), all satisfied`,
+  };
+}
