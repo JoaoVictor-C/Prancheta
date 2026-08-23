@@ -22,6 +22,15 @@ The common failure is not artistic. It is that **the agent never looks at what i
 
 Correct figures come from **code, not pixels**, plus a **render–inspect–repair loop** that closes on an actual rasterized image, plus a **repertoire** of figure kinds broader than the graph.
 
+## Gallery
+
+Two generator experiments from [experiments/generators](experiments/generators), rendered through the same pipeline as every other figure here.
+
+|  |  |
+|---|---|
+| ![Chladni plate nodal patterns](docs/gallery/chladni.png) | ![Logistic map and Mandelbrot conjugacy](docs/gallery/conjugacy.png) |
+| Four vibration modes of a square plate — sand settling along the nodal curves of `cos(nπx)cos(mπy) − cos(mπx)cos(nπy)`. | The logistic map's bifurcation cascade and the Mandelbrot set's real axis, shown as the same dynamical system in two coordinates. |
+
 ## Install
 
 Developed and tested on **Node 25**. It runs the TypeScript directly — there is no build step.
