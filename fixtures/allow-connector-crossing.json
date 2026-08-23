@@ -1,0 +1,277 @@
+{
+  "version": 1,
+  "title": "Leader line across a dense field — needs allowConnectorCrossing",
+  "canvas": {
+    "padding": 24,
+    "theme": "light",
+    "constraints": {
+      "allowConnectorCrossing": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 680,
+    "height": 300,
+    "children": [
+      {
+        "id": "note",
+        "type": "block",
+        "x": 20,
+        "y": 150,
+        "width": 120,
+        "height": 44,
+        "label": "Callout",
+        "fill": "#EAF0FF",
+        "stroke": "#3966C9",
+        "strokeWidth": 1.4,
+        "radius": 4,
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#1B2A4A"
+      },
+      {
+        "id": "target",
+        "type": "block",
+        "x": 540,
+        "y": 150,
+        "width": 120,
+        "height": 44,
+        "label": "Referent",
+        "fill": "#EAF0FF",
+        "stroke": "#3966C9",
+        "strokeWidth": 1.4,
+        "radius": 4,
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#1B2A4A"
+      },
+      {
+        "id": "cell-0-0",
+        "type": "block",
+        "x": 190,
+        "y": 96,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-0-1",
+        "type": "block",
+        "x": 190,
+        "y": 156,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-0-2",
+        "type": "block",
+        "x": 190,
+        "y": 216,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-1-0",
+        "type": "block",
+        "x": 248,
+        "y": 96,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-1-1",
+        "type": "block",
+        "x": 248,
+        "y": 156,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-1-2",
+        "type": "block",
+        "x": 248,
+        "y": 216,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-2-0",
+        "type": "block",
+        "x": 306,
+        "y": 96,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-2-1",
+        "type": "block",
+        "x": 306,
+        "y": 156,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-2-2",
+        "type": "block",
+        "x": 306,
+        "y": 216,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-3-0",
+        "type": "block",
+        "x": 364,
+        "y": 96,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-3-1",
+        "type": "block",
+        "x": 364,
+        "y": 156,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-3-2",
+        "type": "block",
+        "x": 364,
+        "y": 216,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-4-0",
+        "type": "block",
+        "x": 422,
+        "y": 96,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-4-1",
+        "type": "block",
+        "x": 422,
+        "y": 156,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-4-2",
+        "type": "block",
+        "x": 422,
+        "y": 216,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-5-0",
+        "type": "block",
+        "x": 480,
+        "y": 96,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-5-1",
+        "type": "block",
+        "x": 480,
+        "y": 156,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "cell-5-2",
+        "type": "block",
+        "x": 480,
+        "y": 216,
+        "width": 40,
+        "height": 32,
+        "fill": "#D9DEE8",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      }
+    ],
+    "connectors": [
+      {
+        "id": "leader",
+        "from": "note",
+        "to": "target",
+        "arrow": "end",
+        "stroke": "#C23B21",
+        "strokeWidth": 1.6
+      }
+    ]
+  }
+}

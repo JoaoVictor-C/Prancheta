@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "title": "Venn diagram — needs allowOverlap",
+  "canvas": { "padding": 24, "theme": "light", "constraints": { "allowOverlap": true } },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 520,
+    "height": 400,
+    "children": [
+      { "id": "setA", "type": "block", "shape": "circle", "x": 90, "y": 20, "width": 220, "height": 220,
+        "fill": "rgba(57, 102, 201, 0.34)", "stroke": "#3966C9", "strokeWidth": 1.5, "padding": 0 },
+      { "id": "setB", "type": "block", "shape": "circle", "x": 210, "y": 20, "width": 220, "height": 220,
+        "fill": "rgba(194, 59, 33, 0.34)", "stroke": "#C23B21", "strokeWidth": 1.5, "padding": 0 },
+      { "id": "setC", "type": "block", "shape": "circle", "x": 150, "y": 125, "width": 220, "height": 220,
+        "fill": "rgba(46, 139, 87, 0.34)", "stroke": "#2E8B57", "strokeWidth": 1.5, "padding": 0 },
+
+      { "id": "labelA", "type": "block", "x": 118, "y": 62, "width": 60, "height": 22, "label": "A",
+        "fill": "transparent", "stroke": "transparent", "strokeWidth": 0, "padding": 0,
+        "textAlign": "center", "textColor": "#1B2A4A" },
+      { "id": "labelB", "type": "block", "x": 344, "y": 62, "width": 60, "height": 22, "label": "B",
+        "fill": "transparent", "stroke": "transparent", "strokeWidth": 0, "padding": 0,
+        "textAlign": "center", "textColor": "#5A1B10" },
+      { "id": "labelC", "type": "block", "x": 230, "y": 292, "width": 60, "height": 22, "label": "C",
+        "fill": "transparent", "stroke": "transparent", "strokeWidth": 0, "padding": 0,
+        "textAlign": "center", "textColor": "#14402A" }
+    ]
+  }
+}

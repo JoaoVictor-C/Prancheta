@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "title": "All three toggles at once",
+  "canvas": {
+    "padding": 26,
+    "theme": "light",
+    "constraints": {
+      "allowOverlap": true,
+      "allowConnectorCrossing": true,
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 620,
+    "height": 330,
+    "children": [
+      {
+        "id": "ringA",
+        "type": "block",
+        "shape": "circle",
+        "x": 40,
+        "y": 40,
+        "width": 200,
+        "height": 200,
+        "fill": "rgba(57,102,201,0.30)",
+        "stroke": "#3966C9",
+        "strokeWidth": 1.4,
+        "padding": 0
+      },
+      {
+        "id": "ringB",
+        "type": "block",
+        "shape": "circle",
+        "x": 150,
+        "y": 40,
+        "width": 200,
+        "height": 200,
+        "fill": "rgba(194,59,33,0.30)",
+        "stroke": "#C23B21",
+        "strokeWidth": 1.4,
+        "padding": 0
+      },
+      {
+        "id": "note",
+        "type": "block",
+        "x": 430,
+        "y": 250,
+        "width": 150,
+        "height": 46,
+        "label": "both at once",
+        "fill": "#FFFFFF",
+        "stroke": "#2E8B57",
+        "strokeWidth": 1.4,
+        "radius": 5,
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#14402A"
+      },
+      {
+        "id": "anchor",
+        "type": "block",
+        "shape": "circle",
+        "x": 188,
+        "y": 132,
+        "width": 14,
+        "height": 14,
+        "fill": "#14402A",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "padding": 0
+      },
+      {
+        "id": "downstream",
+        "type": "block",
+        "x": 430,
+        "y": 60,
+        "width": 150,
+        "height": 46,
+        "label": "downstream",
+        "fill": "#FFFFFF",
+        "stroke": "#3966C9",
+        "strokeWidth": 1.4,
+        "radius": 5,
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#1B2A4A"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "leader",
+        "from": "note",
+        "to": "anchor",
+        "arrow": "end",
+        "stroke": "#2E8B57",
+        "strokeWidth": 1.5,
+        "curve": {
+          "kind": "arc",
+          "bulge": 0.16
+        }
+      },
+      {
+        "id": "flow",
+        "from": "ringB",
+        "to": "downstream",
+        "arrow": "end",
+        "stroke": "#3966C9",
+        "strokeWidth": 1.5,
+        "curve": {
+          "kind": "arc",
+          "bulge": -0.2
+        }
+      }
+    ]
+  }
+}
