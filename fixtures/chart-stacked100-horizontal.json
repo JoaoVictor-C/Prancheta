@@ -1,0 +1,12 @@
+{
+  "preset": "chart",
+  "title": "Traffic source share by region",
+  "orientation": "horizontal",
+  "stacking": "stacked100",
+  "categories": [
+    { "label": "NA", "values": [40, 35, 25] },
+    { "label": "EU", "values": [30, 45, 25] },
+    { "label": "APAC", "values": [55, 20, 25] }
+  ],
+  "series": ["Organic", "Paid", "Referral"]
+}

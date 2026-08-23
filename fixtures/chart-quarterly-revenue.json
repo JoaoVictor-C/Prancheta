@@ -1,0 +1,13 @@
+{
+  "preset": "chart",
+  "title": "Quarterly revenue, this year vs last",
+  "orientation": "vertical",
+  "categories": [
+    { "label": "Q1", "values": [42, 30] },
+    { "label": "Q2", "values": [58, 39] },
+    { "label": "Q3", "values": [51, 44] },
+    { "label": "Q4", "values": [67, 52] }
+  ],
+  "series": ["This year", "Last year"],
+  "valueSuffix": "k"
+}

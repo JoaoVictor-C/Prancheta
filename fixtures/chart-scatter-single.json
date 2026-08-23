@@ -1,0 +1,13 @@
+{
+  "preset": "chart",
+  "title": "Response size vs. request count, by endpoint",
+  "chartType": "scatter",
+  "categories": [
+    { "label": "auth", "values": [12] },
+    { "label": "search", "values": [88] },
+    { "label": "checkout", "values": [34] },
+    { "label": "profile", "values": [21] },
+    { "label": "feed", "values": [65] }
+  ],
+  "valueSuffix": "kb"
+}

@@ -1,0 +1,14 @@
+{
+  "preset": "chart",
+  "title": "Budget by department, stacked by team",
+  "orientation": "vertical",
+  "stacking": "stacked",
+  "categories": [
+    { "label": "Q1", "values": [18, 12, 9] },
+    { "label": "Q2", "values": [22, 14, 8] },
+    { "label": "Q3", "values": [19, 17, 11] },
+    { "label": "Q4", "values": [25, 15, 10] }
+  ],
+  "series": ["Engineering", "Marketing", "Ops"],
+  "valueSuffix": "k"
+}

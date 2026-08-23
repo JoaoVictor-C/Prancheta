@@ -1,0 +1,15 @@
+{
+  "preset": "chart",
+  "title": "p50 / p99 latency over the last six deploys",
+  "chartType": "line",
+  "categories": [
+    { "label": "d1", "values": [42, 118] },
+    { "label": "d2", "values": [40, 95] },
+    { "label": "d3", "values": [55, 210] },
+    { "label": "d4", "values": [38, 88] },
+    { "label": "d5", "values": [36, 80] },
+    { "label": "d6", "values": [33, 72] }
+  ],
+  "series": ["p50", "p99"],
+  "valueSuffix": "ms"
+}

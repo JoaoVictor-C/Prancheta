@@ -1,0 +1,11 @@
+{
+  "preset": "chart",
+  "title": "Requests by endpoint",
+  "orientation": "horizontal",
+  "categories": [
+    { "label": "/api/v1/search", "values": [812] },
+    { "label": "/api/v1/users", "values": [340] },
+    { "label": "/api/v1/checkout", "values": [155] },
+    { "label": "/healthz", "values": [1420] }
+  ]
+}
