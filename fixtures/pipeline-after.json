@@ -1,0 +1,61 @@
+{
+  "preset": "graph",
+  "title": "ingest pipeline \u2014 after",
+  "direction": "RIGHT",
+  "nodes": [
+    {
+      "id": "queue",
+      "label": "Ingest queue",
+      "role": "primary"
+    },
+    {
+      "id": "parse",
+      "label": "Parser"
+    },
+    {
+      "id": "enrich",
+      "label": "Enrichment worker (x3)"
+    },
+    {
+      "id": "store",
+      "label": "Object store",
+      "role": "warning"
+    },
+    {
+      "id": "index",
+      "label": "Search index"
+    },
+    {
+      "id": "dlq",
+      "label": "Dead letter queue",
+      "role": "warning"
+    },
+    {
+      "id": "cache",
+      "label": "Read cache",
+      "role": "accent"
+    }
+  ],
+  "edges": [
+    {
+      "from": "queue",
+      "to": "parse"
+    },
+    {
+      "from": "parse",
+      "to": "enrich"
+    },
+    {
+      "from": "enrich",
+      "to": "store"
+    },
+    {
+      "from": "enrich",
+      "to": "index"
+    },
+    {
+      "from": "store",
+      "to": "cache"
+    }
+  ]
+}
