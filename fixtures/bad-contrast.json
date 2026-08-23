@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "title": "Planted defect: illegible text",
+  "canvas": { "padding": 32, "background": "#808080" },
+  "root": {
+    "type": "stack",
+    "direction": "column",
+    "gap": 16,
+    "children": [
+      {
+        "type": "block",
+        "id": "bad",
+        "label": "This text is almost the same grey as its own box",
+        "width": 360,
+        "fill": "#808080",
+        "textColor": "#8A8A8A",
+        "strokeWidth": 0
+      },
+      {
+        "type": "block",
+        "id": "good",
+        "label": "This text is fine",
+        "width": 360,
+        "fill": "#171A21",
+        "textColor": "#E6E9EF",
+        "strokeWidth": 0
+      }
+    ]
+  }
+}

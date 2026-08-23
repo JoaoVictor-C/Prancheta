@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "title": "Print theme",
+  "canvas": { "padding": 32, "theme": "print" },
+  "root": {
+    "type": "stack",
+    "direction": "column",
+    "gap": 16,
+    "children": [
+      { "type": "block", "label": "Default role, print theme", "width": 320 },
+      { "type": "block", "label": "Primary role", "role": "primary", "width": 320 },
+      { "type": "block", "label": "Accent role", "role": "accent", "width": 320 },
+      { "type": "block", "label": "Warning role", "role": "warning", "width": 320 },
+      { "type": "block", "label": "Muted role", "role": "muted", "width": 320 }
+    ]
+  }
+}
