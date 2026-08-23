@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "title": "Self-transitions — a connector from a box back to itself",
+  "canvas": {
+    "padding": 26,
+    "theme": "light",
+    "constraints": {
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 560,
+    "height": 220,
+    "children": [
+      {
+        "id": "idle",
+        "type": "block",
+        "x": 40,
+        "y": 120,
+        "width": 150,
+        "height": 54,
+        "label": "Idle",
+        "fill": "#EAF0FF",
+        "stroke": "#3966C9",
+        "strokeWidth": 1.4,
+        "radius": 6,
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#1B2A4A"
+      },
+      {
+        "id": "polling",
+        "type": "block",
+        "x": 370,
+        "y": 120,
+        "width": 150,
+        "height": 54,
+        "label": "Polling",
+        "fill": "#EAF0FF",
+        "stroke": "#3966C9",
+        "strokeWidth": 1.4,
+        "radius": 6,
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#1B2A4A"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "start",
+        "from": "idle",
+        "to": "polling",
+        "arrow": "end"
+      },
+      {
+        "id": "idle-waits",
+        "from": "idle",
+        "to": "idle",
+        "arrow": "end"
+      },
+      {
+        "id": "polling-retries",
+        "from": "polling",
+        "to": "polling",
+        "arrow": "end",
+        "stroke": "#C23B21",
+        "curve": {
+          "kind": "spline",
+          "radius": 12
+        }
+      }
+    ]
+  }
+}

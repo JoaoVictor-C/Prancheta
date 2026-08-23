@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "title": "Curved connectors — needs allowCurvedConnectors",
+  "canvas": {
+    "padding": 26,
+    "theme": "light",
+    "constraints": {
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "stack",
+    "direction": "column",
+    "gap": 30,
+    "align": "start",
+    "children": [
+      {
+        "type": "scene",
+        "layout": "absolute",
+        "width": 620,
+        "height": 300,
+        "children": [
+          {
+            "id": "draft",
+            "type": "block",
+            "x": 30,
+            "y": 30,
+            "width": 130,
+            "height": 54,
+            "label": "Draft",
+            "fill": "#EAF0FF",
+            "stroke": "#3966C9",
+            "strokeWidth": 1.4,
+            "radius": 6,
+            "textAlign": "center",
+            "verticalAlign": "center",
+            "textColor": "#1B2A4A"
+          },
+          {
+            "id": "review",
+            "type": "block",
+            "x": 420,
+            "y": 30,
+            "width": 130,
+            "height": 54,
+            "label": "Review",
+            "fill": "#EAF0FF",
+            "stroke": "#3966C9",
+            "strokeWidth": 1.4,
+            "radius": 6,
+            "textAlign": "center",
+            "verticalAlign": "center",
+            "textColor": "#1B2A4A"
+          },
+          {
+            "id": "publish",
+            "type": "block",
+            "x": 420,
+            "y": 210,
+            "width": 130,
+            "height": 54,
+            "label": "Publish",
+            "fill": "#EAF0FF",
+            "stroke": "#3966C9",
+            "strokeWidth": 1.4,
+            "radius": 6,
+            "textAlign": "center",
+            "verticalAlign": "center",
+            "textColor": "#1B2A4A"
+          }
+        ],
+        "connectors": [
+          {
+            "id": "arc-over",
+            "from": "draft",
+            "to": "review",
+            "arrow": "end",
+            "curve": {
+              "kind": "arc",
+              "bulge": 0.18
+            }
+          },
+          {
+            "id": "arc-side",
+            "from": "review",
+            "to": "publish",
+            "arrow": "end",
+            "curve": {
+              "kind": "arc",
+              "bulge": 0.22
+            }
+          },
+          {
+            "id": "s-curve",
+            "from": "draft",
+            "to": "publish",
+            "arrow": "end",
+            "stroke": "#C23B21",
+            "curve": {
+              "kind": "bezier",
+              "control": [
+                {
+                  "x": 60,
+                  "y": 250
+                },
+                {
+                  "x": 300,
+                  "y": 285
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "type": "scene",
+        "layout": "graph",
+        "graph": {
+          "algorithm": "layered",
+          "direction": "RIGHT",
+          "spacing": 46
+        },
+        "children": [
+          {
+            "id": "a",
+            "type": "block",
+            "x": 0,
+            "y": 0,
+            "width": 130,
+            "height": 54,
+            "label": "Collect",
+            "fill": "#EAF0FF",
+            "stroke": "#3966C9",
+            "strokeWidth": 1.4,
+            "radius": 6,
+            "textAlign": "center",
+            "verticalAlign": "center",
+            "textColor": "#1B2A4A"
+          },
+          {
+            "id": "b",
+            "type": "block",
+            "x": 0,
+            "y": 0,
+            "width": 130,
+            "height": 54,
+            "label": "Sort",
+            "fill": "#EAF0FF",
+            "stroke": "#3966C9",
+            "strokeWidth": 1.4,
+            "radius": 6,
+            "textAlign": "center",
+            "verticalAlign": "center",
+            "textColor": "#1B2A4A"
+          },
+          {
+            "id": "c",
+            "type": "block",
+            "x": 0,
+            "y": 0,
+            "width": 130,
+            "height": 54,
+            "label": "Merge",
+            "fill": "#EAF0FF",
+            "stroke": "#3966C9",
+            "strokeWidth": 1.4,
+            "radius": 6,
+            "textAlign": "center",
+            "verticalAlign": "center",
+            "textColor": "#1B2A4A"
+          },
+          {
+            "id": "d",
+            "type": "block",
+            "x": 0,
+            "y": 0,
+            "width": 130,
+            "height": 54,
+            "label": "Emit",
+            "fill": "#EAF0FF",
+            "stroke": "#3966C9",
+            "strokeWidth": 1.4,
+            "radius": 6,
+            "textAlign": "center",
+            "verticalAlign": "center",
+            "textColor": "#1B2A4A"
+          }
+        ],
+        "connectors": [
+          {
+            "id": "sp1",
+            "from": "a",
+            "to": "b",
+            "arrow": "end",
+            "curve": {
+              "kind": "spline"
+            }
+          },
+          {
+            "id": "sp2",
+            "from": "b",
+            "to": "d",
+            "arrow": "end",
+            "curve": {
+              "kind": "spline"
+            }
+          },
+          {
+            "id": "sp3",
+            "from": "a",
+            "to": "c",
+            "arrow": "end",
+            "curve": {
+              "kind": "spline"
+            }
+          },
+          {
+            "id": "sp4",
+            "from": "c",
+            "to": "d",
+            "arrow": "end",
+            "curve": {
+              "kind": "spline"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

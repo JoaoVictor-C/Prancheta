@@ -9,7 +9,7 @@ import {
   routeToPoint,
   trimRoute,
 } from "../src/layout/connectors.ts";
-import type { PlacedBox, Point } from "../src/ir/types.ts";
+import type { ConnectorCurve, PlacedBox, Point } from "../src/ir/types.ts";
 
 function box(overrides: Partial<PlacedBox> = {}): PlacedBox {
   return {
@@ -201,7 +201,7 @@ test("arc and spline are derived from the route, so lifting leaves them alone", 
 });
 
 test("a scene at the page origin lifts to the identical curve", () => {
-  const curve = { kind: "bezier", control: [{ x: 40, y: 10 }] } as const;
+  const curve: ConnectorCurve = { kind: "bezier", control: [{ x: 40, y: 10 }] };
   assert.equal(liftCurve(curve, { x: 0, y: 0 }), curve);
 });
 
