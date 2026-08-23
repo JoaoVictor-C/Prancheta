@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "title": "Planted defect: a wrapped label that fits its box but not its shape",
+  "canvas": { "padding": 32 },
+  "root": {
+    "type": "stack",
+    "direction": "row",
+    "gap": 24,
+    "align": "center",
+    "children": [
+      {
+        "type": "block",
+        "id": "diamond",
+        "label": "a label long enough to wrap onto three lines",
+        "width": 160,
+        "height": 160,
+        "shape": "diamond"
+      },
+      {
+        "type": "block",
+        "id": "hexagon",
+        "label": "a label long enough to wrap onto three lines",
+        "width": 160,
+        "height": 120,
+        "shape": "hexagon"
+      },
+      {
+        "type": "block",
+        "id": "rect",
+        "label": "a label long enough to wrap onto three lines",
+        "width": 160,
+        "height": 160
+      }
+    ]
+  }
+}

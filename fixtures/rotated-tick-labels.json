@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "title": "Rotated labels — 45 degree tick labels, measured unrotated and rotated at emission",
+  "canvas": { "padding": 48 },
+  "root": {
+    "type": "stack",
+    "direction": "row",
+    "gap": 60,
+    "align": "center",
+    "children": [
+      { "type": "block", "id": "tick-a", "label": "Jan", "width": 100, "height": 60, "rotation": 45 },
+      { "type": "block", "id": "tick-b", "label": "Feb", "width": 100, "height": 60, "rotation": -45 },
+      { "type": "block", "id": "level", "label": "level", "width": 100, "height": 60 }
+    ]
+  }
+}

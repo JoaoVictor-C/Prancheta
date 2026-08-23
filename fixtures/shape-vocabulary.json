@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "title": "Non-rect shape vocabulary",
+  "canvas": { "padding": 32 },
+  "root": {
+    "type": "stack",
+    "direction": "row",
+    "gap": 20,
+    "align": "center",
+    "children": [
+      { "type": "block", "label": "rect", "width": 110, "height": 80 },
+      { "type": "block", "label": "circle", "width": 110, "height": 80, "shape": "circle" },
+      { "type": "block", "label": "ellipse", "width": 110, "height": 80, "shape": "ellipse" },
+      { "type": "block", "label": "diamond", "width": 110, "height": 80, "shape": "diamond" },
+      { "type": "block", "label": "hexagon", "width": 110, "height": 80, "shape": "hexagon" },
+      { "type": "block", "label": "stadium", "width": 110, "height": 80, "shape": "stadium" }
+    ]
+  }
+}
