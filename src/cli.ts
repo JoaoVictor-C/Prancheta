@@ -170,6 +170,22 @@ async function main(argv: string[]): Promise<number> {
     return result.exitCode ?? 0;
   }
 
+  if (command.name === "animate" && payload?.svg !== undefined) {
+    const outDir = String(parsed.out ?? "out");
+    const stem =
+      `${basename(String(parsed.before), extname(String(parsed.before)))}` +
+      `-${basename(String(parsed.after), extname(String(parsed.after)))}`;
+    await mkdir(outDir, { recursive: true });
+    const svgPath = join(outDir, `${stem}.animated.svg`);
+    const manifestPath = join(outDir, `${stem}.animated.manifest.json`);
+    await writeFile(svgPath, payload.svg, "utf8");
+    await writeFile(manifestPath, `${JSON.stringify(payload.manifest, null, 2)}\n`, "utf8");
+    console.log(result.text);
+    console.log(`  ${resolve(svgPath)}`);
+    console.log(`  ${resolve(manifestPath)}`);
+    return result.exitCode ?? 0;
+  }
+
   console.log(result.text);
   return result.exitCode ?? 0;
 }

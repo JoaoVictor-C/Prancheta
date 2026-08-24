@@ -29,6 +29,7 @@ is the part worth reading.
 | `modules` | — | List the figure modules: what each draws, what it needs installed, and a command that runs it.. |
 | `module` | <command> [--args] [--width] [--height] [--out] | Run a figure module in another language and verify what it drew. |
 | `diff` | <before> <after> | Lay out two states of a figure and report what changed between them: appeared, disappeared, moved, resized, restyled, retexted.. |
+| `animate` | <before> <after> [--out] [--durationMs] | Tween two states of a figure into an animated SVG: linear position for moved boxes, opacity fade for appeared/disappeared elements (ADR 0012, M11).. |
 
 ## Repertoire
 

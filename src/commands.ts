@@ -533,6 +533,117 @@ const diffCommand: Command = {
   },
 };
 
+const animateCommand: Command = {
+  name: "animate",
+  summary:
+    "Tween two states of a figure into an animated SVG: linear position for " +
+    "moved boxes, opacity fade for appeared/disappeared elements (ADR 0012, M11).",
+  params: [
+    {
+      name: "before",
+      type: "string",
+      description: "Path to the first state.",
+      required: true,
+      positional: true,
+    },
+    {
+      name: "after",
+      type: "string",
+      description: "Path to the second state.",
+      required: true,
+      positional: true,
+    },
+    {
+      name: "out",
+      type: "string",
+      description: "Output directory.",
+      short: "o",
+      default: "out",
+    },
+    {
+      name: "durationMs",
+      type: "number",
+      description: "Transition length in milliseconds.",
+      default: 500,
+    },
+  ],
+  async run(args) {
+    const { diffFigures } = await import("./anim/diff.ts");
+    const { validateAnimationSpecs, buildTimeline } = await import("./anim/timeline.ts");
+    const { boxesDoNotOverlapDuringTransition } = await import("./anim/checks.ts");
+    const { emitAnimatedSvg } = await import("./anim/emit.ts");
+
+    const load = async (path: string) => {
+      const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
+      return isPresetInput(parsed) ? expand(parsed) : parseSpec(parsed);
+    };
+    const [before, after] = await Promise.all([
+      load(String(args.before)),
+      load(String(args.after)),
+    ]);
+    // Repair disabled, same reasoning as `diff`: repair moves boxes for
+    // reasons that have nothing to do with the author's two authored states,
+    // and animating a repair artefact would confuse the very thing this
+    // command exists to verify.
+    const [renderedBefore, renderedAfter] = [
+      await render(before, { repair: false }),
+      await render(after, { repair: false }),
+    ];
+    const diff = diffFigures(renderedBefore.figure, renderedAfter.figure);
+
+    // Both guards throw SpecError on the first violation; that propagates to
+    // the CLI's own SpecError handling, same as an invalid spec would.
+    validateAnimationSpecs(before, after, diff, renderedBefore.figure, renderedAfter.figure);
+
+    const timeline = buildTimeline(diff, renderedBefore.figure, renderedAfter.figure);
+
+    const boxesOf = (figure: typeof renderedBefore.figure) =>
+      new Map(
+        figure.elements
+          .filter((element): element is Extract<typeof element, { kind: "box" }> => element.kind === "box")
+          .map((box) => [box.id, box] as const),
+      );
+    const transitionChecks = boxesDoNotOverlapDuringTransition(
+      boxesOf(renderedBefore.figure),
+      boxesOf(renderedAfter.figure),
+    );
+
+    const svg = emitAnimatedSvg(renderedAfter.svg, renderedAfter.figure, timeline, {
+      durationMs: Number(args.durationMs ?? 500),
+    });
+
+    const ok =
+      renderedBefore.manifest.ok &&
+      renderedAfter.manifest.ok &&
+      transitionChecks.every((check) => check.status !== "fail");
+
+    const manifest = {
+      version: 1 as const,
+      before: renderedBefore.manifest,
+      after: renderedAfter.manifest,
+      diff: { persisted: diff.persisted, counts: diff.counts },
+      transitionChecks,
+      ok,
+    };
+
+    const lines: string[] = [
+      `${diff.persisted} element(s) persisted, ` +
+        `${timeline.moved.length} tweened, ${timeline.faded.length} faded`,
+    ];
+    for (const check of transitionChecks) {
+      const mark = check.status === "pass" ? "ok  " : check.status === "fail" ? "FAIL" : "n/a ";
+      lines.push(
+        `  ${mark} ${check.id} [${check.target}]${check.detail === undefined ? "" : ` — ${check.detail}`}`,
+      );
+    }
+    if (!renderedBefore.manifest.ok) lines.push("  FAIL one or more checks on the first state (see manifest.before)");
+    if (!renderedAfter.manifest.ok) lines.push("  FAIL one or more checks on the second state (see manifest.after)");
+    if (!ok) lines.push("  !    no repair strategy for this check — translation repair is not wired (M10 debt)");
+
+    return { text: lines.join("\n"), data: { manifest, svg }, exitCode: ok ? 0 : 2 };
+  },
+};
+
 export const COMMANDS: Command[] = [
   renderCommand,
   selectCommand,
@@ -543,6 +654,7 @@ export const COMMANDS: Command[] = [
   modulesCommand,
   moduleCommand,
   diffCommand,
+  animateCommand,
 ];
 
 export function commandByName(name: string): Command | undefined {

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "title": "Planted defect: a box that only rotates between states -- invisible to diffFigures",
+  "canvas": { "padding": 40 },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 300,
+    "height": 200,
+    "children": [
+      { "type": "block", "id": "spinner", "x": 100, "y": 60, "width": 60, "height": 60, "label": "spin", "rotation": 90, "rotateBox": true }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "title": "Planted defect: a moved element relying on a counter-derived id",
+  "canvas": { "padding": 40 },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 300,
+    "height": 200,
+    "children": [
+      { "type": "block", "x": 200, "y": 100, "width": 60, "height": 60, "label": "unnamed" }
+    ]
+  }
+}

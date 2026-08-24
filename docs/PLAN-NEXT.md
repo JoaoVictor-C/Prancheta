@@ -1,6 +1,6 @@
 # Build plan, part two — M5 to M10
 
-[Part one](PLAN.md) took the project from nothing to a verified repertoire: M0–M4 are done and A1–A3 are retired. This is what comes after, derived from a gap analysis against human-oriented figure tools (TikZ, Asymptote, CeTZ, Illustrator, Inkscape, Figma, matplotlib, Vega-Lite, Penrose, Bluefish, draw.io, Excalidraw, D2, Graphviz, ChemDraw, KiCad, GeoGebra, Manim's static side). Animation stays out of scope.
+[Part one](PLAN.md) took the project from nothing to a verified repertoire: M0–M4 are done and A1–A3 are retired. This is what comes after, derived from a gap analysis against human-oriented figure tools (TikZ, Asymptote, CeTZ, Illustrator, Inkscape, Figma, matplotlib, Vega-Lite, Penrose, Bluefish, draw.io, Excalidraw, D2, Graphviz, ChemDraw, KiCad, GeoGebra, Manim's static side). Animation stays out of scope for M5–M10 specifically — **it started 2026-08-24 as M11**, outside this document's own numbering; see [ADR 0012](decisions/0012-animation-m11-scope.md) and the ROADMAP entry of the same date.
 
 Ordered by **risk retired per day**, same as part one, with one addition that is now the house rule:
 
@@ -40,9 +40,11 @@ No tool in the reference set does 10–12 either. They are debts against this pr
 
 ### Explicitly not doing — declared non-goals
 
-Interactive editing, snapping and alignment guides, photorealism, verifying that a figure is *true*, animation.
+Interactive editing, snapping and alignment guides, photorealism, verifying that a figure is *true*.
 
 One correction to the record: **producing an editable handoff file is not covered by the editing non-goal.** Refusing to *be* an editor is not refusing to emit a file an editor can open. That belongs in M6, not here.
+
+A second correction: **animation was listed here when this document was written and is no longer a non-goal.** It started 2026-08-24 as M11, outside this document's M5–M10 numbering — see [ADR 0012](decisions/0012-animation-m11-scope.md).
 
 ---
 

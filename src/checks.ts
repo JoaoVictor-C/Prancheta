@@ -47,6 +47,13 @@ export type CheckId =
   | "categorical-colours-distinguishable"
   | "tick-labels-do-not-collide"
   | "constraints-satisfied"
+  // Animation (ADR 0012, M11). Motion-aware: verified over an interval of
+  // time, not a single instant, so it is intentionally named apart from
+  // "boxes-do-not-overlap" even though it reuses that check's same
+  // intersects/contains geometry -- a manifest reader must be able to tell
+  // "these two states are each fine" from "the transition between them is
+  // fine" without reading detail text.
+  | "boxes-do-not-overlap-during-transition"
   // Module checks (decision 0005). Named apart WHERE THE METHOD DIFFERS: a
   // foreign SVG has no content boxes and no wrapped line boxes, so a check
   // called text-fits-box would promise something it cannot deliver.
@@ -251,7 +258,8 @@ function rectOf(box: PlacedBox): Rect {
  * neighbour or crossing a connector a check had just cleared -- see
  * PlacedBox.bounds.
  */
-function checkRect(box: PlacedBox): Rect {
+/** Exported so anim/checks.ts reasons about the same rotated-or-not footprint the static check does. */
+export function checkRect(box: PlacedBox): Rect {
   return box.bounds ?? { x: box.x, y: box.y, width: box.width, height: box.height };
 }
 
@@ -693,7 +701,8 @@ export function unionOf(rects: Rect[]): Rect {
 }
 
 /** Does `outer` fully enclose `inner`? Used to recognise an ancestor box. */
-function contains(outer: Rect, inner: Rect): boolean {
+/** Exported so anim/checks.ts's transition check tests the same containment-excused relationship, not a redefinition of it. */
+export function contains(outer: Rect, inner: Rect): boolean {
   return (
     outer.x <= inner.x + EPSILON &&
     outer.y <= inner.y + EPSILON &&
@@ -702,7 +711,8 @@ function contains(outer: Rect, inner: Rect): boolean {
   );
 }
 
-function intersects(a: Rect, b: Rect): boolean {
+/** Exported so anim/checks.ts's transition check tests the same intersection relationship, not a redefinition of it. */
+export function intersects(a: Rect, b: Rect): boolean {
   return (
     a.x < b.x + b.width - EPSILON &&
     a.x + a.width > b.x + EPSILON &&

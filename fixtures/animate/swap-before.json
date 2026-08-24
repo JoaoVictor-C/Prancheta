@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "title": "Planted defect: a diagonal swap, checked end to end",
+  "canvas": { "padding": 40 },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 400,
+    "height": 300,
+    "children": [
+      { "type": "block", "id": "a", "x": 0, "y": 0, "width": 60, "height": 60, "label": "a" },
+      { "type": "block", "id": "b", "x": 300, "y": 0, "width": 60, "height": 60, "label": "b" }
+    ]
+  }
+}
