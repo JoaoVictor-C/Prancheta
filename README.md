@@ -24,12 +24,14 @@ Correct figures come from **code, not pixels**, plus a **render–inspect–repa
 
 ## Gallery
 
-Two generator experiments from [experiments/generators](experiments/generators), rendered through the same pipeline as every other figure here.
+Three generator experiments from [experiments/generators](experiments/generators), rendered through the same pipeline as every other figure here.
 
 |  |  |
 |---|---|
 | ![Chladni plate nodal patterns](docs/gallery/chladni.png) | ![Logistic map and Mandelbrot conjugacy](docs/gallery/conjugacy.png) |
 | Four vibration modes of a square plate — sand settling along the nodal curves of `cos(nπx)cos(mπy) − cos(mπx)cos(nπy)`. | The logistic map's bifurcation cascade and the Mandelbrot set's real axis, shown as the same dynamical system in two coordinates. |
+| ![The argument principle as a direction field](docs/gallery/argument.png) | |
+| The phase field of `(z²−1)/(z²+1)`: 6,000 strokes each **turned to** `arg f` and lit tail-to-head, with three closed walks whose accumulated argument lands on `+2π`, `−2π` and `0`. Rotation here is the data, not decoration — the plate could not have been drawn before blocks could turn. | |
 
 ## Install
 

@@ -10,7 +10,17 @@
  * back onto the IR.
  */
 
-import type { Block, FigureNode, FigureSpec, Point, Scene, Stack } from "../ir/types.ts";
+import type {
+  Block,
+  FigureNode,
+  FigureSpec,
+  LineStyle,
+  Paint,
+  PerSideBorder,
+  Point,
+  Scene,
+  Stack,
+} from "../ir/types.ts";
 import { resolveTheme, theme } from "../theme.ts";
 import type { RoleColours, Role } from "../theme.ts";
 import { BUNDLED_FONT_FAMILY, bundledFontFaceCssSync } from "../export/fonts.ts";
@@ -161,6 +171,69 @@ function renderScene(node: Scene, id: string, inner: string, options: HtmlOption
   return `<div data-pr-scene="${escapeAttr(id)}" style="${style}">${inner}</div>`;
 }
 
+/** "dashdot" has no single-line CSS equivalent; "dashed" is close enough for a mirror never shown to anyone. Structural styles (double/ridge/groove) map to their literal CSS equivalents -- also never drawn from here, only measured. */
+function cssBorderStyle(lineStyle: LineStyle): string {
+  switch (lineStyle) {
+    case "solid":
+      return "solid";
+    case "dashed":
+    case "dashdot":
+      return "dashed";
+    case "dotted":
+      return "dotted";
+    case "double":
+      return "double";
+    case "ridge":
+      return "ridge";
+    case "groove":
+      return "groove";
+    default: {
+      const exhaustive: never = lineStyle;
+      return exhaustive;
+    }
+  }
+}
+
+/**
+ * What the HTML mirror paints when a Block's fill/stroke is a gradient.
+ *
+ * The mirror is measurement-only and never exported (decision 0001's rule for
+ * effects applies here too): a gradient changes zero geometry, so any solid
+ * stand-in is fine for layout purposes. The gradient itself is resolved only
+ * at SVG emission, from the same Gradient object carried through untouched by
+ * paint/apply.ts -- this stand-in exists purely so Chromium has a valid CSS
+ * colour to lay out against.
+ */
+function paintToMirrorColour(paint: Paint | undefined, fallback: string): string {
+  if (paint === undefined) return fallback;
+  if (typeof paint === "string") return paint;
+  return paint.stops[0]?.color ?? fallback;
+}
+
+/** Four independent border shorthands, one per side, falling back to the block's own uniform stroke on any side left unset. */
+function borderSidesToCss(
+  border: PerSideBorder,
+  strokeWidth: number,
+  borderStyle: string,
+  strokeColour: string,
+): string {
+  const sides: { css: string; side: keyof PerSideBorder }[] = [
+    { css: "border-top", side: "top" },
+    { css: "border-right", side: "right" },
+    { css: "border-bottom", side: "bottom" },
+    { css: "border-left", side: "left" },
+  ];
+  return sides
+    .map(({ css, side }) => {
+      const entry = border[side];
+      const width = entry?.width ?? strokeWidth;
+      const style = entry?.style !== undefined ? cssBorderStyle(entry.style) : borderStyle;
+      const colour = entry?.color ?? strokeColour;
+      return `${css}: ${width}px ${style} ${colour}`;
+    })
+    .join("; ");
+}
+
 function renderBlock(
   node: Block,
   id: string,
@@ -172,17 +245,22 @@ function renderBlock(
 
   // Build border style string
   const lineStyle = node.lineStyle ?? "solid";
-  const borderStyle = lineStyle === "solid" ? "solid" :
-                      lineStyle === "dashed" ? "dashed" :
-                      lineStyle === "dotted" ? "dotted" :
-                      lineStyle === "dashdot" ? "dashed" : "solid";
+  const borderStyle = cssBorderStyle(lineStyle);
+  const strokeColour = paintToMirrorColour(node.stroke, role.stroke);
 
   const style = [
     placement !== undefined
       ? `position: absolute; left: ${placement.x}px; top: ${placement.y}px`
       : "",
-    `border: ${strokeWidth}px ${borderStyle} ${node.stroke ?? role.stroke}`,
-    `background: ${node.fill ?? role.fill}`,
+    // A per-side border reserves different width on each edge, which changes
+    // the measured content box under `box-sizing: border-box` -- so it has to
+    // be real CSS the mirror lays out against, not just something render/svg.ts
+    // draws afterward. Sides left unset fall back to the block's own uniform
+    // stroke, exactly what render/svg.ts falls back to for the same side.
+    node.border !== undefined
+      ? borderSidesToCss(node.border, strokeWidth, borderStyle, strokeColour)
+      : `border: ${strokeWidth}px ${borderStyle} ${strokeColour}`,
+    `background: ${paintToMirrorColour(node.fill, role.fill)}`,
     `border-radius: ${node.radius ?? theme.block.radius}px`,
     `padding: ${node.padding ?? theme.block.padding}px`,
     `text-align: ${node.textAlign ?? "start"}`,

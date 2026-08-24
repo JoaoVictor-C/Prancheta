@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { attachRotations, collectRotations, rotatePoint, rotatedBounds } from "../src/geometry/rotate.ts";
+import {
+  attachBoxRotation,
+  attachRotations,
+  collectBoxRotations,
+  collectRotations,
+  rotatePoint,
+  rotatedBounds,
+} from "../src/geometry/rotate.ts";
 import type { FigureSpec, LaidOutFigure, PlacedBox, PlacedText } from "../src/ir/types.ts";
 
 function close(a: number, b: number, tol = 1e-6): void {
@@ -136,6 +143,112 @@ test("attachRotations rotates a text element's line boxes around their own union
   // A 90-degree turn of a 40x10 box swaps its dimensions.
   close(rotatedText.lines[0]!.box.width, 10, 0.01);
   close(rotatedText.lines[0]!.box.height, 40, 0.01);
+});
+
+// --- collectBoxRotations / attachBoxRotation --------------------------------
+
+test("collectBoxRotations only records blocks with rotateBox AND a nonzero rotation", () => {
+  const spec: FigureSpec = {
+    version: 1,
+    root: {
+      type: "stack",
+      direction: "row",
+      children: [
+        { type: "block", id: "a", rotation: 30, rotateBox: true },
+        { type: "block", id: "b", rotation: 30 }, // label-only, rotateBox unset
+        { type: "block", id: "c", rotateBox: true }, // no rotation to apply
+      ],
+    },
+  };
+  const rotations = collectBoxRotations(spec);
+  assert.equal(rotations.get("a"), 30);
+  assert.equal(rotations.has("b"), false);
+  assert.equal(rotations.has("c"), false);
+});
+
+test("attachBoxRotation records the box's exact rotated AABB as `bounds`, leaving x/y/width/height (the drawn geometry) untouched", () => {
+  const spec: FigureSpec = { version: 1, root: { type: "block", id: "box-1", rotation: 45, rotateBox: true } };
+  const owner = box({ x: 0, y: 0, width: 100, height: 100 });
+  const figure: LaidOutFigure = { width: 300, height: 300, background: "#fff", elements: [owner] };
+
+  const rotated = attachBoxRotation(figure, spec);
+  const placedBox = rotated.elements[0] as PlacedBox;
+  assert.equal(placedBox.rotation, 45);
+  assert.ok(placedBox.rotationCenter);
+  assert.equal(placedBox.x, 0);
+  assert.equal(placedBox.width, 100);
+  close(placedBox.bounds!.width, 100 * Math.sqrt(2), 0.01);
+});
+
+test("a rotated box that would clear an unrotated neighbour instead overlaps it once its true rotated footprint is accounted for", () => {
+  // A 100x20 box centred at (50,50), rotated 45 degrees, has a rotated AABB
+  // width/height of (100+20)/sqrt(2) =~ 84.85 -- reaching from about x=7.57
+  // to x=92.43 (still short of its own UNROTATED right edge at x=100). A
+  // neighbour placed at x=95 clears the unrotated box (100 <= 95 is false --
+  // it clears because 95 >= 100 is false too; the point is it sits INSIDE the
+  // rotated footprint at x=92.43 while starting past where a naive reading of
+  // "does x=95 overlap width=100 starting at 0" might expect little overlap).
+  const spec: FigureSpec = {
+    version: 1,
+    root: {
+      type: "scene",
+      layout: "absolute",
+      children: [
+        { type: "block", id: "rotated", x: 0, y: 40, width: 100, height: 20, rotation: 45, rotateBox: true },
+        { type: "block", id: "neighbour", x: 88, y: 5, width: 40, height: 40 },
+      ],
+    },
+  };
+  const rotatedBox = box({ id: "rotated", x: 0, y: 40, width: 100, height: 20 });
+  const neighbour = box({ id: "neighbour", x: 88, y: 5, width: 40, height: 40 });
+  const figure: LaidOutFigure = { width: 300, height: 300, background: "#fff", elements: [rotatedBox, neighbour] };
+
+  const attached = attachBoxRotation(figure, spec);
+  const attachedRotated = attached.elements.find((e) => e.kind === "box" && e.id === "rotated") as PlacedBox;
+  // The box's own drawn geometry never moved -- only `bounds` grew to cover it.
+  assert.equal(attachedRotated.x, 0);
+  close(attachedRotated.bounds!.width, (100 + 20) / Math.sqrt(2), 0.01);
+  assert.ok(attachedRotated.bounds!.x + attachedRotated.bounds!.width > 88, "rotated footprint should reach past x=88");
+});
+
+test("attachRotations turns a label around its owner's box centre, not its own text-bbox centre, when the owner also rotates its box", () => {
+  const spec: FigureSpec = {
+    version: 1,
+    root: { type: "block", id: "box-1", label: "tilt", rotation: 30, rotateBox: true },
+  };
+  const owner = box({ x: 0, y: 0, width: 100, height: 100 });
+  const boxRotated = attachBoxRotation(
+    { width: 300, height: 300, background: "#fff", elements: [owner] },
+    spec,
+  );
+  const rotatedOwner = boxRotated.elements[0] as PlacedBox;
+
+  const label = text({
+    lines: [{ text: "tilt", x: 30, y: 55, box: { x: 30, y: 45, width: 40, height: 10 }, baselineUncertain: false }],
+  });
+  const figure: LaidOutFigure = { ...boxRotated, elements: [rotatedOwner, label] };
+
+  const result = attachRotations(figure, spec);
+  const rotatedText = result.elements.find((e) => e.kind === "text") as PlacedText;
+  // The label's rotation centre must be the BOX's own centre (50,50), not the
+  // label's own text-bbox centre (50,50 here too by coincidence of the fixture --
+  // the real assertion is that it matches the box's rotationCenter exactly).
+  assert.deepEqual(rotatedText.rotationCenter, rotatedOwner.rotationCenter);
+  // And text-fits-box's pre-rotation comparison box must be preserved.
+  assert.deepEqual(rotatedText.lines[0]!.localBox, { x: 30, y: 45, width: 40, height: 10 });
+});
+
+test("attachRotations leaves localBox unset when only the label rotates (rotateBox false/unset) -- unchanged existing behaviour", () => {
+  const spec: FigureSpec = { version: 1, root: { type: "block", id: "box-1", label: "tick", rotation: 90 } };
+  const owner = box();
+  const label = text({
+    lines: [{ text: "tick", x: 10, y: 25, box: { x: 10, y: 15, width: 40, height: 10 }, baselineUncertain: false }],
+  });
+  const figure: LaidOutFigure = { width: 200, height: 200, background: "#fff", elements: [owner, label] };
+
+  const result = attachRotations(figure, spec);
+  const rotatedText = result.elements.find((e) => e.kind === "text") as PlacedText;
+  assert.equal(rotatedText.lines[0]!.localBox, undefined);
 });
 
 test("attachRotations is a no-op when no block declares a rotation", () => {

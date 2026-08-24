@@ -15,7 +15,7 @@
  * effects layer already makes for bleed.
  */
 
-import type { Block, FigureNode, FigureSpec, LaidOutFigure, Point, Rect } from "../ir/types.ts";
+import type { Block, FigureNode, FigureSpec, LaidOutFigure, PlacedBox, Point, Rect } from "../ir/types.ts";
 import { unionRects } from "../effects/bleed.ts";
 
 /** Block id -> rotation in degrees, for every block that declared a nonzero one. */
@@ -75,14 +75,32 @@ export function attachRotations(figure: LaidOutFigure, spec: FigureSpec): LaidOu
   const rotations = collectRotations(spec);
   if (rotations.size === 0) return figure;
 
+  // A box already carries `rotation`/`rotationCenter` when Block.rotateBox
+  // attached it (attachBoxRotation runs first -- see pipeline.ts). When it
+  // does, the label rotates around THAT centre, not its own text-bbox centre,
+  // so the two turn rigidly together instead of the label drifting off the
+  // box as soon as the angle is not 0.
+  const boxes = new Map(
+    figure.elements
+      .filter((element): element is PlacedBox => element.kind === "box")
+      .map((box) => [box.id, box] as const),
+  );
+
   const elements = figure.elements.map((element) => {
     if (element.kind !== "text" || element.ownerId === null) return element;
     const degrees = rotations.get(element.ownerId);
     if (degrees === undefined) return element;
 
-    const centre = rectCentre(unionRects(element.lines.map((line) => line.box)));
+    const owner = boxes.get(element.ownerId);
+    const rotatesWithBox = owner?.rotation !== undefined && owner.rotationCenter !== undefined;
+    const centre = rotatesWithBox ? owner!.rotationCenter! : rectCentre(unionRects(element.lines.map((line) => line.box)));
+
     const lines = element.lines.map((line) => ({
       ...line,
+      // Text-fits-box needs the PRE-rotation box when the owner also rotates:
+      // see TextLine.localBox for why comparing the rotated world AABB to a
+      // content rect that rotated along with it asks the wrong question.
+      localBox: rotatesWithBox ? line.box : undefined,
       box: rotatedBounds(line.box, centre, degrees),
     }));
     return { ...element, lines, rotation: degrees, rotationCenter: centre };
@@ -93,4 +111,61 @@ export function attachRotations(figure: LaidOutFigure, spec: FigureSpec): LaidOu
 
 function rectCentre(rect: Rect): Point {
   return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+}
+
+/** Block id -> rotation in degrees, for every block that opted its BOX (not just its label) into rotation. */
+export function collectBoxRotations(spec: FigureSpec): Map<string, number> {
+  const rotations = new Map<string, number>();
+  let counter = 0;
+
+  const visit = (node: FigureNode): void => {
+    counter += 1;
+    const id = node.id ?? `${node.type}-${counter}`;
+    if (node.type === "stack") {
+      node.children.forEach(visit);
+      return;
+    }
+    if (node.type === "scene") {
+      node.children.forEach(visit);
+      return;
+    }
+    const block = node as Block;
+    if (block.rotateBox === true && block.rotation !== undefined && block.rotation % 360 !== 0) {
+      rotations.set(id, block.rotation);
+    }
+  };
+
+  visit(spec.root);
+  return rotations;
+}
+
+/**
+ * The box-geometry counterpart of `attachRotations`: rotates a box's own
+ * corners around its own (unrotated) centre and records the exact
+ * axis-aligned bounding box of the result as `bounds` -- what every check
+ * that reasons about this box's position reads instead of x/y/width/height
+ * (see checks.ts's `checkRect`) -- while x/y/width/height stay the original,
+ * unrotated local rect render/svg.ts draws under an SVG `rotate()` transform.
+ * The same "measure with it off, apply at emission" move `attachRotations`
+ * already makes for a rotated label, generalised to the box it labels.
+ */
+export function attachBoxRotation(figure: LaidOutFigure, spec: FigureSpec): LaidOutFigure {
+  const rotations = collectBoxRotations(spec);
+  if (rotations.size === 0) return figure;
+
+  const elements = figure.elements.map((element) => {
+    if (element.kind !== "box") return element;
+    const degrees = rotations.get(element.id);
+    if (degrees === undefined) return element;
+
+    const centre = rectCentre({ x: element.x, y: element.y, width: element.width, height: element.height });
+    const bounds = rotatedBounds(
+      { x: element.x, y: element.y, width: element.width, height: element.height },
+      centre,
+      degrees,
+    );
+    return { ...element, rotation: degrees, rotationCenter: centre, bounds };
+  });
+
+  return { ...figure, elements };
 }

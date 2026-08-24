@@ -90,9 +90,21 @@ export function measureInPage(): PageMeasurement {
     const pr = parseFloat(style.paddingRight) || 0;
     const pb = parseFloat(style.paddingBottom) || 0;
     const pl = parseFloat(style.paddingLeft) || 0;
-    const lineStyle = style.borderStyle === "dashed" ? "dashed" :
-                      style.borderStyle === "dotted" ? "dotted" :
-                      style.borderStyle === "solid" ? "solid" : undefined;
+    // "double"/"ridge"/"groove" are native CSS border-style keywords, read back
+    // verbatim like "dashed"/"dotted"/"solid" always have been. "dashdot" has
+    // no CSS equivalent (the mirror draws it as "dashed", see html.ts), so it
+    // is not distinguishable here -- a pre-existing limitation of reading the
+    // dash pattern back from computed style rather than carrying it from the
+    // spec, not something this change introduces or fixes.
+    const lineStyle =
+      style.borderStyle === "dashed" ||
+      style.borderStyle === "dotted" ||
+      style.borderStyle === "solid" ||
+      style.borderStyle === "double" ||
+      style.borderStyle === "ridge" ||
+      style.borderStyle === "groove"
+        ? style.borderStyle
+        : undefined;
     // Read back rather than copied from the spec: the repair loop has to know
     // whether a label overflowing *upward* is legitimate, and the only
     // trustworthy answer is what the engine actually applied.

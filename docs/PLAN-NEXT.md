@@ -265,24 +265,24 @@ The milestones above are grouped by theme. This is the linear sequence to actual
 
 | # | step | note |
 | --- | --- | --- |
-| 25 | ✅ Scale abstraction — linear, log, band, time + tick policy | src/scales.ts; maps data values to canvas coords with tick generation |
-| 26 | ✅ `tick-labels-do-not-collide` check + repair by rotating/thinning ticks | Check implemented in checks.ts; identifies tick labels by id pattern; repair deferred to chart integration (step 27) |
-| 27 | ✅ Data binding for `chart` — dataset + encodings, derived axes and legend | src/presets/chart/data-binding.ts; bindData transforms dataset+encoding to ChartInput; createScaleFromData builds scales from data |
-| 28 | ✅ Math typesetting — MathJax SVG output as a measured group | src/math/mathjax.ts; renderMath converts LaTeX to SVG (mock implementation, real MathJax integration deferred) |
-| 29 | ✅ Units, figure scale (1:50) and dimension annotation | src/dimension/annotation.ts; createRealWorldScale maps real-world coords to canvas; renderDimensionLine generates extension lines+arrows |
+| 25 | ◐ Scale abstraction — linear, log, band, time + tick policy | src/scales.ts implements it correctly, but nothing outside dimension/annotation.ts and chart/data-binding.ts imports it, and both of those are themselves unreachable (see 27, 29) — see the 2026-08-24 roadmap entry |
+| 26 | ✅ `tick-labels-do-not-collide` check + repair by rotating/thinning ticks | Check implemented in checks.ts and wired into `runChecks`, so it runs on every real figure; repair itself deferred to chart integration (step 27), which has not landed |
+| 27 | ◐ Data binding for `chart` — dataset + encodings, derived axes and legend | src/presets/chart/data-binding.ts exists and is tested, but the chart preset does not call `bindData` — a chart spec still takes pre-computed values, so A6 ("the agent never does scale arithmetic") does not hold yet |
+| 28 | ◐ Math typesetting — MathJax SVG output as a measured group | src/math/mathjax.ts is an admitted mock (renders LaTeX as text in a dashed box) and no preset calls it |
+| 29 | ◐ Units, figure scale (1:50) and dimension annotation | src/dimension/annotation.ts is implemented and tested but no preset or CLI path reaches it |
 
 **Stage 6 — Constraints and translation repair** *(the deep one; do not start before 19 holds)*
 
 | # | step | note |
 | --- | --- | --- |
 | 30 | ✅ Land ADR 0009 | Status changed from Draft to Accepted; termination proof reviewed and sound |
-| 31 | ✅ Constraint vocabulary in the IR — `align`, `distribute`, `keepClear`, `sameSize`, `anchor` | src/constraints/types.ts; 5 constraint types with isConstraintSatisfied verification |
-| 32 | ✅ Placement layer owns positions as a solution, not a final answer | src/layout/solver.ts; PlacementSolution with detectViolations, adjustPositions, computePotential |
-| 33 | ✅ `constraints-satisfied` check | Added to CheckId type and runChecks; returns not-applicable until constraints integrated into FigureSpec |
-| 34 | ✅ Translation repair edits, bounded by the budget | src/layout/repair.ts; repairTranslations with lexicographic potential descent and per-element budgets |
+| 31 | ✅ Constraint vocabulary in the IR — `align`, `distribute`, `keepClear`, `sameSize`, `anchor` | src/constraints/types.ts; `FigureSpec.layoutConstraints` (2026-08-24) makes it authorable and `constraints-satisfied` (step 33) makes it checked — reachable from a real spec |
+| 32 | ◐ Placement layer owns positions as a solution, not a final answer | src/layout/solver.ts implements `PlacementSolution`, `detectViolations`, `adjustPositions`; only imported by its own tests and by layout/repair.ts, which is itself unreachable (step 34) |
+| 33 | ✅ `constraints-satisfied` check | Added to CheckId type and wired into `runChecks` (2026-08-24). Was previously a hardcoded-empty-array check that could only ever report not-applicable or an unconditional pass — vacuous by the project's own house rule. Now reads `figure.layoutConstraints`, calls `isConstraintSatisfied` per constraint, and fails naming the violated ones. Planted-defect fixture: fixtures/constraint-violation.json |
+| 34 | ◐ Translation repair edits, bounded by the budget | src/layout/repair.ts implements `repairTranslations` with the lexicographic potential descent and per-element budgets ADR 0009 specifies, but nothing in the check-repair loop (repair.ts at the project root, distinct from this file) calls it — a failed `constraints-satisfied` reports "no repair strategy for this check" today, same as before this step was marked done |
 | 35 | ✅ Curves and arbitrary paths in the IR | src/geometry/paths.ts; PathCommand types (M/L/C/Q/A/Z) and adaptive `flattenPath`. Reached the IR through `ConnectorCurve` (decision 0010), not as a path primitive |
 | 36 | ◐ Edge labels, self-loops, spline routing | Spline routing and self-loops ship in src/layout/connectors.ts. **Edge labels do not.** The first pass at this step landed a src/layout/routing.ts that nothing ever called — see the 2026-08-23 roadmap entry |
-| 37 | ✅ Grouping, nesting, container transforms | src/layout/grouping.ts; Transform types, applyTransform, transformToSvg, groupBounds, flattenGroups |
+| 37 | ◐ Grouping, nesting, container transforms | src/layout/grouping.ts implements `Transform`, `applyTransform`, `transformToSvg`, `groupBounds`, `flattenGroups`; only its own test file imports it — no spec can declare a group |
 
 ### Parallelism
 

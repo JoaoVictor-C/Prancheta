@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "title": "Planted defect: two boxes declared aligned that are not",
+  "canvas": { "padding": 40 },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 400,
+    "height": 200,
+    "children": [
+      {
+        "type": "block",
+        "id": "left",
+        "x": 20,
+        "y": 20,
+        "width": 120,
+        "height": 60,
+        "label": "left"
+      },
+      {
+        "type": "block",
+        "id": "right",
+        "x": 220,
+        "y": 100,
+        "width": 120,
+        "height": 60,
+        "label": "right"
+      }
+    ]
+  },
+  "layoutConstraints": [
+    { "kind": "align", "elements": ["left", "right"], "axis": "left" },
+    { "kind": "keepClear", "element1": "left", "element2": "right", "minDistance": 200 }
+  ]
+}

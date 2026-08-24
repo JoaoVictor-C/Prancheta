@@ -51,3 +51,63 @@ test("parseSpec throws SpecError for a block whose label is not a string", () =>
     SpecError,
   );
 });
+
+test("parseSpec accepts a valid layoutConstraints array", () => {
+  const spec = parseSpec({
+    version: 1,
+    root: { type: "block" },
+    layoutConstraints: [
+      { kind: "align", elements: ["a", "b"], axis: "left" },
+      { kind: "keepClear", element1: "a", element2: "b", minDistance: 10 },
+    ],
+  });
+  assert.equal(spec.layoutConstraints?.length, 2);
+});
+
+test("parseSpec throws SpecError for a layoutConstraints entry with an unknown kind", () => {
+  assert.throws(
+    () =>
+      parseSpec({
+        version: 1,
+        root: { type: "block" },
+        layoutConstraints: [{ kind: "levitate", elements: ["a"] }],
+      }),
+    SpecError,
+  );
+});
+
+test("parseSpec throws SpecError for an align constraint with a bad axis", () => {
+  assert.throws(
+    () =>
+      parseSpec({
+        version: 1,
+        root: { type: "block" },
+        layoutConstraints: [{ kind: "align", elements: ["a", "b"], axis: "diagonal" }],
+      }),
+    SpecError,
+  );
+});
+
+test("parseSpec throws SpecError for a keepClear constraint missing minDistance", () => {
+  assert.throws(
+    () =>
+      parseSpec({
+        version: 1,
+        root: { type: "block" },
+        layoutConstraints: [{ kind: "keepClear", element1: "a", element2: "b" }],
+      }),
+    SpecError,
+  );
+});
+
+test("parseSpec throws SpecError for an anchor constraint with neither position nor relativeTo", () => {
+  assert.throws(
+    () =>
+      parseSpec({
+        version: 1,
+        root: { type: "block" },
+        layoutConstraints: [{ kind: "anchor", element: "a" }],
+      }),
+    SpecError,
+  );
+});

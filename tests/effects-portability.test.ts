@@ -66,6 +66,8 @@ const FILTER_EFFECTS: Effect[] = [
   { kind: "tint", color: "#E9C46A", amount: 0.8 },
   { kind: "grain", amount: 0.6, scale: 0.9 },
   { kind: "bevel", depth: 3, strength: 1 },
+  { kind: "outline", width: 4, color: "#FFFFFF", opacity: 1 },
+  { kind: "hue-rotate", angle: 120 },
 ];
 
 for (const effect of FILTER_EFFECTS) {

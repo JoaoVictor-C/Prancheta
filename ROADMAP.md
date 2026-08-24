@@ -720,9 +720,41 @@ Also: `spline` takes an optional `radius` (px, default 16), validated as positiv
 
 Full suite: 713/713 (23 dead-code tests removed, 17 added). Typecheck, `check:docs` and `check:independent` clean.
 
+### 2026-08-24 — Paint: gradients, per-side borders, three structural line styles, whole-box rotation
+
+Four small additions, landed together because they share one property: none of them change layout. Each is "measure with it off, apply at emission" — the same move the effects layer and rotated-label text already make.
+
+**Gradient fill and stroke.** [src/ir/types.ts](src/ir/types.ts)'s `Paint = string | Gradient` — `Block.fill`/`Block.stroke` now accept a `linear` or `radial` gradient alongside a flat colour. The mirror measures a flat colour stand-in; [src/paint/apply.ts](src/paint/apply.ts) attaches the real gradient after layout finishes, matched by id — a gradient paints the same pixels a flat fill would have painted, so nothing downstream needs to know the difference. Linear angle is read as a compass bearing (clockwise from "up"), deliberately not the mathematical convention, because SVG's y-axis points down and the mathematical reading would mirror every angle a spec author wrote.
+
+**Per-side borders.** `Block.border` — independent width/colour/style per edge, falling back to `stroke`/`strokeWidth`/`lineStyle` on any unset side. A declared width reserves real space in the mirror (html.ts emits it as genuine per-side CSS, so the browser's own box model measures it), so `text-fits-box` sees the true content area without new geometry code.
+
+**`double`, `ridge`, `groove` line styles.** Structural rather than a dash pattern — they subdivide the same stroke-width inset every line style already draws inside, so they cost no extra bleed: the outermost ink still lands exactly on the box edge the checks measure.
+
+**`Block.rotateBox`.** Until now `rotation` only ever turned a label; the box itself stayed axis-aligned underneath it, which is fine for a rotated tick label and wrong for a rotated diagram element. `rotateBox: true` turns the box/shape too, and [src/geometry/rotate.ts](src/geometry/rotate.ts)'s `attachBoxRotation` computes its exact rotated AABB as corner arithmetic (`PlacedBox.bounds`) rather than approximating it — the same discipline `boxes-do-not-overlap`'s rotated-footprint fix already established. The label rotates around the BOX's own centre when the box also rotates, not the label's own text-bbox centre, so the two turn rigidly together instead of the label drifting off a turning box.
+
+`fixtures/new-features-smoke.json` exercises all four together. [README.md](README.md)'s gallery gained a third render, [docs/gallery/argument.png](docs/gallery/argument.png), from a new generator experiment ([experiments/generators/argument.mjs](experiments/generators/argument.mjs)) that only became drawable once blocks could turn — the phase field of a rational function, 6,000 strokes each turned to `arg f`.
+
+Full suite: 723/723. Typecheck and `check:docs` clean.
+
+### 2026-08-24 — Reachability audit, and a vacuous check made real
+
+Prompted by asking whether the project was ready to move on to animation: it wasn't, because the same failure mode the 2026-08-23 `routing.ts` entry names — "a test that calls a function directly cannot tell you whether anything else does" — turned out not to be a one-off. It was the shape of most of stages 5 and 6.
+
+**Audit.** Grepped every module M8/M10 marked ✅ for who actually imports it, outside its own test file. Unreachable from any spec, preset, or CLI path: [src/scales.ts](src/scales.ts) (step 25 — the scale abstraction meant to retire A6, "the agent never does scale arithmetic"), [src/presets/chart/data-binding.ts](src/presets/chart/data-binding.ts) (step 27 — the chart preset never calls `bindData`, so A6 does not actually hold), [src/math/mathjax.ts](src/math/mathjax.ts) (step 28 — and it's an admitted mock besides), [src/dimension/annotation.ts](src/dimension/annotation.ts) (step 29), [src/layout/solver.ts](src/layout/solver.ts) (step 32), [src/layout/repair.ts](src/layout/repair.ts) (step 34 — `repairTranslations` implements ADR 0009's lexicographic-potential termination proof correctly, but the check-repair loop never calls it, so a failed `constraints-satisfied` still reports "no repair strategy for this check"), and [src/layout/grouping.ts](src/layout/grouping.ts) (step 37 — no spec can declare a group). All seven are marked ◐ in [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md) now, not ✅. None of this is a defect in the code itself — `repairTranslations`, the solver, the scale math are all correctly implemented and covered — the defect was in what "done" was allowed to mean.
+
+**The one that mattered most: `constraints-satisfied` was a check that could not fail.** [src/checks.ts](src/checks.ts) built its constraint list as a hardcoded empty array with a comment explaining the wiring was deferred, then unconditionally returned `status: "pass"` in the branch that was supposed to check something — dead code that could only ever report not-applicable or a lie. Run on every figure via `runChecks`, which means every manifest this project has ever produced said `constraints-satisfied: pass` while checking nothing. This is exactly the failure mode the project exists to refuse, stated in its own words: "a checker that reports everything as fine is indistinguishable from a checker that is not running."
+
+**The fix gives it something real to check, without touching the deeper unresolved question of repair.** `FigureSpec.layoutConstraints?: Constraint[]` — a new field, deliberately not reusing `canvas.constraints` (that name is taken by decision 0010's toggles, which *relax* checks; this one *adds* one). Validated shape-by-shape in `parseSpec` (right `kind`, right field types per constraint) the same way `validateEffect` validates effect names, and threaded through `LaidOutFigure` alongside the existing toggle-carrying field. `constraintsSatisfied` now reads it, calls `isConstraintSatisfied` (already correctly implemented in [src/constraints/types.ts](src/constraints/types.ts) since step 31, just never fed real data) per declared constraint, and fails naming exactly which ones and why — `align(left, right, left); keepClear(left, right, 200)`, not "something is wrong somewhere."
+
+**Falsifiable outcome, checked:** `fixtures/constraint-violation.json` declares two boxes an `align` and a `keepClear` constraint that their authored positions violate. Rendered end to end, `constraints-satisfied` reports `FAIL ... 2 of 2 constraint(s) violated`, followed by the honest `! unrepaired constraints-satisfied — no repair strategy for this check` — which is the correct manifest for a check that now works, wired to a repair mechanism (step 34) that still doesn't reach it. Step 31 and step 33 move to ✅ for real; steps 32 and 34 stay ◐ until something calls them.
+
+This does not reach the deeper question — whether translation repair should be wired into the main check-repair loop at all is an architectural decision on the order of ADR 0009 itself, not a fix to freelance alongside a vacuous-check patch — so it is left for a deliberate M10 continuation, not attempted here.
+
+Full suite: 732/732 (9 added). Typecheck and `check:docs` clean.
+
 ## Where this goes next
 
-Every milestone in the original plan is done, so what follows is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.
+Every milestone in the original plan reached a ✅ at some point, but a 2026-08-24 reachability audit found several were marked done on the strength of a passing test file rather than a real consumer — the same failure mode step 36 caught first. See [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md)'s stage 5 and 6 tables and the entry below for what is and is not actually wired. What follows here is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.
 
 **Animation, on the foundation M4 laid.** The two-state diff already produces named deltas over stably identified elements. What is missing is a timeline (how long, what easing, what order) and a renderer. Decision 0001 anticipated this: manim as a Python figure module under [decision 0005](docs/decisions/0005-module-protocol.md)'s protocol, or an in-browser tween over the same deltas. The identity work is done; the motion work is not started.
 

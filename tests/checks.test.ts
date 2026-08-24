@@ -220,3 +220,96 @@ test("a clean figure produces no failures", () => {
     "every check was not-applicable; nothing was actually verified",
   );
 });
+
+test("boxes-do-not-overlap uses a rotated box's true rotated footprint (`bounds`), not its unrotated x/y/width/height", () => {
+  // A 100x20 box rotated 45 degrees around its own centre (50,60) reaches a
+  // rotated AABB of about x=[7.5,92.5] -- overlapping a neighbour that starts
+  // well clear of the box's own UNROTATED right edge (x=100).
+  const rotated = box({
+    id: "rotated",
+    x: 0,
+    y: 50,
+    width: 100,
+    height: 20,
+    rotation: 45,
+    rotationCenter: { x: 50, y: 60 },
+    bounds: { x: 7.5, y: 17.5, width: 85, height: 85 },
+  });
+  const neighbour = box({ id: "neighbour", x: 88, y: 0, width: 40, height: 40 });
+  const figure: LaidOutFigure = { width: 300, height: 300, background: "#fff", elements: [rotated, neighbour] };
+
+  const checks = runChecks(figure);
+  const overlap = checks.find((check) => check.id === "boxes-do-not-overlap" && check.target === "rotated");
+  assert.equal(overlap?.status, "fail", "the rotated box's true footprint should have been caught overlapping");
+});
+
+test("boxes-do-not-overlap passes the same figure with `bounds` absent, proving the unrotated rect alone would have missed it", () => {
+  const notRotated = box({ id: "rotated", x: 0, y: 50, width: 100, height: 20 });
+  const neighbour = box({ id: "neighbour", x: 88, y: 0, width: 40, height: 40 });
+  const figure: LaidOutFigure = { width: 300, height: 300, background: "#fff", elements: [notRotated, neighbour] };
+
+  const checks = runChecks(figure);
+  const overlap = checks.find((check) => check.id === "boxes-do-not-overlap" && check.target === "figure");
+  assert.equal(overlap?.status, "pass");
+});
+
+// --- constraints-satisfied (M10, step 33) ------------------------------------
+
+test("constraints-satisfied is not-applicable when no layoutConstraints are declared", () => {
+  const figure: LaidOutFigure = { width: 300, height: 300, background: "#fff", elements: [box()] };
+  const checks = runChecks(figure);
+  const constraints = checks.find((c) => c.id === "constraints-satisfied");
+  assert.equal(constraints?.status, "not-applicable");
+});
+
+test("constraints-satisfied fails on an align constraint whose boxes are not aligned, naming it in the detail", () => {
+  const a = box({ id: "a", x: 0, y: 0 });
+  const b = box({ id: "b", x: 40, y: 0 });
+  const figure: LaidOutFigure = {
+    width: 300,
+    height: 300,
+    background: "#fff",
+    elements: [a, b],
+    layoutConstraints: [{ kind: "align", elements: ["a", "b"], axis: "left" }],
+  };
+  const checks = runChecks(figure);
+  const constraints = checks.find((c) => c.id === "constraints-satisfied");
+  assert.equal(constraints?.status, "fail");
+  assert.match(constraints?.detail ?? "", /align\(a, b, left\)/);
+});
+
+test("constraints-satisfied passes when the declared constraint actually holds", () => {
+  const a = box({ id: "a", x: 10, y: 0 });
+  const b = box({ id: "b", x: 10, y: 50 });
+  const figure: LaidOutFigure = {
+    width: 300,
+    height: 300,
+    background: "#fff",
+    elements: [a, b],
+    layoutConstraints: [{ kind: "align", elements: ["a", "b"], axis: "left" }],
+  };
+  const checks = runChecks(figure);
+  const constraints = checks.find((c) => c.id === "constraints-satisfied");
+  assert.equal(constraints?.status, "pass");
+});
+
+test("constraints-satisfied fails on a keepClear violation while an unrelated align constraint still passes", () => {
+  const a = box({ id: "a", x: 0, y: 0, width: 40, height: 40 });
+  const b = box({ id: "b", x: 45, y: 0, width: 40, height: 40 }); // 5px apart, needs 30
+  const figure: LaidOutFigure = {
+    width: 300,
+    height: 300,
+    background: "#fff",
+    elements: [a, b],
+    layoutConstraints: [
+      { kind: "align", elements: ["a", "b"], axis: "top" },
+      { kind: "keepClear", element1: "a", element2: "b", minDistance: 30 },
+    ],
+  };
+  const checks = runChecks(figure);
+  const constraints = checks.find((c) => c.id === "constraints-satisfied");
+  assert.equal(constraints?.status, "fail");
+  assert.match(constraints?.detail ?? "", /1 of 2 constraint\(s\) violated/);
+  assert.match(constraints?.detail ?? "", /keepClear\(a, b, 30\)/);
+  assert.doesNotMatch(constraints?.detail ?? "", /align/);
+});

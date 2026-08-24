@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "title": "New features smoke test",
+  "canvas": { "padding": 40 },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 640,
+    "height": 420,
+    "children": [
+      {
+        "type": "block",
+        "id": "gradientBlock",
+        "x": 20,
+        "y": 20,
+        "width": 160,
+        "height": 80,
+        "label": "Gradient fill",
+        "fill": { "kind": "linear", "angle": 45, "stops": [{ "offset": 0, "color": "#5B8DEF" }, { "offset": 1, "color": "#2A2418" }] },
+        "stroke": "#FFFFFF",
+        "strokeWidth": 3
+      },
+      {
+        "type": "block",
+        "id": "doubleBorder",
+        "x": 220,
+        "y": 20,
+        "width": 160,
+        "height": 80,
+        "label": "Double border",
+        "lineStyle": "double",
+        "strokeWidth": 9,
+        "stroke": "#E9C46A"
+      },
+      {
+        "type": "block",
+        "id": "ridgeBorder",
+        "x": 420,
+        "y": 20,
+        "width": 160,
+        "height": 80,
+        "label": "Ridge border",
+        "lineStyle": "ridge",
+        "strokeWidth": 10,
+        "stroke": "#4CAF7D"
+      },
+      {
+        "type": "block",
+        "id": "perSide",
+        "x": 20,
+        "y": 140,
+        "width": 160,
+        "height": 80,
+        "label": "Per-side border",
+        "strokeWidth": 2,
+        "stroke": "#6B7789",
+        "border": {
+          "top": { "width": 8, "color": "#E76F51" },
+          "left": { "width": 8, "color": "#E76F51" }
+        }
+      },
+      {
+        "type": "block",
+        "id": "outlined",
+        "x": 220,
+        "y": 140,
+        "width": 160,
+        "height": 80,
+        "label": "Outlined effect",
+        "effect": "outlined"
+      },
+      {
+        "type": "block",
+        "id": "rotated",
+        "x": 460,
+        "y": 260,
+        "width": 120,
+        "height": 60,
+        "label": "Rotated box",
+        "rotation": 20,
+        "rotateBox": true,
+        "fill": "#2A2418",
+        "stroke": "#E9C46A",
+        "strokeWidth": 3
+      },
+      {
+        "type": "block",
+        "id": "neighbour",
+        "x": 300,
+        "y": 260,
+        "width": 100,
+        "height": 60,
+        "label": "Neighbour"
+      }
+    ],
+    "connectors": [
+      { "from": "neighbour", "to": "rotated" }
+    ]
+  }
+}

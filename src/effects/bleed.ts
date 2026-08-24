@@ -91,12 +91,17 @@ function advance(current: Bleed, effect: ResolvedEffect): Bleed {
     case "tint":
     case "grain":
     case "bevel":
+    case "hue-rotate":
       // Colour and lighting operations. They repaint the pixels that are
       // already there and produce none outside them.
       return current;
     case "sheen":
       // Painted geometry clipped to the box, not a filter at all.
       return current;
+    case "outline":
+      // Hard-edged, zero blur by construction: the dilated alpha reaches
+      // exactly `width` past the source, no Gaussian tail to account for.
+      return grow(current, effect.width);
     default: {
       const exhaustive: never = effect;
       return exhaustive;

@@ -71,7 +71,23 @@ export type Effect =
    * lit from one side. NOT a filter: it is a second painted rect clipped to
    * the shape, so it applies to boxes only and is ignored elsewhere.
    */
-  | { kind: "sheen"; strength?: number; direction?: "down" | "up" | "left" | "right" };
+  | { kind: "sheen"; strength?: number; direction?: "down" | "up" | "left" | "right" }
+  /**
+   * A hard-edged flat-coloured halo the width of the shape's own alpha,
+   * dilated outward. Figure-ground separation: the cue for "this shape reads
+   * against any background", not elevation (that is `glow`, which blurs) and
+   * not focus (`emphasis`, a glow preset) — an outline says the shape's own
+   * silhouette is what matters, on a busy scene or a background whose colour
+   * is not fixed. Zero blur by construction, so its bleed is exactly `width`.
+   */
+  | { kind: "outline"; width?: number; color?: string; opacity?: number }
+  /**
+   * Rotates every pixel's hue by `angle` degrees, alpha and lightness
+   * untouched. Pure colour remap — zero bleed, like `saturate`/`tint`.
+   * Categorical recolouring: the same shape drawn once and reused across a
+   * legend with a different hue per entry, without a second `fill` per copy.
+   */
+  | { kind: "hue-rotate"; angle?: number };
 
 export type EffectKind = Effect["kind"];
 
@@ -86,7 +102,9 @@ export type ResolvedEffect =
   | { kind: "tint"; color: string; amount: number }
   | { kind: "grain"; amount: number; scale: number; seed: number }
   | { kind: "bevel"; depth: number; azimuth: number; elevation: number; strength: number }
-  | { kind: "sheen"; strength: number; direction: "down" | "up" | "left" | "right" };
+  | { kind: "sheen"; strength: number; direction: "down" | "up" | "left" | "right" }
+  | { kind: "outline"; width: number; color: string; opacity: number }
+  | { kind: "hue-rotate"; angle: number };
 
 export class EffectError extends Error {}
 
@@ -116,12 +134,14 @@ export function appliesToLabel(kind: EffectKind): boolean {
     case "saturate":
     case "tint":
     case "grain":
+    case "hue-rotate":
       return true;
     case "shadow":
     case "glow":
     case "occlusion":
     case "bevel":
     case "sheen":
+    case "outline":
       return false;
     default: {
       const exhaustive: never = kind;
@@ -183,6 +203,8 @@ export const EFFECT_PRESETS: Record<string, readonly Effect[]> = {
     { kind: "saturate", amount: 0.3 },
     { kind: "brightness", amount: 0.7 },
   ],
+  /** Reads against any background: a hard flat halo the width of the shape's own silhouette. */
+  outlined: [{ kind: "outline", width: 2, color: "#FFFFFF", opacity: 0.9 }],
 };
 
 /** Every effect a spec may name, for error messages and for `effects` listings. */
@@ -284,6 +306,15 @@ function withDefaults(effect: Effect): ResolvedEffect {
         strength: unit(effect.strength, 0.12, "sheen.strength"),
         direction: direction(effect.direction),
       };
+    case "outline":
+      return {
+        kind: "outline",
+        width: positive(effect.width, 2, "outline.width"),
+        color: colour(effect.color, "#FFFFFF", "outline.color"),
+        opacity: unit(effect.opacity, 1, "outline.opacity"),
+      };
+    case "hue-rotate":
+      return { kind: "hue-rotate", angle: num(effect.angle, 0, "hue-rotate.angle") };
     default: {
       const unknown = effect as { kind?: unknown };
       throw new EffectError(`unknown effect kind ${JSON.stringify(unknown.kind)}`);

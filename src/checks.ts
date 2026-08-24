@@ -24,12 +24,15 @@ import { polylineIntersectsBox } from "./layout/connectors.ts";
 import { inkBounds, isEmpty as bleedIsEmpty, unionRects } from "./effects/bleed.ts";
 import type { Bleed } from "./effects/bleed.ts";
 import { containsPoint } from "./geometry/shapes.ts";
+import { rotatedBounds } from "./geometry/rotate.ts";
 import { WCAG_AA_NORMAL, contrastRatio, isTransparent } from "./colour/contrast.ts";
 import {
   DICHROMACY_KINDS,
   MIN_DISTINGUISHABLE_DISTANCE,
   simulatedDistance,
 } from "./colour/colourblind.ts";
+import type { Constraint } from "./constraints/types.ts";
+import { isConstraintSatisfied } from "./constraints/types.ts";
 
 export type CheckId =
   // Core checks: the core computed the geometry, so these are exact.
@@ -119,7 +122,7 @@ export function runChecks(figure: LaidOutFigure): Check[] {
   checks.push(...contrastSufficient(figure, boxes));
   checks.push(categoricalColoursDistinguishable(boxes));
   checks.push(tickLabelsDoNotCollide(figure));
-  checks.push(constraintsSatisfied(figure));
+  checks.push(constraintsSatisfied(figure, boxes));
   return checks;
 }
 
@@ -236,7 +239,20 @@ function boxesDoNotOverlap(boxes: Map<string, PlacedBox>): Check[] {
 }
 
 function rectOf(box: PlacedBox): Rect {
-  return { x: box.x, y: box.y, width: box.width, height: box.height };
+  return checkRect(box);
+}
+
+/**
+ * The rect every geometry check reasons about for this box: its exact
+ * rotated bounding box when Block.rotateBox turned it, or its plain
+ * x/y/width/height otherwise (`bounds` is only ever set by
+ * geometry/rotate.ts's `attachBoxRotation`, which runs iff the block asked
+ * for it). This is what keeps a rotated block from silently overlapping a
+ * neighbour or crossing a connector a check had just cleared -- see
+ * PlacedBox.bounds.
+ */
+function checkRect(box: PlacedBox): Rect {
+  return box.bounds ?? { x: box.x, y: box.y, width: box.width, height: box.height };
 }
 
 /**
@@ -252,18 +268,18 @@ function connectorClearOfBoxes(connector: PlacedConnector, boxes: Map<string, Pl
   const endpointRects = endpoints
     .map((id) => boxes.get(id))
     .filter((box): box is PlacedBox => box !== undefined)
-    .map((box) => ({ x: box.x, y: box.y, width: box.width, height: box.height }));
+    .map((box) => checkRect(box));
 
   const crossed: string[] = [];
   for (const [id, box] of boxes) {
     if (endpoints.includes(id)) continue;
-    const rect = { x: box.x, y: box.y, width: box.width, height: box.height };
+    const rect = checkRect(box);
     // A container necessarily lies between a callout and a part inside it. On a
     // cross-section every leader line crosses the outer case, and reporting that
     // would fail every well-formed annotated figure. Enclosure is structure,
     // not collision — the same guard the text check needs for nesting.
     if (endpointRects.some((endpoint) => contains(rect, endpoint))) continue;
-    if (polylineIntersectsBox(connector.points, box)) crossed.push(id);
+    if (polylineIntersectsBox(connector.points, rect)) crossed.push(id);
   }
   return crossed.length === 0
     ? { id: "connector-clear-of-boxes", target: connector.id, status: "pass" }
@@ -286,11 +302,15 @@ function textFitsBox(text: PlacedText, boxes: Map<string, PlacedBox>): Check {
       detail: "no owning box; nothing to overflow",
     };
   }
-  const overflow = overflowOf(unionOf(text.lines.map((line) => line.box)), owner.content);
+  // localBox (pre-rotation) when the owner box itself also rotates: box and
+  // label turn rigidly together, so whether the label fits is exactly the
+  // question "did it fit before either rotated" -- see TextLine.localBox.
+  const boxOf = (line: PlacedText["lines"][number]): Rect => line.localBox ?? line.box;
+  const overflow = overflowOf(unionOf(text.lines.map(boxOf)), owner.content);
   if (!overflow) return { id: "text-fits-box", target: text.id, status: "pass" };
 
   const worst = text.lines
-    .filter((line) => overflowOf(line.box, owner.content) !== null)
+    .filter((line) => overflowOf(boxOf(line), owner.content) !== null)
     .map((line) => `"${truncate(line.text)}"`);
   return {
     id: "text-fits-box",
@@ -324,6 +344,14 @@ function labelWithinShape(text: PlacedText, boxes: Map<string, PlacedBox>): Chec
     };
   }
 
+  // Deliberately the owner's own unrotated rect, not checkRect(owner): this
+  // check tests each line's corners against the actual polygon a non-rect
+  // shape draws, computed from the box's local geometry. A rotated box's
+  // shape rotates with it (render/svg.ts), and getting THAT case exactly
+  // right needs the shape's vertices rotated the same way -- out of scope
+  // here; label-within-shape is simply not-applicable-precision for a
+  // rotated non-rect shape today, same spirit as the known stroke-inset
+  // simplification render/svg.ts already documents for non-rect shapes.
   const box = { x: owner.x, y: owner.y, width: owner.width, height: owner.height };
   const outside: string[] = [];
   for (const line of text.lines) {
@@ -358,15 +386,12 @@ function labelWithinShape(text: PlacedText, boxes: Map<string, PlacedBox>): Chec
 function textClearOfOtherBoxes(text: PlacedText, boxes: Map<string, PlacedBox>): Check {
   const bounds = unionOf(text.lines.map((line) => line.box));
   const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
-  const ownerRect =
-    owner === undefined
-      ? undefined
-      : { x: owner.x, y: owner.y, width: owner.width, height: owner.height };
+  const ownerRect = owner === undefined ? undefined : checkRect(owner);
 
   const collided: string[] = [];
   for (const [id, box] of boxes) {
     if (id === text.ownerId) continue;
-    const rect = { x: box.x, y: box.y, width: box.width, height: box.height };
+    const rect = checkRect(box);
     // An ancestor necessarily encloses its descendant's label. Once blocks can
     // nest (M2), reporting that as a collision would fire on every well-formed
     // nested figure, so containment of the owner is treated as ancestry.
@@ -409,7 +434,17 @@ function effectWithinCanvas(figure: LaidOutFigure): Check {
     const bleed: Bleed | undefined = element.bleed;
     if (bleed === undefined || bleedIsEmpty(bleed)) continue;
     examined += 1;
-    const overflow = overflowOf(inkBounds(ownBounds(element), bleed), canvas);
+    // A rotated box's filter region is local (pre-rotation), but the halo it
+    // paints rotates to the canvas along with the box it is attached to, so
+    // canvas containment has to test the ROTATED bled rect, not the local
+    // one -- the same "rotate the ink, not just the shape" correction
+    // PlacedBox.bounds already makes for the bare box.
+    const localBled = inkBounds(ownBounds(element), bleed);
+    const bled =
+      element.kind === "box" && element.rotation !== undefined && element.rotationCenter !== undefined
+        ? rotatedBounds(localBled, element.rotationCenter, element.rotation)
+        : localBled;
+    const overflow = overflowOf(bled, canvas);
     if (!overflow) continue;
     clipped.push(`${element.id} ${describe(overflow)}`);
     worst = {
@@ -450,6 +485,10 @@ function effectWithinCanvas(figure: LaidOutFigure): Check {
 /** An element's own bounds, before any effect is taken into account. */
 function ownBounds(element: LaidOutFigure["elements"][number]): Rect {
   if (element.kind === "box") {
+    // Deliberately the box's own LOCAL (unrotated) rect, not checkRect: an
+    // effect's filter region is defined pre-rotation, inside the rotated
+    // group render/svg.ts emits (see effect-within-canvas below, which
+    // rotates the bled rect itself when this element is rotated).
     return { x: element.x, y: element.y, width: element.width, height: element.height };
   }
   if (element.kind === "connector") {
@@ -466,7 +505,7 @@ function contentWithinCanvas(figure: LaidOutFigure): Check {
   for (const element of figure.elements) {
     const box =
       element.kind === "box"
-        ? { x: element.x, y: element.y, width: element.width, height: element.height }
+        ? checkRect(element)
         : element.kind === "connector"
           ? unionOf(
               element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
@@ -751,21 +790,38 @@ function tickLabelsDoNotCollide(figure: LaidOutFigure): Check {
   };
 }
 
+/** One line per violated constraint, naming its kind and the elements involved. */
+function describeConstraint(constraint: Constraint): string {
+  switch (constraint.kind) {
+    case "align":
+      return `align(${constraint.elements.join(", ")}, ${constraint.axis})`;
+    case "distribute":
+      return `distribute(${constraint.elements.join(", ")}, ${constraint.axis})`;
+    case "keepClear":
+      return `keepClear(${constraint.element1}, ${constraint.element2}, ${constraint.minDistance})`;
+    case "sameSize":
+      return `sameSize(${constraint.elements.join(", ")}, ${constraint.dimension})`;
+    case "anchor":
+      return `anchor(${constraint.element})`;
+  }
+}
+
 /**
  * Constraints satisfied (M10, stage 6, step 33).
  *
- * Verifies that all declared constraints (align, distribute, keepClear, sameSize,
- * anchor) are satisfied for the current element positions. This check drives
- * translation repair: when it fails, step 34's repair loop can move boxes
- * (within their budgets) to satisfy the constraints.
+ * Verifies that every constraint declared in `spec.layoutConstraints` (align,
+ * distribute, keepClear, sameSize, anchor -- decision 0010's vocabulary) holds
+ * for the figure's actual laid-out positions, via `isConstraintSatisfied`
+ * from src/constraints/types.ts. Reports not-applicable when nothing is
+ * declared -- never a pass with nothing checked, per the house rule that a
+ * check indistinguishable from "not running" does not count.
  *
- * For now, returns not-applicable — figures don't yet declare constraints in
- * their spec. The check exists so the repair loop (step 34) can reference it.
+ * This verifies; it does not move anything. Translation repair (step 34,
+ * src/layout/repair.ts) is a separate, still-unwired mechanism that would act
+ * on a failure reported here.
  */
-function constraintsSatisfied(figure: LaidOutFigure): Check {
-  // TODO: Extract constraints from figure spec when constraint vocabulary is
-  // integrated into FigureSpec (step 31 added the types, but not the field).
-  const constraints: any[] = [];
+function constraintsSatisfied(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
+  const constraints = figure.layoutConstraints ?? [];
 
   if (constraints.length === 0) {
     return {
@@ -777,8 +833,18 @@ function constraintsSatisfied(figure: LaidOutFigure): Check {
     };
   }
 
-  // When constraints exist, check them using isConstraintSatisfied from
-  // src/constraints/types.ts and report violations.
+  const violated = constraints.filter((c) => !isConstraintSatisfied(c, boxes));
+
+  if (violated.length > 0) {
+    return {
+      id: "constraints-satisfied",
+      target: "figure",
+      status: "fail",
+      examined: constraints.length,
+      detail: `${violated.length} of ${constraints.length} constraint(s) violated: ${violated.map(describeConstraint).join("; ")}`,
+    };
+  }
+
   return {
     id: "constraints-satisfied",
     target: "figure",

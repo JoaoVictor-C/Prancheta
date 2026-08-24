@@ -41,7 +41,8 @@ import { rasterise } from "./render/raster.ts";
 import { attachEffects } from "./effects/apply.ts";
 import { attachCategoryGroups } from "./colour/apply.ts";
 import { attachShapes } from "./geometry/apply.ts";
-import { attachRotations } from "./geometry/rotate.ts";
+import { attachRotations, attachBoxRotation } from "./geometry/rotate.ts";
+import { attachPaints } from "./paint/apply.ts";
 import { buildManifest } from "./manifest.ts";
 import type { Manifest } from "./manifest.ts";
 import { resolveTheme } from "./theme.ts";
@@ -225,6 +226,12 @@ async function layOut(
   figure = attachEffects(figure, spec);
   figure = attachCategoryGroups(figure, spec);
   figure = attachShapes(figure, spec);
+  figure = attachPaints(figure, spec);
+  // Box rotation before label rotation: a label whose owner also rotates
+  // needs to turn around the BOX's own centre, not its own text-bbox centre,
+  // so the two stay rigidly aligned -- attachRotations reads that centre back
+  // off the already-attached PlacedBox.
+  figure = attachBoxRotation(figure, spec);
   figure = attachRotations(figure, spec);
 
   return { figure, warnings };
@@ -331,5 +338,7 @@ export function toLaidOutFigure(
     elements,
     // Carried so the checks can see which constraints this figure stood down.
     constraints: spec.canvas?.constraints,
+    // Carried so constraints-satisfied has something real to verify.
+    layoutConstraints: spec.layoutConstraints,
   };
 }

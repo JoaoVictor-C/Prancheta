@@ -10,7 +10,7 @@
  * that overlaps it reads as a mistake.
  */
 
-import type { ConnectorCurve, PlacedBox, Point } from "../ir/types.ts";
+import type { ConnectorCurve, PlacedBox, Point, Rect } from "../ir/types.ts";
 import type { PathCommand } from "../geometry/paths.ts";
 import { flattenPath } from "../geometry/paths.ts";
 import { connector as connectorTheme } from "../theme.ts";
@@ -149,8 +149,14 @@ function pullBack(point: Point, towards: Point, distance: number): Point {
   };
 }
 
-/** Does a polyline segment cross a rectangle? Used by the connector check. */
-export function polylineIntersectsBox(points: Point[], box: PlacedBox, epsilon = 0.5): boolean {
+/**
+ * Does a polyline segment cross a rectangle? Used by the connector check.
+ *
+ * Takes a plain `Rect` rather than a `PlacedBox` so the caller decides which
+ * rect a box means -- for a rotated box that is its exact rotated bounding
+ * box (checks.ts's `checkRect`), never the box's own unrotated x/y/width/height.
+ */
+export function polylineIntersectsBox(points: Point[], box: Rect, epsilon = 0.5): boolean {
   const left = box.x + epsilon;
   const top = box.y + epsilon;
   const right = box.x + box.width - epsilon;

@@ -34,7 +34,7 @@ The ten primitives. Any of these may be written inline in a spec as an object wi
 
 ## Named effects
 
-The 13 names a spec can use in a block's or connector's `effect` field, in place of a literal object. An unknown name is a `SpecError` at parse time, never a silently skipped effect.
+The 14 names a spec can use in a block's or connector's `effect` field, in place of a literal object. An unknown name is a `SpecError` at parse time, never a silently skipped effect.
 
 | name | chain | bleed |
 | --- | --- | --- |
@@ -45,6 +45,7 @@ The 13 names a spec can use in a block's or connector's `effect` field, in place
 | `ghost` | `saturate` → `brightness` | none — stays inside its own bounds |
 | `inset` | `occlusion` → `brightness` | none — stays inside its own bounds |
 | `lit` | `sheen` → `occlusion` → `shadow` | left 15, top 11, right 15, bottom 19 |
+| `outlined` | `outline` | 2 on every side |
 | `printed` | `grain` | none — stays inside its own bounds |
 | `raised-1` | `shadow` | left 4.5, top 3.5, right 4.5, bottom 5.5 |
 | `raised-2` | `shadow` | left 12, top 9, right 12, bottom 15 |
@@ -101,6 +102,12 @@ Bleed: none — stays inside its own bounds.
 - `shadow` — `dx` = `0`, `dy` = `4`, `blur` = `10`, `color` = `"#000000"`, `opacity` = `0.4`
 
 Bleed: left 15, top 11, right 15, bottom 19.
+
+### `outlined`
+
+- `outline` — `width` = `2`, `color` = `"#FFFFFF"`, `opacity` = `0.9`
+
+Bleed: 2 on every side.
 
 ### `printed`
 

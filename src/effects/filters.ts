@@ -23,7 +23,7 @@
  * the same spec always produces byte-identical SVG.
  */
 
-import type { Rect } from "../ir/types.ts";
+import type { Gradient, Rect } from "../ir/types.ts";
 import { filterRegion, needsFilter, sigmaOf } from "./bleed.ts";
 import type { Bleed } from "./bleed.ts";
 import type { ResolvedEffect } from "./types.ts";
@@ -91,6 +91,52 @@ export class DefsRegistry {
       "pr-vignette",
       `${shape}|${body}`,
       (id) => `<radialGradient id="${id}" ${shape}>${body}</radialGradient>`,
+    );
+  }
+
+  /**
+   * Register the gradient a Block's `fill`/`stroke` paints with (see
+   * ir/types.ts's `Gradient`/`Paint`). Unlike `sheenGradient`, this is a
+   * gradient the SPEC AUTHOR wrote, not one this project's design system
+   * generates -- so it carries the author's own stops and direction/shape
+   * verbatim rather than the fixed white-diagonal wash a sheen always is.
+   * Kept as a distinct method rather than folded into `sheenGradient` because
+   * the two answer different questions: a sheen is a highlight this project
+   * paints over an element regardless of what asked for it; a Paint gradient
+   * IS the element's own colour.
+   */
+  gradient(g: Gradient): string {
+    const stops = g.stops
+      .map((stop) => {
+        const opacity = stop.opacity === undefined ? "" : ` stop-opacity="${num(stop.opacity)}"`;
+        // Not escaped: ir/types.ts's validatePaint already restricts a stop's
+        // colour to the same hex-or-keyword shape effects/types.ts requires,
+        // so it cannot contain a quote or any other attribute-breaking
+        // character, the same reasoning floodOf below already relies on.
+        return `<stop offset="${num(stop.offset)}" stop-color="${stop.color}"${opacity}/>`;
+      })
+      .join("");
+    if (g.kind === "radial") {
+      const shape = `cx="0.5" cy="0.5" r="0.5"`;
+      return this.intern(
+        "pr-grad",
+        `radial|${shape}|${stops}`,
+        (id) => `<radialGradient id="${id}" ${shape}>${stops}</radialGradient>`,
+      );
+    }
+    // objectBoundingBox (the default gradientUnits), like sheenGradient: the
+    // gradient is defined relative to the shape's own box, so it stays right
+    // at any size rather than being computed in absolute user units.
+    const angle = ((g.angle ?? 90) * Math.PI) / 180;
+    // A vector of unit length from the box's own centre, converted into the
+    // x1/y1 -> x2/y2 pair objectBoundingBox units expect (0..1 each axis).
+    const dx = Math.sin(angle) * 0.5;
+    const dy = -Math.cos(angle) * 0.5;
+    const shape = `x1="${num(0.5 - dx)}" y1="${num(0.5 - dy)}" x2="${num(0.5 + dx)}" y2="${num(0.5 + dy)}"`;
+    return this.intern(
+      "pr-grad",
+      `linear|${shape}|${stops}`,
+      (id) => `<linearGradient id="${id}" ${shape}>${stops}</linearGradient>`,
     );
   }
 
@@ -310,6 +356,44 @@ function emit(
     case "sheen":
       // Painted by render/svg.ts as a clipped overlay, not filtered.
       return input;
+    case "outline": {
+      const alpha = next();
+      const dilated = next();
+      const rim = next();
+      const flood = next();
+      const coloured = next();
+      const out = next();
+      parts.push(alphaOf(input, alpha));
+      // feMorphology "dilate" grows the alpha outward by exactly `radius` --
+      // a hard edge, unlike gaussian()'s soft one, which is the whole point:
+      // an outline is a silhouette, not a glow.
+      parts.push(
+        `<feMorphology in="${alpha}" operator="dilate" radius="${num(effect.width)}" result="${dilated}"/>`,
+      );
+      // Dilated alpha minus the original alpha: the ring outside the shape's
+      // own edge, exactly `width` wide. Same subtraction occlusion.ts uses to
+      // keep an inner shadow inside its shape, mirrored to keep this ring
+      // outside it.
+      parts.push(
+        `<feComposite in="${dilated}" in2="${alpha}" operator="arithmetic" ` +
+          `k1="0" k2="1" k3="-1" k4="0" result="${rim}"/>`,
+      );
+      parts.push(floodOf(effect.color, effect.opacity, flood));
+      parts.push(`<feComposite in="${flood}" in2="${rim}" operator="in" result="${coloured}"/>`);
+      // Outline under, element over -- same reasoning as shadow: the source
+      // shape's own edge should sit crisply on top of the ring around it.
+      parts.push(
+        `<feMerge result="${out}"><feMergeNode in="${coloured}"/><feMergeNode in="${input}"/></feMerge>`,
+      );
+      return out;
+    }
+    case "hue-rotate": {
+      const out = next();
+      parts.push(
+        `<feColorMatrix in="${input}" type="hueRotate" values="${num(effect.angle)}" result="${out}"/>`,
+      );
+      return out;
+    }
     default: {
       const exhaustive: never = effect;
       return exhaustive;

@@ -34,6 +34,7 @@
 
 import type {
   ArrowStyle,
+  Gradient,
   LaidOutFigure,
   LineStyle,
   PlacedBox,
@@ -43,6 +44,7 @@ import type {
   Rect,
 } from "../ir/types.ts";
 import { connector as connectorTheme } from "../theme.ts";
+import { parseColour } from "../colour/contrast.ts";
 import { DefsRegistry } from "../effects/filters.ts";
 import { NO_BLEED, unionRects } from "../effects/bleed.ts";
 import type { ResolvedEffect } from "../effects/types.ts";
@@ -173,21 +175,37 @@ function boxToSvg(box: PlacedBox, defs: DefsRegistry, labels: string[] | undefin
   const height = Math.max(0, box.height - box.strokeWidth);
   const radius = Math.max(0, box.radius - half);
 
+  const shape = box.shape ?? "rect";
+  const fillAttr = paintAttr(box.fill, box.fillPaint, defs);
+
+  // Per-side borders and the structural line styles (double/ridge/groove)
+  // both need more than one stroke pass, which a single shapeElement() call
+  // cannot draw -- see strokeBands/perSideBorderToSvg. Both are scoped to
+  // "rect"/"stadium" for the same reason sheen is: every other shape draws
+  // its own analytic outline rather than this inset-rect geometry.
+  const canSubdivide = shape === "rect" || shape === "stadium";
   const lineStyle = box.lineStyle ?? "solid";
-  const strokeDashArray = lineStyle === "solid" ? "" : ` stroke-dasharray="${dashPattern(lineStyle)}"`;
-  const stroke =
-    box.strokeWidth > 0
-      ? ` stroke="${attr(box.stroke)}" stroke-width="${num(box.strokeWidth)}"${strokeDashArray}`
-      : "";
+  let primary: string;
+  if (canSubdivide && box.border !== undefined) {
+    const fillOnly = shapeElement(box, shape, { x, y, width, height, radius }, "", fillAttr);
+    primary = `${fillOnly}\n${perSideBorderToSvg(box, defs)}`;
+  } else if (canSubdivide && (lineStyle === "double" || lineStyle === "ridge" || lineStyle === "groove")) {
+    const fillOnly = shapeElement(box, shape, { x, y, width, height, radius }, "", fillAttr);
+    const bands = strokeBandsToSvg(box, shape, lineStyle, defs);
+    primary = `${fillOnly}\n${bands}`;
+  } else {
+    const strokeDashArray = lineStyle === "solid" ? "" : ` stroke-dasharray="${dashPattern(lineStyle)}"`;
+    const strokeAttr = paintAttr(box.stroke, box.strokePaint, defs);
+    const stroke =
+      box.strokeWidth > 0 ? ` stroke="${strokeAttr}" stroke-width="${num(box.strokeWidth)}"${strokeDashArray}` : "";
+    primary = shapeElement(box, shape, { x, y, width, height, radius }, stroke, fillAttr);
+  }
 
   const effects = box.effects ?? [];
   // The filter now lives on the OUTER accessibility group (wrapElement),
   // never on the rect itself -- one <g id> per element, always, whether or
   // not it carries an effect.
   const filterId = defs.filter(effects, outerRect(box), box.bleed ?? NO_BLEED);
-
-  const shape = box.shape ?? "rect";
-  const primary = shapeElement(box, shape, { x, y, width, height, radius }, stroke);
 
   // Sheen (a gradient overlay clipped to the shape's own geometry) is
   // currently only implemented for the shapes that share a rect's own inset
@@ -201,12 +219,23 @@ function boxToSvg(box: PlacedBox, defs: DefsRegistry, labels: string[] | undefin
       : "";
   const inner = sheen === "" ? primary : `${primary}\n${sheen}`;
 
+  const transform =
+    box.rotation === undefined || box.rotationCenter === undefined
+      ? undefined
+      : `rotate(${num(box.rotation)}, ${num(box.rotationCenter.x)}, ${num(box.rotationCenter.y)})`;
+
   return wrapElement({
     id: box.id,
     titleText: labels === undefined ? undefined : labels.join(" / "),
     filterId,
+    transform,
     inner,
   });
+}
+
+/** A box's fill/stroke as an SVG paint attribute value: a flat colour, or `url(#...)` for a gradient. */
+function paintAttr(solid: string, gradient: Gradient | undefined, defs: DefsRegistry): string {
+  return gradient === undefined ? attr(solid) : `url(#${defs.gradient(gradient)})`;
 }
 
 /**
@@ -232,14 +261,16 @@ function shapeElement(
   shape: ShapeKind,
   geometry: { x: number; y: number; width: number; height: number; radius: number },
   stroke: string,
+  fillOverride?: string,
 ): string {
   const { x, y, width, height, radius } = geometry;
+  const fill = fillOverride ?? attr(box.fill);
 
   if (shape === "rect") {
     return (
       `<rect data-pr-id="${attr(box.id)}" x="${num(x)}" y="${num(y)}" ` +
       `width="${num(width)}" height="${num(height)}" rx="${num(radius)}" ` +
-      `fill="${attr(box.fill)}"${stroke}/>`
+      `fill="${fill}"${stroke}/>`
     );
   }
   if (shape === "stadium") {
@@ -249,7 +280,7 @@ function shapeElement(
     return (
       `<rect data-pr-id="${attr(box.id)}" x="${num(x)}" y="${num(y)}" ` +
       `width="${num(width)}" height="${num(height)}" rx="${num(stadiumR)}" ` +
-      `fill="${attr(box.fill)}"${stroke}/>`
+      `fill="${fill}"${stroke}/>`
     );
   }
   if (shape === "circle" || shape === "ellipse") {
@@ -259,7 +290,7 @@ function shapeElement(
     const ry = shape === "circle" ? Math.min(width, height) / 2 : height / 2;
     return (
       `<ellipse data-pr-id="${attr(box.id)}" cx="${num(cx)}" cy="${num(cy)}" ` +
-      `rx="${num(rx)}" ry="${num(ry)}" fill="${attr(box.fill)}"${stroke}/>`
+      `rx="${num(rx)}" ry="${num(ry)}" fill="${fill}"${stroke}/>`
     );
   }
   // diamond, hexagon, triangle: a polygon over the shape's own analytic vertices.
@@ -268,7 +299,137 @@ function shapeElement(
     throw new Error(`Unhandled shape: ${shape}`);
   }
   const points = vertices.map((point) => `${num(point.x)},${num(point.y)}`).join(" ");
-  return `<polygon data-pr-id="${attr(box.id)}" points="${points}" fill="${attr(box.fill)}"${stroke}/>`;
+  return `<polygon data-pr-id="${attr(box.id)}" points="${points}" fill="${fill}"${stroke}/>`;
+}
+
+/**
+ * "double"/"ridge"/"groove" as two solid stroke passes over the box's own
+ * outer edge, each inset by ITS OWN half-width -- the same convention the
+ * single-stroke case already uses (see `boxToSvg`'s `half`), generalised to
+ * more than one band so the OUTERMOST ink still lands exactly on the box
+ * edge every check measures, whichever style was asked for.
+ *
+ *   "double" -- two thin bands (strokeWidth/3 each) with a gap between.
+ *   "ridge"/"groove" -- two bands of strokeWidth/2 with no gap, one lighter
+ *   and one darker than the block's own stroke colour, ridge lit from the
+ *   outside and groove from the inside -- the classic CSS 3D borders, held to
+ *   this project's schematic register rather than a literal bevel effect.
+ */
+function strokeBandsToSvg(
+  box: PlacedBox,
+  shape: "rect" | "stadium",
+  lineStyle: "double" | "ridge" | "groove",
+  defs: DefsRegistry,
+): string {
+  const w = box.strokeWidth;
+  if (w <= 0) return "";
+  const [outerColour, innerColour] = bandColours(box, lineStyle, defs);
+  const bandWidth = lineStyle === "double" ? w / 3 : w / 2;
+  const bands =
+    lineStyle === "double"
+      ? [
+          { inset: bandWidth / 2, colour: outerColour },
+          { inset: w - bandWidth / 2, colour: innerColour },
+        ]
+      : [
+          { inset: bandWidth / 2, colour: outerColour },
+          { inset: bandWidth + bandWidth / 2, colour: innerColour },
+        ];
+
+  return bands
+    .map(({ inset, colour }) => {
+      const geometry = {
+        x: box.x + inset,
+        y: box.y + inset,
+        width: Math.max(0, box.width - inset * 2),
+        height: Math.max(0, box.height - inset * 2),
+        radius: Math.max(0, box.radius - inset),
+      };
+      const finalRadius = shape === "stadium" ? stadiumRadius(geometry) : geometry.radius;
+      const stroke = ` stroke="${colour}" stroke-width="${num(bandWidth)}"`;
+      return shapeElement(box, shape, { ...geometry, radius: finalRadius }, stroke, "none");
+    })
+    .join("\n");
+}
+
+/** The two band colours "double"/"ridge"/"groove" draw with, outer band first. */
+function bandColours(box: PlacedBox, lineStyle: "double" | "ridge" | "groove", defs: DefsRegistry): [string, string] {
+  if (box.strokePaint !== undefined) {
+    // Lighten/darken has no meaning for a gradient; both bands share it.
+    const g = `url(#${defs.gradient(box.strokePaint)})`;
+    return [g, g];
+  }
+  if (lineStyle === "double") return [attr(box.stroke), attr(box.stroke)];
+  const lighter = attr(shadeColour(box.stroke, 0.25));
+  const darker = attr(shadeColour(box.stroke, -0.25));
+  return lineStyle === "ridge" ? [lighter, darker] : [darker, lighter];
+}
+
+/**
+ * Lightens (`amount` > 0) or darkens (`amount` < 0) a colour by mixing it
+ * toward white or black. Falls back to the colour unchanged for anything
+ * `parseColour` cannot read (a named CSS colour never seen from a real
+ * render) -- a ridge/groove border still draws, just without the 3D cue,
+ * rather than emitting a broken attribute.
+ */
+function shadeColour(colour: string, amount: number): string {
+  const parsed = parseColour(colour);
+  if (parsed === null) return colour;
+  const mix = (channel: number): number => {
+    const target = amount > 0 ? 255 : 0;
+    return Math.round(channel + (target - channel) * Math.abs(amount));
+  };
+  const hex = (channel: number): string => mix(channel).toString(16).padStart(2, "0");
+  return `#${hex(parsed.r)}${hex(parsed.g)}${hex(parsed.b)}`;
+}
+
+/**
+ * Independent per-side border widths/colours/styles (Block.border): four
+ * straight lines, one per edge, each inset by ITS OWN half-width from the
+ * box's outer edge -- so the outermost ink of even the widest side never
+ * passes the box edge every check measures, the same zero-bleed guarantee
+ * every other border style keeps.
+ *
+ * Deliberately NOT mitred at the corners (each line runs the box's full
+ * nominal edge length): a correct mitre needs each corner's two adjacent
+ * half-widths, which is a small geometry problem on its own, and an unmitred
+ * corner is a few pixels of overlap or gap at worst, never a correctness
+ * question -- the same tolerance render/svg.ts already documents for a
+ * non-rect shape's stroke. `radius` is ignored in this mode for the same
+ * reason: a per-side border and a rounded corner are two separate asks, and
+ * combining them exactly is future work, not silently wrong output today.
+ */
+function perSideBorderToSvg(box: PlacedBox, defs: DefsRegistry): string {
+  const border = box.border;
+  if (border === undefined) return "";
+  const lines: string[] = [];
+  const sideOf = (side: "top" | "right" | "bottom" | "left") => {
+    const entry = border[side];
+    const width = entry?.width ?? box.strokeWidth;
+    if (width <= 0) return "";
+    const colour = entry?.color !== undefined ? attr(entry.color) : paintAttr(box.stroke, box.strokePaint, defs);
+    const style = entry?.style ?? box.lineStyle ?? "solid";
+    const dash = dashPattern(style);
+    const dashAttr = dash === "" ? "" : ` stroke-dasharray="${dash}"`;
+    const half = width / 2;
+    const [x1, y1, x2, y2] =
+      side === "top"
+        ? [box.x, box.y + half, box.x + box.width, box.y + half]
+        : side === "bottom"
+          ? [box.x, box.y + box.height - half, box.x + box.width, box.y + box.height - half]
+          : side === "left"
+            ? [box.x + half, box.y, box.x + half, box.y + box.height]
+            : [box.x + box.width - half, box.y, box.x + box.width - half, box.y + box.height];
+    return (
+      `<line data-pr-id="${attr(box.id)}" x1="${num(x1)}" y1="${num(y1)}" x2="${num(x2)}" y2="${num(y2)}" ` +
+      `stroke="${colour}" stroke-width="${num(width)}"${dashAttr}/>`
+    );
+  };
+  for (const side of ["top", "right", "bottom", "left"] as const) {
+    const line = sideOf(side);
+    if (line !== "") lines.push(line);
+  }
+  return lines.join("\n");
 }
 
 /** The corner radius sheenToSvg should clip to, per shape -- only meaningful for rect/stadium. */
@@ -318,8 +479,13 @@ function sheenToSvg(
  * missing arrowhead silently reverses the meaning of a diagram. A path is a
  * path everywhere.
  */
-/** SVG `stroke-dasharray` per line style. "solid" is the absence of the attribute. */
-export const DASH_PATTERNS: Record<Exclude<LineStyle, "solid">, string> = {
+/**
+ * SVG `stroke-dasharray` per DASHED line style. "solid" is the absence of the
+ * attribute; "double"/"ridge"/"groove" are not dash patterns at all -- they
+ * subdivide the stroke band into several solid passes instead (see
+ * `strokeBands`), so they never appear here.
+ */
+export const DASH_PATTERNS: Record<"dashed" | "dotted" | "dashdot", string> = {
   dashed: "6 4",
   dotted: "1 4",
   dashdot: "6 4 1 4",
@@ -327,7 +493,7 @@ export const DASH_PATTERNS: Record<Exclude<LineStyle, "solid">, string> = {
 
 /** Unified dash pattern helper for both connectors and boxes. */
 function dashPattern(style: LineStyle): string {
-  return style === "solid" ? "" : DASH_PATTERNS[style];
+  return style === "dashed" || style === "dotted" || style === "dashdot" ? DASH_PATTERNS[style] : "";
 }
 
 function connectorToSvg(connector: PlacedConnector, defs: DefsRegistry): string {
@@ -335,8 +501,11 @@ function connectorToSvg(connector: PlacedConnector, defs: DefsRegistry): string 
   const path = connector.points
     .map((point, index) => `${index === 0 ? "M" : "L"} ${num(point.x)} ${num(point.y)}`)
     .join(" ");
-  const dash =
-    connector.lineStyle === "solid" ? "" : ` stroke-dasharray="${DASH_PATTERNS[connector.lineStyle]}"`;
+  // Connectors only ever draw a single stroked line -- "double"/"ridge"/
+  // "groove" are a border concept (see strokeBands) and have no connector
+  // rendering of their own, so they fall back to a plain solid line here.
+  const connectorDash = dashPattern(connector.lineStyle);
+  const dash = connectorDash === "" ? "" : ` stroke-dasharray="${connectorDash}"`;
   const parts = [
     `<path data-pr-id="${attr(connector.id)}" d="${path}" fill="none" ` +
       `stroke="${attr(connector.stroke)}" stroke-width="${num(connector.strokeWidth)}" ` +

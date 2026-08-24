@@ -11,12 +11,21 @@ import type { EffectRef, ResolvedEffect } from "../effects/types.ts";
 import { SHAPE_KINDS } from "../geometry/shapes.ts";
 import type { ShapeKind } from "../geometry/shapes.ts";
 import type { Bleed } from "../effects/bleed.ts";
+import type { Constraint } from "../constraints/types.ts";
 
 export type FigureSpec = {
   version: 1;
   title?: string;
   canvas?: CanvasSpec;
   root: FigureNode;
+  /**
+   * Declarative spatial relationships (decision 0010's constraint vocabulary,
+   * M10 step 31) that `constraints-satisfied` verifies against the laid-out
+   * positions. Not to be confused with `canvas.constraints`, which *relaxes*
+   * checks -- this *adds* one. Unset means no constraints are declared, and
+   * the check reports not-applicable rather than a vacuous pass.
+   */
+  layoutConstraints?: Constraint[];
 };
 
 export type CanvasSpec = {
@@ -127,11 +136,75 @@ export const ARROW_STYLES: readonly ArrowStyle[] = ["closed", "open", "diamond",
  * The stroke pattern. "solid" and "dashed" are what the old boolean `dashed`
  * meant; `lineStyle` supersedes it when both are given, and is a superset —
  * `dashed: true` and `lineStyle: "dashed"` draw byte-identically.
+ *
+ * "double", "ridge" and "groove" are structural rather than a dash pattern:
+ * they subdivide the same stroke-width inset every line style already draws
+ * inside (see render/svg.ts's `boxToSvg`), so they cost no extra bleed — the
+ * outermost ink still lands exactly on the box edge the checks measure.
  */
-export type LineStyle = "solid" | "dashed" | "dotted" | "dashdot";
+export type LineStyle = "solid" | "dashed" | "dotted" | "dashdot" | "double" | "ridge" | "groove";
 
 /** Runtime mirror of `LineStyle`, so validation and the generated reference read one list, not two. */
-export const LINE_STYLES: readonly LineStyle[] = ["solid", "dashed", "dotted", "dashdot"];
+export const LINE_STYLES: readonly LineStyle[] = [
+  "solid",
+  "dashed",
+  "dotted",
+  "dashdot",
+  "double",
+  "ridge",
+  "groove",
+];
+
+/**
+ * A stop in a gradient's colour ramp. `offset` is 0 (the gradient's start) to
+ * 1 (its end); stops need not be sorted, since a renderer sorts by offset.
+ */
+export type GradientStop = { offset: number; color: string; opacity?: number };
+
+/**
+ * A fill or stroke that varies over the shape's own area, rather than one flat
+ * colour. Pure paint: it changes which pixels a shape's own outline is filled
+ * with and nothing else, so unlike an Effect it costs no bleed and needs no
+ * check — the geometry a gradient-filled block occupies is identical to the
+ * geometry the same block would occupy filled with any one of its own stops.
+ *
+ * "linear" runs along `angle` degrees across the shape's own bounding box,
+ * read as a COMPASS BEARING measured clockwise from "up": 0 runs
+ * bottom-to-top, 90 left-to-right, 180 top-to-bottom, 270 right-to-left.
+ * Default 90. "radial" is centred on the shape and reaches its edge.
+ *
+ * Bearings rather than the mathematical convention (counterclockwise from
+ * "right") because the y axis points DOWN in SVG, so the mathematical reading
+ * would invert on the screen and every angle in a spec would mean its own
+ * mirror image. A bearing means the same thing here as it does on a map.
+ *
+ * The stops are in the box's OWN frame, so a gradient on a rotated block
+ * (`rotateBox`) turns with it: one definition at angle 90 is "along this
+ * shape's long axis" whatever direction the shape ends up facing.
+ */
+export type Gradient =
+  | { kind: "linear"; angle?: number; stops: GradientStop[] }
+  | { kind: "radial"; stops: GradientStop[] };
+
+/** A flat colour, or a gradient computed over the shape's own area. */
+export type Paint = string | Gradient;
+
+/**
+ * Per-side border override. Unset sides fall back to the block's own
+ * `stroke`/`strokeWidth`/`lineStyle`; a side with `width: 0` draws nothing on
+ * that edge. Independent per-side widths cannot reuse the single
+ * inset-rect-plus-stroke-width geometry every other border style shares — see
+ * render/svg.ts's `borderPathToSvg` — so this is deliberately a separate,
+ * larger code path from `lineStyle` rather than a variant of it.
+ */
+export type BorderSide = { width?: number; color?: string; style?: LineStyle };
+
+export type PerSideBorder = {
+  top?: BorderSide;
+  right?: BorderSide;
+  bottom?: BorderSide;
+  left?: BorderSide;
+};
 
 /**
  * How a connector bends (decision 0010). Requires `canvas.constraints.allowCurvedConnectors`.
@@ -232,11 +305,14 @@ export type Block = {
    * baseline. It moves the whole label down its box.
    */
   verticalAlign?: Align;
-  fill?: string;
-  stroke?: string;
+  /** A flat colour or a gradient (Paint). Mirror measurement uses a solid stand-in; the gradient itself is resolved only at SVG emission — the same "measure with it off" rule effects follow. */
+  fill?: Paint;
+  stroke?: Paint;
   strokeWidth?: number;
   /** Supersedes `dashed` when set on Block. Default "solid". */
   lineStyle?: LineStyle;
+  /** Independent width/colour/style per edge. Unset sides fall back to `stroke`/`strokeWidth`/`lineStyle`. */
+  border?: PerSideBorder;
   radius?: number;
   fontSize?: number;
   /** Font family. Default "Inter, system-ui, sans-serif". */
@@ -282,6 +358,21 @@ export type Block = {
    */
   rotation?: number;
   /**
+   * When true, `rotation` also turns the box/shape itself (and its label
+   * rotates around the box's own centre rather than the label's), not just
+   * the label. Default false, which is exactly today's label-only behaviour.
+   *
+   * This is the box-geometry extension of the same "measure with it off,
+   * apply at emission" move `rotation` already makes for labels
+   * (geometry/rotate.ts): the mirror never rotates anything, and every check
+   * that reasons about this box's position reads the exact axis-aligned
+   * bounding box of the rotated shape (`PlacedBox.bounds`), computed as exact
+   * corner-rotation arithmetic rather than approximated — so a rotated block
+   * cannot silently overlap a neighbour or cross a connector a check had just
+   * cleared. See geometry/rotate.ts's `attachBoxRotation`.
+   */
+  rotateBox?: boolean;
+  /**
    * Visual effects, by design-system name (`"raised-2"`, `"recede"`) or as
    * literal effect objects. Purely visual: an effect never changes where this
    * block sits or how big it is. See effects/types.ts.
@@ -309,6 +400,8 @@ export type LaidOutFigure = {
    * which is what a figure built by hand in a test gets.
    */
   constraints?: ConstraintToggles;
+  /** Carried from `spec.layoutConstraints`; see there. */
+  layoutConstraints?: Constraint[];
 };
 
 export type PlacedElement = PlacedBox | PlacedText | PlacedConnector;
@@ -350,10 +443,13 @@ export type PlacedBox = {
   y: number;
   width: number;
   height: number;
+  /** Solid fallback colour: what a gradient fill approximates for contrast/module checks that need one real colour. The gradient itself, if any, is `fillPaint`. */
   fill: string;
   stroke: string;
   strokeWidth: number;
   lineStyle?: LineStyle;
+  /** Independent per-side border, carried straight from Block.border. */
+  border?: PerSideBorder;
   radius: number;
   /** Content box: the area a label is allowed to occupy. */
   content: Rect;
@@ -370,6 +466,22 @@ export type PlacedBox = {
    * the browser applied, not what we asked for. See Block.verticalAlign.
    */
   verticalAlign?: Align;
+  /** A gradient fill/stroke, resolved at SVG emission only. See Block.fill. */
+  fillPaint?: Gradient;
+  strokePaint?: Gradient;
+  /** Carried straight from Block.rotation, but only when Block.rotateBox is true. Degrees, clockwise. */
+  rotation?: number;
+  /** The point the box was rotated around -- the box's own (unrotated) centre. Present iff `rotation` is. */
+  rotationCenter?: Point;
+  /**
+   * The exact axis-aligned bounding box of this box after rotation, in world
+   * (canvas) space. Present iff `rotation` is. Every check that reasons about
+   * where this box sits reads this instead of x/y/width/height directly — see
+   * checks.ts's `checkRect` — so the box every check reasons about is the box
+   * that is actually drawn, the same guarantee Block.rotation already gives a
+   * rotated label.
+   */
+  bounds?: Rect;
 };
 
 export type PlacedText = {
@@ -400,6 +512,17 @@ export type TextLine = {
   y: number;
   /** Ink/advance extents of this line, for overflow checking. */
   box: Rect;
+  /**
+   * `box` before rotation was applied, present iff the OWNING BOX also
+   * rotates (Block.rotateBox). Text-fits-box uses this instead of `box` in
+   * that one case: when box and label rotate rigidly together by the same
+   * angle around the same centre, whether the label fits its box is exactly
+   * the question "did it fit before either rotated" — the rotated *world*
+   * bounding box is what text-clear-of-other-boxes needs (checking this label
+   * against boxes that have not moved), but comparing it to a content rect
+   * that rotated along with it would be a stricter, wrong question.
+   */
+  localBox?: Rect;
   /** True when a fallback font rendered this line, making the baseline approximate. */
   baselineUncertain: boolean;
 };
@@ -423,10 +546,93 @@ export function parseSpec(input: unknown): FigureSpec {
   }
   if (spec.root === undefined) throw new SpecError("spec.root is required");
   if (spec.canvas !== undefined) validateCanvas(spec.canvas, "canvas");
+  if (spec.layoutConstraints !== undefined) {
+    validateLayoutConstraints(spec.layoutConstraints, "layoutConstraints");
+  }
   // Whether a curve is legal depends on the canvas, so the toggles are
   // resolved once here and carried down rather than looked up per node.
   validateNode(spec.root, "root", resolveConstraints(spec.canvas as CanvasSpec | undefined));
   return spec as FigureSpec;
+}
+
+const CONSTRAINT_KINDS = ["align", "distribute", "keepClear", "sameSize", "anchor"] as const;
+
+/**
+ * Shape-level validation only: right `kind`, right field types. Whether the
+ * named element ids actually exist is a question for the check, not the
+ * parser -- same division `validateEffect` draws for effect names.
+ */
+function validateLayoutConstraints(input: unknown, path: string): void {
+  if (!Array.isArray(input)) throw new SpecError(`${path} must be an array`);
+  input.forEach((entry, i) => validateConstraint(entry, `${path}[${i}]`));
+}
+
+function validateConstraint(input: unknown, path: string): void {
+  if (typeof input !== "object" || input === null) {
+    throw new SpecError(`${path} must be an object`);
+  }
+  const c = input as Record<string, unknown>;
+  if (!(CONSTRAINT_KINDS as readonly unknown[]).includes(c.kind)) {
+    throw new SpecError(`${path}.kind must be one of ${CONSTRAINT_KINDS.join(", ")}, got ${JSON.stringify(c.kind)}`);
+  }
+  const stringArray = (value: unknown, field: string): void => {
+    if (!Array.isArray(value) || value.some((v) => typeof v !== "string")) {
+      throw new SpecError(`${path}.${field} must be an array of element ids`);
+    }
+  };
+  const requireString = (value: unknown, field: string): void => {
+    if (typeof value !== "string") throw new SpecError(`${path}.${field} must be a string, got ${JSON.stringify(value)}`);
+  };
+  const requireNumber = (value: unknown, field: string): void => {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+      throw new SpecError(`${path}.${field} must be a finite number, got ${JSON.stringify(value)}`);
+    }
+  };
+  switch (c.kind) {
+    case "align":
+      stringArray(c.elements, "elements");
+      if (!["left", "right", "top", "bottom", "center-x", "center-y"].includes(c.axis as string)) {
+        throw new SpecError(`${path}.axis must be a valid alignment axis, got ${JSON.stringify(c.axis)}`);
+      }
+      break;
+    case "distribute":
+      stringArray(c.elements, "elements");
+      if (c.axis !== "horizontal" && c.axis !== "vertical") {
+        throw new SpecError(`${path}.axis must be "horizontal" or "vertical", got ${JSON.stringify(c.axis)}`);
+      }
+      if (c.spacing !== undefined) requireNumber(c.spacing, "spacing");
+      break;
+    case "keepClear":
+      requireString(c.element1, "element1");
+      requireString(c.element2, "element2");
+      requireNumber(c.minDistance, "minDistance");
+      break;
+    case "sameSize":
+      stringArray(c.elements, "elements");
+      if (!["width", "height", "both"].includes(c.dimension as string)) {
+        throw new SpecError(`${path}.dimension must be "width", "height" or "both", got ${JSON.stringify(c.dimension)}`);
+      }
+      break;
+    case "anchor":
+      requireString(c.element, "element");
+      if (c.position === undefined && c.relativeTo === undefined) {
+        throw new SpecError(`${path} needs either position or relativeTo`);
+      }
+      if (c.position !== undefined) {
+        const p = c.position as Record<string, unknown>;
+        requireNumber(p?.x, "position.x");
+        requireNumber(p?.y, "position.y");
+      }
+      if (c.relativeTo !== undefined) {
+        const r = c.relativeTo as Record<string, unknown>;
+        requireString(r?.target, "relativeTo.target");
+        if (!["above", "below", "left", "right"].includes(r?.relation as string)) {
+          throw new SpecError(`${path}.relativeTo.relation must be above/below/left/right, got ${JSON.stringify(r?.relation)}`);
+        }
+        requireNumber(r?.offset, "relativeTo.offset");
+      }
+      break;
+  }
 }
 
 function validateCanvas(input: unknown, path: string): void {
@@ -544,6 +750,72 @@ function validateCurve(
   }
 }
 
+/** A flat colour string passes untouched; a gradient object needs at least two stops. */
+function validatePaint(value: unknown, path: string): void {
+  if (typeof value === "string") return;
+  if (typeof value !== "object" || value === null) {
+    throw new SpecError(`${path} must be a colour string or a gradient object, got ${JSON.stringify(value)}`);
+  }
+  const gradient = value as Record<string, unknown>;
+  if (gradient.kind !== "linear" && gradient.kind !== "radial") {
+    throw new SpecError(`${path}.kind must be "linear" or "radial", got ${JSON.stringify(gradient.kind)}`);
+  }
+  if (
+    gradient.kind === "linear" &&
+    gradient.angle !== undefined &&
+    (typeof gradient.angle !== "number" || !Number.isFinite(gradient.angle))
+  ) {
+    throw new SpecError(`${path}.angle must be a finite number, got ${JSON.stringify(gradient.angle)}`);
+  }
+  if (!Array.isArray(gradient.stops) || gradient.stops.length < 2) {
+    throw new SpecError(`${path}.stops must be an array of at least two stops`);
+  }
+  gradient.stops.forEach((stop, i) => {
+    if (typeof stop !== "object" || stop === null) {
+      throw new SpecError(`${path}.stops[${i}] must be an object`);
+    }
+    const s = stop as Record<string, unknown>;
+    if (typeof s.offset !== "number" || !Number.isFinite(s.offset) || s.offset < 0 || s.offset > 1) {
+      throw new SpecError(`${path}.stops[${i}].offset must be between 0 and 1, got ${JSON.stringify(s.offset)}`);
+    }
+    // The same hex-or-keyword shape effects/types.ts requires of an effect
+    // colour: this string goes into an SVG attribute verbatim at emission, so
+    // it is checked here rather than escaped there.
+    if (typeof s.color !== "string" || !/^(#[0-9a-fA-F]{3,8}|[a-zA-Z]+)$/.test(s.color)) {
+      throw new SpecError(`${path}.stops[${i}].color must be a hex colour or a colour keyword, got ${JSON.stringify(s.color)}`);
+    }
+    if (s.opacity !== undefined && (typeof s.opacity !== "number" || s.opacity < 0 || s.opacity > 1)) {
+      throw new SpecError(`${path}.stops[${i}].opacity must be between 0 and 1, got ${JSON.stringify(s.opacity)}`);
+    }
+  });
+}
+
+function validateBorder(value: unknown, path: string): void {
+  if (typeof value !== "object" || value === null) {
+    throw new SpecError(`${path} must be an object`);
+  }
+  const border = value as Record<string, unknown>;
+  for (const side of ["top", "right", "bottom", "left"] as const) {
+    if (border[side] === undefined) continue;
+    const entry = border[side];
+    if (typeof entry !== "object" || entry === null) {
+      throw new SpecError(`${path}.${side} must be an object`);
+    }
+    const b = entry as Record<string, unknown>;
+    if (b.width !== undefined && (typeof b.width !== "number" || b.width < 0)) {
+      throw new SpecError(`${path}.${side}.width must be a non-negative number, got ${JSON.stringify(b.width)}`);
+    }
+    if (b.color !== undefined && typeof b.color !== "string") {
+      throw new SpecError(`${path}.${side}.color must be a string, got ${JSON.stringify(b.color)}`);
+    }
+    if (b.style !== undefined && !LINE_STYLES.includes(b.style as LineStyle)) {
+      throw new SpecError(
+        `${path}.${side}.style must be one of ${LINE_STYLES.join(", ")}, got ${JSON.stringify(b.style)}`,
+      );
+    }
+  }
+}
+
 function validateNode(
   input: unknown,
   path: string,
@@ -578,6 +850,12 @@ function validateNode(
     if (node.rotation !== undefined && (typeof node.rotation !== "number" || !Number.isFinite(node.rotation))) {
       throw new SpecError(`${path}.rotation must be a finite number, got ${JSON.stringify(node.rotation)}`);
     }
+    if (node.rotateBox !== undefined && typeof node.rotateBox !== "boolean") {
+      throw new SpecError(`${path}.rotateBox must be a boolean, got ${JSON.stringify(node.rotateBox)}`);
+    }
+    if (node.fill !== undefined) validatePaint(node.fill, `${path}.fill`);
+    if (node.stroke !== undefined) validatePaint(node.stroke, `${path}.stroke`);
+    if (node.border !== undefined) validateBorder(node.border, `${path}.border`);
     if (
       node.verticalAlign !== undefined &&
       node.verticalAlign !== "start" &&

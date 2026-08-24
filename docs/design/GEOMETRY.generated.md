@@ -42,4 +42,7 @@ All six share one geometric frame: a `size` of 9px along the connector's own dir
 | `dashed` | `6 4` | Long dashes, even gaps. |
 | `dotted` | `1 4` | Short dashes read as dots at typical stroke widths. |
 | `dashdot` | `6 4 1 4` | One long dash, one short dash, repeating. |
+| `double` | `undefined` | undefined |
+| `ridge` | `undefined` | undefined |
+| `groove` | `undefined` | undefined |
 
