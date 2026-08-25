@@ -1,0 +1,51 @@
+{
+  "version": 1,
+  "title": "Pipeline v2",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 650,
+    "height": 330,
+    "children": [
+      {
+        "type": "block",
+        "id": "ingest",
+        "x": 0,
+        "y": 0,
+        "width": 140,
+        "height": 60,
+        "label": "ingest"
+      },
+      {
+        "type": "block",
+        "id": "parse",
+        "x": 170,
+        "y": 90,
+        "width": 140,
+        "height": 60,
+        "label": "parse"
+      },
+      {
+        "type": "block",
+        "id": "render",
+        "x": 340,
+        "y": 180,
+        "width": 140,
+        "height": 60,
+        "label": "render"
+      },
+      {
+        "type": "block",
+        "id": "verify",
+        "x": 510,
+        "y": 270,
+        "width": 140,
+        "height": 60,
+        "label": "verify"
+      }
+    ]
+  }
+}

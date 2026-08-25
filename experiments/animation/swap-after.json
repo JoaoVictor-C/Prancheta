@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "title": "Swap, as authored",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 520,
+    "height": 310,
+    "children": [
+      {
+        "type": "block",
+        "id": "alpha",
+        "x": 360,
+        "y": 240,
+        "width": 160,
+        "height": 70,
+        "label": "alpha"
+      },
+      {
+        "type": "block",
+        "id": "beta",
+        "x": 0,
+        "y": 0,
+        "width": 160,
+        "height": 70,
+        "label": "beta"
+      }
+    ]
+  }
+}
