@@ -16,6 +16,7 @@ import { parseArgs } from "../src/cli.ts";
 import { commandByName, toStringArray } from "../src/commands.ts";
 
 const moduleCommand = commandByName("module")!;
+const animateCommand = commandByName("animate")!;
 
 test("a single --args occurrence stays a plain string (backward compatible with toStringArray's comma-split)", () => {
   const args = parseArgs(moduleCommand, ["python", "--args", "modules/foo/render.py,--name=bar"]);
@@ -75,3 +76,20 @@ test("toStringArray: undefined and null both yield an empty array", () => {
   assert.deepEqual(toStringArray(undefined), []);
   assert.deepEqual(toStringArray(null), []);
 });
+
+test("a variadic positional (animate's states) consumes every remaining bare token, not just one", () => {
+  const args = parseArgs(animateCommand, ["a.json", "b.json", "c.json"]);
+  assert.deepEqual(args.states, ["a.json", "b.json", "c.json"]);
+});
+
+test("a variadic positional still works at the minimum arity of two", () => {
+  const args = parseArgs(animateCommand, ["a.json", "b.json"]);
+  assert.deepEqual(args.states, ["a.json", "b.json"]);
+});
+
+test("a variadic positional stops consuming at the first flag, which parses normally afterward", () => {
+  const args = parseArgs(animateCommand, ["a.json", "b.json", "c.json", "--durationMs", "700"]);
+  assert.deepEqual(args.states, ["a.json", "b.json", "c.json"]);
+  assert.equal(args.durationMs, 700);
+});
+

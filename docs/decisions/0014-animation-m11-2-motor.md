@@ -159,7 +159,13 @@ implemented" to "named, with the reason they are not free".
 
 Deliberately **not** done: multi-keyframe timelines and a camera. Two authored
 states is the right primitive; both of those turn `animate` into a
-presentation tool rather than a figure tool.
+presentation tool rather than a figure tool. *(Corrected by
+[ADR 0016](0016-animation-m14-sequences.md): this bundled two different
+questions under one answer. A camera fails checkability outright and stays
+refused. "More than two states" passes checkability and needed a SEPARATE
+bound — not state count, which a 40-scene checked slideshow shows is the
+wrong axis, but identity continuity between consecutive states — and is
+admitted under that bound in M14.)*
 
 ## References
 

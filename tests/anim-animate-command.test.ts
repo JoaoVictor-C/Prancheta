@@ -23,8 +23,7 @@ test("animate is registered and reachable by name, exactly as diff and render ar
 
 test("a diagonal swap fails boxes-do-not-overlap-during-transition end to end, though both frames are individually clean", async () => {
   const result = await animate.run({
-    before: "fixtures/animate/swap-before.json",
-    after: "fixtures/animate/swap-after.json",
+    states: ["fixtures/animate/swap-before.json", "fixtures/animate/swap-after.json"],
   });
   assert.equal(result.exitCode, 2);
   const data = result.data as { manifest: { before: { ok: boolean }; after: { ok: boolean }; transitionChecks: { id: string; status: string }[]; ok: boolean } };
@@ -39,8 +38,7 @@ test("a diagonal swap fails boxes-do-not-overlap-during-transition end to end, t
 
 test("a clean transition passes end to end and emits an animated SVG with a real @keyframes rule", async () => {
   const result = await animate.run({
-    before: "fixtures/animate/swap-before.json",
-    after: "fixtures/animate/clean-after.json",
+    states: ["fixtures/animate/swap-before.json", "fixtures/animate/clean-after.json"],
   });
   assert.equal(result.exitCode, 0);
   const data = result.data as { manifest: { ok: boolean }; svg: string };
@@ -53,8 +51,7 @@ test("a moved element relying on a counter-derived id is refused with SpecError,
   await assert.rejects(
     () =>
       animate.run({
-        before: "fixtures/animate/missing-id-before.json",
-        after: "fixtures/animate/missing-id-after.json",
+        states: ["fixtures/animate/missing-id-before.json", "fixtures/animate/missing-id-after.json"],
       }),
     SpecError,
   );
@@ -64,8 +61,7 @@ test("a box that only rotates between states is refused -- the confirmed diff.ts
   await assert.rejects(
     () =>
       animate.run({
-        before: "fixtures/animate/rotation-mismatch-before.json",
-        after: "fixtures/animate/rotation-mismatch-after.json",
+        states: ["fixtures/animate/rotation-mismatch-before.json", "fixtures/animate/rotation-mismatch-after.json"],
       }),
     SpecError,
   );
@@ -93,8 +89,7 @@ test("a box that moves AND restyles hard-cuts, so the check no longer reports th
   // The reproduced M11 false positive: `a` was modelled as sliding through
   // `b`'s path, but diff.ts labelled it `restyled` and it was never tweened.
   const result = await animate.run({
-    before: "fixtures/animate/restyle-move-before.json",
-    after: "fixtures/animate/restyle-move-clean-after.json",
+    states: ["fixtures/animate/restyle-move-before.json", "fixtures/animate/restyle-move-clean-after.json"],
   });
   const data = result.data as AnimateData;
   assert.equal(transitionOf(data).status, "pass");
@@ -106,8 +101,7 @@ test("a box that moves AND restyles hard-cuts, so the check no longer reports th
 
 test("a hard-cutting box standing in a sweeper's path is caught — the M11 false negative", async () => {
   const result = await animate.run({
-    before: "fixtures/animate/occupier-before.json",
-    after: "fixtures/animate/occupier-after.json",
+    states: ["fixtures/animate/occupier-before.json", "fixtures/animate/occupier-after.json"],
   });
   const data = result.data as AnimateData;
   assert.equal(data.manifest.before.ok, true);
@@ -123,8 +117,7 @@ test("everything drawn is a participant: the newcomer, and the box still fading 
   // `sweeper` passes through it. Only what the SVG actually draws counts --
   // and since M11.2 the departing box is drawn, so it counts too.
   const result = await animate.run({
-    before: "fixtures/animate/vanish-appear-before.json",
-    after: "fixtures/animate/vanish-appear-after.json",
+    states: ["fixtures/animate/vanish-appear-before.json", "fixtures/animate/vanish-appear-after.json"],
   });
   const data = result.data as AnimateData;
   const failures = data.manifest.transitionChecks.filter((check) => check.status === "fail");
@@ -143,8 +136,7 @@ test("everything drawn is a participant: the newcomer, and the box still fading 
 
 test("the emitted CSS honours prefers-reduced-motion, and leaves departing elements gone rather than visible", async () => {
   const result = await animate.run({
-    before: "fixtures/animate/vanish-appear-before.json",
-    after: "fixtures/animate/vanish-appear-after.json",
+    states: ["fixtures/animate/vanish-appear-before.json", "fixtures/animate/vanish-appear-after.json"],
   });
   const { svg } = result.data as AnimateData;
   assert.match(svg, /@media \(prefers-reduced-motion: reduce\)/);
@@ -153,8 +145,7 @@ test("the emitted CSS honours prefers-reduced-motion, and leaves departing eleme
 
 test("easing rides through to the CSS, and an overshooting one is refused rather than silently unverified", async () => {
   const eased = await animate.run({
-    before: "fixtures/animate/swap-before.json",
-    after: "fixtures/animate/clean-after.json",
+    states: ["fixtures/animate/swap-before.json", "fixtures/animate/clean-after.json"],
     easing: "ease-in-out",
     delayMs: 200,
   });
@@ -165,8 +156,7 @@ test("easing rides through to the CSS, and an overshooting one is refused rather
   await assert.rejects(
     () =>
       animate.run({
-        before: "fixtures/animate/swap-before.json",
-        after: "fixtures/animate/clean-after.json",
+        states: ["fixtures/animate/swap-before.json", "fixtures/animate/clean-after.json"],
         easing: "cubic-bezier(0.68, -0.55, 0.265, 1.55)",
       }),
     SpecError,
@@ -178,8 +168,7 @@ test("a duration the browser would reject is refused, rather than reported as a 
     await assert.rejects(
       () =>
         animate.run({
-          before: "fixtures/animate/swap-before.json",
-          after: "fixtures/animate/clean-after.json",
+          states: ["fixtures/animate/swap-before.json", "fixtures/animate/clean-after.json"],
           durationMs,
         }),
       SpecError,
@@ -189,8 +178,7 @@ test("a duration the browser would reject is refused, rather than reported as a 
 
 test("an overlap the finished figure also has is left to boxes-do-not-overlap, reported once not twice", async () => {
   const result = await animate.run({
-    before: "fixtures/animate/delegated-before.json",
-    after: "fixtures/animate/delegated-after.json",
+    states: ["fixtures/animate/delegated-before.json", "fixtures/animate/delegated-after.json"],
   });
   const data = result.data as AnimateData;
   assert.equal(transitionOf(data).status, "pass");

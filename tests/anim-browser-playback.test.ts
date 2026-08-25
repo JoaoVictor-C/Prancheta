@@ -24,8 +24,7 @@ const animate = commandByName("animate")!;
 
 async function animatedSvg(extra: Record<string, unknown> = {}): Promise<string> {
   const result = await animate.run({
-    before: "fixtures/animate/vanish-appear-before.json",
-    after: "fixtures/animate/vanish-appear-after.json",
+    states: ["fixtures/animate/vanish-appear-before.json", "fixtures/animate/vanish-appear-after.json"],
     durationMs: 2000,
     ...extra,
   });

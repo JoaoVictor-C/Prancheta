@@ -164,24 +164,34 @@ function stops(trajectory: Trajectory, held: string, arrived: string): string {
   return `${open} { ${held} } ${close} { ${arrived} }`;
 }
 
-function pct(fraction: number): string {
-  return `${num(fraction * 100)}%`;
+/**
+ * Keyframe percentage, rounded to 6 decimal places rather than num()'s 2.
+ * A stop at k/segmentCount*100 is only exact when segmentCount divides 100 --
+ * for segmentCount=3 that is 33.333...%, and 2 decimals (33.33%) puts the
+ * ACTUAL keyframe far enough from the intended instant that sampling exactly
+ * at that fraction of the duration lands just short of it (opacity 0.9999
+ * instead of 1, found by a browser test rather than assumed safe). Pixel and
+ * opacity values stay at num()'s coarser rounding; only the keyframe's own
+ * position on the timeline needs this much precision.
+ */
+export function pct(fraction: number): string {
+  return `${(Math.round(fraction * 100 * 1e6) / 1e6).toString()}%`;
 }
 
 function unique(selectors: string[]): string[] {
   return [...new Set(selectors)];
 }
 
-function num(value: number): string {
+export function num(value: number): string {
   return (Math.round(value * 100) / 100).toString();
 }
 
 /** SVG/HTML ids may contain characters CSS identifiers cannot start or contain unescaped; this project's own ids are always simple, but escape defensively. */
-function cssSafe(id: string): string {
+export function cssSafe(id: string): string {
   return id.replace(/[^a-zA-Z0-9_-]/g, "_");
 }
 
-function cssId(id: string): string {
+export function cssId(id: string): string {
   // CSS.escape would be the real answer; this project's ids are always
   // author-chosen simple tokens (validated indirectly by JSON key rules),
   // so a defensive escape of the few characters that matter is enough.

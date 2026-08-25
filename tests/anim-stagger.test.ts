@@ -132,14 +132,12 @@ test("a motion window must be an ordered pair inside [0,1]", () => {
 
 test("the diagonal swap fails together and passes sequenced, through the real command", async () => {
   const together = await animate.run({
-    before: "fixtures/animate/stagger-swap-before.json",
-    after: "fixtures/animate/stagger-swap-together.json",
+    states: ["fixtures/animate/stagger-swap-before.json", "fixtures/animate/stagger-swap-together.json"],
   });
   assert.equal(together.exitCode, 2);
 
   const sequenced = await animate.run({
-    before: "fixtures/animate/stagger-swap-before.json",
-    after: "fixtures/animate/stagger-swap-sequenced.json",
+    states: ["fixtures/animate/stagger-swap-before.json", "fixtures/animate/stagger-swap-sequenced.json"],
   });
   assert.equal(sequenced.exitCode, 0);
   // Stagger is keyframe stops, never animation-delay: one clock, one duration.
@@ -151,14 +149,12 @@ test("the diagonal swap fails together and passes sequenced, through the real co
 
 test("a convoy is clean together and caught when the follower sets off first", async () => {
   const together = await animate.run({
-    before: "fixtures/animate/stagger-convoy-before.json",
-    after: "fixtures/animate/stagger-convoy-together.json",
+    states: ["fixtures/animate/stagger-convoy-before.json", "fixtures/animate/stagger-convoy-together.json"],
   });
   assert.equal(together.exitCode, 0);
 
   const staggered = await animate.run({
-    before: "fixtures/animate/stagger-convoy-before.json",
-    after: "fixtures/animate/stagger-convoy-follower-first.json",
+    states: ["fixtures/animate/stagger-convoy-before.json", "fixtures/animate/stagger-convoy-follower-first.json"],
   });
   assert.equal(staggered.exitCode, 2);
   const failure = (staggered.data as { manifest: { transitionChecks: { status: string; target: string }[] } })
@@ -170,8 +166,7 @@ test("easing is refused on a staggered figure, rather than emitting motion the c
   await assert.rejects(
     () =>
       animate.run({
-        before: "fixtures/animate/stagger-swap-before.json",
-        after: "fixtures/animate/stagger-swap-sequenced.json",
+        states: ["fixtures/animate/stagger-swap-before.json", "fixtures/animate/stagger-swap-sequenced.json"],
         easing: "ease-in-out",
       }),
     SpecError,
@@ -179,8 +174,7 @@ test("easing is refused on a staggered figure, rather than emitting motion the c
   // The same figure is fine linear, and an unstaggered one is fine eased.
   await assert.doesNotReject(() =>
     animate.run({
-      before: "fixtures/animate/stagger-swap-before.json",
-      after: "fixtures/animate/stagger-swap-together.json",
+      states: ["fixtures/animate/stagger-swap-before.json", "fixtures/animate/stagger-swap-together.json"],
       easing: "ease-in-out",
     }),
   );
@@ -190,8 +184,7 @@ test("easing is refused on a staggered figure, rather than emitting motion the c
 
 test("a browser holds, ramps and holds — the keyframe stops are the real mechanism", async () => {
   const result = await animate.run({
-    before: "fixtures/animate/stagger-swap-before.json",
-    after: "fixtures/animate/stagger-swap-sequenced.json",
+    states: ["fixtures/animate/stagger-swap-before.json", "fixtures/animate/stagger-swap-sequenced.json"],
     durationMs: 1000,
   });
   const svg = (result.data as { svg: string }).svg;
@@ -235,8 +228,7 @@ test("a window staggers a fade too, so an exit can finish before an entrance beg
   // drives a box and its own text from one keyframe block rather than deriving
   // the label's timing separately.
   const result = await animate.run({
-    before: "fixtures/animate/stagger-fade-before.json",
-    after: "fixtures/animate/stagger-fade-after.json",
+    states: ["fixtures/animate/stagger-fade-before.json", "fixtures/animate/stagger-fade-after.json"],
   });
   assert.equal(result.exitCode, 0);
   const svg = (result.data as { svg: string }).svg;

@@ -24,7 +24,7 @@ function usage(command?: Command): string {
 
   const positional = command.params
     .filter((param) => param.positional === true)
-    .map((param) => `<${param.name}>`)
+    .map((param) => (param.type === "string[]" ? `<${param.name}...>` : `<${param.name}>`))
     .join(" ");
   const flags = command.params
     .filter((param) => param.positional !== true)
@@ -61,8 +61,17 @@ export function parseArgs(command: Command, argv: string[]): Record<string, unkn
     if (!token.startsWith("-")) {
       const param = positionals[positionalIndex];
       if (param === undefined) throw new Error(`unexpected argument "${token}"`);
-      args[param.name] = token;
-      positionalIndex += 1;
+      if (param.type === "string[]") {
+        // A variadic positional -- must be the LAST one, and consumes every
+        // remaining non-flag token rather than a single value. Distinct from
+        // a repeatable FLAG's "string[]" (--args a --args b): here there is
+        // no flag name to repeat, so arity is "as many bare tokens as follow".
+        const existing = args[param.name];
+        args[param.name] = existing === undefined ? [token] : [...(existing as string[]), token];
+      } else {
+        args[param.name] = token;
+        positionalIndex += 1;
+      }
       continue;
     }
 
@@ -172,9 +181,8 @@ async function main(argv: string[]): Promise<number> {
 
   if (command.name === "animate" && payload?.svg !== undefined) {
     const outDir = String(parsed.out ?? "out");
-    const stem =
-      `${basename(String(parsed.before), extname(String(parsed.before)))}` +
-      `-${basename(String(parsed.after), extname(String(parsed.after)))}`;
+    const statePaths = Array.isArray(parsed.states) ? parsed.states.map(String) : [String(parsed.states)];
+    const stem = statePaths.map((path) => basename(path, extname(path))).join("-");
     await mkdir(outDir, { recursive: true });
     const svgPath = join(outDir, `${stem}.animated.svg`);
     const manifestPath = join(outDir, `${stem}.animated.manifest.json`);

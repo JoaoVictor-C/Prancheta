@@ -17,15 +17,15 @@ All default to `false` (constraints active). Per-diagram scope via `canvas.const
 
 **Why these three:** Each blocks specific legitimate diagram types without being load-bearing for the layout solver. Constraints 3 (axis-aligned), 5 (flat-color), and 6 (text limits) are kept as-is because they're either foundational to the solver or add complexity without structural value.
 
-## Animation: what M11.1, M11.2 and M13 left behind
+## Animation: what M11.1 through M14 left behind
 
-Four milestones shipped against [ADR 0012](docs/decisions/0012-animation-m11-scope.md), [0013](docs/decisions/0013-animation-m11-1-check-what-renders.md), [0014](docs/decisions/0014-animation-m11-2-motor.md) and [0015](docs/decisions/0015-animation-m13-stagger.md). See [ROADMAP.md](ROADMAP.md) for what each found. What is genuinely open, in the order the evidence favours:
+Five milestones shipped against [ADR 0012](docs/decisions/0012-animation-m11-scope.md), [0013](docs/decisions/0013-animation-m11-1-check-what-renders.md), [0014](docs/decisions/0014-animation-m11-2-motor.md), [0015](docs/decisions/0015-animation-m13-stagger.md) and [0016](docs/decisions/0016-animation-m14-sequences.md). See [ROADMAP.md](ROADMAP.md) for what each found. What is genuinely open, in the order the evidence favours:
 
-- [ ] **Connector motion (M12).** The most visibly wrong thing left in the output: a connector is pinned to its second-state route for the whole transition while its endpoint boxes glide away from it. Needs motion-crossing via adaptive-tolerance sampling, reusing the `FLATTEN_TOLERANCE` discipline — a routed connector is not guaranteed reducible to one linear inequality the way box motion is — plus true route interpolation. Its own ADR, the same complexity class as the curve-flattening fix.
+- [ ] **Connector motion (M12).** The most visibly wrong thing left in the output: a connector is pinned to its second-state (or, in a sequence, its final-state) route for the whole run while its endpoint boxes glide away from it. Needs motion-crossing via adaptive-tolerance sampling, reusing the `FLATTEN_TOLERANCE` discipline — a routed connector is not guaranteed reducible to one linear inequality the way box motion is — plus true route interpolation. Its own ADR, the same complexity class as the curve-flattening fix.
 
 - [ ] **Multi-label diff (M12).** `diff.ts` gives each element exactly one delta kind, priority-ordered, so a box that slides *and* recolours is `restyled` and hard-cuts rather than sliding. The root-cause fix for a defect M11.1 could only disclose. Deliberately not absorbed into M11.1: it changes `FigureDiff`'s public shape and the `diff` command's output, neither of which that defect required touching — and it needed the shared trajectory derivation as a prerequisite anyway, since without it `checks.ts` would still derive its own motion and could still disagree.
 
-- [ ] **Easing a staggered figure.** Guard 3 currently refuses the combination, because CSS applies a timing function between each *pair of keyframes*, so easing a staggered element eases its own ramp and every element ends up on a different reparametrisation of time. The way out is designed in ADR 0015 and **unverified**: ease the *global* clock, and give each element's ramp the corresponding sub-arc of that same Bezier, which is itself a Bezier by De Casteljau subdivision. Then there is one shared reparametrisation again and the original proof applies verbatim.
+- [ ] **Easing a staggered figure.** Guard 3 currently refuses the combination, because CSS applies a timing function between each *pair of keyframes*, so easing a staggered element eases its own ramp and every element ends up on a different reparametrisation of time. The way out is designed in ADR 0015 and **unverified**: ease the *global* clock, and give each element's ramp the corresponding sub-arc of that same Bezier, which is itself a Bezier by De Casteljau subdivision. Then there is one shared reparametrisation again and the original proof applies verbatim. Applies identically to an N-state sequence.
 
 - [ ] **A stagger profile helper.** Windows are per-element and hand-declared, which is right for a generator (see [experiments/animation/vortex.mjs](experiments/animation/vortex.mjs)) and tedious by hand for a large figure. No flag is offered because any such flag has to invent an ordering rule, and the core is the wrong place for one. If this lands it belongs in a preset or a generator, not in `animate`.
 
@@ -33,7 +33,11 @@ Four milestones shipped against [ADR 0012](docs/decisions/0012-animation-m11-sco
 
 - [ ] **Effects put ink outside the checked rect.** Inherited from every static check rather than introduced by animation, but worth stating in one place: the motion check reasons about the same rectangles the static checks do, not about pixels, so a box with elevation or depth can overlap in ink while its rect-trajectory reports clear.
 
-**Deliberate non-goals, not backlog.** Multi-keyframe timelines and camera/pan. Two authored states is the right primitive; both would turn `animate` into a presentation tool rather than a figure tool.
+- [ ] **A sequence launches one browser per state.** `render()` launches and closes its own Chromium instance; an N-state sequence pays that cost N times rather than sharing one browser across states. Not optimised in M14 — stated as a measured cost, not assumed away. Worth revisiting if sequences of a dozen-plus states become common.
+
+- [ ] **The identity-continuity bound is heuristic at the edges.** `persisted > 0` between every consecutive pair (ADR 0016) catches the paradigm slideshow and admits the paradigm evolving figure, but a slideshow with one persistent header element would still pass. Good enough for a feature nobody has stress-tested against adversarial specs yet; would need sharpening before it became a guard people actively try to route around.
+
+**Deliberate non-goals, not backlog (ADR 0016).** Shape morphing, a camera, and video export. None of the three is refused for lack of effort: an axis-aligned-box solver cannot reason about a shape becoming another shape; there is no check for legibility under zoom, and none can exist without a research-grade advance; and encoding to a video file would destroy the `prefers-reduced-motion` behaviour M11.2 deliberately shipped, so it could at most be an explicitly lossy convenience, never the deliverable. "More than two states" is **not** on this list any longer — see M14.
 
 ## Candidate figure modules, in priority order
 

@@ -536,21 +536,18 @@ const diffCommand: Command = {
 const animateCommand: Command = {
   name: "animate",
   summary:
-    "Tween two states of a figure into an animated SVG: eased position for moved " +
-    "boxes, crossfades for those arriving and leaving, optional per-element " +
-    "stagger, and a motion check that models what the renderer actually does.",
+    "Tween a sequence of two or more states of a figure into an animated SVG: eased " +
+    "position for moved boxes, crossfades for those arriving and leaving, optional " +
+    "per-element stagger, and a motion check that models what the renderer actually " +
+    "does at every transition and every state boundary.",
   params: [
     {
-      name: "before",
-      type: "string",
-      description: "Path to the first state.",
-      required: true,
-      positional: true,
-    },
-    {
-      name: "after",
-      type: "string",
-      description: "Path to the second state.",
+      name: "states",
+      type: "string[]",
+      description:
+        "Paths to each state, in order. Two states is a single transition; more is a " +
+        "checked sequence (ADR 0016) -- every consecutive pair needs at least one " +
+        "persisting element, or the run is refused as two unrelated figures rather than one evolving.",
       required: true,
       positional: true,
     },
@@ -589,13 +586,7 @@ const animateCommand: Command = {
     },
   ],
   async run(args) {
-    const { diffFigures } = await import("./anim/diff.ts");
-    const { validateAnimationSpecs, buildTimeline } = await import("./anim/timeline.ts");
-    const { boxesDoNotOverlapDuringTransition } = await import("./anim/checks.ts");
-    const { renderedTrajectories, requireLinearWhenStaggered } = await import("./anim/trajectory.ts");
-    const { emitAnimatedSvg } = await import("./anim/emit.ts");
     const { parseEasing } = await import("./anim/easing.ts");
-    const { toSvg } = await import("./render/svg.ts");
 
     // Validated before anything is rendered: a duration the browser rejects
     // makes the whole <style> block inert, so the manifest would report a
@@ -614,13 +605,101 @@ const animateCommand: Command = {
     }
     const easing = parseEasing(String(args.easing ?? "linear"));
 
+    const states = toStringArray(args.states);
+    if (states.length < 2) {
+      throw new SpecError(`animate: needs at least 2 states, got ${states.length}`);
+    }
+
+    // Three or more states: a checked sequence (ADR 0016, M14). Its own
+    // module owns the piecewise machinery -- every function it calls per
+    // segment is the exact two-state pipeline below, unchanged, run once per
+    // consecutive pair rather than once for the whole command.
+    if (states.length > 2) {
+      const { animateSequence } = await import("./anim/sequence.ts");
+      const result = await animateSequence(states, {
+        durationMs,
+        delayMs,
+        easing,
+        loop: args.loop === true,
+      });
+
+      const manifest = {
+        version: 1 as const,
+        states: result.states.map((state) => state.rendered.manifest),
+        segments: result.segments.map((segment) => ({
+          from: segment.index,
+          to: segment.index + 1,
+          persisted: segment.diff.persisted,
+          counts: segment.diff.counts,
+        })),
+        transitionChecks: result.transitionChecks,
+        disclosed: result.disclosed,
+        ok: result.ok,
+      };
+
+      const totalPersisted = result.segments.reduce((sum, segment) => sum + segment.diff.persisted, 0);
+      const totalTweened = result.segments.reduce((sum, segment) => sum + segment.timeline.moved.length, 0);
+      const totalFadedIn = result.segments.reduce(
+        (sum, segment) => sum + segment.timeline.faded.filter((fade) => fade.direction === "in").length,
+        0,
+      );
+      const totalFadedOut = result.segments.reduce(
+        (sum, segment) => sum + segment.timeline.faded.filter((fade) => fade.direction === "out").length,
+        0,
+      );
+      const lines: string[] = [
+        `${states.length} states, ${result.segments.length} transition(s) at ${durationMs}ms each ` +
+          `(${durationMs * result.segments.length}ms total), ${totalPersisted} persisted-element ` +
+          `boundary crossing(s), ${totalTweened} tweened, ${totalFadedIn} faded in, ${totalFadedOut} faded out`,
+      ];
+      for (const check of result.transitionChecks) {
+        const mark = check.status === "pass" ? "ok  " : check.status === "fail" ? "FAIL" : "n/a ";
+        lines.push(
+          `  ${mark} ${check.id} [${check.target}]${check.detail === undefined ? "" : ` — ${check.detail}`}`,
+        );
+      }
+      if (result.disclosed.hardCut.length > 0) {
+        lines.push(
+          `  !    ${result.disclosed.hardCut.join(", ")} moved but also changed size, style or text at some ` +
+            `boundary, so ${result.disclosed.hardCut.length === 1 ? "it hard-cuts" : "they hard-cut"} there ` +
+            `rather than tweening (diff.ts gives an element one delta kind per segment; ADR 0013)`,
+        );
+      }
+      if (result.disclosed.clippedOnExit.length > 0) {
+        lines.push(
+          `  !    ${result.disclosed.clippedOnExit.join(", ")} fades out beyond the canvas at the state it ` +
+            `leaves from, so ${result.disclosed.clippedOnExit.length === 1 ? "it is" : "they are"} clipped while leaving`,
+        );
+      }
+      result.states.forEach((state, index) => {
+        if (!state.rendered.manifest.ok) {
+          const authored = index === 0 || index === result.states.length - 1 ? " as authored" : "";
+          lines.push(`  FAIL one or more checks on state ${index}${authored} (see manifest.states[${index}])`);
+        }
+      });
+      if (!result.ok) {
+        lines.push("  !    no repair strategy for this check — translation repair is not wired (M10 debt)");
+      }
+
+      return { text: lines.join("\n"), data: { manifest, svg: result.svg }, exitCode: result.ok ? 0 : 2 };
+    }
+
+    // Exactly two states: the original M11-M13 path, unchanged, so every
+    // already-verified test keeps asserting on the exact output it always has.
+    const { diffFigures } = await import("./anim/diff.ts");
+    const { validateAnimationSpecs, buildTimeline } = await import("./anim/timeline.ts");
+    const { boxesDoNotOverlapDuringTransition } = await import("./anim/checks.ts");
+    const { renderedTrajectories, requireLinearWhenStaggered } = await import("./anim/trajectory.ts");
+    const { emitAnimatedSvg } = await import("./anim/emit.ts");
+    const { toSvg } = await import("./render/svg.ts");
+
     const load = async (path: string) => {
       const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
       return isPresetInput(parsed) ? expand(parsed) : parseSpec(parsed);
     };
     const [before, after] = await Promise.all([
-      load(String(args.before)),
-      load(String(args.after)),
+      load(states[0]!),
+      load(states[1]!),
     ]);
     // Repair disabled, same reasoning as `diff`: repair moves boxes for
     // reasons that have nothing to do with the author's two authored states,
