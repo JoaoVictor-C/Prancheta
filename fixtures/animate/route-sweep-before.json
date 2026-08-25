@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "title": "A connector that pivots past a box it does not join (before)",
+  "canvas": { "padding": 20 },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 600,
+    "height": 600,
+    "children": [
+      { "type": "block", "id": "pivot", "x": 100, "y": 300, "width": 10, "height": 10, "padding": 0 },
+      { "type": "block", "id": "obstacle", "x": 390, "y": 295, "width": 25, "height": 25, "padding": 0 }
+    ],
+    "connectors": [
+      { "id": "arm", "from": "pivot", "to": { "x": 500, "y": 100 }, "arrow": "none" }
+    ]
+  }
+}

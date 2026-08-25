@@ -55,13 +55,21 @@ test("every consecutive pair reuses the exact two-state solver: 3 clean boundari
   });
   const data = result.data as { manifest: SequenceManifest };
   const checks = data.manifest.transitionChecks;
-  assert.equal(checks.length, 3);
-  assert.ok(checks.every((check) => check.status === "pass"));
+  const overlap = checks.filter((c) => c.id === "boxes-do-not-overlap-during-transition");
+  assert.equal(overlap.length, 3);
+  assert.ok(overlap.every((check) => check.status === "pass"));
   // Each verdict is tagged with the segment it belongs to, so a reader can
   // tell WHICH transition a failure would have come from.
-  assert.match(checks[0]!.detail ?? "", /\[state 0 -> 1\]/);
-  assert.match(checks[1]!.detail ?? "", /\[state 1 -> 2\]/);
-  assert.match(checks[2]!.detail ?? "", /\[state 2 -> 3\]/);
+  assert.match(overlap[0]!.detail ?? "", /\[state 0 -> 1\]/);
+  assert.match(overlap[1]!.detail ?? "", /\[state 1 -> 2\]/);
+  assert.match(overlap[2]!.detail ?? "", /\[state 2 -> 3\]/);
+
+  // Every segment also answers for connector routes (ADR 0017). These states
+  // carry no connectors, so the honest verdict is "not applicable" once per
+  // segment -- not silence, which would read the same as "checked and clean".
+  const routes = checks.filter((c) => c.id === "connector-clear-of-boxes-during-transition");
+  assert.equal(routes.length, 3);
+  assert.ok(routes.every((check) => check.status === "not-applicable"));
 });
 
 test("a collision the two-state solver would catch is caught in exactly the segment it occurs, not the whole run", async () => {

@@ -1,0 +1,7 @@
+[
+  "P is fixed. Q sits h to its right, also on the curve. The line through both is a secant.",
+  "Slide Q closer to P. The secant pivots about P, and its slope falls.",
+  "Closer still. The slope keeps falling, but it is slowing down.",
+  "Very close now. The secant is almost resting on the curve at P.",
+  "In the limit the secant IS the tangent. Its slope, 2, is the derivative at P."
+]

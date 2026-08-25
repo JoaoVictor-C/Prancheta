@@ -1,0 +1,131 @@
+{
+  "version": 1,
+  "title": "The derivative at P, state 3",
+  "canvas": {
+    "padding": 20,
+    "constraints": {
+      "allowConnectorCrossing": true,
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 1100,
+    "height": 540,
+    "children": [
+      {
+        "type": "block",
+        "id": "title",
+        "x": 60,
+        "y": 28,
+        "width": 420,
+        "height": 54,
+        "label": "The derivative at P"
+      },
+      {
+        "type": "block",
+        "id": "curve-start",
+        "x": 150,
+        "y": 440,
+        "width": 1,
+        "height": 1,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none"
+      },
+      {
+        "type": "block",
+        "id": "P",
+        "shape": "circle",
+        "x": 444,
+        "y": 434,
+        "width": 13,
+        "height": 13,
+        "padding": 0,
+        "fill": "rgb(235, 238, 244)",
+        "stroke": "rgb(235, 238, 244)",
+        "strokeWidth": 1
+      },
+      {
+        "type": "block",
+        "id": "Q-3",
+        "shape": "circle",
+        "x": 459,
+        "y": 422,
+        "width": 13,
+        "height": 13,
+        "padding": 0,
+        "fill": "rgb(255, 132, 110)",
+        "stroke": "rgb(255, 132, 110)",
+        "strokeWidth": 1
+      },
+      {
+        "type": "block",
+        "id": "h-3",
+        "x": 740,
+        "y": 372,
+        "width": 320,
+        "height": 56,
+        "label": "h = 0.1"
+      },
+      {
+        "type": "block",
+        "id": "m-3",
+        "x": 740,
+        "y": 452,
+        "width": 320,
+        "height": 56,
+        "label": "slope = 2.10"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "curve",
+        "from": "curve-start",
+        "to": {
+          "x": 705,
+          "y": 87.75999999999993
+        },
+        "arrow": "none",
+        "stroke": "rgb(110, 143, 208)",
+        "strokeWidth": 2.5,
+        "curve": {
+          "kind": "bezier",
+          "control": [
+            {
+              "x": 335,
+              "y": 578.1333333333333
+            },
+            {
+              "x": 520,
+              "y": 460.71999999999997
+            }
+          ]
+        }
+      },
+      {
+        "id": "sec-left",
+        "from": "P",
+        "to": {
+          "x": 390,
+          "y": 487.04
+        },
+        "arrow": "none",
+        "stroke": "rgb(255, 196, 92)",
+        "strokeWidth": 3
+      },
+      {
+        "id": "sec-right",
+        "from": "P",
+        "to": {
+          "x": 702,
+          "y": 242.43199999999996
+        },
+        "arrow": "none",
+        "stroke": "rgb(255, 196, 92)",
+        "strokeWidth": 3
+      }
+    ]
+  }
+}

@@ -688,7 +688,9 @@ const animateCommand: Command = {
     // already-verified test keeps asserting on the exact output it always has.
     const { diffFigures } = await import("./anim/diff.ts");
     const { validateAnimationSpecs, buildTimeline } = await import("./anim/timeline.ts");
-    const { boxesDoNotOverlapDuringTransition } = await import("./anim/checks.ts");
+    const { boxesDoNotOverlapDuringTransition, connectorsClearOfBoxesDuringTransition } =
+      await import("./anim/checks.ts");
+    const { renderedRoutes } = await import("./anim/route.ts");
     const { renderedTrajectories, requireLinearWhenStaggered } = await import("./anim/trajectory.ts");
     const { emitAnimatedSvg } = await import("./anim/emit.ts");
     const { toSvg } = await import("./render/svg.ts");
@@ -725,10 +727,12 @@ const animateCommand: Command = {
     // exact about what the browser will draw (ADR 0015).
     requireLinearWhenStaggered(trajectories, easing);
 
-    const transitionChecks = boxesDoNotOverlapDuringTransition(trajectories, {
-      after: renderedAfter.figure,
-      before: renderedBefore.figure,
-    });
+    const routes = renderedRoutes(renderedAfter.figure, renderedBefore.figure);
+    const frames = { after: renderedAfter.figure, before: renderedBefore.figure };
+    const transitionChecks = [
+      ...boxesDoNotOverlapDuringTransition(trajectories, frames),
+      ...connectorsClearOfBoxesDuringTransition(routes, trajectories, frames),
+    ];
 
     // Disclosure, not refusal (ADR 0013). Three things the timeline or the
     // docs used to claim that the renderer does not do; naming them is cheaper
@@ -777,7 +781,7 @@ const animateCommand: Command = {
     const baseSvg =
       leaving.length === 0 ? renderedAfter.svg : toSvg(drawn, renderedAfter.effectiveSpec.title);
 
-    const svg = emitAnimatedSvg(baseSvg, drawn, trajectories, {
+    const svg = emitAnimatedSvg(baseSvg, drawn, trajectories, routes, {
       durationMs,
       delayMs,
       easing,

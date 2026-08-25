@@ -34,9 +34,12 @@
 import type { LaidOutFigure, Rect } from "../ir/types.ts";
 import { resolveConstraints } from "../ir/types.ts";
 import type { Check } from "../checks.ts";
-import { EPSILON } from "../checks.ts";
+import { contains, EPSILON } from "../checks.ts";
 import type { Trajectory } from "./trajectory.ts";
 import { rectAt } from "./trajectory.ts";
+import type { RouteTrajectory } from "./route.ts";
+import { pointsAt } from "./route.ts";
+import { segmentSweepsBox } from "./sweep.ts";
 import {
   anyRangeMeetsOpenInterval,
   intersectRange,
@@ -268,4 +271,198 @@ export function overlapRangesDuringTransition(a0: Rect, a1: Rect, b0: Rect, b1: 
  */
 export function overlapsDuringTransition(a0: Rect, a1: Rect, b0: Rect, b1: Rect): boolean {
   return anyRangeMeetsOpenInterval(overlapRangesDuringTransition(a0, a1, b0, b1), 0, 1);
+}
+
+/**
+ * Every connector the emitted SVG carries, against every box it does not join,
+ * over the whole transition (ADR 0017, M15).
+ *
+ * The moving analogue of `connector-clear-of-boxes`, and named apart for the
+ * same reason `boxes-do-not-overlap-during-transition` is: a reader must be
+ * able to tell "the line is clear in both states" from "the line is clear all
+ * the way between them" without parsing detail text. The defect it exists for
+ * is the one the M15 secant makes trivially constructible -- a line that
+ * pivots past a box, clear at t=0 and clear at t=1, straight through it at
+ * t=0.5.
+ *
+ * Three policies are inherited verbatim from the static check rather than
+ * re-decided, because a transition check that disagreed with the state checks
+ * it delegates to would be worse than no check:
+ *
+ *   - a connector may touch the boxes it JOINS, and only those;
+ *   - a box that CONTAINS an endpoint is structure, not collision (a callout
+ *     necessarily crosses the case it points into);
+ *   - a box is shrunk by the same half-pixel (`EDGE_EPSILON`) before the
+ *     question is asked.
+ *
+ * The geometry is in src/anim/sweep.ts, which is where the segment's turning
+ * normal makes this quadratic rather than linear.
+ */
+export function connectorsClearOfBoxesDuringTransition(
+  routes: Map<string, RouteTrajectory>,
+  trajectories: Map<string, Trajectory>,
+  frames: { after: LaidOutFigure; before?: LaidOutFigure },
+): Check[] {
+  const boxIds = [...trajectories.keys()].sort();
+  const examined = routes.size * boxIds.length;
+
+  if (examined === 0) {
+    return [
+      {
+        id: "connector-clear-of-boxes-during-transition",
+        target: "figure",
+        status: "not-applicable",
+        examined: 0,
+        detail: "not applicable: no connector and box are both drawn during the transition",
+      },
+    ];
+  }
+
+  // Relaxation is read off each frame's own figure, exactly as the box check
+  // reads allowOverlap: a delegation is to THAT frame's connector-clear-of-
+  // boxes, so the toggle that governs it is the one on the figure delegated to.
+  const finishedFigureChecked = !resolveConstraints({
+    constraints: frames.after.constraints,
+  }).allowConnectorCrossing;
+  const firstStateChecked =
+    frames.before !== undefined &&
+    !resolveConstraints({ constraints: frames.before.constraints }).allowConnectorCrossing;
+
+  // Where this DIVERGES from the box check above, deliberately.
+  //
+  // `allowOverlap` does not stand `boxes-do-not-overlap-during-transition`
+  // down, and should not: a designed overlap and a transient collision during
+  // a swap are two different phenomena, so a mid-transition crossing is news
+  // even in a figure that permits static overlap.
+  //
+  // `allowConnectorCrossing` is not like that. A line crossing a box is one
+  // phenomenon whether the line is moving or not, and this check asks exactly
+  // the question the toggle just excused, over an interval instead of an
+  // instant. Reporting it anyway would fail every figure that marks a point ON
+  // a plotted curve -- which is the case the toggle exists for -- and a check
+  // that always fires is a check that gets switched off. So it stands down
+  // with the toggle named, never silently.
+  if (!finishedFigureChecked && (frames.before === undefined || !firstStateChecked)) {
+    return [
+      {
+        id: "connector-clear-of-boxes-during-transition",
+        target: "figure",
+        status: "not-applicable",
+        detail:
+          "not applicable: canvas.constraints.allowConnectorCrossing is on, so this constraint " +
+          "was not enforced",
+      },
+    ];
+  }
+
+  const failures: { route: string; box: string; note: string }[] = [];
+
+  for (const route of [...routes.values()].sort((x, y) => (x.id < y.id ? -1 : 1))) {
+    for (const boxId of boxIds) {
+      if (route.endpointIds.includes(boxId)) continue;
+      const box = trajectories.get(boxId)!;
+
+      // Enclosure is structure, not collision -- and it has to be judged over
+      // the interval too, since a box that contains an endpoint at t=0 and at
+      // t=1 contains it throughout only because both travel affinely.
+      if (enclosesAnyEndpoint(box, route, trajectories)) continue;
+
+      const ranges = routeSweepsBox(route, box);
+      if (!anyRangeMeetsOpenInterval(ranges, 0, 1)) continue;
+
+      const atEnd = ranges.some((range) => range.hi >= T_END);
+      const atStart = ranges.some((range) => range.lo <= T_START);
+      if (atEnd && route.inFinishedFigure && box.inFinishedFigure && finishedFigureChecked) continue;
+      if (atStart && route.atFirstStatePlace && box.atFirstStatePlace && firstStateChecked) continue;
+
+      failures.push({
+        route: route.id,
+        box: boxId,
+        note: describeSweep(ranges, atStart, atEnd),
+      });
+    }
+  }
+
+  if (failures.length > 0) {
+    return failures.map(({ route, box, note }) => ({
+      id: "connector-clear-of-boxes-during-transition" as const,
+      target: route,
+      status: "fail" as const,
+      detail: `sweeps across ${box}, which it does not join, ${note}`,
+    }));
+  }
+
+  return [
+    {
+      id: "connector-clear-of-boxes-during-transition",
+      target: "figure",
+      status: "pass",
+      examined,
+      detail:
+        `resolved ${examined} connector/box pair(s) exactly over t in [0,1]; no route sweeps ` +
+        `across a box it does not join beyond what the two states' own checks cover`,
+    },
+  ];
+}
+
+/** Does any box this connector joins sit inside `box` for the whole transition? */
+function enclosesAnyEndpoint(
+  box: Trajectory,
+  route: RouteTrajectory,
+  trajectories: Map<string, Trajectory>,
+): boolean {
+  for (const endpointId of route.endpointIds) {
+    const endpoint = trajectories.get(endpointId);
+    if (endpoint === undefined) continue;
+    if (contains(rectAt(box, 0), rectAt(endpoint, 0)) && contains(rectAt(box, 1), rectAt(endpoint, 1))) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Every span of t where any of this route's segments is inside this box.
+ *
+ * Cut at both participants' motion-window edges first, exactly as
+ * `pairOverlapRanges` does: within a piece the route's vertices and the box's
+ * rect are all affine again, which is the premise `segmentSweepsBox` needs.
+ */
+export function routeSweepsBox(route: RouteTrajectory, box: Trajectory): TRange[] {
+  const cuts = [
+    ...new Set([0, route.window.start, route.window.end, box.window.start, box.window.end, 1]),
+  ]
+    .filter((value) => value >= 0 && value <= 1)
+    .sort((x, y) => x - y);
+
+  const out: TRange[] = [];
+  for (let i = 0; i < cuts.length - 1; i += 1) {
+    const p = cuts[i]!;
+    const q = cuts[i + 1]!;
+    if (q - p < 1e-12) continue;
+    const atP = pointsAt(route, p);
+    const atQ = pointsAt(route, q);
+    const boxP = rectAt(box, p);
+    const boxQ = rectAt(box, q);
+    for (let k = 0; k < atP.length - 1; k += 1) {
+      const local = segmentSweepsBox(atP[k]!, atQ[k]!, atP[k + 1]!, atQ[k + 1]!, boxP, boxQ);
+      for (const range of local) {
+        out.push({ lo: p + range.lo * (q - p), hi: p + range.hi * (q - p) });
+      }
+    }
+  }
+  return out;
+}
+
+function describeSweep(ranges: TRange[], atStart: boolean, atEnd: boolean): string {
+  const first = ranges[0]!;
+  const where =
+    atStart && atEnd
+      ? "for the whole transition"
+      : atStart
+        ? `from the start until t=${first.hi.toFixed(3)}`
+        : atEnd
+          ? `from t=${ranges[ranges.length - 1]!.lo.toFixed(3)} to the end`
+          : `over t in [${first.lo.toFixed(3)}, ${first.hi.toFixed(3)}]`;
+  return `${where} -- a defect no single frame shows`;
 }

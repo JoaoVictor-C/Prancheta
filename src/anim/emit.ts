@@ -33,8 +33,10 @@
  * leaves the motion check exact. A keyframe stop leaves it intact.
  */
 
-import type { LaidOutFigure, PlacedBox, PlacedText } from "../ir/types.ts";
+import type { LaidOutFigure, MotionWindow, PlacedBox, PlacedText } from "../ir/types.ts";
 import type { Trajectory } from "./trajectory.ts";
+import type { RouteTrajectory } from "./route.ts";
+import { pathData } from "./route.ts";
 
 export type EmitAnimatedSvgOptions = {
   /** Total transition length. Default 500ms. */
@@ -51,6 +53,7 @@ export function emitAnimatedSvg(
   baseSvg: string,
   drawn: LaidOutFigure,
   trajectories: Map<string, Trajectory>,
+  routes: Map<string, RouteTrajectory>,
   options: EmitAnimatedSvgOptions = {},
 ): string {
   const durationMs = options.durationMs ?? 500;
@@ -134,6 +137,22 @@ export function emitAnimatedSvg(
     }
   }
 
+  // Route tracks (ADR 0017). A connector's own `d` is animated rather than a
+  // transform on its group: only redrawing the polyline keeps a line attached
+  // to endpoints that are themselves moving. `> path` reaches past the group,
+  // where `d` would mean nothing, and stops short of any arrowhead sibling.
+  for (const route of routes.values()) {
+    if (!route.tweened) continue;
+    const suffix = `${cssSafe(route.id)}-${seq++}`;
+    const name = `pr-route-${suffix}`;
+    const held = `d: path("${pathData(route.from)}");`;
+    const arrived = `d: path("${pathData(route.to)}");`;
+    keyframeBlocks.push(`@keyframes ${name} { ${stops(route, held, arrived)} }`);
+    const selector = `#${cssId(route.id)} > path`;
+    rules.push(`${selector} { animation: ${name} ${timing}; }`);
+    stilled.push(selector);
+  }
+
   if (keyframeBlocks.length === 0 && rules.length === 0) return baseSvg;
 
   // A figure is a document, and this project already holds itself to WCAG AA
@@ -156,7 +175,7 @@ export function emitAnimatedSvg(
  * and at `arrived` after it closes. An unstaggered element collapses to the
  * plain from/to pair it always emitted.
  */
-function stops(trajectory: Trajectory, held: string, arrived: string): string {
+function stops(trajectory: { window: MotionWindow }, held: string, arrived: string): string {
   const { start, end } = trajectory.window;
   if (start <= 0 && end >= 1) return `from { ${held} } to { ${arrived} }`;
   const open = start <= 0 ? "0%" : `0%, ${pct(start)}`;

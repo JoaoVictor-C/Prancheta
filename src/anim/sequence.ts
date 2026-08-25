@@ -49,7 +49,12 @@ import { buildTimeline, validateAnimationSpecs } from "./timeline.ts";
 import type { AnimationTimeline } from "./timeline.ts";
 import { isStaggered, renderedTrajectories, requireLinearWhenStaggered } from "./trajectory.ts";
 import type { Trajectory } from "./trajectory.ts";
-import { boxesDoNotOverlapDuringTransition } from "./checks.ts";
+import {
+  boxesDoNotOverlapDuringTransition,
+  connectorsClearOfBoxesDuringTransition,
+} from "./checks.ts";
+import { pathData, pointsAt, renderedRoutes } from "./route.ts";
+import type { RouteTrajectory } from "./route.ts";
 import { cssId, cssSafe, num, pct } from "./emit.ts";
 
 export type State = { spec: FigureSpec; rendered: RenderResult };
@@ -71,6 +76,8 @@ export type Segment = {
   timeline: AnimationTimeline;
   /** LOCAL to this segment: window fractions are relative to THIS transition. */
   trajectories: Map<string, Trajectory>;
+  /** Connector routes, same locality (ADR 0017). */
+  routes: Map<string, RouteTrajectory>;
   transitionChecks: Check[];
 };
 
@@ -102,12 +109,14 @@ export function buildSegment(index: number, before: State, after: State): Segmen
     timeline,
     before.rendered.figure,
   );
-  const transitionChecks = boxesDoNotOverlapDuringTransition(trajectories, {
-    after: after.rendered.figure,
-    before: before.rendered.figure,
-  });
+  const routes = renderedRoutes(after.rendered.figure, before.rendered.figure);
+  const frames = { after: after.rendered.figure, before: before.rendered.figure };
+  const transitionChecks = [
+    ...boxesDoNotOverlapDuringTransition(trajectories, frames),
+    ...connectorsClearOfBoxesDuringTransition(routes, trajectories, frames),
+  ];
 
-  return { index, diff, timeline, trajectories, transitionChecks };
+  return { index, diff, timeline, trajectories, routes, transitionChecks };
 }
 
 export type AnimateSequenceOptions = {
@@ -367,6 +376,40 @@ function emitSequenceSvg(
         (lastFadeDirection === "out" ? hidden : stilled).push(`#${cssId(target)}`);
       }
     }
+  }
+
+  // -- route tracks (ADR 0017) ------------------------------------------
+  //
+  // A connector's own geometry, not a transform on it: `d` is animated so the
+  // polyline is redrawn each frame, which is the only way a line whose
+  // endpoints move can stay attached to them. The selector reaches PAST the
+  // element's group to the <path> itself, since `d` means nothing on a <g>,
+  // and stops at the direct child so an arrowhead sibling is left alone.
+  const routeIds = new Set<string>();
+  for (const segment of segments) for (const id of segment.routes.keys()) routeIds.add(id);
+
+  for (const id of routeIds) {
+    const participations = segments
+      .filter((segment) => segment.routes.has(id))
+      .map((segment) => ({ segment, route: segment.routes.get(id)! }));
+    if (!participations.some(({ route }) => route.tweened)) continue;
+
+    const routeStops: GlobalStop[] = [];
+    for (const { segment, route } of participations) {
+      for (const p of localStopPoints(route.window)) {
+        routeStops.push({
+          frac: (segment.index + p) / segmentCount,
+          value: `d: path("${pathData(pointsAt(route, p))}");`,
+        });
+      }
+    }
+
+    const suffix = `${cssSafe(id)}-${seq++}`;
+    const name = `pr-seq-route-${suffix}`;
+    keyframeBlocks.push(`@keyframes ${name} { ${renderStops(routeStops)} }`);
+    const selector = `#${cssId(id)} > path`;
+    rules.push(`${selector} { animation: ${name} ${timing}; }`);
+    stilled.push(selector);
   }
 
   if (keyframeBlocks.length === 0 && rules.length === 0) {

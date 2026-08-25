@@ -54,6 +54,12 @@ export type CheckId =
   // "these two states are each fine" from "the transition between them is
   // fine" without reading detail text.
   | "boxes-do-not-overlap-during-transition"
+  // The same distinction one degree of freedom further out (ADR 0017, M15).
+  // A connector's ROUTE can now travel, so a line clear of every box in both
+  // states can still sweep across one on the way -- which no instant check
+  // can see, and which the static connector-clear-of-boxes is not named to
+  // cover.
+  | "connector-clear-of-boxes-during-transition"
   // Module checks (decision 0005). Named apart WHERE THE METHOD DIFFERS: a
   // foreign SVG has no content boxes and no wrapped line boxes, so a check
   // called text-fits-box would promise something it cannot deliver.
