@@ -83,6 +83,22 @@ export function resolveConstraints(canvas: CanvasSpec | undefined): Required<Con
   };
 }
 
+/**
+ * When, within a transition, this element does its moving (ADR 0015).
+ *
+ * Both ends are fractions of the whole transition, so `{ start: 0.2, end: 0.7 }`
+ * means "hold at the first state until a fifth of the way through, travel, then
+ * hold at the second state". Absent means the whole transition, which is what
+ * every element did before staggering existed.
+ *
+ * This is NOT an `animation-delay`. The emitted CSS keeps every element on one
+ * clock of one duration and encodes the window as keyframe stops, because the
+ * proof that easing costs the motion check nothing depends on every element
+ * sharing a single reparametrisation of time. A delay would break that; a
+ * keyframe stop does not.
+ */
+export type MotionWindow = { start: number; end: number };
+
 export type FigureNode = Stack | Block | Scene;
 
 /**
@@ -373,6 +389,14 @@ export type Block = {
    */
   rotateBox?: boolean;
   /**
+   * When this block moves within a transition; see MotionWindow. Read from the
+   * state being animated TO, since it describes arrival. Has no effect on a
+   * static render, and is deliberately not a visual property: a block whose
+   * window differs between states is still `moved`, never `restyled`, so it
+   * still tweens.
+   */
+  motion?: MotionWindow;
+  /**
    * Visual effects, by design-system name (`"raised-2"`, `"recede"`) or as
    * literal effect objects. Purely visual: an effect never changes where this
    * block sits or how big it is. See effects/types.ts.
@@ -458,6 +482,8 @@ export type PlacedBox = {
   bleed?: Bleed;
   /** Carried straight from the spec's Block.categoryGroup; see there. */
   categoryGroup?: string;
+  /** Carried straight from the spec's Block.motion; see there. Absent means the whole transition. */
+  motion?: MotionWindow;
   /** Carried straight from the spec's Block.shape. Default "rect" when unset. */
   shape?: ShapeKind;
   /**
@@ -852,6 +878,25 @@ function validateNode(
     }
     if (node.rotateBox !== undefined && typeof node.rotateBox !== "boolean") {
       throw new SpecError(`${path}.rotateBox must be a boolean, got ${JSON.stringify(node.rotateBox)}`);
+    }
+    if (node.motion !== undefined) {
+      const motion = node.motion as Record<string, unknown>;
+      if (typeof motion !== "object" || motion === null) {
+        throw new SpecError(`${path}.motion must be an object with start and end`);
+      }
+      const { start, end } = motion as { start?: unknown; end?: unknown };
+      for (const [name, value] of [["start", start], ["end", end]] as const) {
+        if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 1) {
+          throw new SpecError(
+            `${path}.motion.${name} must be a number in [0,1], got ${JSON.stringify(value)}`,
+          );
+        }
+      }
+      if (!((start as number) < (end as number))) {
+        throw new SpecError(
+          `${path}.motion.start must be strictly less than .end, got ${JSON.stringify(start)} and ${JSON.stringify(end)}`,
+        );
+      }
     }
     if (node.fill !== undefined) validatePaint(node.fill, `${path}.fill`);
     if (node.stroke !== undefined) validatePaint(node.stroke, `${path}.stroke`);

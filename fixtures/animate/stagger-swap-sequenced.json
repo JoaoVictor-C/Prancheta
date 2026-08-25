@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "title": "a clears out before b sets off",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 420,
+    "height": 280,
+    "children": [
+      {
+        "type": "block",
+        "id": "a",
+        "x": 300,
+        "y": 200,
+        "width": 100,
+        "height": 60,
+        "label": "a",
+        "motion": {
+          "start": 0.0,
+          "end": 0.45
+        }
+      },
+      {
+        "type": "block",
+        "id": "b",
+        "x": 0,
+        "y": 200,
+        "width": 100,
+        "height": 60,
+        "label": "b",
+        "motion": {
+          "start": 0.55,
+          "end": 1.0
+        }
+      }
+    ]
+  }
+}

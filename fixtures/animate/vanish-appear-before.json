@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "title": "One box vanishes where another appears, while a third sweeps through that spot",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 400,
+    "height": 300,
+    "children": [
+      {
+        "type": "block",
+        "id": "vanishing",
+        "x": 170,
+        "y": 150,
+        "width": 60,
+        "height": 60,
+        "label": "v"
+      },
+      {
+        "type": "block",
+        "id": "sweeper",
+        "x": 0,
+        "y": 150,
+        "width": 60,
+        "height": 60,
+        "label": "s"
+      }
+    ]
+  }
+}

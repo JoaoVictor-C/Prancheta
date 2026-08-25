@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "title": "The newcomer is a constant occupier from t=0; the box that left occupies nothing",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 400,
+    "height": 300,
+    "children": [
+      {
+        "type": "block",
+        "id": "newcomer",
+        "x": 170,
+        "y": 150,
+        "width": 60,
+        "height": 60,
+        "label": "n"
+      },
+      {
+        "type": "block",
+        "id": "sweeper",
+        "x": 340,
+        "y": 150,
+        "width": 60,
+        "height": 60,
+        "label": "s"
+      }
+    ]
+  }
+}

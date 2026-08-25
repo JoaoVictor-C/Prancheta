@@ -30,7 +30,7 @@ node src/cli.ts <command> [options]
 | `modules` | — | List the figure modules: what each draws, what it needs installed, and a command that runs it.. |
 | `module` | <command> [--args] [--width] [--height] [--out] | Run a figure module in another language and verify what it drew. |
 | `diff` | <before> <after> | Lay out two states of a figure and report what changed between them: appeared, disappeared, moved, resized, restyled, retexted.. |
-| `animate` | <before> <after> [--out] [--durationMs] | Tween two states of a figure into an animated SVG: linear position for moved boxes, opacity fade for appeared/disappeared elements (ADR 0012, M11).. |
+| `animate` | <before> <after> [--out] [--durationMs] [--delayMs] [--easing] [--loop] | Tween two states of a figure into an animated SVG: eased position for moved boxes, crossfades for those arriving and leaving, optional per-element stagger, and a motion check that models what the renderer actually does.. |
 
 Start with `select`. Then write a preset input as JSON and `render` it. Every
 render prints its checks; a figure that fails them is reported, never hidden.

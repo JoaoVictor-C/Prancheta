@@ -1,7 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { overlapsDuringTransition, boxesDoNotOverlapDuringTransition } from "../src/anim/checks.ts";
-import type { PlacedBox, Rect } from "../src/ir/types.ts";
+import type { LaidOutFigure, PlacedBox, Rect } from "../src/ir/types.ts";
+import type { Trajectory } from "../src/anim/trajectory.ts";
+import { FULL_WINDOW } from "../src/anim/trajectory.ts";
 
 function rect(x: number, y: number, width: number, height: number): Rect {
   return { x, y, width, height };
@@ -80,33 +82,111 @@ test("two boxes already overlapping at rest (ddx=ddy=0, no motion) still overlap
 });
 
 // --- boxesDoNotOverlapDuringTransition: the Check[]-producing wrapper --------
+//
+// Since M11.1 the wrapper consumes trajectories (what the renderer actually
+// does) rather than two figures, and its population is what the emitted SVG
+// draws. These helpers build trajectories directly so the wrapper's own
+// policy -- the population, and the t=1 delegation to boxes-do-not-overlap --
+// is what is under test, not the derivation feeding it.
 
-test("not-applicable when fewer than two boxes persist across both states", () => {
-  const before = new Map([["a", box({ id: "a", x: 0, y: 0 })]]);
-  const after = new Map([["a", box({ id: "a", x: 100, y: 0 })]]);
-  const checks = boxesDoNotOverlapDuringTransition(before, after);
+function moves(id: string, from: [number, number], to: [number, number]): Trajectory {
+  return {
+    id,
+    from: rect(from[0], from[1], 40, 40),
+    to: rect(to[0], to[1], 40, 40),
+    tweened: true,
+    fade: null,
+    inFinishedFigure: true,
+    atFirstStatePlace: true,
+    window: FULL_WINDOW,
+  };
+}
+
+/** A box that hard-cuts: already at its second-state place when t=0. */
+function stays(id: string, at: [number, number]): Trajectory {
+  const r = rect(at[0], at[1], 40, 40);
+  return {
+    id,
+    from: r,
+    to: r,
+    tweened: false,
+    fade: null,
+    inFinishedFigure: true,
+    atFirstStatePlace: false,
+    window: FULL_WINDOW,
+  };
+}
+
+function fadesIn(id: string, at: [number, number]): Trajectory {
+  return { ...stays(id, at), fade: "in" };
+}
+
+function fadesOut(id: string, at: [number, number]): Trajectory {
+  return { ...stays(id, at), fade: "out", inFinishedFigure: false, atFirstStatePlace: true };
+}
+
+function figure(constraints?: LaidOutFigure["constraints"]): LaidOutFigure {
+  return { width: 500, height: 500, background: "#fff", elements: [], constraints };
+}
+
+function run(trajectories: Trajectory[], constraints?: LaidOutFigure["constraints"]) {
+  return boxesDoNotOverlapDuringTransition(new Map(trajectories.map((t) => [t.id, t])), {
+    after: figure(constraints),
+    before: figure(constraints),
+  });
+}
+
+test("not-applicable when fewer than two boxes are drawn during the transition", () => {
+  const checks = run([moves("a", [0, 0], [100, 0])]);
   assert.equal(checks.length, 1);
   assert.equal(checks[0]!.status, "not-applicable");
 });
 
 test("fails naming both boxes on a planted diagonal-swap defect, passes a clean transition", () => {
-  const before = new Map([
-    ["a", box({ id: "a", x: 0, y: 0 })],
-    ["b", box({ id: "b", x: 200, y: 0 })],
-  ]);
-  const after = new Map([
-    ["a", box({ id: "a", x: 200, y: 200 })],
-    ["b", box({ id: "b", x: 0, y: 200 })],
-  ]);
-  const checks = boxesDoNotOverlapDuringTransition(before, after);
+  const checks = run([moves("a", [0, 0], [200, 200]), moves("b", [200, 0], [0, 200])]);
   assert.equal(checks.length, 1);
   assert.equal(checks[0]!.status, "fail");
   assert.match(checks[0]!.detail ?? "", /overlaps b during the transition/);
 
-  const cleanAfter = new Map([
-    ["a", box({ id: "a", x: 200, y: 0 })],
-    ["b", box({ id: "b", x: 400, y: 0 })],
-  ]);
-  const cleanChecks = boxesDoNotOverlapDuringTransition(before, cleanAfter);
-  assert.equal(cleanChecks[0]!.status, "pass");
+  const clean = run([moves("a", [0, 0], [200, 0]), moves("b", [200, 0], [400, 0])]);
+  assert.equal(clean[0]!.status, "pass");
+});
+
+test("a box that hard-cuts is a constant occupier, and a sweeper that hits it fails -- the M11 false negative", () => {
+  // `a` moved but also restyled, so diff.ts labelled it `restyled` and it is
+  // not tweened: it sits at (100,0) from t=0. `b` sweeps straight through.
+  const checks = run([stays("a", [100, 0]), moves("b", [0, 0], [300, 0])]);
+  assert.equal(checks[0]!.status, "fail");
+  assert.match(checks[0]!.detail ?? "", /though clear of it in the finished figure/);
+});
+
+test("an overlap that is also present in the finished figure is delegated to boxes-do-not-overlap, not double-reported", () => {
+  // Two constants sitting on top of each other overlap at t=1 too, which is
+  // exactly what the after frame's own static check reports.
+  const checks = run([stays("a", [100, 100]), stays("b", [110, 110])]);
+  assert.equal(checks[0]!.status, "pass");
+});
+
+test("when allowOverlap stands the static check down, the delegation is void and the overlap is reported here", () => {
+  const checks = run([stays("a", [100, 100]), stays("b", [110, 110])], { allowOverlap: true });
+  assert.equal(checks[0]!.status, "fail");
+  assert.match(checks[0]!.detail ?? "", /allowOverlap stood boxes-do-not-overlap down/);
+});
+
+test("a crossfade is not an overlap: one box fades out exactly where another fades in", () => {
+  // The commonest transition anyone writes. Their opacities are complementary
+  // on one clock, so neither is ever at full strength while the other shows.
+  const checks = run([fadesOut("old", [100, 100]), fadesIn("new", [100, 100])]);
+  assert.equal(checks[0]!.status, "pass");
+});
+
+test("a box gliding through one that is still fading out is a real defect neither state contains", () => {
+  const checks = run([fadesOut("old", [150, 0]), moves("mover", [0, 0], [300, 0])]);
+  assert.equal(checks[0]!.status, "fail");
+  assert.match(checks[0]!.detail ?? "", /still fading out/);
+});
+
+test("two boxes that leave together, overlapping where the first state put them, are left to that state's own check", () => {
+  const checks = run([fadesOut("one", [100, 100]), fadesOut("two", [110, 110])]);
+  assert.equal(checks[0]!.status, "pass");
 });

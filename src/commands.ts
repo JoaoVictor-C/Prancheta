@@ -14,7 +14,7 @@
  */
 
 import { readFile } from "node:fs/promises";
-import { parseSpec } from "./ir/types.ts";
+import { SpecError, parseSpec } from "./ir/types.ts";
 import { expand, isPresetInput } from "./presets/index.ts";
 import { render } from "./pipeline.ts";
 import type { RenderOptions } from "./pipeline.ts";
@@ -536,8 +536,9 @@ const diffCommand: Command = {
 const animateCommand: Command = {
   name: "animate",
   summary:
-    "Tween two states of a figure into an animated SVG: linear position for " +
-    "moved boxes, opacity fade for appeared/disappeared elements (ADR 0012, M11).",
+    "Tween two states of a figure into an animated SVG: eased position for moved " +
+    "boxes, crossfades for those arriving and leaving, optional per-element " +
+    "stagger, and a motion check that models what the renderer actually does.",
   params: [
     {
       name: "before",
@@ -566,12 +567,52 @@ const animateCommand: Command = {
       description: "Transition length in milliseconds.",
       default: 500,
     },
+    {
+      name: "delayMs",
+      type: "number",
+      description: "Hold on the first state before the transition starts.",
+      default: 0,
+    },
+    {
+      name: "easing",
+      type: "string",
+      description:
+        "CSS timing function: linear, ease, ease-in, ease-out, ease-in-out, or " +
+        "cubic-bezier(x1,y1,x2,y2). Must be non-decreasing; overshoot is refused.",
+      default: "linear",
+    },
+    {
+      name: "loop",
+      type: "boolean",
+      description: "Repeat forever instead of settling on the second state.",
+      default: false,
+    },
   ],
   async run(args) {
     const { diffFigures } = await import("./anim/diff.ts");
     const { validateAnimationSpecs, buildTimeline } = await import("./anim/timeline.ts");
     const { boxesDoNotOverlapDuringTransition } = await import("./anim/checks.ts");
+    const { renderedTrajectories, requireLinearWhenStaggered } = await import("./anim/trajectory.ts");
     const { emitAnimatedSvg } = await import("./anim/emit.ts");
+    const { parseEasing } = await import("./anim/easing.ts");
+    const { toSvg } = await import("./render/svg.ts");
+
+    // Validated before anything is rendered: a duration the browser rejects
+    // makes the whole <style> block inert, so the manifest would report a
+    // transition over an SVG that never moves.
+    const durationMs = Number(args.durationMs ?? 500);
+    if (!Number.isFinite(durationMs) || durationMs <= 0) {
+      throw new SpecError(
+        `animate: --durationMs must be a positive number of milliseconds, got ${String(args.durationMs)}`,
+      );
+    }
+    const delayMs = Number(args.delayMs ?? 0);
+    if (!Number.isFinite(delayMs) || delayMs < 0) {
+      throw new SpecError(
+        `animate: --delayMs must be zero or a positive number of milliseconds, got ${String(args.delayMs)}`,
+      );
+    }
+    const easing = parseEasing(String(args.easing ?? "linear"));
 
     const load = async (path: string) => {
       const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
@@ -597,19 +638,71 @@ const animateCommand: Command = {
 
     const timeline = buildTimeline(diff, renderedBefore.figure, renderedAfter.figure);
 
-    const boxesOf = (figure: typeof renderedBefore.figure) =>
-      new Map(
-        figure.elements
-          .filter((element): element is Extract<typeof element, { kind: "box" }> => element.kind === "box")
-          .map((box) => [box.id, box] as const),
-      );
-    const transitionChecks = boxesDoNotOverlapDuringTransition(
-      boxesOf(renderedBefore.figure),
-      boxesOf(renderedAfter.figure),
-    );
+    // One derivation of the motion, read by the check here and by the emitter
+    // below (ADR 0013). M11 let those two derive it separately and they
+    // disagreed.
+    const trajectories = renderedTrajectories(renderedAfter.figure, timeline, renderedBefore.figure);
+    // Guard 3: a staggered figure must be linear, or the check stops being
+    // exact about what the browser will draw (ADR 0015).
+    requireLinearWhenStaggered(trajectories, easing);
 
-    const svg = emitAnimatedSvg(renderedAfter.svg, renderedAfter.figure, timeline, {
-      durationMs: Number(args.durationMs ?? 500),
+    const transitionChecks = boxesDoNotOverlapDuringTransition(trajectories, {
+      after: renderedAfter.figure,
+      before: renderedBefore.figure,
+    });
+
+    // Disclosure, not refusal (ADR 0013). Three things the timeline or the
+    // docs used to claim that the renderer does not do; naming them is cheaper
+    // than refusing specs that are perfectly legitimate.
+    const hardCut = [...trajectories.values()]
+      .filter((trajectory) => !trajectory.tweened)
+      .filter((trajectory) => {
+        const previous = renderedBefore.figure.elements.find((e) => e.id === trajectory.id);
+        return (
+          previous !== undefined &&
+          previous.kind === "box" &&
+          (Math.abs(previous.x - trajectory.to.x) > 0.5 || Math.abs(previous.y - trajectory.to.y) > 0.5)
+        );
+      })
+      .map((trajectory) => trajectory.id)
+      .sort();
+    // What actually leaves the canvas, as opposed to what the timeline names:
+    // an element disappears, and it is drawn at its first-state place and
+    // faded out (ADR 0014). One that sits outside the second state's canvas is
+    // clipped there, and that is worth saying rather than letting the reader
+    // assume they saw it go.
+    const leavingIds = new Set(
+      timeline.faded.filter((fade) => fade.direction === "out").map((fade) => fade.id),
+    );
+    const leaving = renderedBefore.figure.elements.filter((element) => leavingIds.has(element.id));
+    const clippedOnExit = leaving
+      .filter((element) => element.kind === "box")
+      .filter((element) => {
+        const box = element as Extract<typeof element, { kind: "box" }>;
+        return (
+          box.x < 0 ||
+          box.y < 0 ||
+          box.x + box.width > renderedAfter.figure.width ||
+          box.y + box.height > renderedAfter.figure.height
+        );
+      })
+      .map((element) => element.id)
+      .sort();
+
+    // The base SVG is the second state plus what is on its way out, drawn
+    // underneath so departing content never obscures what is arriving.
+    const drawn = {
+      ...renderedAfter.figure,
+      elements: [...leaving, ...renderedAfter.figure.elements],
+    };
+    const baseSvg =
+      leaving.length === 0 ? renderedAfter.svg : toSvg(drawn, renderedAfter.effectiveSpec.title);
+
+    const svg = emitAnimatedSvg(baseSvg, drawn, trajectories, {
+      durationMs,
+      delayMs,
+      easing,
+      loop: args.loop === true,
     });
 
     const ok =
@@ -623,12 +716,14 @@ const animateCommand: Command = {
       after: renderedAfter.manifest,
       diff: { persisted: diff.persisted, counts: diff.counts },
       transitionChecks,
+      disclosed: { hardCut, clippedOnExit },
       ok,
     };
 
+    const fadedIn = timeline.faded.length - leavingIds.size;
     const lines: string[] = [
       `${diff.persisted} element(s) persisted, ` +
-        `${timeline.moved.length} tweened, ${timeline.faded.length} faded`,
+        `${timeline.moved.length} tweened, ${fadedIn} faded in, ${leavingIds.size} faded out`,
     ];
     for (const check of transitionChecks) {
       const mark = check.status === "pass" ? "ok  " : check.status === "fail" ? "FAIL" : "n/a ";
@@ -636,7 +731,22 @@ const animateCommand: Command = {
         `  ${mark} ${check.id} [${check.target}]${check.detail === undefined ? "" : ` — ${check.detail}`}`,
       );
     }
-    if (!renderedBefore.manifest.ok) lines.push("  FAIL one or more checks on the first state (see manifest.before)");
+    if (hardCut.length > 0) {
+      lines.push(
+        `  !    ${hardCut.join(", ")} moved but also changed size, style or text, so ${hardCut.length === 1 ? "it hard-cuts" : "they hard-cut"} ` +
+          `rather than tweening (diff.ts gives an element one delta kind; ADR 0013)`,
+      );
+    }
+    if (clippedOnExit.length > 0) {
+      lines.push(
+        `  !    ${clippedOnExit.join(", ")} fades out beyond the second state's canvas, so ${clippedOnExit.length === 1 ? "it is" : "they are"} clipped while leaving`,
+      );
+    }
+    // manifest.before reports on the AUTHORED first state, which is not a
+    // frame this animation ever renders: at t=0 every untweened box already
+    // sits at its second-state position. Worth checking, worth not confusing
+    // with the transition.
+    if (!renderedBefore.manifest.ok) lines.push("  FAIL one or more checks on the first state as authored (see manifest.before; it is not a rendered frame)");
     if (!renderedAfter.manifest.ok) lines.push("  FAIL one or more checks on the second state (see manifest.after)");
     if (!ok) lines.push("  !    no repair strategy for this check — translation repair is not wired (M10 debt)");
 

@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "title": "Diagonal swap, first state",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 420,
+    "height": 280,
+    "children": [
+      {
+        "type": "block",
+        "id": "a",
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 60,
+        "label": "a"
+      },
+      {
+        "type": "block",
+        "id": "b",
+        "x": 300,
+        "y": 0,
+        "width": 100,
+        "height": 60,
+        "label": "b"
+      }
+    ]
+  }
+}

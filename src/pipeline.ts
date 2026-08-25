@@ -40,6 +40,7 @@ import { toSvg } from "./render/svg.ts";
 import { rasterise } from "./render/raster.ts";
 import { attachEffects } from "./effects/apply.ts";
 import { attachCategoryGroups } from "./colour/apply.ts";
+import { attachMotionWindows } from "./anim/apply.ts";
 import { attachShapes } from "./geometry/apply.ts";
 import { attachRotations, attachBoxRotation } from "./geometry/rotate.ts";
 import { attachPaints } from "./paint/apply.ts";
@@ -225,6 +226,7 @@ async function layOut(
   // move anything. See effects/apply.ts for why the ordering is the argument.
   figure = attachEffects(figure, spec);
   figure = attachCategoryGroups(figure, spec);
+  figure = attachMotionWindows(figure, spec);
   figure = attachShapes(figure, spec);
   figure = attachPaints(figure, spec);
   // Box rotation before label rotation: a label whose owner also rotates

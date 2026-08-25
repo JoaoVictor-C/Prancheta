@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "title": "A hard-cutting occupier standing in a sweeper's path",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 400,
+    "height": 300,
+    "children": [
+      {
+        "type": "block",
+        "id": "occupier",
+        "x": 0,
+        "y": 0,
+        "width": 60,
+        "height": 60,
+        "label": "o"
+      },
+      {
+        "type": "block",
+        "id": "sweeper",
+        "x": 0,
+        "y": 150,
+        "width": 60,
+        "height": 60,
+        "label": "s"
+      }
+    ]
+  }
+}

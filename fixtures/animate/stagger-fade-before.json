@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "title": "one stays, one leaves",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 460,
+    "height": 160,
+    "children": [
+      {
+        "type": "block",
+        "id": "keep",
+        "x": 0,
+        "y": 0,
+        "width": 100,
+        "height": 60,
+        "label": "keep"
+      },
+      {
+        "type": "block",
+        "id": "gone",
+        "x": 340,
+        "y": 0,
+        "width": 100,
+        "height": 60,
+        "label": "gone",
+        "motion": {
+          "start": 0.0,
+          "end": 0.4
+        }
+      }
+    ]
+  }
+}

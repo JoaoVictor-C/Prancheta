@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "title": "The M11 false positive: a hard-cuts clear of b's sweep, but M11 modelled it as sliding",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 400,
+    "height": 300,
+    "children": [
+      {
+        "type": "block",
+        "id": "a",
+        "x": 300,
+        "y": 200,
+        "width": 60,
+        "height": 60,
+        "label": "a",
+        "stroke": "#c02020"
+      },
+      {
+        "type": "block",
+        "id": "b",
+        "x": 0,
+        "y": 200,
+        "width": 60,
+        "height": 60,
+        "label": "b"
+      }
+    ]
+  }
+}

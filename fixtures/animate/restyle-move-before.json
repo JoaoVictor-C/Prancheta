@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "title": "A box that moves AND restyles: diff.ts labels it restyled, so it hard-cuts",
+  "canvas": {
+    "padding": 40
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 400,
+    "height": 300,
+    "children": [
+      {
+        "type": "block",
+        "id": "a",
+        "x": 0,
+        "y": 0,
+        "width": 60,
+        "height": 60,
+        "label": "a"
+      },
+      {
+        "type": "block",
+        "id": "b",
+        "x": 300,
+        "y": 0,
+        "width": 60,
+        "height": 60,
+        "label": "b"
+      }
+    ]
+  }
+}
