@@ -17,6 +17,24 @@ All default to `false` (constraints active). Per-diagram scope via `canvas.const
 
 **Why these three:** Each blocks specific legitimate diagram types without being load-bearing for the layout solver. Constraints 3 (axis-aligned), 5 (flat-color), and 6 (text limits) are kept as-is because they're either foundational to the solver or add complexity without structural value.
 
+## Animation: what M11.1, M11.2 and M13 left behind
+
+Four milestones shipped against [ADR 0012](docs/decisions/0012-animation-m11-scope.md), [0013](docs/decisions/0013-animation-m11-1-check-what-renders.md), [0014](docs/decisions/0014-animation-m11-2-motor.md) and [0015](docs/decisions/0015-animation-m13-stagger.md). See [ROADMAP.md](ROADMAP.md) for what each found. What is genuinely open, in the order the evidence favours:
+
+- [ ] **Connector motion (M12).** The most visibly wrong thing left in the output: a connector is pinned to its second-state route for the whole transition while its endpoint boxes glide away from it. Needs motion-crossing via adaptive-tolerance sampling, reusing the `FLATTEN_TOLERANCE` discipline — a routed connector is not guaranteed reducible to one linear inequality the way box motion is — plus true route interpolation. Its own ADR, the same complexity class as the curve-flattening fix.
+
+- [ ] **Multi-label diff (M12).** `diff.ts` gives each element exactly one delta kind, priority-ordered, so a box that slides *and* recolours is `restyled` and hard-cuts rather than sliding. The root-cause fix for a defect M11.1 could only disclose. Deliberately not absorbed into M11.1: it changes `FigureDiff`'s public shape and the `diff` command's output, neither of which that defect required touching — and it needed the shared trajectory derivation as a prerequisite anyway, since without it `checks.ts` would still derive its own motion and could still disagree.
+
+- [ ] **Easing a staggered figure.** Guard 3 currently refuses the combination, because CSS applies a timing function between each *pair of keyframes*, so easing a staggered element eases its own ramp and every element ends up on a different reparametrisation of time. The way out is designed in ADR 0015 and **unverified**: ease the *global* clock, and give each element's ramp the corresponding sub-arc of that same Bezier, which is itself a Bezier by De Casteljau subdivision. Then there is one shared reparametrisation again and the original proof applies verbatim.
+
+- [ ] **A stagger profile helper.** Windows are per-element and hand-declared, which is right for a generator (see [experiments/animation/vortex.mjs](experiments/animation/vortex.mjs)) and tedious by hand for a large figure. No flag is offered because any such flag has to invent an ordering rule, and the core is the wrong place for one. If this lands it belongs in a preset or a generator, not in `animate`.
+
+- [ ] **Unowned text is still not a participant.** The motion check's population is drawn *boxes*. A `PlacedText` with no owner — a figure title rather than a label — is drawn too and has never been checked against anything moving. Owned text is covered, since it is contained in its owner's content rect and travels with it. Standing limit since ADR 0012, restated in 0013, still open.
+
+- [ ] **Effects put ink outside the checked rect.** Inherited from every static check rather than introduced by animation, but worth stating in one place: the motion check reasons about the same rectangles the static checks do, not about pixels, so a box with elevation or depth can overlap in ink while its rect-trajectory reports clear.
+
+**Deliberate non-goals, not backlog.** Multi-keyframe timelines and camera/pan. Two authored states is the right primitive; both would turn `animate` into a presentation tool rather than a figure tool.
+
 ## Candidate figure modules, in priority order
 
 - [x] **Reaction schemes** — [modules/reaction](modules/reaction/MODULE.md). Reactants → arrow → products, reusing `molecule`'s per-molecule geometry via a `.`-joined SMILES mini-DSL (repeated components declare a coefficient). Four canned reactions, `--misdeclare` probe, e2e tests.

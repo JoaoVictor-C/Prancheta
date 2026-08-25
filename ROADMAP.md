@@ -770,11 +770,61 @@ The first milestone that moves anything. Reasoned through with Terza across four
 
 Full suite: 758/758. Typecheck and `check:docs` clean.
 
+### 2026-08-24 - M11.1: the check was modelling a different animation from the one that shipped
+
+M11 landed with 758/758 green and a clean typecheck. Running `animate` on a two-box probe found a soundness defect none of that could see, because it lived between two modules that never call each other. [ADR 0013](docs/decisions/0013-animation-m11-1-check-what-renders.md).
+
+`diff.ts` gives each element **one** delta kind, priority-ordered, so a box that both moves and changes fill is `restyled` and never `moved`. `buildTimeline` tweens only `moved`, so it hard-cuts. `emit.ts` renders the second state as its base and animates only `translate`, so an untweened box sits at its **final** position from t=0. And `checks.ts` took every box in both states regardless of delta kind and solved as if it lerped -- using **first**-state widths. Reproduced: a fixture reporting `1 tweened` and then failing the transition check naming the box that never moved. Its mirror is the dangerous one -- a hard-cutting box sitting exactly where a tweened box sweeps through, excused because the check believed it had slid away.
+
+**The fix is structural, not corrective.** [src/anim/trajectory.ts](src/anim/trajectory.ts) is one derivation of what each box actually does, read by both `emit.ts` and `checks.ts`, so they cannot drift again -- the same one-source-two-consumers discipline `gen-views.ts` applies to the generated docs. Tweened boxes lerp; everything else is a **constant**, degenerately affine, so [interval.ts](src/anim/interval.ts) needed no change at all.
+
+**The population became derived rather than inherited.** Participants are what the emitted SVG draws. That admits appeared boxes -- which occupy their full rect from t=0 while fading in, and can be struck by a sweeping box, a three-way blind spot no single-frame check could see -- and excludes disappeared ones for free, as a fact about the renderer rather than a clause in the check.
+
+**Delegation, so each fact is reported once.** Overlaps whose range reaches t=1 belong to the finished figure's own `boxes-do-not-overlap`. Conditional on that check being enabled: when `allowOverlap` (decision 0010) stands it down, the silence has nothing to rest on, so the violation is reported here.
+
+**Three false disclosures deleted**, all with one cause -- each was written about the design that was intended rather than the SVG that is emitted, which is the identical error the check itself was making. A connector does not "hard-cut between its two authored paths"; it is pinned to its second-state route for the whole transition. A disappeared element was not faded; it was not drawn at all, while the CLI counted it as faded. And the check's own detail said "clear of it at both authored endpoints", already false under M11 the moment any box hard-cut, because the rendered t=0 frame is not the first-state figure.
+
+Four fixtures in [fixtures/animate/](fixtures/animate/) pin all of it, driven through `commandByName("animate")`. Refusal, not silence, was rejected here on purpose: refusing a box that slides and changes colour would reject the most ordinary animation anyone writes, and the renderer's behaviour is fully determined, so there is no unknown to be honest about. Disclosure instead. Full suite 766/766.
+
+### 2026-08-24 - M11.2: easing, exits, and the reader who asked for less motion
+
+The other half -- improving the animation itself, and the first milestone where a *visual* improvement had to buy its way past the house rule. [ADR 0014](docs/decisions/0014-animation-m11-2-motor.md).
+
+**Easing costs the check nothing, and that is a proof rather than a hope.** Every box shares one easing `e`, so overlap at time `t` is overlap at parameter `s = e(t)`; if `e` is continuous, non-decreasing and fixes 0 and 1, the intermediate value theorem makes "overlaps somewhere strictly inside" **invariant** under it. The solver answers in `s`, and that is already the answer in `t`. Each premise became a refusal in [src/anim/easing.ts](src/anim/easing.ts): overshoot is rejected by `0 <= y1 <= y2 <= 1` -- a Bezier lies inside the convex hull of its derivative's Bernstein control values, so that is *sufficient*, conservative, and stated as such; `steps()` is rejected because it skips ranges of `s` where a real overlap can hide.
+
+**Disappearing elements are drawn now, and fade.** The base carries them re-injected at their first-state position, painted underneath. Being drawn makes them participants -- ADR 0013's population rule did not change, the drawn set did, which is the point of having derived it. Three policies follow: a crossfade is exempt (complementary opacities, never both at full strength); a box gliding through one still fading out is reported, a frame neither authored state contains; and delegation became pairwise, since two boxes both at their first-state place have exactly their first-state geometry.
+
+**`prefers-reduced-motion` is honoured**, which a project running WCAG AA contrast checks on every label had no business omitting. Plus `--loop` and `--delayMs`.
+
+**Two latent defects fixed in passing.** The `@keyframes` name came from a slug mapping every non-alphanumeric to `_`, so `a.b` and `a_b` collided and the second block silently animated the first box from the wrong place -- reachable precisely because ADR 0012's first guard *requires* author-declared ids. And `--durationMs` went from argv into the CSS unchecked, where a value the browser drops leaves the manifest reporting a transition over an SVG that never moves.
+
+**One bug found by reading the emitted CSS rather than by a test:** with a delay, `animation-fill-mode: forwards` parks movers at their *destination* during the hold, then snaps them backwards. Changed to `both`. Same species as the three false disclosures -- a hold that did not hold.
+
+[tests/anim-browser-playback.test.ts](tests/anim-browser-playback.test.ts) loads the emitted SVG into Chromium and seeks the animations through the Web Animations API, because agreeing with your own generated strings is not evidence. Full suite 783/783.
+
+### 2026-08-25 - M13: stagger, without giving up an exact check
+
+ADR 0014 closed with a limit stated as though it were permanent: *"one coherent gesture, rich in space, never in time"*. No waves, no ripples, no cascades. That was correct about `animation-delay` and **wrong about stagger in general**. [ADR 0015](docs/decisions/0015-animation-m13-stagger.md).
+
+The easing proof needs every element to share one monotone reparametrisation of time. A delay gives each its own clock. But a delay is not the only way to move during part of a transition: keep one duration and one clock, and encode the window as **keyframe stops**. `motion: { start, end }` on a `Block` emits `0%, 20% { ...start } 70%, 100% { ...end }` -- the stagger lives entirely in where the stops sit, and the premise survives untouched.
+
+**Hold to ramp to hold is piecewise affine**, so `pairOverlapRanges` cuts the timeline at a pair's at most four window edges and runs `overlapRangesDuringTransition` -- completely unchanged -- per segment, clipping each answer to its own domain before mapping back. Still exact, still no tolerance, still O(1) per pair. The degenerate case is not close to the old behaviour but **identical**: a test asserts agreement over ten thousand random pairs, because M13 must not quietly change the verdict on any figure already drawn.
+
+**The check had to change too, not just the renderer**, and that is the whole justification for the milestone's shape. Stagger removes collisions -- the diagonal swap becomes clean when one box clears out before the other sets off -- but it also **creates** a defect class that does not exist on a shared clock: a convoy with a constant gap is clean until the follower sets off first and drives through where the leader is still parked. Nothing about either authored state changed. A renderer shipped without the matching check would have shipped that as a blind spot.
+
+**Guard 3 refuses easing on a staggered figure**, naming the elements that declared a window. CSS applies a timing function between each *pair of keyframes*, so easing here gives every element its own curve, and the invariance holds only while they share one. Honest refusal beats emitting motion the check cannot speak about.
+
+`motion` is attached after layout by [src/anim/apply.ts](src/anim/apply.ts), the same shape as `categoryGroup` and `shape` -- it changes nothing about layout, so no static check has to learn about it, and a block whose window differs between states is still `moved`, never `restyled`.
+
+**A design intuition the checker overturned immediately.** A radial ripple on the vortex demo was expected to be roughly free. It is not -- it *compounds* the shear the differential twist already has, because an inner seed turns while its outer neighbour has not set off. Asked for the ripple at the standing 138-degree ceiling, the checker returned five colliding pairs. So the ceiling is a curve, not a number, and every point on it was measured: 138 degrees with no ripple, 135 at span 0.8, 121 at 0.6, 99 at 0.45, 77 at 0.3.
+
+Deferred and designed but unverified, deliberately not claimed as working: easing a staggered figure by easing the *global* clock and giving each ramp the corresponding sub-arc of that same Bezier, which De Casteljau subdivision makes exact. Full suite 793/793.
+
 ## Where this goes next
 
 Every milestone in the original plan reached a ✅ at some point, but a 2026-08-24 reachability audit found several were marked done on the strength of a passing test file rather than a real consumer — the same failure mode step 36 caught first. See [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md)'s stage 5 and 6 tables and the entry below for what is and is not actually wired. What follows here is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.
 
-**Animation, M12 and beyond.** M11 (above) ships box position tweening with a real, sampling-free check and a real consumer. Connector motion-crossing and true connector-route interpolation are named and deferred, not silently absent — they need adaptive-tolerance sampling and their own ADR, the same complexity class as the curve-flattening fix. Easing beyond linear, multi-keyframe timelines, resize/restyle/retext tweening and camera/pan are all still unstarted.
+**Animation, M12 and beyond.** M11 shipped box tweening with a sampling-free check and a real consumer; M11.1 made that check model the animation that actually renders; M11.2 added easing, exits and reduced motion; M13 added stagger. What is left, in the order the evidence favours: **connector motion**, still the most visibly wrong thing in the output — a connector is pinned to its second-state route while its endpoints glide away from it — needing adaptive-tolerance sampling and its own ADR, the same complexity class as the curve-flattening fix. **Multi-label diff**, so a box that slides *and* recolours actually slides rather than hard-cutting; it changes `FigureDiff`'s public shape and the `diff` command's output, which is why it was not absorbed into M11.1. **Easing a staggered figure**, designed in ADR 0015 and unverified. Multi-keyframe timelines, resize/restyle/retext tweening and camera/pan remain unstarted, and the first two are deliberate non-goals — two authored states is the right primitive, and both would turn `animate` into a presentation tool rather than a figure tool.
 
 **Semantic checks.** Everything verified so far is geometric — that a figure is well-formed. Nothing checks that an arrow points the way the content says, that no entity was invented, that nothing was dropped. That needs a model in the loop and so cannot live in CI, which is exactly the line drawn in [0004](docs/decisions/0004-selection-core.md) and [0005](docs/decisions/0005-module-protocol.md). It ships as a script when it ships.
 
@@ -794,7 +844,7 @@ Animation rendering · manim / Motion Canvas / Remotion integration · interacti
 
 - Final rasteriser: Chromium for fidelity, or resvg for identical output across platforms. M0 evidence: on this figure the two are visually indistinguishable, so resvg stays a *check* for now and the decision can wait for a figure that stresses gradients, filters or clipping.
 - Whether `graph` should also front Graphviz, or ELK alone is enough.
-- Where pacing and camera live once animation arrives. The states-plus-transitions idea bounds this but is untested.
+- Where pacing and camera live once animation arrives. The states-plus-transitions idea bounds this, and M13 tested part of it: per-element *pacing* fits inside two states as a motion window, without a timeline. Camera is still untested and still unstarted.
 
 ## Known costs, accepted deliberately
 
