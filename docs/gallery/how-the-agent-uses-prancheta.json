@@ -1,0 +1,278 @@
+{
+  "version": 1,
+  "title": "How an agent uses Prancheta, and what happens inside",
+  "canvas": {
+    "theme": "dark",
+    "padding": 56,
+    "vignette": 0.22
+  },
+  "root": {
+    "type": "scene",
+    "id": "graph",
+    "layout": "graph",
+    "graph": {
+      "algorithm": "layered",
+      "direction": "RIGHT",
+      "spacing": 44,
+      "layerSpacing": 84,
+      "wrapping": "multi-edge",
+      "aspectRatio": 1.1
+    },
+    "children": [
+      {
+        "type": "block",
+        "id": "request",
+        "label": "1 · a request arrives: \"draw me a schematic\"",
+        "role": "primary",
+        "effect": "raised-2",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "select",
+        "label": "2 · select — what IS this content, and how must it be drawn?",
+        "role": "default",
+        "effect": "raised-2",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "outcome",
+        "label": "3 · a preset · a composition of two · none, author raw IR",
+        "role": "default",
+        "effect": "raised-2",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "author",
+        "label": "4 · the agent authors a preset input as JSON",
+        "role": "default",
+        "effect": "raised-2",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "validate",
+        "label": "5 · validate — the document only, in milliseconds, no browser",
+        "role": "default",
+        "effect": "raised-2",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "dispatch",
+        "label": "6 · parseFigureInput — the one dispatch CLI and MCP both reach",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "unknown",
+        "label": "unknown preset — refused by name, sent back to select",
+        "role": "warning",
+        "effect": "emphasis",
+        "maxWidth": 190,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "guards",
+        "label": "7 · per-preset validators — types, ids, references, derived sums",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "refusal",
+        "label": "SpecError — exact field path, near miss named, never coerced",
+        "role": "warning",
+        "effect": "emphasis",
+        "maxWidth": 190,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "expand",
+        "label": "8 · expand — a preset is a macro, not a second engine",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "ir",
+        "label": "9 · ordinary figure IR — boxes, text, connectors",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "measure",
+        "label": "10 · measure text in the same browser engine that draws it",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "layout",
+        "label": "11 · layout — ELK is handed measured sizes, never guesses",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "checks",
+        "label": "12 · checks — overlap · contrast · text fits · connectors clear",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "repair",
+        "label": "13 · repair loop — width, height, wrap, canvas padding, then measure again",
+        "role": "accent",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "artefacts",
+        "label": "14 · SVG · PNG · manifest",
+        "role": "default",
+        "effect": "raised-1",
+        "maxWidth": 200,
+        "textAlign": "center"
+      },
+      {
+        "type": "block",
+        "id": "report",
+        "label": "15 · every check reported, every repair listed, nothing hidden",
+        "role": "primary",
+        "effect": "raised-2",
+        "maxWidth": 200,
+        "textAlign": "center"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "request--select",
+        "from": "request",
+        "to": "select",
+        "arrow": "end"
+      },
+      {
+        "id": "select--outcome",
+        "from": "select",
+        "to": "outcome",
+        "arrow": "end"
+      },
+      {
+        "id": "outcome--author",
+        "from": "outcome",
+        "to": "author",
+        "arrow": "end"
+      },
+      {
+        "id": "author--validate",
+        "from": "author",
+        "to": "validate",
+        "arrow": "end"
+      },
+      {
+        "id": "validate--dispatch",
+        "from": "validate",
+        "to": "dispatch",
+        "arrow": "end"
+      },
+      {
+        "id": "dispatch--unknown",
+        "from": "dispatch",
+        "to": "unknown",
+        "arrow": "end",
+        "dashed": true
+      },
+      {
+        "id": "dispatch--guards",
+        "from": "dispatch",
+        "to": "guards",
+        "arrow": "end"
+      },
+      {
+        "id": "guards--refusal",
+        "from": "guards",
+        "to": "refusal",
+        "arrow": "end",
+        "dashed": true
+      },
+      {
+        "id": "guards--expand",
+        "from": "guards",
+        "to": "expand",
+        "arrow": "end"
+      },
+      {
+        "id": "expand--ir",
+        "from": "expand",
+        "to": "ir",
+        "arrow": "end"
+      },
+      {
+        "id": "ir--measure",
+        "from": "ir",
+        "to": "measure",
+        "arrow": "end"
+      },
+      {
+        "id": "measure--layout",
+        "from": "measure",
+        "to": "layout",
+        "arrow": "end"
+      },
+      {
+        "id": "layout--checks",
+        "from": "layout",
+        "to": "checks",
+        "arrow": "end"
+      },
+      {
+        "id": "checks--repair",
+        "from": "checks",
+        "to": "repair",
+        "arrow": "end",
+        "dashed": true
+      },
+      {
+        "id": "checks--artefacts",
+        "from": "checks",
+        "to": "artefacts",
+        "arrow": "end"
+      },
+      {
+        "id": "artefacts--report",
+        "from": "artefacts",
+        "to": "report",
+        "arrow": "end"
+      }
+    ]
+  }
+}

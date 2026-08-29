@@ -290,6 +290,11 @@ function renderBlock(
     node.fontSize !== undefined ? `font-size: ${node.fontSize}px` : "",
     node.fontFamily !== undefined ? `font-family: ${node.fontFamily}` : "",
     node.fontWeight !== undefined ? `font-weight: ${node.fontWeight}` : "",
+    // Tracking goes into the MIRROR, not just the SVG. Chromium measures the
+    // tracked run, so advance widths stay honest and text-fits-box keeps
+    // meaning what it says. Emitting it only at draw time would make the
+    // measured width and the drawn width disagree.
+    node.letterSpacing !== undefined ? `letter-spacing: ${node.letterSpacing}px` : "",
     `color: ${node.textColor ?? role.text}`,
   ]
     .filter(Boolean)

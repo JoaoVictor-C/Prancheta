@@ -1,0 +1,1208 @@
+{
+  "version": 1,
+  "title": "How an agent uses Prancheta, and what happens inside",
+  "figure": {
+    "width": 1352,
+    "height": 1060.95
+  },
+  "elements": [
+    {
+      "id": "request",
+      "kind": "box",
+      "box": {
+        "x": 150,
+        "y": 66.88,
+        "width": 200,
+        "height": 75.5
+      }
+    },
+    {
+      "id": "select",
+      "kind": "box",
+      "box": {
+        "x": 434,
+        "y": 56,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "outcome",
+      "kind": "box",
+      "box": {
+        "x": 718,
+        "y": 56,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "author",
+      "kind": "box",
+      "box": {
+        "x": 150,
+        "y": 205.13,
+        "width": 200,
+        "height": 75.5
+      }
+    },
+    {
+      "id": "validate",
+      "kind": "box",
+      "box": {
+        "x": 434,
+        "y": 194.25,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "dispatch",
+      "kind": "box",
+      "box": {
+        "x": 150,
+        "y": 457.53,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "unknown",
+      "kind": "box",
+      "box": {
+        "x": 434,
+        "y": 332.5,
+        "width": 190,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "guards",
+      "kind": "box",
+      "box": {
+        "x": 434,
+        "y": 473.75,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "refusal",
+      "kind": "box",
+      "box": {
+        "x": 718,
+        "y": 348.7,
+        "width": 190,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "expand",
+      "kind": "box",
+      "box": {
+        "x": 718,
+        "y": 489.95,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "ir",
+      "kind": "box",
+      "box": {
+        "x": 1002,
+        "y": 500.83,
+        "width": 200,
+        "height": 75.5
+      }
+    },
+    {
+      "id": "measure",
+      "kind": "box",
+      "box": {
+        "x": 150,
+        "y": 628.2,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "layout",
+      "kind": "box",
+      "box": {
+        "x": 434,
+        "y": 628.2,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "checks",
+      "kind": "box",
+      "box": {
+        "x": 150,
+        "y": 891.5,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "repair",
+      "kind": "box",
+      "box": {
+        "x": 434,
+        "y": 766.45,
+        "width": 200,
+        "height": 119
+      }
+    },
+    {
+      "id": "artefacts",
+      "kind": "box",
+      "box": {
+        "x": 435.8,
+        "y": 929.45,
+        "width": 196.38,
+        "height": 53.75
+      }
+    },
+    {
+      "id": "report",
+      "kind": "box",
+      "box": {
+        "x": 718,
+        "y": 907.7,
+        "width": 200,
+        "height": 97.25
+      }
+    },
+    {
+      "id": "request--select",
+      "kind": "connector",
+      "box": {
+        "x": 353,
+        "y": 104.625,
+        "width": 78,
+        "height": 0
+      },
+      "ownerId": "request",
+      "joins": [
+        "request",
+        "select"
+      ]
+    },
+    {
+      "id": "select--outcome",
+      "kind": "connector",
+      "box": {
+        "x": 637,
+        "y": 104.625,
+        "width": 78,
+        "height": 0
+      },
+      "ownerId": "select",
+      "joins": [
+        "select",
+        "outcome"
+      ]
+    },
+    {
+      "id": "outcome--author",
+      "kind": "connector",
+      "box": {
+        "x": 56,
+        "y": 104.625,
+        "width": 1156,
+        "height": 138.25
+      },
+      "ownerId": "outcome",
+      "joins": [
+        "outcome",
+        "author"
+      ]
+    },
+    {
+      "id": "author--validate",
+      "kind": "connector",
+      "box": {
+        "x": 353,
+        "y": 242.875,
+        "width": 78,
+        "height": 0
+      },
+      "ownerId": "author",
+      "joins": [
+        "author",
+        "validate"
+      ]
+    },
+    {
+      "id": "validate--dispatch",
+      "kind": "connector",
+      "box": {
+        "x": 56,
+        "y": 242.875,
+        "width": 872,
+        "height": 263.2916666666667
+      },
+      "ownerId": "validate",
+      "joins": [
+        "validate",
+        "dispatch"
+      ]
+    },
+    {
+      "id": "dispatch--unknown",
+      "kind": "connector",
+      "box": {
+        "x": 353,
+        "y": 381.125,
+        "width": 78,
+        "height": 108.83333333333337
+      },
+      "ownerId": "dispatch",
+      "joins": [
+        "dispatch",
+        "unknown"
+      ]
+    },
+    {
+      "id": "dispatch--guards",
+      "kind": "connector",
+      "box": {
+        "x": 353,
+        "y": 522.375,
+        "width": 78,
+        "height": 0
+      },
+      "ownerId": "dispatch",
+      "joins": [
+        "dispatch",
+        "guards"
+      ]
+    },
+    {
+      "id": "guards--refusal",
+      "kind": "connector",
+      "box": {
+        "x": 637,
+        "y": 397.33333333333337,
+        "width": 78,
+        "height": 108.83333333333331
+      },
+      "ownerId": "guards",
+      "joins": [
+        "guards",
+        "refusal"
+      ]
+    },
+    {
+      "id": "guards--expand",
+      "kind": "connector",
+      "box": {
+        "x": 637,
+        "y": 538.5833333333334,
+        "width": 78,
+        "height": 0
+      },
+      "ownerId": "guards",
+      "joins": [
+        "guards",
+        "expand"
+      ]
+    },
+    {
+      "id": "expand--ir",
+      "kind": "connector",
+      "box": {
+        "x": 921,
+        "y": 538.5833333333334,
+        "width": 78,
+        "height": 0
+      },
+      "ownerId": "expand",
+      "joins": [
+        "expand",
+        "ir"
+      ]
+    },
+    {
+      "id": "ir--measure",
+      "kind": "connector",
+      "box": {
+        "x": 56,
+        "y": 538.5833333333334,
+        "width": 1240,
+        "height": 138.25
+      },
+      "ownerId": "ir",
+      "joins": [
+        "ir",
+        "measure"
+      ]
+    },
+    {
+      "id": "measure--layout",
+      "kind": "connector",
+      "box": {
+        "x": 353,
+        "y": 676.8333333333334,
+        "width": 78,
+        "height": 0
+      },
+      "ownerId": "measure",
+      "joins": [
+        "measure",
+        "layout"
+      ]
+    },
+    {
+      "id": "layout--checks",
+      "kind": "connector",
+      "box": {
+        "x": 56,
+        "y": 676.8333333333334,
+        "width": 872,
+        "height": 263.29166666666663
+      },
+      "ownerId": "layout",
+      "joins": [
+        "layout",
+        "checks"
+      ]
+    },
+    {
+      "id": "checks--repair",
+      "kind": "connector",
+      "box": {
+        "x": 353,
+        "y": 825.9583333333334,
+        "width": 78,
+        "height": 97.95833333333326
+      },
+      "ownerId": "checks",
+      "joins": [
+        "checks",
+        "repair"
+      ]
+    },
+    {
+      "id": "checks--artefacts",
+      "kind": "connector",
+      "box": {
+        "x": 353,
+        "y": 956.3333333333334,
+        "width": 79.81,
+        "height": 0
+      },
+      "ownerId": "checks",
+      "joins": [
+        "checks",
+        "artefacts"
+      ]
+    },
+    {
+      "id": "artefacts--report",
+      "kind": "connector",
+      "box": {
+        "x": 635.19,
+        "y": 956.3333333333334,
+        "width": 79.80999999999995,
+        "height": 0
+      },
+      "ownerId": "artefacts",
+      "joins": [
+        "artefacts",
+        "report"
+      ]
+    },
+    {
+      "id": "request--label",
+      "kind": "text",
+      "ownerId": "request",
+      "box": {
+        "x": 174.58,
+        "y": 82.88,
+        "width": 150.83,
+        "height": 41.75
+      },
+      "lines": [
+        "1 · a request arrives:",
+        "\"draw me a schematic\""
+      ]
+    },
+    {
+      "id": "select--label",
+      "kind": "text",
+      "ownerId": "select",
+      "box": {
+        "x": 451.47,
+        "y": 72,
+        "width": 165.04999999999995,
+        "height": 63.5
+      },
+      "lines": [
+        "2 · select — what IS this",
+        "content, and how must it",
+        "be drawn?"
+      ]
+    },
+    {
+      "id": "outcome--label",
+      "kind": "text",
+      "ownerId": "outcome",
+      "box": {
+        "x": 749.98,
+        "y": 72,
+        "width": 136.01999999999998,
+        "height": 63.5
+      },
+      "lines": [
+        "3 · a preset · a",
+        "composition of two ·",
+        "none, author raw IR"
+      ]
+    },
+    {
+      "id": "author--label",
+      "kind": "text",
+      "ownerId": "author",
+      "box": {
+        "x": 175.56,
+        "y": 221.13,
+        "width": 148.88,
+        "height": 41.75
+      },
+      "lines": [
+        "4 · the agent authors a",
+        "preset input as JSON"
+      ]
+    },
+    {
+      "id": "validate--label",
+      "kind": "text",
+      "ownerId": "validate",
+      "box": {
+        "x": 452.55,
+        "y": 210.25,
+        "width": 162.91000000000003,
+        "height": 63.5
+      },
+      "lines": [
+        "5 · validate — the",
+        "document only, in",
+        "milliseconds, no browser"
+      ]
+    },
+    {
+      "id": "dispatch--label",
+      "kind": "text",
+      "ownerId": "dispatch",
+      "box": {
+        "x": 167.97,
+        "y": 473.53,
+        "width": 164.05999999999997,
+        "height": 63.5
+      },
+      "lines": [
+        "6 · parseFigureInput —",
+        "the one dispatch CLI and",
+        "MCP both reach"
+      ]
+    },
+    {
+      "id": "unknown--label",
+      "kind": "text",
+      "ownerId": "unknown",
+      "box": {
+        "x": 456.19,
+        "y": 348.5,
+        "width": 145.60999999999996,
+        "height": 63.5
+      },
+      "lines": [
+        "unknown preset —",
+        "refused by name, sent",
+        "back to select"
+      ]
+    },
+    {
+      "id": "guards--label",
+      "kind": "text",
+      "ownerId": "guards",
+      "box": {
+        "x": 454.2,
+        "y": 489.75,
+        "width": 159.57999999999998,
+        "height": 63.5
+      },
+      "lines": [
+        "7 · per-preset validators",
+        "— types, ids, references,",
+        "derived sums"
+      ]
+    },
+    {
+      "id": "refusal--label",
+      "kind": "text",
+      "ownerId": "refusal",
+      "box": {
+        "x": 736.03,
+        "y": 364.7,
+        "width": 153.91999999999996,
+        "height": 63.5
+      },
+      "lines": [
+        "SpecError — exact field",
+        "path, near miss named,",
+        "never coerced"
+      ]
+    },
+    {
+      "id": "expand--label",
+      "kind": "text",
+      "ownerId": "expand",
+      "box": {
+        "x": 738.84,
+        "y": 505.95,
+        "width": 158.30000000000007,
+        "height": 63.50000000000006
+      },
+      "lines": [
+        "8 · expand — a preset is",
+        "a macro, not a second",
+        "engine"
+      ]
+    },
+    {
+      "id": "ir--label",
+      "kind": "text",
+      "ownerId": "ir",
+      "box": {
+        "x": 1025.19,
+        "y": 516.83,
+        "width": 153.6300000000001,
+        "height": 41.75
+      },
+      "lines": [
+        "9 · ordinary figure IR —",
+        "boxes, text, connectors"
+      ]
+    },
+    {
+      "id": "measure--label",
+      "kind": "text",
+      "ownerId": "measure",
+      "box": {
+        "x": 172.64,
+        "y": 644.2,
+        "width": 154.72000000000003,
+        "height": 63.5
+      },
+      "lines": [
+        "10 · measure text in the",
+        "same browser engine",
+        "that draws it"
+      ]
+    },
+    {
+      "id": "layout--label",
+      "kind": "text",
+      "ownerId": "layout",
+      "box": {
+        "x": 455.13,
+        "y": 644.2,
+        "width": 157.73000000000002,
+        "height": 63.5
+      },
+      "lines": [
+        "11 · layout — ELK is",
+        "handed measured sizes,",
+        "never guesses"
+      ]
+    },
+    {
+      "id": "checks--label",
+      "kind": "text",
+      "ownerId": "checks",
+      "box": {
+        "x": 174.31,
+        "y": 907.5,
+        "width": 151.36,
+        "height": 63.5
+      },
+      "lines": [
+        "12 · checks — overlap ·",
+        "contrast · text fits ·",
+        "connectors clear"
+      ]
+    },
+    {
+      "id": "repair--label",
+      "kind": "text",
+      "ownerId": "repair",
+      "box": {
+        "x": 452.25,
+        "y": 782.45,
+        "width": 163.48000000000002,
+        "height": 85.25
+      },
+      "lines": [
+        "13 · repair loop — width,",
+        "height, wrap, canvas",
+        "padding, then measure",
+        "again"
+      ]
+    },
+    {
+      "id": "artefacts--label",
+      "kind": "text",
+      "ownerId": "artefacts",
+      "box": {
+        "x": 451.8,
+        "y": 945.45,
+        "width": 164.38000000000005,
+        "height": 20
+      },
+      "lines": [
+        "14 · SVG · PNG · manifest"
+      ]
+    },
+    {
+      "id": "report--label",
+      "kind": "text",
+      "ownerId": "report",
+      "box": {
+        "x": 745.59,
+        "y": 923.7,
+        "width": 144.80000000000007,
+        "height": 63.5
+      },
+      "lines": [
+        "15 · every check",
+        "reported, every repair",
+        "listed, nothing hidden"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "request--select",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "select--outcome",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "outcome--author",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "author--validate",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "validate--dispatch",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "dispatch--unknown",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "dispatch--guards",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "guards--refusal",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "guards--expand",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "expand--ir",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "ir--measure",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "measure--layout",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "layout--checks",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "checks--repair",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "checks--artefacts",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "artefacts--report",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "request--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "request--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "request--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "select--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "select--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "select--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "outcome--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "outcome--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "outcome--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "author--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "author--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "author--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "validate--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "validate--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "validate--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "dispatch--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "dispatch--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "dispatch--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "unknown--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "unknown--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "unknown--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "guards--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "guards--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "guards--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "refusal--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "refusal--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "refusal--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "expand--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "expand--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "expand--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "ir--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "ir--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "ir--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "measure--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "measure--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "measure--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "layout--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "layout--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "layout--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "checks--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "checks--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "checks--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "repair--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "repair--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "repair--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "artefacts--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "artefacts--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "artefacts--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "report--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "report--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "report--label",
+      "status": "pass"
+    },
+    {
+      "id": "boxes-do-not-overlap",
+      "target": "figure",
+      "status": "pass",
+      "examined": 136,
+      "detail": "resolved 136 pair(s); 37 needed an overlap test"
+    },
+    {
+      "id": "content-within-canvas",
+      "target": "figure",
+      "status": "pass",
+      "examined": 50,
+      "detail": "examined 50 element(s)"
+    },
+    {
+      "id": "effect-within-canvas",
+      "target": "figure",
+      "status": "pass",
+      "examined": 17,
+      "detail": "examined 17 element(s) with effect bleed"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "request--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "12.58:1 against rgb(22, 36, 61)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "select--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "outcome--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "author--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "validate--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "dispatch--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "unknown--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "12.76:1 against rgb(46, 27, 22)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "guards--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "refusal--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "12.76:1 against rgb(46, 27, 22)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "expand--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "ir--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "measure--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "layout--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "checks--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "repair--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "13.08:1 against rgb(42, 36, 24)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "artefacts--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.32:1 against rgb(23, 26, 33)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "report--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "12.58:1 against rgb(22, 36, 61)"
+    },
+    {
+      "id": "categorical-colours-distinguishable",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no categoryGroup has two or more members to compare"
+    },
+    {
+      "id": "tick-labels-do-not-collide",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no axis tick labels found"
+    },
+    {
+      "id": "constraints-satisfied",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no constraints declared"
+    }
+  ],
+  "repairs": [],
+  "passes": 1,
+  "unrepaired": [],
+  "warnings": [],
+  "ok": true
+}

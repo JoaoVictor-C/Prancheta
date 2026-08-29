@@ -1,0 +1,394 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1352" height="1060.95" viewBox="0 0 1352 1060.95">
+<title>How an agent uses Prancheta, and what happens inside</title>
+<defs>
+<filter id="pr-fx-1" filterUnits="userSpaceOnUse" x="136" y="55.88" width="228" height="103.5" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="3" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="4" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.4" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-2" filterUnits="userSpaceOnUse" x="420" y="45" width="228" height="125.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="3" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="4" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.4" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-3" filterUnits="userSpaceOnUse" x="704" y="45" width="228" height="125.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="3" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="4" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.4" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-4" filterUnits="userSpaceOnUse" x="136" y="194.13" width="228" height="103.5" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="3" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="4" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.4" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-5" filterUnits="userSpaceOnUse" x="420" y="183.25" width="228" height="125.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="3" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="4" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.4" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-6" filterUnits="userSpaceOnUse" x="143.5" y="452.03" width="213" height="110.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-7" filterUnits="userSpaceOnUse" x="417" y="315.5" width="224" height="131.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feGaussianBlur in="pr1" stdDeviation="5" result="pr2"/>
+<feFlood flood-color="#5B8DEF" flood-opacity="0.9" result="pr3"/>
+<feComposite in="pr3" in2="pr2" operator="in" result="pr4"/>
+<feMerge result="pr5"><feMergeNode in="pr4"/><feMergeNode in="pr4"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-8" filterUnits="userSpaceOnUse" x="427.5" y="468.25" width="213" height="110.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-9" filterUnits="userSpaceOnUse" x="701" y="331.7" width="224" height="131.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feGaussianBlur in="pr1" stdDeviation="5" result="pr2"/>
+<feFlood flood-color="#5B8DEF" flood-opacity="0.9" result="pr3"/>
+<feComposite in="pr3" in2="pr2" operator="in" result="pr4"/>
+<feMerge result="pr5"><feMergeNode in="pr4"/><feMergeNode in="pr4"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-10" filterUnits="userSpaceOnUse" x="711.5" y="484.45" width="213" height="110.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-11" filterUnits="userSpaceOnUse" x="995.5" y="495.33" width="213" height="88.5" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-12" filterUnits="userSpaceOnUse" x="143.5" y="622.7" width="213" height="110.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-13" filterUnits="userSpaceOnUse" x="427.5" y="622.7" width="213" height="110.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-14" filterUnits="userSpaceOnUse" x="143.5" y="886" width="213" height="110.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-15" filterUnits="userSpaceOnUse" x="427.5" y="760.95" width="213" height="132" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-16" filterUnits="userSpaceOnUse" x="429.3" y="923.95" width="209.38" height="66.75" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="1" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="1.5" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.35" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<filter id="pr-fx-17" filterUnits="userSpaceOnUse" x="704" y="896.7" width="228" height="125.25" color-interpolation-filters="sRGB">
+<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="pr1"/>
+<feOffset in="pr1" dx="0" dy="3" result="pr2"/>
+<feGaussianBlur in="pr2" stdDeviation="4" result="pr3"/>
+<feFlood flood-color="#000000" flood-opacity="0.4" result="pr4"/>
+<feComposite in="pr4" in2="pr3" operator="in" result="pr5"/>
+<feMerge result="pr6"><feMergeNode in="pr5"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+<radialGradient id="pr-vignette-18" cx="0.5" cy="0.5" r="0.75"><stop offset="0.45" stop-color="#000000" stop-opacity="0"/><stop offset="0.78" stop-color="#000000" stop-opacity="0.099"/><stop offset="1" stop-color="#000000" stop-opacity="0.22"/></radialGradient>
+</defs>
+<rect x="0" y="0" width="1352" height="1060.95" fill="#0F1115"/>
+<g id="pr-boxes">
+<g id="request" filter="url(#pr-fx-1)">
+<title>1 · a request arrives: "draw me a schematic"</title>
+<rect data-pr-id="request" x="151" y="67.88" width="198" height="73.5" rx="5" fill="rgb(22, 36, 61)" stroke="rgb(91, 141, 239)" stroke-width="2"/>
+</g>
+<g id="select" filter="url(#pr-fx-2)">
+<title>2 · select — what IS this content, and how must it be drawn?</title>
+<rect data-pr-id="select" x="435" y="57" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="outcome" filter="url(#pr-fx-3)">
+<title>3 · a preset · a composition of two · none, author raw IR</title>
+<rect data-pr-id="outcome" x="719" y="57" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="author" filter="url(#pr-fx-4)">
+<title>4 · the agent authors a preset input as JSON</title>
+<rect data-pr-id="author" x="151" y="206.13" width="198" height="73.5" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="validate" filter="url(#pr-fx-5)">
+<title>5 · validate — the document only, in milliseconds, no browser</title>
+<rect data-pr-id="validate" x="435" y="195.25" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="dispatch" filter="url(#pr-fx-6)">
+<title>6 · parseFigureInput — the one dispatch CLI and MCP both reach</title>
+<rect data-pr-id="dispatch" x="151" y="458.53" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="unknown" filter="url(#pr-fx-7)">
+<title>unknown preset — refused by name, sent back to select</title>
+<rect data-pr-id="unknown" x="435" y="333.5" width="188" height="95.25" rx="5" fill="rgb(46, 27, 22)" stroke="rgb(231, 111, 81)" stroke-width="2"/>
+</g>
+<g id="guards" filter="url(#pr-fx-8)">
+<title>7 · per-preset validators — types, ids, references, derived sums</title>
+<rect data-pr-id="guards" x="435" y="474.75" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="refusal" filter="url(#pr-fx-9)">
+<title>SpecError — exact field path, near miss named, never coerced</title>
+<rect data-pr-id="refusal" x="719" y="349.7" width="188" height="95.25" rx="5" fill="rgb(46, 27, 22)" stroke="rgb(231, 111, 81)" stroke-width="2"/>
+</g>
+<g id="expand" filter="url(#pr-fx-10)">
+<title>8 · expand — a preset is a macro, not a second engine</title>
+<rect data-pr-id="expand" x="719" y="490.95" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="ir" filter="url(#pr-fx-11)">
+<title>9 · ordinary figure IR — boxes, text, connectors</title>
+<rect data-pr-id="ir" x="1003" y="501.83" width="198" height="73.5" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="measure" filter="url(#pr-fx-12)">
+<title>10 · measure text in the same browser engine that draws it</title>
+<rect data-pr-id="measure" x="151" y="629.2" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="layout" filter="url(#pr-fx-13)">
+<title>11 · layout — ELK is handed measured sizes, never guesses</title>
+<rect data-pr-id="layout" x="435" y="629.2" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="checks" filter="url(#pr-fx-14)">
+<title>12 · checks — overlap · contrast · text fits · connectors clear</title>
+<rect data-pr-id="checks" x="151" y="892.5" width="198" height="95.25" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="repair" filter="url(#pr-fx-15)">
+<title>13 · repair loop — width, height, wrap, canvas padding, then measure again</title>
+<rect data-pr-id="repair" x="435" y="767.45" width="198" height="117" rx="5" fill="rgb(42, 36, 24)" stroke="rgb(233, 196, 106)" stroke-width="2"/>
+</g>
+<g id="artefacts" filter="url(#pr-fx-16)">
+<title>14 · SVG · PNG · manifest</title>
+<rect data-pr-id="artefacts" x="436.8" y="930.45" width="194.38" height="51.75" rx="5" fill="rgb(23, 26, 33)" stroke="rgb(61, 71, 87)" stroke-width="2"/>
+</g>
+<g id="report" filter="url(#pr-fx-17)">
+<title>15 · every check reported, every repair listed, nothing hidden</title>
+<rect data-pr-id="report" x="719" y="908.7" width="198" height="95.25" rx="5" fill="rgb(22, 36, 61)" stroke="rgb(91, 141, 239)" stroke-width="2"/>
+</g>
+</g>
+<g id="pr-connectors">
+<g id="request--select">
+<desc>Connects request to select</desc>
+<path data-pr-id="request--select" d="M 353 104.63 L 431 104.63" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 431 104.63 L 422 107.33 L 422 101.93 Z" fill="#6B7789"/>
+</g>
+<g id="select--outcome">
+<desc>Connects select to outcome</desc>
+<path data-pr-id="select--outcome" d="M 637 104.63 L 715 104.63" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 715 104.63 L 706 107.33 L 706 101.93 Z" fill="#6B7789"/>
+</g>
+<g id="outcome--author">
+<desc>Connects outcome to author</desc>
+<path data-pr-id="outcome--author" d="M 921 104.63 L 1212 104.63 L 1212 173.25 L 56 173.25 L 56 242.88 L 147 242.88" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 147 242.88 L 138 245.58 L 138 240.18 Z" fill="#6B7789"/>
+</g>
+<g id="author--validate">
+<desc>Connects author to validate</desc>
+<path data-pr-id="author--validate" d="M 353 242.88 L 431 242.88" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 431 242.88 L 422 245.58 L 422 240.18 Z" fill="#6B7789"/>
+</g>
+<g id="validate--dispatch">
+<desc>Connects validate to dispatch</desc>
+<path data-pr-id="validate--dispatch" d="M 637 242.88 L 928 242.88 L 928 311.5 L 56 311.5 L 56 506.17 L 147 506.17" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 147 506.17 L 138 508.87 L 138 503.47 Z" fill="#6B7789"/>
+</g>
+<g id="dispatch--unknown">
+<desc>Connects dispatch to unknown</desc>
+<path data-pr-id="dispatch--unknown" d="M 353 489.96 L 360 489.96 L 360 381.13 L 431 381.13" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+<path d="M 431 381.13 L 422 383.83 L 422 378.43 Z" fill="#6B7789"/>
+</g>
+<g id="dispatch--guards">
+<desc>Connects dispatch to guards</desc>
+<path data-pr-id="dispatch--guards" d="M 353 522.38 L 431 522.38" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 431 522.38 L 422 525.08 L 422 519.67 Z" fill="#6B7789"/>
+</g>
+<g id="guards--refusal">
+<desc>Connects guards to refusal</desc>
+<path data-pr-id="guards--refusal" d="M 637 506.17 L 644 506.17 L 644 397.33 L 715 397.33" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+<path d="M 715 397.33 L 706 400.03 L 706 394.63 Z" fill="#6B7789"/>
+</g>
+<g id="guards--expand">
+<desc>Connects guards to expand</desc>
+<path data-pr-id="guards--expand" d="M 637 538.58 L 715 538.58" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 715 538.58 L 706 541.28 L 706 535.88 Z" fill="#6B7789"/>
+</g>
+<g id="expand--ir">
+<desc>Connects expand to ir</desc>
+<path data-pr-id="expand--ir" d="M 921 538.58 L 999 538.58" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 999 538.58 L 990 541.28 L 990 535.88 Z" fill="#6B7789"/>
+</g>
+<g id="ir--measure">
+<desc>Connects ir to measure</desc>
+<path data-pr-id="ir--measure" d="M 1205 538.58 L 1296 538.58 L 1296 607.21 L 56 607.21 L 56 676.83 L 147 676.83" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 147 676.83 L 138 679.53 L 138 674.13 Z" fill="#6B7789"/>
+</g>
+<g id="measure--layout">
+<desc>Connects measure to layout</desc>
+<path data-pr-id="measure--layout" d="M 353 676.83 L 431 676.83" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 431 676.83 L 422 679.53 L 422 674.13 Z" fill="#6B7789"/>
+</g>
+<g id="layout--checks">
+<desc>Connects layout to checks</desc>
+<path data-pr-id="layout--checks" d="M 637 676.83 L 928 676.83 L 928 745.46 L 56 745.46 L 56 940.13 L 147 940.13" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 147 940.13 L 138 942.83 L 138 937.43 Z" fill="#6B7789"/>
+</g>
+<g id="checks--repair">
+<desc>Connects checks to repair</desc>
+<path data-pr-id="checks--repair" d="M 353 923.92 L 360 923.92 L 360 825.96 L 431 825.96" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+<path d="M 431 825.96 L 422 828.66 L 422 823.26 Z" fill="#6B7789"/>
+</g>
+<g id="checks--artefacts">
+<desc>Connects checks to artefacts</desc>
+<path data-pr-id="checks--artefacts" d="M 353 956.33 L 432.81 956.33" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 432.81 956.33 L 423.81 959.03 L 423.81 953.63 Z" fill="#6B7789"/>
+</g>
+<g id="artefacts--report">
+<desc>Connects artefacts to report</desc>
+<path data-pr-id="artefacts--report" d="M 635.19 956.33 L 715 956.33" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 715 956.33 L 706 959.03 L 706 953.63 Z" fill="#6B7789"/>
+</g>
+</g>
+<g id="pr-text">
+<g id="request--label">
+<desc>Labels request</desc>
+<text data-pr-id="request--label" x="249.99" y="98.88" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(220, 232, 255)" text-anchor="middle" xml:space="preserve">1 · a request arrives:</text>
+<text data-pr-id="request--label" x="249.99" y="120.63" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(220, 232, 255)" text-anchor="middle" xml:space="preserve">"draw me a schematic"</text>
+</g>
+<g id="select--label">
+<desc>Labels select</desc>
+<text data-pr-id="select--label" x="533.99" y="88" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">2 · select — what IS this</text>
+<text data-pr-id="select--label" x="533.99" y="109.75" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">content, and how must it</text>
+<text data-pr-id="select--label" x="533.99" y="131.5" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">be drawn?</text>
+</g>
+<g id="outcome--label">
+<desc>Labels outcome</desc>
+<text data-pr-id="outcome--label" x="817.99" y="88" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">3 · a preset · a</text>
+<text data-pr-id="outcome--label" x="817.99" y="109.75" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">composition of two ·</text>
+<text data-pr-id="outcome--label" x="817.99" y="131.5" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">none, author raw IR</text>
+</g>
+<g id="author--label">
+<desc>Labels author</desc>
+<text data-pr-id="author--label" x="250" y="237.13" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">4 · the agent authors a</text>
+<text data-pr-id="author--label" x="249.99" y="258.88" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">preset input as JSON</text>
+</g>
+<g id="validate--label">
+<desc>Labels validate</desc>
+<text data-pr-id="validate--label" x="533.99" y="226.25" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">5 · validate — the</text>
+<text data-pr-id="validate--label" x="533.99" y="248" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">document only, in</text>
+<text data-pr-id="validate--label" x="534" y="269.75" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">milliseconds, no browser</text>
+</g>
+<g id="dispatch--label">
+<desc>Labels dispatch</desc>
+<text data-pr-id="dispatch--label" x="250" y="489.53" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">6 · parseFigureInput —</text>
+<text data-pr-id="dispatch--label" x="250" y="511.28" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">the one dispatch CLI and</text>
+<text data-pr-id="dispatch--label" x="249.99" y="533.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">MCP both reach</text>
+</g>
+<g id="unknown--label">
+<desc>Labels unknown</desc>
+<text data-pr-id="unknown--label" x="529" y="364.5" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(251, 221, 211)" text-anchor="middle" xml:space="preserve">unknown preset —</text>
+<text data-pr-id="unknown--label" x="528.99" y="386.25" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(251, 221, 211)" text-anchor="middle" xml:space="preserve">refused by name, sent</text>
+<text data-pr-id="unknown--label" x="529" y="408" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(251, 221, 211)" text-anchor="middle" xml:space="preserve">back to select</text>
+</g>
+<g id="guards--label">
+<desc>Labels guards</desc>
+<text data-pr-id="guards--label" x="534" y="505.75" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">7 · per-preset validators</text>
+<text data-pr-id="guards--label" x="533.99" y="527.5" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">— types, ids, references,</text>
+<text data-pr-id="guards--label" x="533.99" y="549.25" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">derived sums</text>
+</g>
+<g id="refusal--label">
+<desc>Labels refusal</desc>
+<text data-pr-id="refusal--label" x="812.99" y="380.7" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(251, 221, 211)" text-anchor="middle" xml:space="preserve">SpecError — exact field</text>
+<text data-pr-id="refusal--label" x="812.99" y="402.45" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(251, 221, 211)" text-anchor="middle" xml:space="preserve">path, near miss named,</text>
+<text data-pr-id="refusal--label" x="812.99" y="424.2" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(251, 221, 211)" text-anchor="middle" xml:space="preserve">never coerced</text>
+</g>
+<g id="expand--label">
+<desc>Labels expand</desc>
+<text data-pr-id="expand--label" x="817.99" y="521.95" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">8 · expand — a preset is</text>
+<text data-pr-id="expand--label" x="817.99" y="543.7" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">a macro, not a second</text>
+<text data-pr-id="expand--label" x="817.99" y="565.45" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">engine</text>
+</g>
+<g id="ir--label">
+<desc>Labels ir</desc>
+<text data-pr-id="ir--label" x="1102" y="532.83" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">9 · ordinary figure IR —</text>
+<text data-pr-id="ir--label" x="1102" y="554.58" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">boxes, text, connectors</text>
+</g>
+<g id="measure--label">
+<desc>Labels measure</desc>
+<text data-pr-id="measure--label" x="250" y="660.2" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">10 · measure text in the</text>
+<text data-pr-id="measure--label" x="249.99" y="681.95" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">same browser engine</text>
+<text data-pr-id="measure--label" x="249.99" y="703.7" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">that draws it</text>
+</g>
+<g id="layout--label">
+<desc>Labels layout</desc>
+<text data-pr-id="layout--label" x="533.99" y="660.2" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">11 · layout — ELK is</text>
+<text data-pr-id="layout--label" x="533.99" y="681.95" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">handed measured sizes,</text>
+<text data-pr-id="layout--label" x="533.99" y="703.7" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">never guesses</text>
+</g>
+<g id="checks--label">
+<desc>Labels checks</desc>
+<text data-pr-id="checks--label" x="249.99" y="923.5" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">12 · checks — overlap ·</text>
+<text data-pr-id="checks--label" x="249.99" y="945.25" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">contrast · text fits ·</text>
+<text data-pr-id="checks--label" x="250" y="967" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">connectors clear</text>
+</g>
+<g id="repair--label">
+<desc>Labels repair</desc>
+<text data-pr-id="repair--label" x="533.99" y="798.45" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(246, 236, 210)" text-anchor="middle" xml:space="preserve">13 · repair loop — width,</text>
+<text data-pr-id="repair--label" x="533.99" y="820.2" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(246, 236, 210)" text-anchor="middle" xml:space="preserve">height, wrap, canvas</text>
+<text data-pr-id="repair--label" x="533.99" y="841.95" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(246, 236, 210)" text-anchor="middle" xml:space="preserve">padding, then measure</text>
+<text data-pr-id="repair--label" x="534" y="863.7" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(246, 236, 210)" text-anchor="middle" xml:space="preserve">again</text>
+</g>
+<g id="artefacts--label">
+<desc>Labels artefacts</desc>
+<text data-pr-id="artefacts--label" x="533.98" y="961.45" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(230, 233, 239)" text-anchor="middle" xml:space="preserve">14 · SVG · PNG · manifest</text>
+</g>
+<g id="report--label">
+<desc>Labels report</desc>
+<text data-pr-id="report--label" x="818" y="939.7" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(220, 232, 255)" text-anchor="middle" xml:space="preserve">15 · every check</text>
+<text data-pr-id="report--label" x="817.99" y="961.45" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(220, 232, 255)" text-anchor="middle" xml:space="preserve">reported, every repair</text>
+<text data-pr-id="report--label" x="817.99" y="983.2" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(220, 232, 255)" text-anchor="middle" xml:space="preserve">listed, nothing hidden</text>
+</g>
+</g>
+<rect data-pr-vignette="1" x="0" y="0" width="1352" height="1060.95" fill="url(#pr-vignette-18)"/>
+</svg>

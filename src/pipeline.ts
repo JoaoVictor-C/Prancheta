@@ -15,6 +15,8 @@ import { chromium } from "playwright";
 import type { Page } from "playwright";
 import type { FigureSpec, LaidOutFigure, PlacedBox, PlacedElement, Point } from "./ir/types.ts";
 import { normalise } from "./ir/normalise.ts";
+import { applyStyle } from "./effects/styles.ts";
+import { applyType } from "./typography-apply.ts";
 import { buildHtml } from "./layout/html.ts";
 import type { FontEmbedMode, HtmlOptions } from "./layout/html.ts";
 import { lineNeedsTextFallback, loadOutlineFont } from "./export/fonts.ts";
@@ -103,7 +105,11 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
       deviceScaleFactor: 1,
     });
 
-    let working = normalise(spec).spec;
+    // The style pack lands before anything measures or checks: from here down
+    // a packed effect is indistinguishable from a hand-written one, which is
+    // exactly the point -- it goes through the same bleed arithmetic and the
+    // same effect-within-canvas check.
+    let working = normalise(applyType(applyStyle(spec))).spec;
     const repairs: RepairEdit[] = [];
     let unrepaired: { check: Check; why: string }[] = [];
     let pass = 0;
@@ -321,6 +327,7 @@ export function toLaidOutFigure(
       fontFamily,
       fontSize: text.fontSize,
       fontWeight: text.fontWeight,
+      letterSpacing: text.letterSpacing,
       fill: text.color,
       anchor: text.anchor,
       lines: text.lines.map((line) => ({

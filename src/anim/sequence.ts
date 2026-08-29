@@ -39,7 +39,7 @@ import type { Check } from "../checks.ts";
 import type { FigureSpec, LaidOutFigure, MotionWindow, PlacedBox, PlacedText } from "../ir/types.ts";
 import { SpecError, parseSpec } from "../ir/types.ts";
 import { checkRect } from "../checks.ts";
-import { expand, isPresetInput } from "../presets/index.ts";
+import { parseFigureInput } from "../presets/index.ts";
 import { render } from "../pipeline.ts";
 import type { RenderResult } from "../pipeline.ts";
 import { toSvg } from "../render/svg.ts";
@@ -61,7 +61,7 @@ export type State = { spec: FigureSpec; rendered: RenderResult };
 
 export async function loadState(path: string): Promise<State> {
   const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
-  const spec = isPresetInput(parsed) ? expand(parsed) : parseSpec(parsed);
+  const spec = parseFigureInput(parsed);
   // Repair disabled, same reasoning as the two-state command: repair moves
   // boxes for reasons that have nothing to do with the author's states, and
   // animating a repair artefact would confuse the thing this exists to verify.
@@ -148,7 +148,15 @@ export async function animateSequence(
     throw new SpecError(`animate: needs at least 2 states, got ${paths.length}`);
   }
 
-  const states = await Promise.all(paths.map(loadState));
+  // Sequentially, NOT Promise.all. Every loadState launches and tears down its
+  // own browser (pipeline.ts), so mapping the array concurrently asks Chromium
+  // for one instance per state all at once: a 77-state run died three times at a
+  // 30s Playwright timeout, in setContent and in screenshot, purely from launch
+  // contention. Loading the same 77 states one at a time completes 77/77 at a
+  // flat ~2.3s each -- and finishes in under half the wall time the concurrent
+  // version took when it did survive, because the launch storm was the cost.
+  const states: State[] = [];
+  for (const path of paths) states.push(await loadState(path));
   const segmentCount = states.length - 1;
 
   const segments: Segment[] = [];
@@ -392,6 +400,49 @@ function emitSequenceSvg(
     const participations = segments
       .filter((segment) => segment.routes.has(id))
       .map((segment) => ({ segment, route: segment.routes.get(id)! }));
+
+    // -- route fade track (appear/disappear) --------------------------------
+    //
+    // A box that appears mid-sequence gets a fade track from `trajectory.fade`
+    // (diffFigures classifies it `appeared`); a CONNECTOR introduced mid-
+    // sequence had no equivalent until this, and defaulted to fully opaque
+    // for every segment before the one that first draws it -- a growth demo
+    // whose branches are themselves new connectors (not just new boxes) made
+    // every future generation's branch visible from frame one, because
+    // `renderedRoutes` already computes `atFirstStatePlace: false` for
+    // exactly this case but nothing downstream consulted it for opacity, only
+    // for the transition check's own "does this need re-verifying" shortcut.
+    // Mirrors the box fade's hold-then-ramp shape via the SAME `fadeValueAt`
+    // arithmetic (full window, since routes carry no stagger).
+    const routeFadeStops: GlobalStop[] = [];
+    let routeFadeDirection: "in" | "out" | null = null;
+    if (participations.length > 0) {
+      const first = participations[0]!;
+      if (!first.route.atFirstStatePlace) {
+        routeFadeDirection = "in";
+        routeFadeStops.push({ frac: 0, value: `opacity: 0;` });
+        for (const p of localStopPoints(first.route.window)) {
+          routeFadeStops.push({ frac: (first.segment.index + p) / segmentCount, value: `opacity: ${num(p)};` });
+        }
+      }
+      const last = participations[participations.length - 1]!;
+      if (!last.route.inFinishedFigure) {
+        routeFadeDirection = "out";
+        for (const p of localStopPoints(last.route.window)) {
+          routeFadeStops.push({ frac: (last.segment.index + p) / segmentCount, value: `opacity: ${num(1 - p)};` });
+        }
+        routeFadeStops.push({ frac: 1, value: `opacity: 0;` });
+      }
+    }
+    if (routeFadeStops.length > 0) {
+      const fadeSuffix = `${cssSafe(id)}-${seq++}`;
+      const fadeName = `pr-seq-route-fade-${fadeSuffix}`;
+      keyframeBlocks.push(`@keyframes ${fadeName} { ${renderStops(routeFadeStops)} }`);
+      const fadeSelector = `#${cssId(id)}`;
+      rules.push(`${fadeSelector} { animation: ${fadeName} ${timing}; }`);
+      (routeFadeDirection === "out" ? hidden : stilled).push(fadeSelector);
+    }
+
     if (!participations.some(({ route }) => route.tweened)) continue;
 
     const routeStops: GlobalStop[] = [];

@@ -182,7 +182,16 @@ async function main(argv: string[]): Promise<number> {
   if (command.name === "animate" && payload?.svg !== undefined) {
     const outDir = String(parsed.out ?? "out");
     const statePaths = Array.isArray(parsed.states) ? parsed.states.map(String) : [String(parsed.states)];
-    const stem = statePaths.map((path) => basename(path, extname(path))).join("-");
+    // Every state's name joined by "-" is fine for a two-state transition and
+    // unusable for a sequence: 51 states produced a 700-character filename that
+    // the filesystem refused, AFTER every state had been rendered and checked.
+    // Past a handful of states the name says which run this is, not what is in
+    // it -- the manifest already lists every state by path.
+    const stems = statePaths.map((path) => basename(path, extname(path)));
+    const stem =
+      stems.length <= 3
+        ? stems.join("-")
+        : `${stems[0]}-to-${stems[stems.length - 1]}-${stems.length}states`;
     await mkdir(outDir, { recursive: true });
     const svgPath = join(outDir, `${stem}.animated.svg`);
     const manifestPath = join(outDir, `${stem}.animated.manifest.json`);

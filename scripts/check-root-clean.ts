@@ -41,6 +41,13 @@ const APPROVED_ROOT_ITEMS = new Set([
   // Hidden config
   '.claude',
 
+  // The repository itself, not a project file -- but readdirSync sees it like
+  // any other entry, and ADR 0011 lists `.git/` among approved hidden items.
+  // Omitting it meant this check had never passed on an actual clone: only on
+  // a copy of the tree with no VCS directory. Every other hidden root entry
+  // (.gitignore, .npmrc, .claude) was already approved above.
+  '.git',
+
   // Scripts directory
   'scripts',
 ]);

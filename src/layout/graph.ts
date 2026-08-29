@@ -102,6 +102,18 @@ function elkOptions(options: GraphOptions): Record<string, string> {
     base["elk.layered.spacing.nodeNodeBetweenLayers"] = layerSpacing;
     // Orthogonal routes read as deliberate; splines read as decoration.
     base["elk.edgeRouting"] = "ORTHOGONAL";
+    // A pipeline is a chain, and a chain laid out in one direction is as long
+    // as it has steps -- fifteen of them came out 4004x383, which is checkable,
+    // correct and unreadable. ELK can cut the chain into rows instead; the
+    // aspect ratio is what tells it where.
+    const wrapping = options.wrapping ?? "off";
+    if (wrapping !== "off") {
+      base["elk.layered.wrapping.strategy"] =
+        wrapping === "multi-edge" ? "MULTI_EDGE" : "SINGLE_EDGE";
+      if (options.aspectRatio !== undefined) {
+        base["elk.aspectRatio"] = String(options.aspectRatio);
+      }
+    }
   }
   if (algorithm === "mrtree") {
     base["elk.direction"] = options.direction ?? "DOWN";

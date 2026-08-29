@@ -671,9 +671,13 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
       const fontWeight = text.fontWeight !== undefined && text.fontWeight !== 400
         ? ` font-weight="${num(text.fontWeight)}"`
         : "";
+      const tracking =
+        text.letterSpacing !== undefined && text.letterSpacing !== 0
+          ? ` letter-spacing="${num(text.letterSpacing)}"`
+          : "";
       return (
         `<text data-pr-id="${attr(text.id)}" x="${num(line.x)}" y="${num(line.y)}" ` +
-        `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight} ` +
+        `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight}${tracking} ` +
         `fill="${attr(text.fill)}" text-anchor="${anchor}" ` +
         `xml:space="preserve">${escapeText(line.text)}</text>`
       );

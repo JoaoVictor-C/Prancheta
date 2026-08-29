@@ -15,17 +15,22 @@
 
 import { readFile } from "node:fs/promises";
 import { SpecError, parseSpec } from "./ir/types.ts";
-import { expand, isPresetInput } from "./presets/index.ts";
+import type { FigureNode } from "./ir/types.ts";
+import { isPresetInput, parseFigureInput } from "./presets/index.ts";
 import { render } from "./pipeline.ts";
 import type { RenderOptions } from "./pipeline.ts";
 import { rank } from "./selection/rank.ts";
 import { FLOOR, RULES } from "./selection/rules.ts";
 import { IDIOM, PRESETS, STRUCTURE, partitionPredicates } from "./selection/vocabulary.ts";
 import { EFFECT_NAMES, EFFECT_PRESETS, resolveEffects } from "./effects/types.ts";
+import { STYLE_IDS, STYLE_PACKS } from "./effects/styles.ts";
+import { TYPE_IDS, TYPE_LEVELS, TYPE_PACKS, hostDependentLevels, isSelfContained } from "./typography.ts";
 import { MODULES, exampleArgs } from "./modules/repertoire.ts";
 import { bleedOf, isEmpty as bleedIsEmpty } from "./effects/bleed.ts";
 import { THEMES } from "./theme.ts";
 import { WCAG_AA_NORMAL, contrastRatio } from "./colour/contrast.ts";
+
+const NEWLINE = String.fromCharCode(10);
 
 export type ParamType = "string" | "number" | "boolean" | "string[]";
 
@@ -122,7 +127,7 @@ const renderCommand: Command = {
   async run(args) {
     const specPath = String(args.spec);
     const parsed: unknown = JSON.parse(await readFile(specPath, "utf8"));
-    const spec = isPresetInput(parsed) ? expand(parsed) : parseSpec(parsed);
+    const spec = parseFigureInput(parsed);
 
     const fontEmbed = String(args.fontEmbed ?? "none");
     if (fontEmbed !== "none" && fontEmbed !== "embed" && fontEmbed !== "outline") {
@@ -498,7 +503,7 @@ const diffCommand: Command = {
     const { diffFigures } = await import("./anim/diff.ts");
     const load = async (path: string) => {
       const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
-      return isPresetInput(parsed) ? expand(parsed) : parseSpec(parsed);
+      return parseFigureInput(parsed);
     };
     const [before, after] = await Promise.all([
       load(String(args.before)),
@@ -697,7 +702,7 @@ const animateCommand: Command = {
 
     const load = async (path: string) => {
       const parsed: unknown = JSON.parse(await readFile(path, "utf8"));
-      return isPresetInput(parsed) ? expand(parsed) : parseSpec(parsed);
+      return parseFigureInput(parsed);
     };
     const [before, after] = await Promise.all([
       load(states[0]!),
@@ -837,13 +842,167 @@ const animateCommand: Command = {
   },
 };
 
+
+/**
+ * `validate` -- the document, never the figure.
+ *
+ * The limit leads the summary rather than trailing it, and deliberately. The
+ * generated command tables in AGENTS.md and SKILL.md print only the first
+ * sentence, and an agent that reads "validate" and stops has learned exactly
+ * the wrong lesson: overlap, contrast, text fit and every unrepaired defect
+ * are measured from a real render, and this command never launches one. It
+ * answers "can this be drawn at all", so that `render` is paid for once
+ * instead of once per typo.
+ */
+const validateCommand: Command = {
+  name: "validate",
+  summary:
+    "Check a spec or preset input WITHOUT drawing it -- shape, references and " +
+    "arithmetic only, never whether the figure is any good. Overlap, contrast and " +
+    "text fit are measured from a real render, so `render` still has to run.",
+  params: [
+    {
+      name: "spec",
+      type: "string",
+      description: "Path to a JSON file holding raw figure IR or a preset input.",
+      required: true,
+      positional: true,
+    },
+  ],
+  async run(args) {
+    const specPath = String(args.spec);
+    const parsed: unknown = JSON.parse(await readFile(specPath, "utf8"));
+    const spec = parseFigureInput(parsed);
+
+    const shape = isPresetInput(parsed) ? `preset ${parsed.preset}` : "raw IR";
+    return {
+      text:
+        `ok   ${shape}, ${countNodes(spec.root)} element(s) after expansion\n` +
+        `     Nothing here is a claim about the drawing. Run \`render\` for the checks.`,
+      data: { spec },
+      exitCode: 0,
+    };
+  },
+};
+
+/** Elements the expansion produced -- a number worth seeing before drawing it. */
+function countNodes(node: FigureNode): number {
+  let total = 1;
+  const children = (node as { children?: FigureNode[] }).children;
+  if (Array.isArray(children)) for (const child of children) total += countNodes(child);
+  return total;
+}
+
+
+/**
+ * `styles` -- the pack repertoire, with the reach each one costs.
+ *
+ * The bleed numbers are the point, not decoration on the listing. A pack that
+ * puts ink 30px past every primary's own edge needs that much room on the
+ * canvas, and an author choosing between packs is choosing between those costs.
+ */
+const stylesCommand: Command = {
+  name: "styles",
+  summary:
+    "List the style packs: a whole look applied by role, so an effect is named " +
+    "once for a figure rather than written on every element by hand. A pack only " +
+    "fills in what an element did not declare, and is checked exactly as a " +
+    "hand-written effect is.",
+  params: [],
+  async run() {
+    const lines: string[] = [];
+    for (const pack of STYLE_PACKS) {
+      lines.push(`${pack.id} — ${pack.summary}`);
+      for (const [role, effect] of Object.entries(pack.roles)) {
+        const names = Array.isArray(effect) ? effect : [effect];
+        const resolved = resolveEffects(names);
+        const bleed = bleedOf(resolved);
+        const reach = bleedIsEmpty(bleed)
+          ? "stays inside its own bounds"
+          : `bleeds left ${bleed.left} top ${bleed.top} right ${bleed.right} bottom ${bleed.bottom}`;
+        lines.push(`  ${role.padEnd(8)} ${String(names.join(" + ")).padEnd(16)} ${reach}`);
+      }
+      if (pack.vignette !== undefined) {
+        lines.push(`  ${"canvas".padEnd(8)} vignette ${pack.vignette}`);
+      }
+      lines.push("");
+    }
+    lines.push(
+      'Set canvas.style in a spec ("' +
+        STYLE_IDS.join('" | "') +
+        '") to apply one. A block that declares its own `effect` keeps it — a pack is a',
+    );
+    lines.push(
+      "default, never an override — and `callout` is never styled, because a callout carries",
+    );
+    lines.push("no fill or border by design. Unset renders exactly as before packs existed.");
+    return { text: lines.join("\n") };
+  },
+};
+
+
+/**
+ * `type` -- the typography repertoire.
+ *
+ * Reports self-contained vs host-dependent per pack, because that is the one
+ * thing a caller cannot see from the output: a pack naming a Didone draws
+ * beautifully here and falls back to Georgia on a machine without it, and a
+ * figure that reflows on someone else's computer is a portability defect this
+ * project already takes seriously (see fontEmbed, and resolvePlatformFonts).
+ */
+const typeCommand: Command = {
+  name: "type",
+  summary:
+    "List the type packs: family, size, weight and tracking for each `level` an " +
+    "element can declare. `level` is how LOUD text is and is independent of `role`, " +
+    "which is what it MEANS -- a warning caption is both at once.",
+  params: [],
+  async run() {
+    const lines: string[] = [];
+    for (const pack of TYPE_PACKS) {
+      const dependent = hostDependentLevels(pack);
+      const where = isSelfContained(pack)
+        ? "self-contained — every face bundled, draws identically anywhere"
+        : `host-dependent at ${dependent.join(", ")} — those first choices may fall back`;
+      lines.push(`${pack.id} — ${pack.summary}`);
+      lines.push(`  ${where}`);
+      for (const level of TYPE_LEVELS) {
+        const step = pack.levels[level];
+        const bits = [
+          `${step.size}px`,
+          step.weight === undefined ? "" : `w${step.weight}`,
+          step.letterSpacing === undefined ? "" : `tracking ${step.letterSpacing}px`,
+        ].filter((bit) => bit !== "");
+        lines.push(
+          `  ${level.padEnd(9)} ${bits.join("  ").padEnd(30)} ${step.family.split(",")[0]}`,
+        );
+      }
+      lines.push("");
+    }
+    lines.push(
+      'Set canvas.type in a spec ("' + TYPE_IDS.join('" | "') + '"), or `type` on a preset input.',
+    );
+    lines.push(
+      "An element declares `level` for how loud it is; one that declares none is set as body.",
+    );
+    lines.push(
+      "A pack fills only what an element did not declare, and tracking is applied in the HTML",
+    );
+    lines.push("mirror too, so the width Chromium measured is the width that gets drawn.");
+    return { text: lines.join(NEWLINE) };
+  },
+};
+
 export const COMMANDS: Command[] = [
   renderCommand,
+  validateCommand,
   selectCommand,
   presetsCommand,
   rulesCommand,
   effectsCommand,
   themesCommand,
+  stylesCommand,
+  typeCommand,
   modulesCommand,
   moduleCommand,
   diffCommand,

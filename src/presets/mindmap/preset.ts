@@ -13,6 +13,8 @@
 
 import type { Block, Connector, FigureSpec, Scene } from "../../ir/types.ts";
 import type { BlockRole } from "../../ir/types.ts";
+import * as v from "../validate.ts";
+import { SpecError } from "../../ir/types.ts";
 
 export type MindmapNode = {
   label: string;
@@ -77,4 +79,37 @@ export function expandMindmap(input: MindmapInput): FigureSpec {
   };
 
   return { version: 1, title: input.title, root: scene };
+}
+
+/**
+ * Preconditions expandMindmap relies on. The tree is walked recursively, so
+ * the validation is too -- and node ids, where the author supplies them, must
+ * be unique across the WHOLE tree rather than among siblings, because that is
+ * the scope ELK resolves them in.
+ */
+export function validateMindmapInput(input: Record<string, unknown>, path = "mindmap"): void {
+  v.optionalString(input, "title", path);
+  v.optionalEnum(input, "shape", path, ["tree", "radial"] as const);
+  v.optionalNumber(input, "spacing", path);
+
+  const root = input.root;
+  if (root === undefined) {
+    throw new SpecError(
+      `${path}.root is required (the single node everything else hangs from). ` +
+        `A mindmap has exactly one root; if the content has several, it is a graph.`,
+    );
+  }
+  const ids: { id: string; at: string }[] = [];
+  visitNode(root, `${path}.root`, ids);
+  v.unique(ids, "node");
+}
+
+function visitNode(raw: unknown, at: string, ids: { id: string; at: string }[]): void {
+  const node = v.object(raw, at);
+  v.requiredString(node, "label", at);
+  const id = v.optionalString(node, "id", at);
+  if (id !== undefined) ids.push({ id, at });
+  if (node.children === undefined) return;
+  const children = v.array(node, "children", at, "child nodes");
+  for (const [i, child] of children.entries()) visitNode(child, `${at}.children[${i}]`, ids);
 }

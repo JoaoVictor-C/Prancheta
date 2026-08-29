@@ -45,6 +45,8 @@ export type MeasuredText = {
   fontFamily: string;
   fontSize: number;
   fontWeight?: number;
+  /** Tracking in px, read back from the mirror so measure and draw agree. */
+  letterSpacing?: number;
   color: string;
   anchor: "start" | "center" | "end";
   lines: MeasuredLine[];
@@ -159,6 +161,10 @@ export function measureInPage(): PageMeasurement {
     const style = getComputedStyle(span);
     const fontSize = parseFloat(style.fontSize) || 0;
     const fontWeight = parseFloat(style.fontWeight) || undefined;
+    // Read back rather than carried forward: whatever Chromium actually
+    // applied is what it measured, so the two can never drift apart.
+    const tracked = parseFloat(style.letterSpacing);
+    const letterSpacing = Number.isFinite(tracked) && tracked !== 0 ? tracked : undefined;
     const align = style.textAlign;
     const anchor: "start" | "center" | "end" =
       align === "center" ? "center" : align === "right" || align === "end" ? "end" : "start";
@@ -282,6 +288,7 @@ export function measureInPage(): PageMeasurement {
       fontFamily: style.fontFamily,
       fontSize: round(fontSize),
       fontWeight,
+      letterSpacing,
       color: style.color,
       anchor,
       lines,

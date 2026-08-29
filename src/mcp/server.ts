@@ -78,6 +78,15 @@ export function knowledgeResources(): KnowledgeResource[] {
       path: join(projectRoot, "docs", "CONSTRAINTS.md"),
     },
     {
+      uri: "prancheta://typography",
+      name: "Typography: two axes, and what is bundled",
+      description:
+        "Why type keys on `level` (how loud) rather than `role` (what it means), the four " +
+        "type packs, which of their faces are actually bundled versus wished for, and why " +
+        "tracking is measured in the mirror rather than only drawn.",
+      path: join(projectRoot, "docs", "design", "TYPOGRAPHY.md"),
+    },
+    {
       uri: "prancheta://effects",
       name: "Effects: depth cues that are checked, not decorated",
       description:

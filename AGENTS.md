@@ -21,11 +21,14 @@ is the part worth reading.
 | command | arguments | what it does |
 | --- | --- | --- |
 | `render` | <spec> [--out] [--scale] [--repair] [--maxPasses] [--maxScale] [--fontEmbed] [--pdf] [--pdfSize] | Render a figure spec or preset input to SVG, PNG and a manifest.. |
+| `validate` | <spec> | Check a spec or preset input WITHOUT drawing it -- shape, references and arithmetic only, never whether the figure is any good. |
 | `select` | [--structure] [--idiom] | Rank presets for a set of content predicates, with the rules that decided it. |
 | `presets` | — | List the repertoire: every preset, whether it is implemented, and what it is for.. |
 | `rules` | — | Print the selection rule table: what each rule reacts to and what it does.. |
 | `effects` | — | List the effect repertoire: every named effect, what it is composed of, and how far past an element's own edges it puts ink.. |
 | `themes` | — | List the theme repertoire: every named palette, its roles, and whether each role's text clears WCAG AA against its own fill.. |
+| `styles` | — | List the style packs: a whole look applied by role, so an effect is named once for a figure rather than written on every element by hand. |
+| `type` | — | List the type packs: family, size, weight and tracking for each `level` an element can declare. |
 | `modules` | — | List the figure modules: what each draws, what it needs installed, and a command that runs it.. |
 | `module` | <command> [--args] [--width] [--height] [--out] | Run a figure module in another language and verify what it drew. |
 | `diff` | <before> <after> | Lay out two states of a figure and report what changed between them: appeared, disappeared, moved, resized, restyled, retexted.. |
@@ -80,6 +83,7 @@ resources:
 | `prancheta://selection` | Choosing what to draw |
 | `prancheta://selection/rules` | Selection rule reference |
 | `prancheta://constraints` | Constraints, and the three you may stand down |
+| `prancheta://typography` | Typography: two axes, and what is bundled |
 | `prancheta://effects` | Effects: depth cues that are checked, not decorated |
 | `prancheta://preset/labelled-blocks` | labelled-blocks preset |
 | `prancheta://preset/graph` | graph preset |

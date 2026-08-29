@@ -7,6 +7,9 @@
  */
 
 import { EffectError, resolveEffects } from "../effects/types.ts";
+import { STYLE_IDS, styleById } from "../effects/styles.ts";
+import { TYPE_IDS, TYPE_LEVELS, typeById } from "../typography.ts";
+import type { TypeLevel } from "../typography.ts";
 import type { EffectRef, ResolvedEffect } from "../effects/types.ts";
 import { SHAPE_KINDS } from "../geometry/shapes.ts";
 import type { ShapeKind } from "../geometry/shapes.ts";
@@ -40,6 +43,18 @@ export type CanvasSpec = {
   vignette?: number;
   /** Named palette (decision 0007). Unset renders exactly as before: "dark". */
   theme?: "dark" | "light" | "print";
+  /**
+   * Named style pack: a whole look, applied by role, instead of writing
+   * `effect` on every element by hand. See src/effects/styles.ts. It only ever
+   * fills in what an element did not declare, and buys no exemption from the
+   * effect checks. Unset renders exactly as before packs existed.
+   */
+  style?: string;
+  /**
+   * Named type pack: family, size, weight and tracking per `level`. Fills only
+   * what an element did not declare. See src/typography.ts.
+   */
+  type?: string;
   /**
    * Structural constraints that may be relaxed for this figure (decision 0010).
    * Every toggle defaults to false, so a spec that says nothing is checked
@@ -133,6 +148,17 @@ export type GraphOptions = {
   spacing?: number;
   /** Space between layers/ranks. */
   layerSpacing?: number;
+  /**
+   * Wrap a long chain onto several rows instead of one very wide rank
+   * sequence. "multi-edge" is ELK's general strategy and the one to reach for;
+   * "single-edge" only wraps where a single edge spans the cut. Layered only.
+   */
+  wrapping?: "off" | "single-edge" | "multi-edge";
+  /**
+   * Target width-to-height ratio, honoured only when `wrapping` is on -- it is
+   * what tells ELK where to cut. 1 asks for a square.
+   */
+  aspectRatio?: number;
 };
 
 export type Point = { x: number; y: number };
@@ -335,6 +361,18 @@ export type Block = {
   fontFamily?: string;
   /** Font weight. Default 400 (normal). Common values: 400, 600, 700. */
   fontWeight?: number;
+  /**
+   * Tracking in px. Negative tightens, which is what display sizes want.
+   * Applied in the HTML mirror as well as the SVG, so the width Chromium
+   * measures is the width that gets drawn.
+   */
+  letterSpacing?: number;
+  /**
+   * How LOUD this text is, independent of what it MEANS (`role`). A type pack
+   * turns it into family, size, weight and tracking. Undeclared means "body".
+   * See src/typography.ts for why this is a separate axis from `role`.
+   */
+  level?: TypeLevel;
   textColor?: string;
   /** Position within an "absolute" scene. Ignored elsewhere. */
   x?: number;
@@ -519,6 +557,8 @@ export type PlacedText = {
   fontFamily: string;
   fontSize: number;
   fontWeight?: number;
+  /** Tracking in px, carried from Block.letterSpacing. */
+  letterSpacing?: number;
   fill: string;
   anchor: Align;
   effects?: ResolvedEffect[];
@@ -572,6 +612,18 @@ export function parseSpec(input: unknown): FigureSpec {
   }
   if (spec.root === undefined) throw new SpecError("spec.root is required");
   if (spec.canvas !== undefined) validateCanvas(spec.canvas, "canvas");
+  const style = (spec.canvas as CanvasSpec | undefined)?.style;
+  if (style !== undefined && styleById(style) === undefined) {
+    throw new SpecError(
+      `canvas.style must be one of ${STYLE_IDS.join(", ")}, got ${JSON.stringify(style)}`,
+    );
+  }
+  const typePack = (spec.canvas as CanvasSpec | undefined)?.type;
+  if (typePack !== undefined && typeById(typePack) === undefined) {
+    throw new SpecError(
+      `canvas.type must be one of ${TYPE_IDS.join(", ")}, got ${JSON.stringify(typePack)}`,
+    );
+  }
   if (spec.layoutConstraints !== undefined) {
     validateLayoutConstraints(spec.layoutConstraints, "layoutConstraints");
   }
@@ -867,6 +919,11 @@ function validateNode(
     }
     if (node.categoryGroup !== undefined && typeof node.categoryGroup !== "string") {
       throw new SpecError(`${path}.categoryGroup must be a string`);
+    }
+    if (node.level !== undefined && !TYPE_LEVELS.includes(node.level as TypeLevel)) {
+      throw new SpecError(
+        `${path}.level must be one of ${TYPE_LEVELS.join(", ")}, got ${JSON.stringify(node.level)}`,
+      );
     }
     if (node.shape !== undefined && !SHAPE_KINDS.includes(node.shape as ShapeKind)) {
       throw new SpecError(

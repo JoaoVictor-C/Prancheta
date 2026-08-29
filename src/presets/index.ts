@@ -11,27 +11,65 @@
  * is how the pair ships half-updated.
  */
 
+import { SpecError, parseSpec } from "../ir/types.ts";
 import type { FigureSpec } from "../ir/types.ts";
+import { PRESETS } from "../selection/vocabulary.ts";
+import { STYLE_IDS } from "../effects/styles.ts";
+import { TYPE_IDS } from "../typography.ts";
+import * as v from "./validate.ts";
 import type { PresetId } from "../selection/vocabulary.ts";
-import { expandGraph } from "./graph/preset.ts";
+import { expandGraph, validateGraphInput } from "./graph/preset.ts";
 import type { GraphInput } from "./graph/preset.ts";
-import { expandMindmap } from "./mindmap/preset.ts";
+import { expandMindmap, validateMindmapInput } from "./mindmap/preset.ts";
 import type { MindmapInput } from "./mindmap/preset.ts";
-import { expandAnnotatedFigure } from "./annotated-figure/preset.ts";
+import { expandAnnotatedFigure, validateAnnotatedFigureInput } from "./annotated-figure/preset.ts";
 import type { AnnotatedFigureInput } from "./annotated-figure/preset.ts";
-import { expandLabelledBlocks } from "./labelled-blocks/preset.ts";
+import { expandLabelledBlocks, validateLabelledBlocksInput } from "./labelled-blocks/preset.ts";
 import type { LabelledBlocksInput } from "./labelled-blocks/preset.ts";
-import { expandChart } from "./chart/preset.ts";
+import { expandChart, validateChartInput } from "./chart/preset.ts";
 import type { ChartInput } from "./chart/preset.ts";
 
-export type PresetInput =
+/**
+ * Every preset input may also name a style pack and a theme. They are declared
+ * here rather than on each of the five inputs because they are not a preset's
+ * business: a preset decides what the figure IS, and these decide what it looks
+ * like. Attaching them in one place also means a sixth preset gets them free.
+ */
+export type CommonPresetOptions = {
+  /** Style pack, applied by role. See src/effects/styles.ts. */
+  style?: string;
+  /** Named palette. */
+  theme?: "dark" | "light" | "print";
+  /** Type pack. See src/typography.ts. */
+  type?: string;
+};
+
+export type PresetInput = (
   | ({ preset: "graph" } & GraphInput)
   | ({ preset: "mindmap" } & MindmapInput)
   | ({ preset: "annotated-figure" } & AnnotatedFigureInput)
   | ({ preset: "labelled-blocks" } & LabelledBlocksInput)
-  | ({ preset: "chart" } & ChartInput);
+  | ({ preset: "chart" } & ChartInput)
+) &
+  CommonPresetOptions;
 
 export function expand(input: PresetInput): FigureSpec {
+  const spec = expandPreset(input);
+  if (input.style === undefined && input.theme === undefined && input.type === undefined) {
+    return spec;
+  }
+  return {
+    ...spec,
+    canvas: {
+      ...spec.canvas,
+      ...(input.style === undefined ? {} : { style: input.style }),
+      ...(input.theme === undefined ? {} : { theme: input.theme }),
+      ...(input.type === undefined ? {} : { type: input.type }),
+    },
+  };
+}
+
+function expandPreset(input: PresetInput): FigureSpec {
   switch (input.preset) {
     case "graph":
       return expandGraph(input);
@@ -43,6 +81,36 @@ export function expand(input: PresetInput): FigureSpec {
       return expandLabelledBlocks(input);
     case "chart":
       return expandChart(input);
+  }
+}
+
+/**
+ * Refuse a preset input the expanders cannot honestly consume.
+ *
+ * One function per preset, each living beside the expander it guards, so a new
+ * field is edited in a directory whose siblings are already tested for
+ * agreement (ADR 0002). Nothing MECHANICALLY forces a new optional field to
+ * gain a clause here -- that limit is real and is recorded in ADR 0018 rather
+ * than papered over.
+ */
+export function validatePresetInput(input: PresetInput): void {
+  const raw = input as unknown as Record<string, unknown>;
+  // The common options first, so a bad style name is refused by name rather
+  // than reaching the renderer as an unknown pack that silently does nothing.
+  v.optionalEnum(raw, "style", input.preset, STYLE_IDS);
+  v.optionalEnum(raw, "theme", input.preset, ["dark", "light", "print"]);
+  v.optionalEnum(raw, "type", input.preset, TYPE_IDS);
+  switch (input.preset) {
+    case "graph":
+      return validateGraphInput(raw);
+    case "mindmap":
+      return validateMindmapInput(raw);
+    case "annotated-figure":
+      return validateAnnotatedFigureInput(raw);
+    case "labelled-blocks":
+      return validateLabelledBlocksInput(raw);
+    case "chart":
+      return validateChartInput(raw);
   }
 }
 
@@ -60,3 +128,64 @@ export function isPresetInput(value: unknown): value is PresetInput {
 
 export type { GraphInput, MindmapInput, AnnotatedFigureInput, LabelledBlocksInput, ChartInput };
 export type { PresetId };
+
+/**
+ * The one place a parsed JSON document becomes a FigureSpec.
+ *
+ * Four call sites had independently written `isPresetInput(parsed) ?
+ * expand(parsed) : parseSpec(parsed)` -- three in commands.ts (render, and
+ * both sides of diff) and one in anim/sequence.ts. Four copies of a dispatch
+ * is four places a new guard has to be remembered, and the animate path was
+ * the one that got forgotten: an N-state sequence validated nothing, and paid
+ * a browser launch per state before saying so.
+ *
+ * The ternary also had a hole neither copy could see. `isPresetInput` returns
+ * false for an unknown preset, so `{"preset": "flowchart"}` fell through to
+ * the raw-IR validator and came back as `spec.version must be 1, got
+ * undefined` -- the IR parser answering a question nobody asked it, about the
+ * exact request this project exists to intercept.
+ */
+export function parseFigureInput(parsed: unknown): FigureSpec {
+  if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+    const preset = (parsed as { preset?: unknown }).preset;
+    if (preset !== undefined) {
+      if (!isPresetInput(parsed)) throw unknownPreset(preset);
+      validatePresetInput(parsed);
+      return expand(parsed);
+    }
+    if ((parsed as { version?: unknown }).version === undefined) throw neitherShape();
+  }
+  return parseSpec(parsed);
+}
+
+/**
+ * Named by what was asked for, not by what the parser wanted. The repertoire
+ * is listed because an agent that guessed "flowchart" has no other way to
+ * learn what it may guess instead, and `select` is named because guessing is
+ * the failure -- a flowchart renders beautifully and is still the wrong
+ * answer when the content is not a graph.
+ */
+function unknownPreset(preset: unknown): SpecError {
+  const known = PRESETS.filter((entry) => entry.implemented).map((entry) => entry.id);
+  const name = JSON.stringify(preset);
+  const graphNote =
+    typeof preset === "string" && /flow|chart|diagram|flowchart/i.test(preset)
+      ? `\nA flowchart is what \`graph\` draws -- but reach for it because the content ` +
+        `has entities and relations, not because it is available.`
+      : "";
+  return new SpecError(
+    `no preset named ${name}. The repertoire is: ${known.join(", ")}.\n` +
+      `Run \`select\` with what the content is and how it must be drawn; it answers with ` +
+      `a preset, a composition of two, or "no preset fits -- author raw IR".${graphNote}`,
+  );
+}
+
+/** Neither shape, said as both -- rather than complaining about one of them. */
+function neitherShape(): SpecError {
+  const known = PRESETS.filter((entry) => entry.implemented).map((entry) => entry.id);
+  return new SpecError(
+    `this is neither a preset input nor a version-1 IR document: it has no "preset" ` +
+      `and no "version". Add "preset" (one of: ${known.join(", ")}) to use the preset ` +
+      `layer, or "version": 1 to author raw IR.`,
+  );
+}

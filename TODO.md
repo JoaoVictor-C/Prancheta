@@ -39,6 +39,82 @@ Five milestones shipped against [ADR 0012](docs/decisions/0012-animation-m11-sco
 
 **Deliberate non-goals, not backlog (ADR 0016).** Shape morphing, a camera, and video export. None of the three is refused for lack of effort: an axis-aligned-box solver cannot reason about a shape becoming another shape; there is no check for legibility under zoom, and none can exist without a research-grade advance; and encoding to a video file would destroy the `prefers-reduced-motion` behaviour M11.2 deliberately shipped, so it could at most be an explicitly lossy convenience, never the deliverable. "More than two states" is **not** on this list any longer — see M14.
 
+## Agent-facing surface: what ADR 0018 shipped, and what it deliberately left
+
+Shipped against [ADR 0018](docs/decisions/0018-preset-input-validation.md): one `parseFigureInput` dispatch replacing four independently-written copies, an unknown preset refused by name instead of falling through to a complaint about `spec.version`, per-preset validators whose remit is every expander precondition the repair loop cannot reach, and a `validate` command that never launches a browser. Full suite green throughout (812 -> 829).
+
+Left open, in the order the evidence favours:
+
+- [ ] **A module's missing dependency should be a named refusal.** `module python --args "..."` reaches the same CLI and the same MCP tool table as every other command, and never touches `parseFigureInput` at all — its input is an argv string, and its likeliest failure by far is an absent Python package. `MODULES` already declares each module's `needs`, so the repertoire already knows what to say; nothing says it. This is the same defect ADR 0018 fixed for documents, one surface over, and it is cheap for exactly the same reason.
+
+- [ ] **Over MCP, `render` returns checks but no figure and no path.** The svg/png Buffers are dropped deliberately, and the stated reason is good — a base64 image in a tool result is a payload nobody asked for. But the consequence is that an MCP-only agent is strictly worse off than a CLI one: it is told its figure has a defect and given no way to look at it. The minimal fix is not base64 but moving the artefact write out of `cli.ts` into a helper both bindings call, so MCP returns paths. It revises a documented deliberate decision, so it wants its own ADR rather than being smuggled into someone else's change.
+
+- [ ] **A validator can drift from its expander.** Stated in ADR 0018 rather than solved. Co-location under ADR 0002's discipline, a coverage test, and running every shipped fixture through the layer are mitigations; nothing *mechanically* forces a new optional field to gain a clause. Worth revisiting only if a real drift is ever observed — the alternatives (a schema library, generating from erased types) are both worse for reasons the ADR records.
+
+- [x] **`check:root-clean` failed on a pristine tree**, flagging `.git` as an unapproved root item, so `npm run validate` exited 1 even when typecheck, every test and every generated-doc check passed — a green run was indistinguishable from a red one. Pre-existing and unrelated to ADR 0018; found while establishing a baseline for it. The script's allowlist had simply never mirrored its own ADR: [ADR 0011](docs/decisions/0011-project-organization.md) lists `.git/` among approved hidden items, and every other hidden root entry (`.gitignore`, `.npmrc`, `.claude`) was already approved. Which means the check had never passed on an actual clone — only on a copy of the tree with no VCS directory. Fixed in [scripts/check-root-clean.ts](scripts/check-root-clean.ts); `npm run check:all` now exits 0.
+
+## Generators: the shared library became supported, the generators stayed experiments
+
+The poster series had a 137-line `lib.mjs` that six generators used (63-149 lines each) and seven abandoned (111-708 lines each), re-deriving its own `W`/`H`/`BG`/`nid`/`ramp`/`text` on the way out. Reading them settled *why*, and it was not the reason the line counts suggested: `phyllotaxis.mjs` re-implements `poster()` inline with lib's exact magic numbers on lib's exact canvas, so it did not outgrow the frame, it copied one. The cause is that every helper took the accumulator array as its first argument, so a generator wanting one local helper wrote a closure — and having dropped the import, lost everything else in it.
+
+Shipped in [experiments/generators/lib.mjs](experiments/generators/lib.mjs), with [README.md](experiments/generators/README.md) as its contract:
+
+- **`page()`** — closes over its own kids and its own theme, so a call site carries neither. Purely additive: the free functions are unchanged and all six incumbents still run.
+- **Themes** — `midnight`, `bone`, `blueprint` as plain role records, replacing five hardcoded `INK_*` constants. Each poster prints its own contrast, measured with `contrastRatio` from `src/colour/contrast.ts` — the same function `contrast-sufficient` uses. Text roles get a WCAG AA verdict; mark roles and ramp floors get a ratio and explicitly no verdict, because a 1px rule and a data-driven mark are not text.
+- **`carve`** — a rule emitted as segments that stop short of everything reserved. Extracted from `zeta-conformal`'s private `carvedLine`, which had discovered the hard way that a grid drawn as whole rects runs straight through its own axis labels.
+- **`panel`** — a sub-region with a data-space map, `ticks()` that reserves labels before drawing any grid, and an optional `pitch` that snaps marks onto a lattice. Gridlines default OFF: `carve` can route a rule around reserved labels, never around a thousand data points.
+
+**Acceptance test, and it passed:** [collatz.mjs](experiments/generators/collatz.mjs), a genuinely new two-panel poster with real axes, written from the library and README only. **88 lines**, against 340-341 for the comparable hand-rolled ones (`zeta-conformal`, `conjugacy`). Every check green. Its first render found three real defects — origin labels clipping at the axis corner, gridlines through the data, marks touching across lattice cells — each fixed in the library rather than the generator.
+
+Open:
+
+- [ ] **Nothing was migrated,** so no claim is made about how much of the existing 3,199 lines this makes unnecessary; the measured claim is forward-looking only. The six sound generators (`chladni`, `harmonograph`, `bifurcation`, `ulam`, `pascal`, `delaunay`) are 63-149 lines each and would be cheap to move; the six legacy ones are not, and their maths is worth more than their plumbing. The README labels which is which so the corpus stops teaching the retired idiom.
+
+- [ ] **`navguide` does not belong in this series.** It is a node-and-connector diagram sitting in a poster directory; the library does not serve it and a core preset would. Left where it is rather than moved silently.
+
+- [ ] **The library was derived from this corpus.** Panels, carving and the lattice are what fourteen programs actually needed, generalised from them. A genuinely different figure may find a new ceiling; the honest response is to widen the library rather than fork it a fifteenth time.
+
+- [ ] **No `generators` command, and that is deliberate.** `modules` earns its repertoire table because a caller chooses one at runtime; nobody invokes a generator at runtime, so the same table here would be shape without reason.
+
+## Flashy on purpose: style packs and symbol shapes
+
+Two gaps, both measured rather than assumed. An agent asked for something loud had to write `effect` on every element by hand and keep the choices consistent itself, and the shape vocabulary was seven geometric primitives with no symbols in it at all — the word "symbol" appeared exactly once in `src/`, inside a Python module's description.
+
+- [x] **Style packs** — [src/effects/styles.ts](src/effects/styles.ts), documented in [EFFECTS.md](docs/effects/EFFECTS.md). `canvas.style` (or `style` on any preset input) names a whole look, mapped by the `role` an element already declares: `elevated`, `neon`, `spotlight`, `etched`. Applied in the pipeline right before `normalise`, so from there down a packed effect is indistinguishable from a hand-written one — same `resolveEffects`, same bleed, same `effect-within-canvas`, same repair growing `canvas.padding`. Three rules, each with a test: it fills only absences (an authored `effect` wins), it never styles a `callout`, and it buys no exemption. New `styles` command lists each pack with the bleed every role costs, since that reach is the real difference between them.
+
+- [x] **Six symbol shapes** — `parallelogram`, `trapezoid`, `chevron`, `cross`, `star`, `note`, taking the repertoire from 7 to 13. Every one is a polygon, and deliberately: `shapeVertices` hands the *same* vertex list to `inPolygon` for containment and to the `<polygon>` for drawing, so `label-within-shape` answers about the shape actually on the page rather than an approximation. A curved symbol (a cylinder, a cloud) would break that identity and is not offered. Reachable from the preset layer too — `shape` now passes through `graph` nodes and `labelled-blocks` items.
+
+- [x] **`SHAPE_DESCRIPTIONS` was missing `triangle`**, so the generated shape reference had been printing `undefined` in its "what it is" column. Pre-existing; `scripts/` sits outside `tsconfig`, so the `Record<ShapeKind, string>` was never exhaustiveness-checked. All seven gaps filled.
+
+Two things the checks said that are worth keeping in view rather than fixing:
+
+- [ ] **`star` (27.6% of its bounding box) and `cross` (55.2%) are markers, not containers.** `label-within-shape` refuses even a two-character label in a star at ordinary node height, which is correct and is why the generated reference now states the inscribed area of every shape. A symbol sheet should caption them, not label them. Nothing to fix; worth not forgetting.
+
+- [ ] **Nothing has a `shape` in the `mindmap`, `annotated-figure` or `chart` presets.** `graph` and `labelled-blocks` pass it through; the other three do not, and for `chart` that is probably right (a bar is a bar). Left unasserted rather than fixed by reflex.
+
+## Typography: the third design system, and the placement helpers
+
+Colour had THEMES. Depth had STYLE_PACKS. Type had one family stack, one size and one line-height, for everything — a categorical absence, not a gap of degree. Shipped as [src/typography.ts](src/typography.ts) + [typography-apply.ts](src/typography-apply.ts), documented in [docs/design/TYPOGRAPHY.md](docs/design/TYPOGRAPHY.md) and served over MCP as `prancheta://typography`.
+
+- [x] **`level`, a second axis.** Type does NOT key on `role`, and one ordinary poster is why: its date line is the largest type on the page and means nothing, while a safety notice may be the smallest and mean the most. `role` answers *what does this mean*; `level` answers *how loud is this*. A warning caption is `{role: "warning", level: "caption"}`. A test asserts the two never collapse into one vocabulary.
+- [x] **Four packs** — `grotesk`, `editorial`, `poster`, `technical` — over seven levels (`display · title · subtitle · body · caption · eyebrow · mono`). New `type` command lists every step.
+- [x] **`letterSpacing`, measured not just drawn.** Emitted into the HTML mirror as well as the SVG, and read back from `getComputedStyle` rather than carried forward, so the width Chromium measured and the width drawn cannot drift. Emitting it only at draw time would have made every `text-fits-box` result a lie on any tracked label.
+- [x] **Portability is derived, not asserted.** A pack is self-contained only when *every* level's first-choice face is bundled — and only Inter is. The first draft hand-marked `grotesk` self-contained because five of six levels use Inter; its `mono` level does not. `type` now names exactly which levels will fall back.
+- [x] **Placement helpers** in [experiments/generators/lib.mjs](experiments/generators/lib.mjs): `spiral`, `ring`, `serpentine`, `tracked`, `rng`, `scatter`. Each was re-derived by hand in at least two generators before extraction. They return positions and draw nothing.
+
+Two things the tests found rather than the design:
+
+- The **size ladder** (`display → caption`) is asserted monotone, and the first draft failed it: the poster pack's eyebrow had been filed as a `subtitle`. An eyebrow is a *device* — small, widely tracked, sitting above a title — not a size step, so it became its own level and sits outside the ladder alongside `mono`.
+
+Deferred, with reasons rather than as a backlog:
+
+- [ ] **Contrast thresholds still ignore size.** WCAG lets large text pass at 3:1 rather than 4.5:1, and `contrast-sufficient` applies 4.5:1 to everything, so display type can fail a check it should pass. Packs now make size and weight knowable, so the check *could* learn this. It has not: the change makes a check more PERMISSIVE, which is the direction this project is most careful about, and it wants its own ADR rather than arriving as a side effect of typography.
+- [ ] **Composition is the fourth missing system.** There is `canvas.padding` and nothing else — no margins, no modular scale, no title-block rhythm. The generator lib's `poster()` still hardcodes 140/52/916/120. Real and wanted; deliberately not shipped alongside type, because two systems in one pass is how both arrive half-verified.
+- [ ] **Text over a colour field still cannot pass.** `allowOverlap` stands down `boxes-do-not-overlap`; nothing stands down `text-clear-of-other-boxes`. The honest fix is not a fourth toggle but a TRADE — stand down the collision check and force the contrast check to run against the box the text now sits over, since what matters there is legibility, not collision. Depends on the contrast work above.
+- [ ] **Arbitrary block paths.** `flattenPath` already ships (used for connector curves) and is unconsumed by blocks, so a `shape: "path"` flattened for containment is feasible. Own ADR: it trades away the exact-containment guarantee every shape currently keeps.
+
+Refused outright, on current evidence: skew/flip/tile/scale transforms (ceiling, not floor — and each multiplies what every check must reason about); more effects (14 compose from 10 primitives, and too few looks was never the measured problem); a `poster` preset (a poster is compute plus composition, and the compute cannot be JSON); a `select`-style rule table for packs (choosing wrong is a preference, not a defect, and arbitrating taste is authority this project does not have).
+
 ## Candidate figure modules, in priority order
 
 - [x] **Reaction schemes** — [modules/reaction](modules/reaction/MODULE.md). Reactants → arrow → products, reusing `molecule`'s per-molecule geometry via a `.`-joined SMILES mini-DSL (repeated components declare a coefficient). Four canned reactions, `--misdeclare` probe, e2e tests.

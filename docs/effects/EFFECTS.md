@@ -109,3 +109,36 @@ a bevel to be legible has a layout problem that a bevel will not fix.
 `canvas.vignette` (0 to 1) darkens the edges of the whole figure. It is the one
 effect that can never clip and never needs bleed — it is bounded by the canvas
 by construction — which is why it lives on the canvas rather than on a node.
+
+## Style packs: a look named once, not applied N times
+
+The effect repertoire above is per-element — `effect: "raised-2"` on a block. That is the right primitive and the wrong ergonomics for a figure with forty nodes, where the field has to be written forty times *and* the choices kept consistent by hand. Consistency maintained by hand is consistency that drifts the moment a node is added.
+
+A **style pack** maps the `role` an element already declares to the effect it should carry:
+
+```json
+{ "preset": "graph", "style": "neon", "nodes": [ { "id": "a", "label": "Ingest", "role": "primary" } ] }
+```
+
+`node src/cli.ts styles` lists all four with the bleed each role costs, because that reach is the real difference between them:
+
+| pack | what it is |
+| --- | --- |
+| `elevated` | Cards lifted off the page. Depth carries hierarchy — the more a part matters, the further it floats. |
+| `neon` | Glow as emphasis. The loudest: primaries and accents burn, failures alarm, everything else recedes to outline. |
+| `spotlight` | One thing in focus and the rest falling away — lit primaries against blurred, desaturated surroundings. |
+| `etched` | Engraved rather than lit: bevels and grain, no cast shadows, nothing leaving its own bounds. Reach for it when a figure has to print. |
+
+Roles already exist because a figure's parts *mean* different things. A pack is the statement of what that difference should look like, which is why it keys on roles rather than on ids: `role: "warning"` keeps meaning "this is the failure case", and the pack decides whether that reads as a glow, a bevel, or nothing.
+
+### Three rules the layer keeps
+
+**It fills only absences.** A block that declares its own `effect` is left exactly as authored. A pack is a default; the author is not overruled by one. The same holds for a connector's line and arrow styles, and for `canvas.vignette`.
+
+**It buys no exemption.** Every effect a pack applies goes through the same `resolveEffects` and the same bleed arithmetic as a hand-written one, so `effect-within-canvas` still runs and the repair loop still grows `canvas.padding` when the ink would clip. A pack makes a look *reachable*; it does not make it *unchecked*. There is a test asserting a packed effect and a hand-written one resolve identically, because a decoration escape hatch is exactly what this project exists to refuse.
+
+**It never touches `callout`.** A callout carries no fill and no border by design — it sits *on* the figure, and the leader line does the pointing. An effect there would turn it back into the floating sticky note the `annotated-figure` preset exists to avoid.
+
+### What a pack does not do
+
+It does not choose a **theme**: a pack is depth and emphasis, a theme is colour, and the two are set independently (`canvas.theme`, `canvas.style`). It does not choose **shapes** either. And it is not a way to make a figure louder than its content earns — `neon` on a diagram with six primaries is six things shouting, which is the same failure two accents per figure already warns about, arriving faster.

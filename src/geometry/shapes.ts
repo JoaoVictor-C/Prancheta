@@ -20,7 +20,20 @@
 
 import type { Point, Rect } from "../ir/types.ts";
 
-export type ShapeKind = "rect" | "circle" | "ellipse" | "diamond" | "hexagon" | "stadium" | "triangle";
+export type ShapeKind =
+  | "rect"
+  | "circle"
+  | "ellipse"
+  | "diamond"
+  | "hexagon"
+  | "stadium"
+  | "triangle"
+  | "parallelogram"
+  | "trapezoid"
+  | "chevron"
+  | "cross"
+  | "star"
+  | "note";
 
 export const SHAPE_KINDS: readonly ShapeKind[] = [
   "rect",
@@ -30,6 +43,12 @@ export const SHAPE_KINDS: readonly ShapeKind[] = [
   "hexagon",
   "stadium",
   "triangle",
+  "parallelogram",
+  "trapezoid",
+  "chevron",
+  "cross",
+  "star",
+  "note",
 ];
 
 /** True when `point` lies inside `shape`, inscribed in bounding box `box`. */
@@ -54,6 +73,23 @@ export function containsPoint(shape: ShapeKind, box: Rect, point: Point): boolea
       return inStadium(box, point);
     case "triangle":
       return inPolygon(triangleVertices(box), point);
+    // Every symbol below is a polygon, and deliberately so: the SAME vertex
+    // list is handed to `inPolygon` here and to the `<polygon>` in svg.ts, so
+    // "is this point inside the shape" is answered about the shape actually
+    // drawn rather than about an approximation of it. A curved symbol (a
+    // cylinder, a cloud) would break that identity and is not offered.
+    case "parallelogram":
+      return inPolygon(parallelogramVertices(box), point);
+    case "trapezoid":
+      return inPolygon(trapezoidVertices(box), point);
+    case "chevron":
+      return inPolygon(chevronVertices(box), point);
+    case "cross":
+      return inPolygon(crossVertices(box), point);
+    case "star":
+      return inPolygon(starVertices(box), point);
+    case "note":
+      return inPolygon(noteVertices(box), point);
     default: {
       const exhaustive: never = shape;
       return exhaustive;
@@ -102,6 +138,18 @@ export function shapeVertices(shape: ShapeKind, box: Rect): Point[] | null {
       return hexagonVertices(box);
     case "triangle":
       return triangleVertices(box);
+    case "parallelogram":
+      return parallelogramVertices(box);
+    case "trapezoid":
+      return trapezoidVertices(box);
+    case "chevron":
+      return chevronVertices(box);
+    case "cross":
+      return crossVertices(box);
+    case "star":
+      return starVertices(box);
+    case "note":
+      return noteVertices(box);
     default:
       return null;
   }
@@ -190,6 +238,121 @@ export function triangleVertices(box: Rect): Point[] {
   const cx = box.x + box.width / 2;
   return [
     { x: cx, y: box.y },
+    { x: box.x + box.width, y: box.y + box.height },
+    { x: box.x, y: box.y + box.height },
+  ];
+}
+
+/**
+ * A rectangle sheared horizontally: the flowchart convention for input and
+ * output. The shear is a sixth of the box width on each side, so a short wide
+ * box stays legible rather than collapsing into a sliver.
+ */
+export function parallelogramVertices(box: Rect): Point[] {
+  const shear = box.width / 6;
+  return [
+    { x: box.x + shear, y: box.y },
+    { x: box.x + box.width, y: box.y },
+    { x: box.x + box.width - shear, y: box.y + box.height },
+    { x: box.x, y: box.y + box.height },
+  ];
+}
+
+/**
+ * Narrower at the top than the bottom -- the flowchart "manual operation".
+ * Deliberately not the mirror of `triangle`: both parallel sides are kept, so
+ * a label has a full-width baseline to sit on.
+ */
+export function trapezoidVertices(box: Rect): Point[] {
+  const inset = box.width / 5;
+  return [
+    { x: box.x + inset, y: box.y },
+    { x: box.x + box.width - inset, y: box.y },
+    { x: box.x + box.width, y: box.y + box.height },
+    { x: box.x, y: box.y + box.height },
+  ];
+}
+
+/**
+ * A rightward process arrow with a notched tail, so a row of them interlocks
+ * without overlapping -- the pipeline/roadmap convention. The point and the
+ * notch are the same depth, which is what makes the interlock exact.
+ */
+export function chevronVertices(box: Rect): Point[] {
+  const point = Math.min(box.width * 0.22, box.height / 2);
+  const cy = box.y + box.height / 2;
+  return [
+    { x: box.x, y: box.y },
+    { x: box.x + box.width - point, y: box.y },
+    { x: box.x + box.width, y: cy },
+    { x: box.x + box.width - point, y: box.y + box.height },
+    { x: box.x, y: box.y + box.height },
+    { x: box.x + point, y: cy },
+  ];
+}
+
+/**
+ * A plus/cross with arms a third of each dimension. Twelve vertices, and the
+ * concavity is why containment is tested by winding rather than by bounding
+ * box: the four corners of the box are genuinely outside this shape.
+ */
+export function crossVertices(box: Rect): Point[] {
+  const aw = box.width / 3;
+  const ah = box.height / 3;
+  const x0 = box.x;
+  const y0 = box.y;
+  const x1 = box.x + box.width;
+  const y1 = box.y + box.height;
+  return [
+    { x: x0 + aw, y: y0 },
+    { x: x1 - aw, y: y0 },
+    { x: x1 - aw, y: y0 + ah },
+    { x: x1, y: y0 + ah },
+    { x: x1, y: y1 - ah },
+    { x: x1 - aw, y: y1 - ah },
+    { x: x1 - aw, y: y1 },
+    { x: x0 + aw, y: y1 },
+    { x: x0 + aw, y: y1 - ah },
+    { x: x0, y: y1 - ah },
+    { x: x0, y: y0 + ah },
+    { x: x0 + aw, y: y0 + ah },
+  ];
+}
+
+/**
+ * A five-pointed star inscribed in the box, point upward. The inner radius is
+ * the classic 0.382 of the outer (1/phi squared), which is the ratio that makes
+ * the arms read as a star rather than as a decagon.
+ *
+ * It holds very little text -- see the inscribed-area column in the generated
+ * reference -- so it is a marker, not a container.
+ */
+export function starVertices(box: Rect): Point[] {
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  const rx = box.width / 2;
+  const ry = box.height / 2;
+  const inner = 0.382;
+  const points: Point[] = [];
+  for (let i = 0; i < 10; i += 1) {
+    const angle = -Math.PI / 2 + (i * Math.PI) / 5;
+    const k = i % 2 === 0 ? 1 : inner;
+    points.push({ x: cx + Math.cos(angle) * rx * k, y: cy + Math.sin(angle) * ry * k });
+  }
+  return points;
+}
+
+/**
+ * A page with its top-right corner turned back -- the conventional "note" or
+ * "document" annotation. The fold is a fifth of the width, clamped so it never
+ * exceeds half the height on a short box.
+ */
+export function noteVertices(box: Rect): Point[] {
+  const fold = Math.min(box.width / 5, box.height / 2);
+  return [
+    { x: box.x, y: box.y },
+    { x: box.x + box.width - fold, y: box.y },
+    { x: box.x + box.width, y: box.y + fold },
     { x: box.x + box.width, y: box.y + box.height },
     { x: box.x, y: box.y + box.height },
   ];

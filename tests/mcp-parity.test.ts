@@ -45,6 +45,7 @@ const NARRATIVE_RESOURCES = [
   "prancheta://selection/rules",
   "prancheta://constraints",
   "prancheta://effects",
+  "prancheta://typography",
   "prancheta://modules",
 ];
 

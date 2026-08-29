@@ -17,7 +17,13 @@ Every shape shares the block's own axis-aligned bounding box exactly -- see [ste
 | `diamond` | 49.917% | out | out | out | out | The box's own edge midpoints, joined -- `|x-cx|/halfW + |y-cy|/halfH <= 1`. |
 | `hexagon` | 74.204% | out | out | out | out | A flat-topped, elongated hexagon (BPMN/flowchart convention, not a regular polygon): two vertical sides, corner cuts a quarter of the box width on each side. |
 | `stadium` | 84.966% | out | out | out | out | A rectangle with fully rounded ends; the radius is half the shorter side, so a near-square box degrades toward a circle rather than self-intersecting. |
-| `triangle` | 49.229% | out | out | out | out | undefined |
+| `triangle` | 49.229% | out | out | out | out | An upward triangle on the box's own base: apex at the top edge's midpoint, base along the bottom edge. |
+| `parallelogram` | 82.491% | out | out | out | out | A rectangle sheared horizontally by a sixth of its width -- the flowchart convention for input and output. |
+| `trapezoid` | 79.092% | out | out | out | out | Narrower at the top than the bottom (the flowchart "manual operation"). Both parallel sides are kept, so a label still has a full-width baseline. |
+| `chevron` | 77.226% | in | out | out | out | A rightward process arrow with a notched tail, so a row of them interlocks exactly without overlapping. Point and notch are the same depth. |
+| `cross` | 55.224% | out | out | out | out | A plus with arms a third of each dimension. Genuinely concave -- all four box corners are outside it, which is why containment is tested by winding. |
+| `star` | 27.623% | out | out | out | out | A five-pointed star, inner radius 0.382 of the outer. At 27.6% of its bounding box it is the least capacious shape here: a marker, not a container. |
+| `note` | 96.037% | in | out | out | out | A page with its top-right corner turned back -- the conventional note or document annotation. The fold is a fifth of the width, clamped to half the height. |
 
 ## Arrowheads (`Connector.arrowStyle`)
 

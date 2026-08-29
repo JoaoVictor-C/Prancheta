@@ -18,6 +18,10 @@ ELK decides node positions and edge routes. It is handed the **measured** size o
 - Edge routing is orthogonal. Splines read as decoration; right angles read as deliberate.
 - Arrowheads are filled paths, never SVG `<marker>` — marker support varies across renderers, and a missing arrowhead silently reverses the meaning of a diagram.
 - `direction: "RIGHT"` for a pipeline, `"DOWN"` for a call tree.
+- A long chain is as long as it has steps: fifteen of them came out 4004x383, which is
+  checkable, correct and unreadable. `wrapping: "multi-edge"` lets ELK cut the chain into
+  rows instead, and `aspectRatio` is what tells it where to cut — `1` asks for a square.
+  Off by default, because a short flow wrapped for no reason is harder to read, not easier.
 - Use `role` to mark what matters (`primary`) and what is failure (`warning`). Two accents per figure is usually one too many.
 
 ## Input

@@ -19,6 +19,8 @@
 
 import type { Block, Connector, FigureSpec, FigureNode, Scene } from "../../ir/types.ts";
 import { palette } from "../../theme.ts";
+import * as v from "../validate.ts";
+import { SpecError } from "../../ir/types.ts";
 
 export type ChartCategory = {
   label: string;
@@ -546,4 +548,86 @@ function buildSeriesChart(
   };
 
   return { version: 1, title: input.title, root };
+}
+
+/**
+ * Preconditions expandChart relies on.
+ *
+ * Two of these guard arithmetic rather than shape, which is the whole reason
+ * this layer's remit is "what the expander presupposes" and not "is this
+ * well-formed". A category whose values sum to zero is perfectly well-formed
+ * and, in stacked100, has no shares to express -- the existing `total > 0`
+ * guard keeps it from dividing by zero by drawing empty segments under a label
+ * that says 100%, which is a quieter failure than a crash and a worse one. And
+ * values that are individually finite can sum past Number.MAX_VALUE, so the
+ * derived total is checked, not just the numbers as written.
+ */
+export function validateChartInput(input: Record<string, unknown>, path = "chart"): void {
+  v.optionalString(input, "title", path);
+  v.optionalEnum(input, "chartType", path, ["bar", "line", "scatter"] as const);
+  v.optionalEnum(input, "orientation", path, ["vertical", "horizontal"] as const);
+  const stacking = v.optionalEnum(input, "stacking", path, [
+    "grouped",
+    "stacked",
+    "stacked100",
+  ] as const);
+  v.optionalString(input, "valueSuffix", path);
+  for (const key of [
+    "maxBarLength",
+    "barThickness",
+    "barGap",
+    "groupGap",
+    "labelWidth",
+    "plotWidth",
+    "plotHeight",
+  ]) {
+    v.optionalNumber(input, key, path);
+  }
+  v.optionalBoolean(input, "showValues", path);
+
+  const categories = v.nonEmptyArray(input, "categories", path, "categories");
+  const first = v.object(categories[0], `${path}.categories[0]`);
+  const seriesCount = v.nonEmptyArray(first, "values", `${path}.categories[0]`, "numbers").length;
+
+  for (const [i, raw] of categories.entries()) {
+    const at = `${path}.categories[${i}]`;
+    const category = v.object(raw, at);
+    v.requiredString(category, "label", at);
+    const values = v.nonEmptyArray(category, "values", at, "numbers");
+    if (values.length !== seriesCount) {
+      throw new SpecError(
+        `${at}.values has ${values.length} value(s), but ` +
+          `${path}.categories[0].values has ${seriesCount}. Every category must carry one ` +
+          `value per series, in the same order.`,
+      );
+    }
+    let total = 0;
+    for (const [j, value] of values.entries()) total += v.finite(value, `${at}.values[${j}]`);
+    v.finite(total, `${at}.values summed`);
+    if (stacking === "stacked100" && total === 0) {
+      throw new SpecError(
+        `${at}.values sums to 0, and stacked100 draws each segment as its share of the ` +
+          `category total. There are no shares of nothing -- the bar would render empty ` +
+          `under a label reading 100%.`,
+      );
+    }
+  }
+
+  if (input.series !== undefined) {
+    const series = v.array(input, "series", path, "series names");
+    for (const [i, name] of series.entries()) {
+      if (typeof name !== "string") {
+        throw new SpecError(
+          `${path}.series[${i}] must be a string, got ${JSON.stringify(name)}`,
+        );
+      }
+    }
+    if (series.length !== seriesCount) {
+      throw new SpecError(
+        `${path}.series names ${series.length} series, but each category carries ` +
+          `${seriesCount} value(s). A series without a value, or a value without a series, ` +
+          `has nothing to draw.`,
+      );
+    }
+  }
 }

@@ -14,6 +14,8 @@
 import type { Block, Connector, FigureSpec, Point, Scene } from "../../ir/types.ts";
 import type { BlockRole } from "../../ir/types.ts";
 import { typeScale } from "../../theme.ts";
+import * as v from "../validate.ts";
+import { SpecError } from "../../ir/types.ts";
 
 export type AnnotatedFigureInput = {
   title?: string;
@@ -97,4 +99,63 @@ export function expandAnnotatedFigure(input: AnnotatedFigureInput): FigureSpec {
   };
 
   return { version: 1, title: input.title, root: scene };
+}
+
+/**
+ * Preconditions expandAnnotatedFigure relies on.
+ *
+ * The interesting line in this whole layer runs through this preset, three
+ * keys apart. A callout whose `points` names a part that was never declared is
+ * OURS: a reference cannot be repaired into existence. A part declared taller
+ * than the canvas is NOT: repair grows boxes and canvas padding for a living,
+ * and refusing that here would turn a figure this project can fix into one it
+ * refuses to draw. Statically knowable is not the test; statically knowable
+ * AND beyond repair's reach is.
+ */
+export function validateAnnotatedFigureInput(
+  input: Record<string, unknown>,
+  path = "annotated-figure",
+): void {
+  v.optionalString(input, "title", path);
+  v.requiredNumber(input, "width", path);
+  v.requiredNumber(input, "height", path);
+
+  const ids: { id: string; at: string }[] = [];
+  if (input.parts !== undefined) {
+    const parts = v.array(input, "parts", path, "parts");
+    for (const [i, raw] of parts.entries()) {
+      const at = `${path}.parts[${i}]`;
+      const part = v.object(raw, at);
+      ids.push({ id: v.requiredString(part, "id", at), at });
+      v.optionalString(part, "label", at);
+      v.requiredNumber(part, "x", at);
+      v.requiredNumber(part, "y", at);
+      v.requiredNumber(part, "width", at);
+      v.requiredNumber(part, "height", at);
+      v.optionalEnum(part, "role", at, v.ROLES);
+      v.optionalNumber(part, "radius", at);
+    }
+    v.unique(ids, "part");
+  }
+
+  const declared = new Set(ids.map((entry) => entry.id));
+  const callouts = v.nonEmptyArray(input, "callouts", path, "callouts");
+  for (const [i, raw] of callouts.entries()) {
+    const at = `${path}.callouts[${i}]`;
+    const callout = v.object(raw, at);
+    v.optionalString(callout, "id", at);
+    v.requiredString(callout, "text", at);
+    v.point(callout.at, `${at}.at`);
+    v.optionalNumber(callout, "width", at);
+    const points = callout.points;
+    if (points === undefined) {
+      throw new SpecError(
+        `${at}.points is required: a part id, or a bare {x, y} on the figure. ` +
+          `A callout with nothing to point at is a floating label, which this preset ` +
+          `deliberately cannot draw.`,
+      );
+    }
+    if (typeof points === "string") v.knownId(points, declared, `${at}.points`, "part");
+    else v.point(points, `${at}.points`);
+  }
 }
