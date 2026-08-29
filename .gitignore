@@ -10,3 +10,4 @@ temp/
 err.txt
 out.txt
 debug*.txt
+experiments/*/states/
