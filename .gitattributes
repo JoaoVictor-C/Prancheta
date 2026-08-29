@@ -1,0 +1,12 @@
+# The generated views and references are compared BYTE-FOR-BYTE by their own
+# --check scripts. With core.autocrlf=true a Windows checkout rewrote every
+# file to CRLF, so `npm run check:docs` failed on a pristine clone and
+# gen-views' H1 strip silently stopped matching. One line ending for everyone.
+* text=auto eol=lf
+
+# Binary, never converted.
+*.png binary
+*.jpg binary
+*.woff2 binary
+*.ttf binary
+*.pyc binary

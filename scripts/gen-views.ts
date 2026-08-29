@@ -116,8 +116,10 @@ async function skillView(): Promise<GeneratedView> {
   const presetSections: string[] = [];
   for (const preset of PRESETS) {
     const doc = await readPresetDoc(preset.id, outDir);
-    // Drop the doc's own H1; it becomes a section here.
-    const body = doc.replace(/^# .*\n/, "").trim();
+    // Drop the doc's own H1; it becomes a section here. The \r? is load-bearing
+    // on Windows: `.` does not match \r, so against a CRLF working tree this
+    // matched nothing and every preset section shipped a duplicate heading.
+    const body = doc.replace(/^# .*\r?\n/, "").trim();
     presetSections.push(`### ${preset.id}\n\n${body}`);
   }
 

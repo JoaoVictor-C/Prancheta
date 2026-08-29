@@ -18,6 +18,7 @@ const APPROVED_ROOT_ITEMS = new Set([
   'tsconfig.json',
   '.npmrc',
   '.gitignore',
+  '.gitattributes',
 
   // Documentation
   'README.md',
