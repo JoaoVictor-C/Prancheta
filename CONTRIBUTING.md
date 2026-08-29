@@ -10,7 +10,7 @@ Before you start work, run these to ensure your environment is set up:
 npm run typecheck    # Verify TypeScript compiles
 npm run test         # Run the test suite
 npm run check:docs   # Verify generated views are up to date
-npm run check:all    # Run all checks (once implemented)
+npm run check:all    # All of the above, plus the root-clean check
 ```
 
 ## Project Structure

@@ -62,6 +62,9 @@ const LINE_DESCRIPTIONS: Record<LineStyle, string> = {
   dashed: "Long dashes, even gaps.",
   dotted: "Short dashes read as dots at typical stroke widths.",
   dashdot: "One long dash, one short dash, repeating.",
+  double: "Two thin bands (strokeWidth/3 each) with a gap between, drawn as two stroke passes over the box's own path rather than as a dash pattern.",
+  ridge: "Two bands of strokeWidth/2 with no gap, one lighter and one darker than the block's own stroke colour, lit from the OUTSIDE -- the classic CSS 3D border, held to the theme's own colours.",
+  groove: "The ridge lit from the INSIDE: the same two bands with the darker one outermost.",
 };
 
 /** Grid-samples containsPoint over `box` and returns the fraction of sample points inside the shape. */
@@ -154,7 +157,16 @@ lines.push("| --- | --- | --- |");
 lines.push(`| \`solid\` | (none) | ${LINE_DESCRIPTIONS.solid} |`);
 for (const style of LINE_STYLES) {
   if (style === "solid") continue;
-  lines.push(`| \`${style}\` | \`${DASH_PATTERNS[style]}\` | ${LINE_DESCRIPTIONS[style]} |`);
+  // double/ridge/groove are not dash patterns at all -- they are two stroke
+  // passes over the box's own path, and they apply to a Block's border only:
+  // a Connector carrying one draws solid, since dashPattern() has nothing to
+  // give it. Printing DASH_PATTERNS[style] for them put `undefined` in this
+  // column, the same defect SHAPE_DESCRIPTIONS had for `triangle`.
+  const pattern =
+    style in DASH_PATTERNS
+      ? `\`${DASH_PATTERNS[style as keyof typeof DASH_PATTERNS]}\``
+      : "(none -- two stroke passes, `Block` borders only)";
+  lines.push(`| \`${style}\` | ${pattern} | ${LINE_DESCRIPTIONS[style]} |`);
 }
 lines.push("");
 
