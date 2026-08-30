@@ -292,8 +292,24 @@ export function toLaidOutFigure(
 ): LaidOutFigure {
   const elements: PlacedElement[] = [];
 
+  // What each block asked for, so `declared-size-honoured` can compare the
+  // request against the measurement. `spec` here is the spec that was
+  // actually laid out -- repaired, if the loop edited it -- so a repair that
+  // set a new size is the declaration this compares against, not the author's
+  // superseded original.
+  const { index } = normalise(spec);
+
   // Boxes first, then text: painter's order, so labels are never buried.
   for (const box of measured.boxes) {
+    const node = index.get(box.id);
+    const asked = node !== undefined && node.type === "block" ? node : undefined;
+    const declared =
+      asked === undefined || (asked.width === undefined && asked.height === undefined)
+        ? undefined
+        : {
+            ...(asked.width === undefined ? {} : { width: asked.width }),
+            ...(asked.height === undefined ? {} : { height: asked.height }),
+          };
     elements.push({
       kind: "box",
       id: box.id,
@@ -301,6 +317,7 @@ export function toLaidOutFigure(
       y: box.y,
       width: box.width,
       height: box.height,
+      ...(declared === undefined ? {} : { declared }),
       fill: box.fill,
       stroke: box.stroke,
       strokeWidth: box.borderWidth,

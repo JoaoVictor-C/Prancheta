@@ -47,6 +47,11 @@ export type CheckId =
   | "categorical-colours-distinguishable"
   | "tick-labels-do-not-collide"
   | "constraints-satisfied"
+  // Does the box that got drawn have the size the spec asked for? The one
+  // relationship the other core checks never look at: they all measure the
+  // figure against ITSELF (does this label fit, do these boxes collide),
+  // never against what was requested.
+  | "declared-size-honoured"
   // Animation (ADR 0012, M11). Motion-aware: verified over an interval of
   // time, not a single instant, so it is intentionally named apart from
   // "boxes-do-not-overlap" even though it reuses that check's same
@@ -136,6 +141,7 @@ export function runChecks(figure: LaidOutFigure): Check[] {
   checks.push(categoricalColoursDistinguishable(boxes));
   checks.push(tickLabelsDoNotCollide(figure));
   checks.push(constraintsSatisfied(figure, boxes));
+  checks.push(declaredSizeHonoured(boxes));
   return checks;
 }
 
@@ -681,6 +687,73 @@ function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>
           detail: `${rounded}:1 against ${background}, below the ${WCAG_AA_NORMAL}:1 WCAG AA threshold for normal text`,
         };
   });
+}
+
+/**
+ * Did the box that got drawn have the size the spec asked for?
+ *
+ * Every other core check measures the figure against ITSELF -- does this
+ * label fit its box, do these two boxes collide. None of them ever asks
+ * whether the box is the box that was requested, so a spec could state one
+ * number and the figure draw another with nothing in the output saying so.
+ *
+ * The case that found this: a 3px-tall rule for an inclined plane came out
+ * 28px tall. Under `box-sizing: border-box` a height below padding plus
+ * border is unsatisfiable, and CSS resolves it by growing the box -- correct,
+ * since honouring the height would have to silently violate the padding
+ * instead. Both axes behave this way; `width: 3` floors at 28 too.
+ *
+ * So this check does NOT report a bug in the layout. It reports that a
+ * request could not be met, which is the part that was missing: the figure is
+ * well-formed and the author's instruction was still overruled. There is no
+ * repair for it -- growing is what already happened -- so it surfaces as
+ * `unrepaired`, and the author fixes it by lowering the padding or raising
+ * the size.
+ *
+ * Compared against the spec that was actually drawn (see PlacedBox.declared),
+ * so a repaired block is measured against its repaired size. A repair that
+ * lands is not a broken promise.
+ */
+function declaredSizeHonoured(boxes: Map<string, PlacedBox>): Check {
+  const claimed = [...boxes.values()].filter((box) => box.declared !== undefined);
+  if (claimed.length === 0) {
+    return {
+      id: "declared-size-honoured",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no block declared a width or a height",
+    };
+  }
+
+  const broken: string[] = [];
+  for (const box of claimed) {
+    const declared = box.declared!;
+    if (declared.width !== undefined && Math.abs(box.width - declared.width) > EPSILON) {
+      broken.push(`${box.id} asked for width ${fmt(declared.width)} and got ${fmt(box.width)}`);
+    }
+    if (declared.height !== undefined && Math.abs(box.height - declared.height) > EPSILON) {
+      broken.push(`${box.id} asked for height ${fmt(declared.height)} and got ${fmt(box.height)}`);
+    }
+  }
+
+  return broken.length === 0
+    ? {
+        id: "declared-size-honoured",
+        target: "figure",
+        status: "pass",
+        examined: claimed.length,
+        detail: `every declared size was honoured across ${claimed.length} block(s)`,
+      }
+    : {
+        id: "declared-size-honoured",
+        target: "figure",
+        status: "fail",
+        examined: claimed.length,
+        detail:
+          `${broken.length} declared size(s) could not be honoured: ${broken.join("; ")}` +
+          ` — a size below its own padding and border cannot be drawn`,
+      };
 }
 
 /**

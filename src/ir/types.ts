@@ -316,14 +316,27 @@ export type Block = {
   type: "block";
   id?: string;
   label?: string;
-  /** Fixed total width, border included. Text wraps to it. */
+  /**
+   * Total width, border included. Text wraps to it.
+   *
+   * Honoured exactly, with ONE unsatisfiable case: the box is laid out
+   * `box-sizing: border-box`, so a width smaller than this block's own
+   * padding plus border cannot be drawn at all, and CSS resolves it by
+   * growing the box. Honouring the width there would mean silently violating
+   * the padding instead — there is no size that satisfies both. When it
+   * happens the figure is still well-formed, so no other check notices;
+   * `declared-size-honoured` is what reports it.
+   */
   width?: number;
   maxWidth?: number;
   minWidth?: number;
   /**
-   * Fixed total height. Real schematics need shapes that keep their size, and
-   * a fixed height is the first way a label can overflow downward — which is
+   * Total height. Real schematics need shapes that keep their size, and a
+   * fixed height is the first way a label can overflow downward — which is
    * precisely what the repair loop exists to fix.
+   *
+   * Subject to the same padding-and-border floor as `width`, and reported the
+   * same way.
    */
   height?: number;
   /**
@@ -537,6 +550,21 @@ export type PlacedBox = {
   motion?: MotionWindow;
   /** Carried straight from the spec's Block.shape. Default "rect" when unset. */
   shape?: ShapeKind;
+  /**
+   * The size the block ASKED FOR, carried from the spec that was actually
+   * drawn -- so a repaired block declares its repaired size, not its original
+   * one. Only the axes the author fixed appear; an auto-sized axis is absent
+   * and claims nothing.
+   *
+   * This exists so `declared-size-honoured` can compare a request against the
+   * measurement, which is the one relationship no other core check covers. It
+   * is deliberately NOT called `declaredBox`, the module protocol's name for
+   * the superficially similar field: a module's declared box is a CLAIM by a
+   * foreign process about what it already drew, and this is an INSTRUCTION
+   * from the author about what to draw. Compared the same way, earned
+   * differently.
+   */
+  declared?: { width?: number; height?: number };
   /**
    * Where the label actually sits in this box, read back from computed style
    * rather than copied from the spec — so the repair loop reasons about what
