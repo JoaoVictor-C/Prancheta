@@ -107,7 +107,10 @@ function expandGrid(
   const labelColor = grid.labelColor ?? "#6B7280";
   const drawAxes = grid.axes !== false;
   const drawLabels = grid.labels !== false;
-  const every = Math.max(1, Math.round(grid.labelEvery ?? 1));
+  const everyOn = (axis: { labelEvery?: number }): number =>
+    Math.max(1, Math.round(axis.labelEvery ?? grid.labelEvery ?? 1));
+  const everyX = everyOn(grid.x);
+  const everyY = everyOn(grid.y);
 
   const xs = ticksOf(grid.x);
   const ys = ticksOf(grid.y);
@@ -188,12 +191,12 @@ function expandGrid(
 
   const format = (value: number): string => String(Math.round(value * 1000) / 1000);
   for (const [i, x] of xs.entries()) {
-    if (i % every !== 0) continue;
+    if (i % everyX !== 0) continue;
     const at = resolveInFrame(frame, x, yBase);
     out.push(tick(`${frame.id}-tick-x-${i}`, { x: at.x, y: at.y + 14 }, format(x), "center"));
   }
   for (const [i, y] of ys.entries()) {
-    if (i % every !== 0) continue;
+    if (i % everyY !== 0) continue;
     const at = resolveInFrame(frame, xBase, y);
     out.push(tick(`${frame.id}-tick-y-${i}`, { x: at.x - 8, y: at.y }, format(y), "end"));
   }

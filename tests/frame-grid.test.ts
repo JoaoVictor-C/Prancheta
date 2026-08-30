@@ -35,6 +35,31 @@ test("a grid expands into stroked lines and numbered ticks", () => {
   assert.equal(ticks.filter((c) => c.id!.includes("-tick-")).length, 10);
 });
 
+test("each axis sets its own label density", () => {
+  // The two axes rarely want the same one. Ruling every 50s and every 200m,
+  // a plot wants a number on every fourth line of x and every second of y;
+  // one value for both forces the denser axis to carry labels it has no room
+  // for.
+  const s = planeScene({
+    x: { from: 0, to: 8, step: 1, labelEvery: 4 },
+    y: { from: 0, to: 8, step: 1, labelEvery: 2 },
+  }).root as Scene;
+  const ticks = s.children.filter((c) => c.id!.includes("-tick-"));
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-x-")).length, 3, "0, 4, 8");
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-y-")).length, 5, "0, 2, 4, 6, 8");
+});
+
+test("an axis with no density of its own falls back to the grid's", () => {
+  const s = planeScene({
+    x: { from: 0, to: 4, step: 1 },
+    y: { from: 0, to: 4, step: 1, labelEvery: 1 },
+    labelEvery: 2,
+  }).root as Scene;
+  const ticks = s.children.filter((c) => c.id!.includes("-tick-"));
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-x-")).length, 3, "fell back to 2");
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-y-")).length, 5, "stated its own 1");
+});
+
 test("gridlines can be dashed, and the axes stay solid", () => {
   const s = planeScene({ ...smallGrid, lineStyle: "dashed" }).root as Scene;
   const dashed = s.marks!.filter((m) => m.lineStyle === "dashed");

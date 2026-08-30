@@ -1012,7 +1012,9 @@ Reproducing a real exam figure -- UFRGS 2016, two cyclists' distance against tim
 
 **And a plotted series is not a connector.** A connector joins two elements; a line through data points joins nothing -- it is ink, and the difference shows up in painter's order. Drawn as connectors, the series lines painted OVER the markers, so the dashed line ran visibly through the middle of every hollow diamond. Drawn as marks they paint beneath, and the markers sit on the line the way a reader expects. Reported by eye rather than by a check, which is the honest description: no check knows what a plot is supposed to look like.
 
-The figure reproduced with zero failures and, after the change, with NO relaxation toggles at all -- the connector version needed `allowConnectorCrossing` for lines crossing gridlines and `allowOverlap` for markers on them, and both went away once the ink was ink. 943 -> 944.
+**Label density is per-axis**, found the same way: matching the original's ruling meant a vertical line every 50s and a horizontal every 200m, with a number on every FOURTH line of one and every SECOND of the other. `GridSpec.labelEvery` was a single value for both, which forces the denser axis to carry labels it has no room for. It moves onto each axis and stays at the top level as the fallback, so a grid that wants one density still states it once.
+
+The figure reproduced with zero failures and, after the change, with NO relaxation toggles at all -- the connector version needed `allowConnectorCrossing` for lines crossing gridlines and `allowOverlap` for markers on them, and both went away once the ink was ink. 943 -> 946.
 
 ## Where this goes next
 

@@ -240,13 +240,21 @@ export type Frame = {
  * between lines, also in frame units.
  */
 export type GridSpec = {
-  x: { from: number; to: number; step?: number };
-  y: { from: number; to: number; step?: number };
+  x: GridAxis;
+  y: GridAxis;
   /** Draw the x = 0 and y = 0 lines more heavily. Default true. */
   axes?: boolean;
   /** Number the ticks along the axes. Default true. */
   labels?: boolean;
-  /** Every `labels`-th tick is numbered. Default 1. */
+  /**
+   * Fallback for an axis that states no `labelEvery` of its own. Default 1.
+   *
+   * Per-axis because the two axes rarely want the same density: a plot of
+   * metres against seconds might rule every 50s and every 200m, and want a
+   * number on every fourth line of one and every second line of the other.
+   * A single value for both forces the denser axis to carry labels it has no
+   * room for.
+   */
   labelEvery?: number;
   stroke?: string;
   axisStroke?: string;
@@ -262,6 +270,16 @@ export type GridSpec = {
    * an axis.
    */
   lineStyle?: LineStyle;
+};
+
+/** One axis of a grid: its extent, its line spacing, and how often it is numbered. */
+export type GridAxis = {
+  from: number;
+  to: number;
+  /** Spacing between lines, in frame units. Default 1. */
+  step?: number;
+  /** Number every nth line on this axis. Falls back to `GridSpec.labelEvery`. */
+  labelEvery?: number;
 };
 
 /** A point stated in a named frame rather than in canvas coordinates. */
