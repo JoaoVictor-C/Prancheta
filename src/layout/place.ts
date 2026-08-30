@@ -15,13 +15,16 @@
  */
 
 import type { Block, Connector, FigureNode, FigureSpec, Point, Scene } from "../ir/types.ts";
-import type { PlacedBox, PlacedConnector } from "../ir/types.ts";
+import type { PlacedBox, PlacedConnector, PlacedMark } from "../ir/types.ts";
+import type { PathCommand } from "../geometry/paths.ts";
+import { flattenPath } from "../geometry/paths.ts";
 import { layoutGraph } from "./graph.ts";
 import type { NodeSize } from "./graph.ts";
 import {
   curveRoute,
   liftCurve,
   routeBetweenBoxes,
+  sweepCommands,
   routeSelfLoop,
   routeFromPoint,
   routePointToPoint,
@@ -210,5 +213,59 @@ export function buildConnectors(
     }
   }
 
+  return placed;
+}
+
+/**
+ * A scene's marks, flattened into the polylines every check reads.
+ *
+ * Flattening happens HERE and once, for the same reason `curveRoute` does it
+ * for connectors: the renderer emits these very points, so a filled region
+ * cannot bulge through something a check just cleared. The arc segments reuse
+ * `sweepCommands`, so a mark's curvature is derived from its ends and centre
+ * exactly as an angle mark's is.
+ */
+export function buildMarks(scenes: SceneRecord[], measured: PageMeasurement): PlacedMark[] {
+  const sceneById = new Map(measured.scenes.map((scene) => [scene.id, scene as Point]));
+  const placed: PlacedMark[] = [];
+  for (const record of scenes) {
+    const origin = sceneById.get(record.id) ?? ZERO;
+    for (const [i, mark] of (record.scene.marks ?? []).entries()) {
+      const lift = (point: Point): Point => ({ x: point.x + origin.x, y: point.y + origin.y });
+      const start = lift(mark.from as Point);
+      const commands: PathCommand[] = [{ kind: "M", x: start.x, y: start.y }];
+      const arcCentres: { centre: Point; from: Point; to: Point }[] = [];
+      let cursor = start;
+      for (const segment of mark.segments) {
+        if ("line" in segment) {
+          const to = lift(segment.line as Point);
+          commands.push({ kind: "L", x: to.x, y: to.y });
+          cursor = to;
+          continue;
+        }
+        const to = lift(segment.arc as Point);
+        const centre = lift(segment.centre as Point);
+        arcCentres.push({ centre, from: cursor, to });
+        // [0] is the M that sweepCommands emits for its own start, which this
+        // path already has; only the A is wanted.
+        commands.push(...sweepCommands(cursor, to, centre).slice(1));
+        cursor = to;
+      }
+      const closed = mark.close ?? mark.fill !== undefined;
+      if (closed) commands.push({ kind: "Z" });
+      const points = flattenPath(commands);
+      placed.push({
+        kind: "mark",
+        id: mark.id ?? `${record.id}-mark-${i + 1}`,
+        points,
+        closed,
+        fill: mark.fill ?? "none",
+        stroke: mark.stroke ?? "none",
+        strokeWidth: mark.strokeWidth ?? 0,
+        lineStyle: mark.lineStyle ?? "solid",
+        arcCentres,
+      });
+    }
+  }
   return placed;
 }

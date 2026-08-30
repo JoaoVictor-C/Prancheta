@@ -1,0 +1,325 @@
+{
+  "version": 1,
+  "title": "Circle theorem: the angle in the alternate segment",
+  "canvas": {
+    "padding": 28,
+    "theme": "print",
+    "constraints": {
+      "allowOverlap": true,
+      "allowConnectorCrossing": true,
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 560,
+    "height": 470,
+    "frames": [
+      {
+        "id": "page",
+        "origin": {
+          "x": 250,
+          "y": 230
+        }
+      },
+      {
+        "id": "CtoA",
+        "origin": {
+          "frame": "page",
+          "x": 26.047,
+          "y": 147.721
+        },
+        "towards": {
+          "frame": "page",
+          "x": -140.954,
+          "y": -51.303
+        }
+      },
+      {
+        "id": "CtoB",
+        "origin": {
+          "frame": "page",
+          "x": 26.047,
+          "y": 147.721
+        },
+        "towards": {
+          "frame": "page",
+          "x": 140.954,
+          "y": -51.303
+        }
+      }
+    ],
+    "marks": [
+      {
+        "id": "segment",
+        "from": {
+          "frame": "page",
+          "x": -140.954,
+          "y": -51.303
+        },
+        "segments": [
+          {
+            "arc": {
+              "frame": "page",
+              "x": 140.954,
+              "y": -51.303
+            },
+            "centre": {
+              "frame": "page",
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "line": {
+              "frame": "page",
+              "x": -140.954,
+              "y": -51.303
+            }
+          }
+        ],
+        "fill": "rgba(200, 60, 40, 0.16)",
+        "stroke": "none"
+      },
+      {
+        "id": "circle",
+        "from": {
+          "frame": "page",
+          "x": 150.0,
+          "y": 0
+        },
+        "segments": [
+          {
+            "arc": {
+              "frame": "page",
+              "x": -150.0,
+              "y": 0
+            },
+            "centre": {
+              "frame": "page",
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "arc": {
+              "frame": "page",
+              "x": 150.0,
+              "y": 0
+            },
+            "centre": {
+              "frame": "page",
+              "x": 0,
+              "y": 0
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#222",
+        "strokeWidth": 2
+      }
+    ],
+    "children": [
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "",
+        "id": "Adot",
+        "frame": "page",
+        "x": -140.954,
+        "y": -51.303,
+        "anchor": "center",
+        "width": 8,
+        "height": 8,
+        "radius": 4
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "",
+        "id": "Bdot",
+        "frame": "page",
+        "x": 140.954,
+        "y": -51.303,
+        "anchor": "center",
+        "width": 8,
+        "height": 8,
+        "radius": 4
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "",
+        "id": "Cdot",
+        "frame": "page",
+        "x": 26.047,
+        "y": 147.721,
+        "anchor": "center",
+        "width": 8,
+        "height": 8,
+        "radius": 4
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "A",
+        "id": "A-label",
+        "frame": "page",
+        "x": -166.954,
+        "y": -65.303,
+        "anchor": "center",
+        "width": 26,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#222",
+        "annotates": "Adot"
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "B",
+        "id": "B-label",
+        "frame": "page",
+        "x": 164.954,
+        "y": -67.303,
+        "anchor": "center",
+        "width": 26,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#222",
+        "annotates": "Bdot"
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "C",
+        "id": "C-label",
+        "frame": "page",
+        "x": 32.047,
+        "y": 173.721,
+        "anchor": "center",
+        "width": 26,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#222",
+        "annotates": "Cdot"
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "x",
+        "id": "x-label",
+        "frame": "page",
+        "x": 18.047,
+        "y": 95.721,
+        "anchor": "center",
+        "width": 26,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#a00",
+        "annotates": "atC"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "chordAB",
+        "from": {
+          "frame": "page",
+          "x": -140.954,
+          "y": -51.303
+        },
+        "to": {
+          "frame": "page",
+          "x": 140.954,
+          "y": -51.303
+        },
+        "arrow": "none",
+        "stroke": "#222",
+        "strokeWidth": 2
+      },
+      {
+        "id": "CA",
+        "from": {
+          "frame": "page",
+          "x": 26.047,
+          "y": 147.721
+        },
+        "to": {
+          "frame": "page",
+          "x": -140.954,
+          "y": -51.303
+        },
+        "arrow": "none",
+        "stroke": "#222",
+        "strokeWidth": 2
+      },
+      {
+        "id": "BC",
+        "from": {
+          "frame": "page",
+          "x": 140.954,
+          "y": -51.303
+        },
+        "to": {
+          "frame": "page",
+          "x": 26.047,
+          "y": 147.721
+        },
+        "arrow": "none",
+        "stroke": "#222",
+        "strokeWidth": 2
+      },
+      {
+        "id": "atC",
+        "from": {
+          "frame": "CtoA",
+          "x": 52,
+          "y": 0
+        },
+        "to": {
+          "frame": "CtoB",
+          "x": 52,
+          "y": 0
+        },
+        "curve": {
+          "kind": "sweep",
+          "centre": {
+            "frame": "page",
+            "x": 26.047,
+            "y": 147.721
+          }
+        },
+        "arrow": "none",
+        "stroke": "#a00",
+        "strokeWidth": 1.5
+      }
+    ]
+  }
+}

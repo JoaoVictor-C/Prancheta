@@ -144,6 +144,8 @@ export type Scene = {
    * positions in. A nested scene's frames win over an enclosing scene's by id.
    */
   frames?: Frame[];
+  /** Free outlines — regions the thirteen block shapes cannot express. */
+  marks?: Mark[];
 };
 
 export type GraphOptions = {
@@ -253,6 +255,48 @@ export type GridSpec = {
 
 /** A point stated in a named frame rather than in canvas coordinates. */
 export type FramedPoint = { frame: string; x: number; y: number };
+
+/**
+ * Free geometry: an outline the shape system cannot express.
+ *
+ * The thirteen block shapes are polygons inscribed in a bounding box, which
+ * covers a great deal and stops exactly where a figure needs a region rather
+ * than a box — a shaded circular segment, a sector, the area between a chord
+ * and its arc. A Mark is that region, stated as a start point and a run of
+ * segments.
+ *
+ * It is FLATTENED at layout time into the polyline every check walks, at the
+ * same 0.05px bound a curved connector uses, so admitting curves here costs
+ * none of the precision the polygon-only rule was protecting.
+ *
+ * A mark is ink and nothing else: it carries no label, takes no part in the
+ * layout, and is never repaired. What it does carry is a FILL, which makes it
+ * a surface a label can sit on — so `contrast-sufficient` reads it, and a
+ * mark added under a label changes what that label is measured against.
+ */
+export type Mark = {
+  id: string;
+  from: Point | FramedPoint;
+  segments: MarkSegment[];
+  /** Close the outline back to `from`. Default true when a fill is given. */
+  close?: boolean;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  lineStyle?: LineStyle;
+};
+
+/**
+ * One run of a mark's outline: a straight line, or a circular arc about a
+ * stated centre.
+ *
+ * The arc is the same construction `ConnectorCurve`'s "sweep" uses, and for
+ * the same reason: its curvature is DERIVED from the two ends and the centre
+ * rather than stated beside them.
+ */
+export type MarkSegment =
+  | { line: Point | FramedPoint }
+  | { arc: Point | FramedPoint; centre: Point | FramedPoint };
 
 /**
  * The arrowhead shape drawn at every end `arrow` selects. "closed" (the
@@ -661,7 +705,30 @@ export type LaidOutFigure = {
   layoutConstraints?: Constraint[];
 };
 
-export type PlacedElement = PlacedBox | PlacedText | PlacedConnector;
+export type PlacedElement = PlacedBox | PlacedText | PlacedConnector | PlacedMark;
+
+/**
+ * A mark as drawn: its outline already FLATTENED to a polyline, exactly as a
+ * curved connector is.
+ *
+ * Every check that reasons about a mark reads these points, and the renderer
+ * emits the same ones, so a filled region cannot bulge somewhere a check just
+ * cleared. That identity is the same one `shapeVertices` gives a polygon
+ * block -- one vertex list, used for containment and for drawing -- extended
+ * to geometry the author supplies rather than the shape system.
+ */
+export type PlacedMark = {
+  kind: "mark";
+  id: string;
+  points: Point[];
+  closed: boolean;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  lineStyle: LineStyle;
+  /** The centre of every arc segment, kept so `arc-is-circular` can check it. */
+  arcCentres: { centre: Point; from: Point; to: Point }[];
+};
 
 export type PlacedConnector = {
   kind: "connector";

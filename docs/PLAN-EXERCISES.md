@@ -226,7 +226,7 @@ anything else.
 of the altitude, a base angle marked 52° and *checked* against the arc drawn
 for it, and `x` as the unknown at the apex.
 
-### M4 — the Mark
+### M4 — the Mark — **DONE (2026-08-29)**
 
 Free outlines, sectors, hatching — flattened by the same 0.05px flattener, so a
 mark is checked as it is drawn. It ships with a **bleed**, because hatching is

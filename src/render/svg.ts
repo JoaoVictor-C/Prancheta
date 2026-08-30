@@ -39,6 +39,7 @@ import type {
   LineStyle,
   PlacedBox,
   PlacedConnector,
+  PlacedMark,
   PlacedText,
   Point,
   Rect,
@@ -81,12 +82,15 @@ export function toSvg(figure: LaidOutFigure, title?: string, options: ToSvgOptio
     else labelsByOwner.set(element.ownerId, [text]);
   }
 
+  const marksOut: string[] = [];
   const boxesOut: string[] = [];
   const connectorsOut: string[] = [];
   const textOut: string[] = [];
 
   for (const element of figure.elements) {
-    if (element.kind === "box") {
+    if (element.kind === "mark") {
+      marksOut.push(markToSvg(element));
+    } else if (element.kind === "box") {
       boxesOut.push(boxToSvg(element, defs, labelsByOwner.get(element.id)));
     } else if (element.kind === "connector") {
       connectorsOut.push(connectorToSvg(element, defs));
@@ -96,6 +100,10 @@ export function toSvg(figure: LaidOutFigure, title?: string, options: ToSvgOptio
   }
 
   const body: string[] = [];
+  // Marks first, and that is the whole reason they are their own layer: a
+  // shaded region is what a figure is drawn ON, so it belongs beneath the
+  // boxes, the connectors and the labels, in that order (decision 0008).
+  if (marksOut.length > 0) body.push(layerGroup("pr-marks", marksOut));
   if (boxesOut.length > 0) body.push(layerGroup("pr-boxes", boxesOut));
   if (connectorsOut.length > 0) body.push(layerGroup("pr-connectors", connectorsOut));
   if (textOut.length > 0) body.push(layerGroup("pr-text", textOut));
@@ -163,6 +171,35 @@ function wrapElement(options: {
     meta.push(`<desc>${escapeText(options.descText)}</desc>`);
   }
   return `<g ${attrs.join(" ")}>\n${[...meta, options.inner].join("\n")}\n</g>`;
+}
+
+/**
+ * A mark: the flattened outline, emitted as the same polyline every check
+ * walked.
+ *
+ * No curve survives to this point -- `buildMarks` flattened it at layout time
+ * at the 0.05px bound -- which is exactly the guarantee `connectorToSvg`
+ * already gives for a curved connector, and the reason admitting free
+ * geometry costs none of the precision the polygon-only rule protected.
+ */
+function markToSvg(mark: PlacedMark): string {
+  if (mark.points.length < 2) return "";
+  const path =
+    mark.points
+      .map((point, index) => `${index === 0 ? "M" : "L"} ${num(point.x)} ${num(point.y)}`)
+      .join(" ") + (mark.closed ? " Z" : "");
+  const dash = dashPattern(mark.lineStyle);
+  const stroke =
+    mark.strokeWidth <= 0
+      ? ' stroke="none"'
+      : ` stroke="${attr(mark.stroke)}" stroke-width="${num(mark.strokeWidth)}"` +
+        ` stroke-linejoin="round" stroke-linecap="round"` +
+        (dash === "" ? "" : ` stroke-dasharray="${dash}"`);
+  return wrapElement({
+    id: mark.id,
+    descText: mark.closed ? "A filled region" : "An outline",
+    inner: `<path data-pr-id="${attr(mark.id)}" d="${path}" fill="${attr(mark.fill)}"${stroke}/>`,
+  });
 }
 
 function boxToSvg(box: PlacedBox, defs: DefsRegistry, labels: string[] | undefined): string {

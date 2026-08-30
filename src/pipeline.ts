@@ -22,7 +22,7 @@ import type { FontEmbedMode, HtmlOptions } from "./layout/html.ts";
 import { lineNeedsTextFallback, loadOutlineFont } from "./export/fonts.ts";
 import { rasterisePdf } from "./export/pdf.ts";
 import type { PdfOptions } from "./export/pdf.ts";
-import { buildConnectors, collectScenes, placeScenes } from "./layout/place.ts";
+import { buildConnectors, buildMarks, collectScenes, placeScenes } from "./layout/place.ts";
 import { measureInPage } from "./layout/measure.ts";
 import type { PageMeasurement } from "./layout/measure.ts";
 import { quoteFamily, resolvePlatformFonts } from "./layout/fonts.ts";
@@ -222,10 +222,12 @@ async function layOut(
     const boxes = figure.elements.filter((element) => element.kind === "box");
     const rest = figure.elements.filter((element) => element.kind !== "box");
     const connectors = buildConnectors(scenes, measured, routes, boxes);
-    // Painter's order: boxes, then connectors over them, then text over both.
+    const marks = buildMarks(scenes, measured);
+    // Painter's order: marks, then boxes over them, then connectors, then text.
     // A connector under a box would vanish; a label under a connector would be
-    // crossed out by it.
-    figure.elements = [...boxes, ...connectors, ...rest];
+    // crossed out by it; and a shaded region is what the rest is drawn ON, so
+    // it goes underneath all three.
+    figure.elements = [...marks, ...boxes, ...connectors, ...rest];
   }
 
   // Last, and only now: layout is finished, so nothing an effect records can

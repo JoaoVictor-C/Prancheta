@@ -25,7 +25,7 @@
  * is the one sharp edge here and it is tested directly.
  */
 
-import type { Block, FigureNode, FigureSpec, Frame, FramedPoint, GridSpec, Point, Scene } from "./types.ts";
+import type { Block, FigureNode, FigureSpec, Frame, FramedPoint, GridSpec, Mark, Point, Scene } from "./types.ts";
 import { SpecError } from "./types.ts";
 
 /** A point stated in a frame, or one already in canvas coordinates. */
@@ -308,7 +308,28 @@ function resolveNode(
       };
     });
 
-    const resolved: Scene = { ...node, children, ...(connectors === undefined ? {} : { connectors }) };
+    const marks = node.marks?.map((mark, i) => {
+      const where = `marks[${i}]`;
+      return {
+        ...mark,
+        from: resolvePoint(mark.from, frames, `${where}.from`),
+        segments: mark.segments.map((segment, j) =>
+          "line" in segment
+            ? { line: resolvePoint(segment.line, frames, `${where}.segments[${j}].line`) }
+            : {
+                arc: resolvePoint(segment.arc, frames, `${where}.segments[${j}].arc`),
+                centre: resolvePoint(segment.centre, frames, `${where}.segments[${j}].centre`),
+              },
+        ),
+      } as Mark;
+    });
+
+    const resolved: Scene = {
+      ...node,
+      children,
+      ...(connectors === undefined ? {} : { connectors }),
+      ...(marks === undefined ? {} : { marks }),
+    };
     delete resolved.frames;
     return resolved;
   }

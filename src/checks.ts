@@ -16,6 +16,7 @@ import type {
   LaidOutFigure,
   PlacedBox,
   PlacedConnector,
+  PlacedMark,
   PlacedText,
   Point,
   Rect,
@@ -61,6 +62,10 @@ export type CheckId =
   // defect this whole line of work exists to prevent, reappearing inside the
   // primitive meant to cure it.
   | "sweep-matches-its-label"
+  // An "arc" whose two ends are not the same distance from its centre is not
+  // an arc, and nothing else notices: the renderer averages the two radii and
+  // draws a curve matching neither.
+  | "arc-is-circular"
   // Animation (ADR 0012, M11). Motion-aware: verified over an interval of
   // time, not a single instant, so it is intentionally named apart from
   // "boxes-do-not-overlap" even though it reuses that check's same
@@ -153,6 +158,7 @@ export function runChecks(figure: LaidOutFigure): Check[] {
   checks.push(declaredSizeHonoured(boxes));
   checks.push(annotationNearestItsOwner(figure, boxes));
   checks.push(sweepMatchesItsLabel(figure, boxes));
+  checks.push(arcIsCircular(figure));
   return checks;
 }
 
@@ -486,7 +492,9 @@ function effectWithinCanvas(figure: LaidOutFigure): Check {
   let examined = 0;
 
   for (const element of figure.elements) {
-    const bleed: Bleed | undefined = element.bleed;
+    // A mark carries no effect, so it has no halo to clip. Its own stroke
+    // reach is ordinary ink and is accounted for by content-within-canvas.
+    const bleed: Bleed | undefined = element.kind === "mark" ? undefined : element.bleed;
     if (bleed === undefined || bleedIsEmpty(bleed)) continue;
     examined += 1;
     // A rotated box's filter region is local (pre-rotation), but the halo it
@@ -551,6 +559,11 @@ function ownBounds(element: LaidOutFigure["elements"][number]): Rect {
       element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
     );
   }
+  if (element.kind === "mark") {
+    return unionRects(
+      element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
+    );
+  }
   return unionRects(element.lines.map((line) => line.box));
 }
 
@@ -565,7 +578,18 @@ function contentWithinCanvas(figure: LaidOutFigure): Check {
           ? unionOf(
               element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
             )
-          : unionOf(element.lines.map((line) => line.box));
+          : element.kind === "mark"
+            ? // A stroked outline lays ink half its own width past the path,
+              // which is the mark's whole bleed: no effect, no halo, just the
+              // pen. Ignoring it would let a mark's edge fall off the canvas
+              // while its centreline sat inside.
+              padRect(
+                unionOf(
+                  element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
+                ),
+                element.strokeWidth / 2,
+              )
+            : unionOf(element.lines.map((line) => line.box));
     const overflow = overflowOf(box, canvas);
     if (overflow) escaped.push(`${element.id} ${describe(overflow)}`);
   }
@@ -604,6 +628,16 @@ function contentWithinCanvas(figure: LaidOutFigure): Check {
  * wrong" and "nothing could be checked" never look the same in the
  * manifest.
  */
+/** A rect grown by `pad` on every side. */
+function padRect(rect: Rect, pad: number): Rect {
+  return {
+    x: rect.x - pad,
+    y: rect.y - pad,
+    width: rect.width + pad * 2,
+    height: rect.height + pad * 2,
+  };
+}
+
 /** A world-space point expressed in one box's own unrotated frame. */
 function inFramePoint(point: Point, box: PlacedBox): Point {
   if (box.rotation === undefined || box.rotationCenter === undefined) return point;
@@ -678,10 +712,27 @@ function inFrameOf(rect: Rect, box: PlacedBox): Rect {
  * the caller reports the worse -- it lies on both, and choosing one would be
  * a guess dressed as a measurement.
  */
+/** Is `point` inside this closed polyline? Ray casting, same rule as inPolygon. */
+function inPolyline(points: Point[], point: Point): boolean {
+  let inside = false;
+  for (let i = 0, j = points.length - 1; i < points.length; j = i, i += 1) {
+    const a = points[i]!;
+    const b = points[j]!;
+    if (
+      a.y > point.y !== b.y > point.y &&
+      point.x < ((b.x - a.x) * (point.y - a.y)) / (b.y - a.y) + a.x
+    ) {
+      inside = !inside;
+    }
+  }
+  return inside;
+}
+
 function surfacesUnder(
   text: PlacedText,
   boxes: Map<string, PlacedBox>,
   background: string,
+  marks: PlacedMark[] = [],
 ): string[] {
   const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
   if (owner !== undefined && !isTransparent(owner.fill)) return [owner.fill];
@@ -715,6 +766,19 @@ function surfacesUnder(
     }
   }
 
+  // A filled mark is a surface a label can sit on, and this is the obligation
+  // ADR 0019 named as the Mark's price: without it, shading a region under a
+  // label would change what a reader sees and nothing would measure it. Only
+  // a CLOSED, filled mark counts -- an open outline is a line, not a ground --
+  // and containment is tested against the flattened polyline, which is the
+  // same geometry the renderer fills.
+  const inkCentre = { x: ink.x + ink.width / 2, y: ink.y + ink.height / 2 };
+  for (const mark of marks) {
+    if (!mark.closed || mark.fill === "none" || isTransparent(mark.fill)) continue;
+    if (!inPolyline(mark.points, inkCentre)) continue;
+    covered = compositeOver(mark.fill, covered) ?? mark.fill;
+  }
+
   if (straddling.length === 0) return [covered];
   // Part of the label lies on the covered stack and part on that stack plus
   // whatever it half-crosses. Both are real surfaces under real glyphs, and
@@ -727,6 +791,7 @@ function surfacesUnder(
 
 function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check[] {
   const texts = figure.elements.filter((element): element is PlacedText => element.kind === "text");
+  const marks = figure.elements.filter((element): element is PlacedMark => element.kind === "mark");
   if (texts.length === 0) {
     return [
       {
@@ -740,7 +805,7 @@ function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>
   }
 
   return texts.map((text) => {
-    const surfaces = surfacesUnder(text, boxes, figure.background);
+    const surfaces = surfacesUnder(text, boxes, figure.background, marks);
     // Worst surface wins: a label straddling two of them has to be legible
     // against both, and reporting the kinder one would be the same silent
     // pass this check exists to prevent.
@@ -875,6 +940,79 @@ function sweepMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedBo
         status: "fail",
         examined: compared,
         detail: `${disagreements.length} angle mark(s) disagree with their own label: ${disagreements.join("; ")}`,
+      };
+}
+
+/**
+ * Are both ends of every arc the same distance from the centre it turns about?
+ *
+ * An arc is stated as two endpoints and a centre, which is one number more
+ * than a circle needs -- so the three can disagree, and when they do nothing
+ * else in the pipeline notices. `sweepCommands` averages the two radii and
+ * draws a perfectly smooth curve matching neither end's distance, and every
+ * other check is happy because the polyline it walks is the polyline that
+ * gets drawn. The figure is well-formed and the arc is not the arc that was
+ * asked for.
+ *
+ * This was a known gap when the sweep shipped (ADR 0019 records it as
+ * implied-but-unwritten) and the Mark made it reachable a second way, which
+ * is the point at which a gap becomes a defect. One check covers both.
+ *
+ * Half a pixel, the same EPSILON everything else tolerates: an author
+ * computing both arms from one radius lands exactly, and rounding to whole
+ * pixels is not a defect.
+ */
+function arcIsCircular(figure: LaidOutFigure): Check {
+  const arcs: { id: string; centre: Point; from: Point; to: Point }[] = [];
+  for (const element of figure.elements) {
+    if (element.kind === "connector" && element.curve?.kind === "sweep") {
+      arcs.push({
+        id: element.id,
+        centre: element.curve.centre as Point,
+        from: element.points[0]!,
+        to: element.points[element.points.length - 1]!,
+      });
+    }
+    if (element.kind === "mark") {
+      for (const [i, arc] of element.arcCentres.entries()) {
+        arcs.push({ id: `${element.id}#${i}`, centre: arc.centre, from: arc.from, to: arc.to });
+      }
+    }
+  }
+
+  if (arcs.length === 0) {
+    return {
+      id: "arc-is-circular",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: the figure draws no arcs",
+    };
+  }
+
+  const wrong: string[] = [];
+  for (const arc of arcs) {
+    const r1 = Math.hypot(arc.from.x - arc.centre.x, arc.from.y - arc.centre.y);
+    const r2 = Math.hypot(arc.to.x - arc.centre.x, arc.to.y - arc.centre.y);
+    if (Math.abs(r1 - r2) > EPSILON) {
+      wrong.push(`${arc.id} reaches ${fmt(r1)}px one side of its centre and ${fmt(r2)}px the other`);
+    }
+  }
+
+  return wrong.length === 0
+    ? {
+        id: "arc-is-circular",
+        target: "figure",
+        status: "pass",
+        examined: arcs.length,
+        detail: `both ends of every arc sit on one circle across ${arcs.length} arc(s)`,
+      }
+    : {
+        id: "arc-is-circular",
+        target: "figure",
+        status: "fail",
+        examined: arcs.length,
+        detail: `${wrong.length} arc(s) are not circular: ${wrong.join("; ")}`,
       };
 }
 
