@@ -1,0 +1,23 @@
+# Python dependencies for the figure modules.
+#
+# The TypeScript core needs none of this. Only `modules/*/render.py` does, and
+# only the module you actually run -- several need nothing beyond the standard
+# library (piechart, topology, circuit, and plot in curve mode).
+#
+# Install with:  python -m pip install -r modules/requirements.txt
+#
+# The full set is what `npm run test:modules` requires; it spawns every module
+# for real and fails loudly rather than skipping when an import is missing.
+#
+# Lower bounds are the versions this was developed and tested against
+# (Python 3.14). Nothing here is pinned to an exact release: these are mature
+# scientific packages, and pinning would age worse than it would protect.
+
+numpy>=2.4                  # crystal, dendrogram, plot (fit mode), skewt
+scipy>=1.18                 # dendrogram -- hierarchical clustering linkage
+ase>=3.29                   # crystal -- crystallographic unit cells
+MetPy>=1.7                  # skewt -- atmospheric thermodynamics
+dna_features_viewer>=3.1    # genomic -- gene feature level packing
+pyproj>=3.7                 # map -- lon/lat to Web Mercator
+shapely>=2.1                # map -- polygon geometry, label placement
+rdkit>=2026.3               # molecule, reaction -- 2D coordinates, stereo

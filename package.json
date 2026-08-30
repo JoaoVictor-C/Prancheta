@@ -5,6 +5,29 @@
   "type": "module",
   "description": "A drafting board for agents: correct, complex figures from code.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JoaoVictor-C/Prancheta.git"
+  },
+  "homepage": "https://github.com/JoaoVictor-C/Prancheta#readme",
+  "bugs": {
+    "url": "https://github.com/JoaoVictor-C/Prancheta/issues"
+  },
+  "keywords": [
+    "svg",
+    "diagram",
+    "figure",
+    "schematic",
+    "layout",
+    "agent",
+    "llm",
+    "mcp",
+    "visualization",
+    "technical-drawing"
+  ],
+  "engines": {
+    "node": ">=22.18.0"
+  },
   "bin": {
     "prancheta": "./src/cli.ts",
     "prancheta-mcp": "./src/mcp/server.ts"

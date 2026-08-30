@@ -1,9 +1,13 @@
-import { writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 
 const { runAndVerifyModule } = await import(pathToFileURL("./src/modules/run.ts").href);
-const dir = "C:/Users/JOO~1/AppData/Local/Temp/claude/C--Joao-Programa--o-ProjectHub-Prancheta/2caffd2e-027a-4e22-9fdd-63ae36e2d598/scratchpad/";
+// Output goes to temp/, which is gitignored -- ADR 0011's home for transient
+// artefacts. This used to be one developer's absolute scratchpad path, which
+// meant the probe ran on exactly one machine.
+const dir = "temp/";
+await mkdir(dir, { recursive: true });
 
 const { output } = await runAndVerifyModule({
   command: "python",
