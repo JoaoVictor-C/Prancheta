@@ -1,0 +1,391 @@
+{
+  "version": 1,
+  "title": "Isosceles triangle: find angle x",
+  "canvas": {
+    "padding": 30,
+    "theme": "print",
+    "constraints": {
+      "allowOverlap": true,
+      "allowConnectorCrossing": true,
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 520,
+    "height": 400,
+    "frames": [
+      {
+        "id": "page",
+        "origin": {
+          "x": 66,
+          "y": 330
+        }
+      },
+      {
+        "id": "AB",
+        "origin": {
+          "frame": "page",
+          "x": 0,
+          "y": 0
+        },
+        "towards": {
+          "frame": "page",
+          "x": 380,
+          "y": 0
+        }
+      },
+      {
+        "id": "AC",
+        "origin": {
+          "frame": "page",
+          "x": 0,
+          "y": 0
+        },
+        "towards": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        }
+      },
+      {
+        "id": "BC",
+        "origin": {
+          "frame": "page",
+          "x": 380,
+          "y": 0
+        },
+        "towards": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        }
+      },
+      {
+        "id": "CA",
+        "origin": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        },
+        "towards": {
+          "frame": "page",
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": "CB",
+        "origin": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        },
+        "towards": {
+          "frame": "page",
+          "x": 380,
+          "y": 0
+        }
+      },
+      {
+        "id": "midAC",
+        "origin": {
+          "frame": "page",
+          "x": 95.0,
+          "y": 121.59
+        },
+        "towards": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        }
+      },
+      {
+        "id": "midBC",
+        "origin": {
+          "frame": "page",
+          "x": 285.0,
+          "y": 121.59
+        },
+        "towards": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        }
+      },
+      {
+        "id": "foot",
+        "origin": {
+          "frame": "page",
+          "x": 190,
+          "y": 0
+        },
+        "towards": {
+          "frame": "page",
+          "x": 380,
+          "y": 0
+        }
+      }
+    ],
+    "children": [
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "",
+        "id": "tick-AC-1",
+        "frame": "midAC",
+        "x": 0,
+        "y": 0,
+        "anchor": "center",
+        "width": 2,
+        "height": 16,
+        "radius": 0
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "",
+        "id": "tick-BC-1",
+        "frame": "midBC",
+        "x": 0,
+        "y": 0,
+        "anchor": "center",
+        "width": 2,
+        "height": 16,
+        "radius": 0
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "#888",
+        "strokeWidth": 1.5,
+        "label": "",
+        "id": "rightangle",
+        "frame": "foot",
+        "x": 0,
+        "y": 16,
+        "width": 16,
+        "height": 16,
+        "radius": 0
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "A",
+        "id": "A-label",
+        "frame": "page",
+        "x": -24,
+        "y": -16,
+        "anchor": "center",
+        "width": 24,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#222",
+        "annotates": "sideAB"
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "B",
+        "id": "B-label",
+        "frame": "page",
+        "x": 404,
+        "y": -16,
+        "anchor": "center",
+        "width": 24,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#222",
+        "annotates": "sideBC"
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "C",
+        "id": "C-label",
+        "frame": "page",
+        "x": 190,
+        "y": 269.19,
+        "anchor": "center",
+        "width": 24,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#222",
+        "annotates": "sideCA"
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "x",
+        "id": "x-label",
+        "frame": "page",
+        "x": 209,
+        "y": 170.19,
+        "anchor": "center",
+        "width": 24,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#a00",
+        "annotates": "apex"
+      },
+      {
+        "type": "block",
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "label": "52\u00b0",
+        "id": "base-label",
+        "frame": "page",
+        "x": 82,
+        "y": 40,
+        "anchor": "center",
+        "width": 36,
+        "height": 20,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#333",
+        "annotates": "baseA"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "sideAB",
+        "from": {
+          "frame": "page",
+          "x": 0,
+          "y": 0
+        },
+        "to": {
+          "frame": "page",
+          "x": 380,
+          "y": 0
+        },
+        "arrow": "none",
+        "stroke": "#222",
+        "strokeWidth": 2
+      },
+      {
+        "id": "sideBC",
+        "from": {
+          "frame": "page",
+          "x": 380,
+          "y": 0
+        },
+        "to": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        },
+        "arrow": "none",
+        "stroke": "#222",
+        "strokeWidth": 2
+      },
+      {
+        "id": "sideCA",
+        "from": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        },
+        "to": {
+          "frame": "page",
+          "x": 0,
+          "y": 0
+        },
+        "arrow": "none",
+        "stroke": "#222",
+        "strokeWidth": 2
+      },
+      {
+        "id": "altitude",
+        "from": {
+          "frame": "page",
+          "x": 190,
+          "y": 0
+        },
+        "to": {
+          "frame": "page",
+          "x": 190,
+          "y": 243.19
+        },
+        "arrow": "none",
+        "lineStyle": "dashed",
+        "stroke": "#999",
+        "strokeWidth": 1.5
+      },
+      {
+        "id": "baseA",
+        "from": {
+          "frame": "AB",
+          "x": 64,
+          "y": 0
+        },
+        "to": {
+          "frame": "AC",
+          "x": 64,
+          "y": 0
+        },
+        "curve": {
+          "kind": "sweep",
+          "centre": {
+            "frame": "page",
+            "x": 0,
+            "y": 0
+          }
+        },
+        "arrow": "none",
+        "stroke": "#333",
+        "strokeWidth": 1.5
+      },
+      {
+        "id": "apex",
+        "from": {
+          "frame": "CA",
+          "x": 70,
+          "y": 0
+        },
+        "to": {
+          "frame": "CB",
+          "x": 70,
+          "y": 0
+        },
+        "curve": {
+          "kind": "sweep",
+          "centre": {
+            "frame": "page",
+            "x": 190,
+            "y": 243.19
+          }
+        },
+        "arrow": "none",
+        "stroke": "#a00",
+        "strokeWidth": 1.5
+      }
+    ]
+  }
+}

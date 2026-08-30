@@ -192,3 +192,55 @@ test("resolving twice changes nothing, because resolution strips what it consume
   assert.equal((once.root as Scene).frames, undefined, "frames must be gone once resolved");
   assert.equal(((once.root as Scene).children[0] as Block).frame, undefined);
 });
+
+// --- aiming a frame at a point ----------------------------------------------
+
+test("a frame aimed at a point takes its rotation from the two ends", () => {
+  // The reason this exists: an equal-side tick across AB is perpendicular to
+  // AB, and the moment an author has to type AB's angle, that number can
+  // disagree with where A and B actually are.
+  const s = resolved(
+    scene([
+      { id: "page", origin: { x: 0, y: 100 } },
+      // From the origin towards (100, 100) in page units, which is up and
+      // right at exactly 45 degrees.
+      { id: "aimed", origin: { frame: "page", x: 0, y: 0 }, towards: { frame: "page", x: 100, y: 100 } },
+    ], [
+      { type: "block", id: "tick", frame: "aimed", x: 0, y: 0, width: 2, height: 20, label: "" },
+    ]),
+  );
+  // Block.rotation is clockwise and the frame's is counter-clockwise.
+  assert.equal((s.children[0] as Block).rotation, -45);
+});
+
+test("aiming and stating a rotation at once is refused", () => {
+  assert.throws(
+    () =>
+      parseSpec(
+        scene([{ id: "f", origin: { x: 0, y: 0 }, rotation: 10, towards: { x: 1, y: 1 } }]),
+      ),
+    (error: unknown) =>
+      error instanceof SpecError && /aimed one way or the other/.test(error.message),
+  );
+});
+
+test("a frame's perpendicular is its y axis, so a tick needs no trigonometry", () => {
+  // A 2x20 block in a frame aimed along a side runs 2px ALONG it and 20px
+  // ACROSS it, whatever direction that side happens to run.
+  const s = resolved(
+    scene([
+      { id: "side", origin: { x: 0, y: 0 }, towards: { x: 0, y: -50 } }, // straight up the page
+    ], [
+      { type: "block", id: "tick", frame: "side", x: 0, y: 0, width: 2, height: 20, label: "" },
+    ]),
+  );
+  // Aimed up the page is +90 degrees counter-clockwise, so the block turns -90.
+  assert.equal((s.children[0] as Block).rotation, -90);
+});
+
+test("a malformed aim is refused rather than silently leaving the frame unrotated", () => {
+  assert.throws(
+    () => parseSpec(scene([{ id: "f", origin: { x: 0, y: 0 }, towards: { x: 1 } }])),
+    (error: unknown) => error instanceof SpecError && /towards must be an \{x, y\} point/.test(error.message),
+  );
+});

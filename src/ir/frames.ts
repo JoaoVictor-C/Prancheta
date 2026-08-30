@@ -208,7 +208,22 @@ function framesOf(
           frame.origin.y,
         )
       : frame.origin;
-    frames.set(frame.id, { ...frame, origin });
+    // `towards` becomes a rotation the moment both ends are known, so nothing
+    // downstream has to learn about a second way of aiming a frame.
+    let rotation = frame.rotation;
+    if (frame.towards !== undefined) {
+      const aim = isFramedPoint(frame.towards)
+        ? resolveInFrame(
+            frameOrThrow(frames, frame.towards.frame, `frame "${frame.id}".towards`),
+            frame.towards.x,
+            frame.towards.y,
+          )
+        : frame.towards;
+      // Canvas y is down and a frame's rotation is counter-clockwise, so the
+      // bearing is negated exactly once, here.
+      rotation = (-Math.atan2(aim.y - origin.y, aim.x - origin.x) * 180) / Math.PI;
+    }
+    frames.set(frame.id, { ...frame, origin, ...(rotation === undefined ? {} : { rotation }) });
   }
   return frames;
 }

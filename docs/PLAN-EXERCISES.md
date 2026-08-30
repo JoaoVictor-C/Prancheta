@@ -203,12 +203,28 @@ every one of which is a figure whose positions are stated coordinates.
 **Deliverable: a transformations question — a shape and its image on a labelled
 grid.**
 
-### M3 — geometry marks
+### M3 — geometry marks — **DONE (2026-08-29)**
 
-Equal-side ticks and right-angle squares, folding in
-[src/dimension/annotation.ts](../src/dimension/annotation.ts), which is already
-built on `createLinearScale` and is a Frame annotation layer in all but name.
-**Deliverable: a triangle construction, and a circle theorem minus the shading.**
+Equal-side ticks and right-angle squares turned out to need no new vocabulary
+at all, only a better way to aim a frame: `Frame.towards` takes its rotation
+from two points instead of a stated angle, so a tick across AB is a thin block
+on the frame's y axis and a right-angle mark is a square in its corner.
+Neither knows any trigonometry, and the angle of AB cannot disagree with where
+A and B are because it is never written down.
+
+`src/dimension/annotation.ts` was **deleted rather than folded in**, reversing
+the plan. Its `DimensionLine` carried a stated `measurement` alongside its own
+`start` and `end` — two independent numbers for one length, which is exactly
+the falseness class this milestone exists to remove — and its `FigureScale` is
+`Frame.xUnit` inverted. Wiring it would have added a second way to say the same
+thing, and the second way permits a lie the first cannot. A dimension line is
+now a connector in a frame aimed along what it measures, annotated like
+anything else.
+
+**Deliverable: [fixtures/isosceles-construction.json](../fixtures/isosceles-construction.json)**
+— an isosceles triangle with equal-side ticks, a right-angle mark at the foot
+of the altitude, a base angle marked 52° and *checked* against the arc drawn
+for it, and `x` as the unknown at the apex.
 
 ### M4 — the Mark
 

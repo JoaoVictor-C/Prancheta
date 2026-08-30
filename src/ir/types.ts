@@ -197,8 +197,23 @@ export type Frame = {
    * document, which is the whole purpose.
    */
   origin: Point | FramedPoint;
-  /** Degrees counter-clockwise. Unset is axis-aligned. */
+  /** Degrees counter-clockwise. Unset is axis-aligned. Refused alongside `towards`. */
   rotation?: number;
+  /**
+   * Point this frame's +x axis aims at, instead of a stated `rotation`.
+   *
+   * The same idea as the rest of frames, one level further out: an equal-side
+   * tick across AB is perpendicular to AB, and saying so should not require
+   * an author to work out AB's angle and type it in — the moment that angle
+   * is typed, it can disagree with where A and B actually are. A frame aimed
+   * from A at B has AB as its x axis and the perpendicular as its y axis, so
+   * a tick is a small rect on the y axis and a right-angle mark is a square
+   * in the corner. Neither knows any trigonometry.
+   *
+   * May be a framed point, so a frame can be aimed using coordinates stated
+   * in another frame.
+   */
+  towards?: Point | FramedPoint;
   /** Canvas px per unit along x. Default 1. */
   xUnit?: number;
   /** Canvas px per unit along y. Defaults to `xUnit`, so a frame is square unless told otherwise. */
@@ -1236,6 +1251,21 @@ function validateNode(
           !Number.isFinite(origin.x) || !Number.isFinite(origin.y)
         ) {
           throw new SpecError(`${where}.origin must be an {x, y} point`);
+        }
+        if (frame.towards !== undefined) {
+          if (frame.rotation !== undefined) {
+            throw new SpecError(
+              `${where} declares both rotation and towards; a frame is aimed one way or the other`,
+            );
+          }
+          const towards = frame.towards as Point;
+          if (
+            typeof towards !== "object" || towards === null ||
+            typeof towards.x !== "number" || typeof towards.y !== "number" ||
+            !Number.isFinite(towards.x) || !Number.isFinite(towards.y)
+          ) {
+            throw new SpecError(`${where}.towards must be an {x, y} point`);
+          }
         }
         for (const key of ["rotation", "xUnit", "yUnit"] as const) {
           const value = frame[key];
