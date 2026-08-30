@@ -274,10 +274,25 @@ export type PerSideBorder = {
 export type ConnectorCurve =
   | { kind: "arc"; bulge?: number }
   | { kind: "bezier"; control: Point[] }
-  | { kind: "spline"; radius?: number };
+  | { kind: "spline"; radius?: number }
+  /**
+   * A true circular arc about `centre`, from this connector's start to its
+   * end. This is the angle mark of school geometry and physics: the theta
+   * between an incline and the horizontal, the angle at a triangle's vertex.
+   *
+   * The sweep is DERIVED from the two endpoints and the centre rather than
+   * stated alongside them, which is the whole point. An author computes the
+   * arm endpoints from the angle they mean and the arc's sweep follows; the
+   * number appears once, so the drawing and the label cannot disagree. What
+   * they can still do is disagree with a label that was typed independently,
+   * which is what `sweep-matches-its-label` is for.
+   *
+   * `centre` is scene-local, exactly like a bare endpoint.
+   */
+  | { kind: "sweep"; centre: Point };
 
 /** Runtime mirror of `ConnectorCurve`'s tags, so validation reads one list. */
-export const CURVE_KINDS: readonly ConnectorCurve["kind"][] = ["arc", "bezier", "spline"];
+export const CURVE_KINDS: readonly ConnectorCurve["kind"][] = ["arc", "bezier", "spline", "sweep"];
 
 export type Connector = {
   id?: string;
@@ -888,6 +903,16 @@ function validateCurve(
         throw new SpecError(`${path}.control[${i}] must be an {x, y} point`);
       }
     });
+  }
+  if (curve.kind === "sweep") {
+    const centre = curve.centre as Point | undefined;
+    if (
+      typeof centre !== "object" || centre === null ||
+      typeof centre.x !== "number" || typeof centre.y !== "number" ||
+      !Number.isFinite(centre.x) || !Number.isFinite(centre.y)
+    ) {
+      throw new SpecError(`${path}.centre must be an {x, y} point`);
+    }
   }
   if (curve.kind === "spline" && curve.radius !== undefined) {
     // Zero is refused rather than treated as "no rounding": a spline with no

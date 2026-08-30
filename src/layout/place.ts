@@ -182,8 +182,15 @@ export function buildConnectors(
       // Bend the route before anything else sees it, so the polyline every
       // check reads is the one the renderer draws (decision 0010). The curve
       // is lifted into page space first, for the same reason the route was.
-      if (connector.curve !== undefined) {
-        points = curveRoute(points, liftCurve(connector.curve, origin ?? ZERO));
+      // Lifted once and kept, not lifted and thrown away. `points` are in
+      // page space, so a curve carried alongside them in SCENE space is a
+      // trap for anything that reads both: `sweep-matches-its-label` compared
+      // a page-space arc against a scene-space centre and measured 21.4
+      // degrees for an arc that subtends exactly 30.
+      const lifted =
+        connector.curve === undefined ? undefined : liftCurve(connector.curve, origin ?? ZERO);
+      if (lifted !== undefined) {
+        points = curveRoute(points, lifted);
       }
 
       placed.push({
@@ -192,7 +199,7 @@ export function buildConnectors(
         fromId: typeof connector.from === "string" ? connector.from : null,
         toId: typeof connector.to === "string" ? connector.to : null,
         points,
-        curve: connector.curve,
+        curve: lifted,
         arrow: connector.arrow ?? "end",
         arrowStyle: connector.arrowStyle ?? "closed",
         dashed: connector.dashed ?? false,

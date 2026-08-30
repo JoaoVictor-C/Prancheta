@@ -21,7 +21,7 @@ import type {
   Rect,
 } from "./ir/types.ts";
 import { resolveConstraints } from "./ir/types.ts";
-import { polylineIntersectsBox } from "./layout/connectors.ts";
+import { polylineIntersectsBox, sweptDegrees } from "./layout/connectors.ts";
 import { inkBounds, isEmpty as bleedIsEmpty, unionRects } from "./effects/bleed.ts";
 import type { Bleed } from "./effects/bleed.ts";
 import { containsPoint } from "./geometry/shapes.ts";
@@ -57,6 +57,10 @@ export type CheckId =
   // it names; in exchange it must be nearer to that element than to any
   // other, because a reader attributes a label to whatever it sits closest to.
   | "annotation-nearest-its-owner"
+  // An angle mark that says one thing and draws another is the original
+  // defect this whole line of work exists to prevent, reappearing inside the
+  // primitive meant to cure it.
+  | "sweep-matches-its-label"
   // Animation (ADR 0012, M11). Motion-aware: verified over an interval of
   // time, not a single instant, so it is intentionally named apart from
   // "boxes-do-not-overlap" even though it reuses that check's same
@@ -148,6 +152,7 @@ export function runChecks(figure: LaidOutFigure): Check[] {
   checks.push(constraintsSatisfied(figure, boxes));
   checks.push(declaredSizeHonoured(boxes));
   checks.push(annotationNearestItsOwner(figure, boxes));
+  checks.push(sweepMatchesItsLabel(figure, boxes));
   return checks;
 }
 
@@ -736,6 +741,105 @@ function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>
           detail: `${rounded}:1 against ${background}, below the ${WCAG_AA_NORMAL}:1 WCAG AA threshold for normal text`,
         };
   });
+}
+
+/**
+ * Does an angle mark sweep the angle its label prints?
+ *
+ * A sweep's geometry is derived -- the arc subtends whatever its two arms
+ * subtend -- so the drawing cannot disagree with the coordinates that made
+ * it. What it can still disagree with is a LABEL typed independently, and
+ * that is exactly the defect this whole line of work started from: a slope
+ * drawn at one angle beside a label reading another, passing every check.
+ * Shipping an angle mark without this would rebuild that defect inside the
+ * primitive meant to cure it.
+ *
+ * The label is found through `annotates`, so the connection is authored
+ * rather than guessed at by proximity. Only labels that actually state a
+ * number are compared -- "theta" names the angle without claiming a value,
+ * and reporting it would punish correct figures. A degree sign, spaces and a
+ * leading sign are tolerated; anything else is treated as not a claim.
+ *
+ * One degree of tolerance, because a label is written to the precision a
+ * reader sees: an arc swept 29.97 degrees beside a label reading 30 is not a
+ * defect, and demanding EPSILON here would fail every figure whose arm
+ * endpoints were rounded to whole pixels.
+ */
+const SWEEP_LABEL_TOLERANCE_DEGREES = 1;
+
+function sweepMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
+  const sweeps = figure.elements.filter(
+    (element): element is PlacedConnector =>
+      element.kind === "connector" && element.curve?.kind === "sweep",
+  );
+  if (sweeps.length === 0) {
+    return {
+      id: "sweep-matches-its-label",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no connector draws an angle sweep",
+    };
+  }
+
+  const texts = figure.elements.filter((element): element is PlacedText => element.kind === "text");
+  const disagreements: string[] = [];
+  let compared = 0;
+
+  for (const sweep of sweeps) {
+    const centre = (sweep.curve as { kind: "sweep"; centre: Point }).centre;
+    const first = sweep.points[0]!;
+    const last = sweep.points[sweep.points.length - 1]!;
+    const drawn = sweptDegrees(first, last, centre);
+
+    for (const [id, box] of boxes) {
+      if (box.annotates !== sweep.id) continue;
+      const text = texts.find((candidate) => candidate.ownerId === id);
+      if (text === undefined) continue;
+      const stated = statedDegrees(text.lines.map((line) => line.text).join(""));
+      if (stated === null) continue; // names the angle without claiming a value
+      compared += 1;
+      if (Math.abs(stated - drawn) > SWEEP_LABEL_TOLERANCE_DEGREES) {
+        disagreements.push(
+          `${id} says ${fmt(stated)} but ${sweep.id} sweeps ${fmt(drawn)} degrees`,
+        );
+      }
+    }
+  }
+
+  if (compared === 0) {
+    return {
+      id: "sweep-matches-its-label",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: `not applicable: ${sweeps.length} sweep(s), none annotated with a stated angle`,
+    };
+  }
+
+  return disagreements.length === 0
+    ? {
+        id: "sweep-matches-its-label",
+        target: "figure",
+        status: "pass",
+        examined: compared,
+        detail: `every stated angle matches the arc drawn for it across ${compared} mark(s)`,
+      }
+    : {
+        id: "sweep-matches-its-label",
+        target: "figure",
+        status: "fail",
+        examined: compared,
+        detail: `${disagreements.length} angle mark(s) disagree with their own label: ${disagreements.join("; ")}`,
+      };
+}
+
+/** The number a label claims, in degrees, or null when it claims none. */
+function statedDegrees(text: string): number | null {
+  const match = /^\s*([+-]?\d+(?:\.\d+)?)\s*(?:°|deg|degrees)?\s*$/.exec(text);
+  if (match === null) return null;
+  const value = Number(match[1]);
+  return Number.isFinite(value) ? value : null;
 }
 
 /** True when one of these two boxes is an annotation naming the other. */

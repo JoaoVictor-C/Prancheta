@@ -6,7 +6,8 @@
     "theme": "print",
     "constraints": {
       "allowOverlap": true,
-      "allowConnectorCrossing": true
+      "allowConnectorCrossing": true,
+      "allowCurvedConnectors": true
     }
   },
   "root": {
@@ -103,6 +104,22 @@
         "textColor": "#050",
         "label": "f",
         "annotates": "f"
+      },
+      {
+        "type": "block",
+        "id": "theta-label",
+        "x": 144.26543458855986,
+        "y": 356.14242173620676,
+        "width": 34,
+        "height": 22,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#333",
+        "label": "30\u00b0",
+        "annotates": "theta"
       }
     ],
     "connectors": [
@@ -147,6 +164,27 @@
         "arrow": "end",
         "stroke": "#050",
         "strokeWidth": 2
+      },
+      {
+        "id": "theta",
+        "from": {
+          "x": 148.0,
+          "y": 400.0
+        },
+        "to": {
+          "x": 137.54998149518622,
+          "y": 361.0
+        },
+        "curve": {
+          "kind": "sweep",
+          "centre": {
+            "x": 70.0,
+            "y": 400.0
+          }
+        },
+        "arrow": "none",
+        "stroke": "#333",
+        "strokeWidth": 1.5
       }
     ]
   }

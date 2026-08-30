@@ -113,12 +113,19 @@ export function routeSelfLoop(box: PlacedBox, height = SELF_LOOP_HEIGHT): Point[
  * which is why they are the two that survive being re-routed.
  */
 export function liftCurve(curve: ConnectorCurve, origin: Point): ConnectorCurve {
-  if (curve.kind !== "bezier") return curve;
   if (origin.x === 0 && origin.y === 0) return curve;
-  return {
-    kind: "bezier",
-    control: curve.control.map((point) => ({ x: point.x + origin.x, y: point.y + origin.y })),
-  };
+  if (curve.kind === "bezier") {
+    return {
+      kind: "bezier",
+      control: curve.control.map((point) => ({ x: point.x + origin.x, y: point.y + origin.y })),
+    };
+  }
+  // A sweep's centre is a coordinate in the same scene-local space as the
+  // endpoints, so it travels with them.
+  if (curve.kind === "sweep") {
+    return { kind: "sweep", centre: { x: curve.centre.x + origin.x, y: curve.centre.y + origin.y } };
+  }
+  return curve;
 }
 
 /**
@@ -295,6 +302,62 @@ function segmentIntersectsRect(
  * boxes and pulled them back off the borders, and a curve that moved them
  * would undo that.
  */
+/**
+ * The SVG arc commands for a circular sweep from `first` to `last` about
+ * `centre`, taking the shorter way round.
+ *
+ * The radius is the mean of the two arms. They should be equal -- an author
+ * computing both from one angle gets that for free -- and when they are not,
+ * `sweep-is-circular` says so rather than this quietly drawing an ellipse
+ * that matches neither arm.
+ */
+export function sweepCommands(first: Point, last: Point, centre: Point): PathCommand[] {
+  const r1 = Math.hypot(first.x - centre.x, first.y - centre.y);
+  const r2 = Math.hypot(last.x - centre.x, last.y - centre.y);
+  const radius = (r1 + r2) / 2;
+  if (radius === 0) return [{ kind: "M", x: first.x, y: first.y }];
+  return [
+    { kind: "M", x: first.x, y: first.y },
+    {
+      kind: "A",
+      rx: radius,
+      ry: radius,
+      rotation: 0,
+      largeArc: false,
+      // SVG's sweep flag means "drawn in the direction of INCREASING angle".
+      // Endpoint parameterisation offers two centres for the same pair of
+      // points and radius, and picking the wrong one silently draws an arc
+      // about the mirror centre -- the points still sit at the stated radius,
+      // just not from the centre that was asked for. The cross product of the
+      // two arms says which way the shorter path runs.
+      sweep: crossSign(first, last, centre) > 0,
+      x: last.x,
+      y: last.y,
+    },
+  ];
+}
+
+function crossSign(first: Point, last: Point, centre: Point): number {
+  const ax = first.x - centre.x;
+  const ay = first.y - centre.y;
+  const bx = last.x - centre.x;
+  const by = last.y - centre.y;
+  return ax * by - ay * bx;
+}
+
+/** The angle the two arms subtend at `centre`, in degrees, always 0..180. */
+export function sweptDegrees(first: Point, last: Point, centre: Point): number {
+  const ax = first.x - centre.x;
+  const ay = first.y - centre.y;
+  const bx = last.x - centre.x;
+  const by = last.y - centre.y;
+  const la = Math.hypot(ax, ay);
+  const lb = Math.hypot(bx, by);
+  if (la === 0 || lb === 0) return 0;
+  const cosine = Math.min(1, Math.max(-1, (ax * bx + ay * by) / (la * lb)));
+  return (Math.acos(cosine) * 180) / Math.PI;
+}
+
 export function curveRoute(points: Point[], curve: ConnectorCurve): Point[] {
   if (points.length < 2) return points;
   const first = points[0]!;
@@ -323,6 +386,14 @@ export function curveRoute(points: Point[], curve: ConnectorCurve): Point[] {
             { kind: "C", x1: c1!.x, y1: c1!.y, x2: c2.x, y2: c2.y, x: last.x, y: last.y },
           ];
     return withEnds(flattenPath(commands), first, last);
+  }
+
+  if (curve.kind === "sweep") {
+    // A real circular arc, not a bowed chord: the sweep is whatever the two
+    // endpoints subtend at `centre`, so it cannot disagree with the geometry
+    // that produced them. Flattened through the same adaptive flattener every
+    // other curve uses, so what the checks walk is what the renderer draws.
+    return withEnds(flattenPath(sweepCommands(first, last, curve.centre)), first, last);
   }
 
   // "arc": bow the chord by `bulge` of its own length. Intermediate waypoints
