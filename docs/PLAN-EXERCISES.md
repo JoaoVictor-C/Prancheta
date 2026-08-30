@@ -233,13 +233,19 @@ mark is checked as it is drawn. It ships with a **bleed**, because hatching is
 ink with area. Its other obligation, contrast substrate resolution, was already
 paid in M0.2. **Deliverable: a shaded circular segment.**
 
-### M5 — parametric shape vertices
+### M5 — parametric shape vertices — **NOT NEEDED (2026-08-29)**
 
-Only if M1's outline approach proves insufficient in practice. Budget the
-`gen-shape-reference` format change: it holds an exhaustive
-`Record<ShapeKind, string>` and grid-samples `containsPoint` over one canonical
-box, so a parameterised shape makes each entry a function rather than a
-constant.
+Gated on M1's outline approach proving insufficient. It did not. Every figure
+built for M1 through M4 is made of thin rotated rects, connectors and marks,
+and the case M5 existed for — a *filled* wedge whose angle is stated once —
+turned out to be a three-point Mark whose corners are frame coordinates. It
+renders with zero failures and its angle is checked by
+`sweep-matches-its-label`, with no change to the shape system at all.
+
+Closed rather than deferred. The `gen-shape-reference` cost this section
+budgeted for is therefore not spent: `SHAPE_KINDS` keeps its exhaustive
+`Record<ShapeKind, string>` and its constant inscribed areas, and
+`label-within-shape` keeps answering about a vertex list it can enumerate.
 
 ## Cut
 

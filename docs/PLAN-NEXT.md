@@ -270,7 +270,7 @@ The milestones above are grouped by theme. This is the linear sequence to actual
 | 25 | ◐ Scale abstraction — linear, log, band, time + tick policy | src/scales.ts implements it correctly, but nothing outside dimension/annotation.ts and chart/data-binding.ts imports it, and both of those are themselves unreachable (see 27, 29) — see the 2026-08-24 roadmap entry |
 | 26 | ✅ `tick-labels-do-not-collide` check + repair by rotating/thinning ticks | Check implemented in checks.ts and wired into `runChecks`, so it runs on every real figure; repair itself deferred to chart integration (step 27), which has not landed |
 | 27 | ◐ Data binding for `chart` — dataset + encodings, derived axes and legend | src/presets/chart/data-binding.ts exists and is tested, but the chart preset does not call `bindData` — a chart spec still takes pre-computed values, so A6 ("the agent never does scale arithmetic") does not hold yet |
-| 28 | ◐ Math typesetting — MathJax SVG output as a measured group | src/math/mathjax.ts is an admitted mock (renders LaTeX as text in a dashed box) and no preset calls it |
+| 28 | ✗ Math typesetting — MathJax SVG output as a measured group | Removed 2026-08-29. The mock guessed its advance width, which is the defect this project exists to refuse, and Unicode subscripts, Greek and the degree sign already measure correctly through the browser mirror. See the ROADMAP entry for M4. |
 | 29 | ◐ Units, figure scale (1:50) and dimension annotation | src/dimension/annotation.ts is implemented and tested but no preset or CLI path reaches it |
 
 **Stage 6 — Constraints and translation repair** *(the deep one; do not start before 19 holds)*
