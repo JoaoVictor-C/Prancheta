@@ -35,6 +35,15 @@ test("a grid expands into stroked lines and numbered ticks", () => {
   assert.equal(ticks.filter((c) => c.id!.includes("-tick-")).length, 10);
 });
 
+test("a gridline never competes to be the nearest thing to a label", () => {
+  // Regression: gridlines became marks, marks became annotation candidates,
+  // and every vertex label on a dense plane was suddenly "nearer a gridline"
+  // than the point it named. Grid furniture is substrate in whichever form it
+  // takes -- a numbered tick is a block, a ruled line is a mark.
+  const s = planeScene(smallGrid).root as Scene;
+  for (const m of s.marks!) assert.equal(m.gridOf, "plane");
+});
+
 test("each axis sets its own label density", () => {
   // The two axes rarely want the same one. Ruling every 50s and every 200m,
   // a plot wants a number on every fourth line of x and every second of y;

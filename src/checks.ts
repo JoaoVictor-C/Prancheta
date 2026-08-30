@@ -1100,7 +1100,14 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
     });
   }
   for (const element of figure.elements) {
-    if (element.kind !== "connector") continue;
+    // A mark is measured exactly like a connector -- both are polylines, and
+    // both would beat every real neighbour if measured by a bounding box.
+    if (element.kind !== "connector" && element.kind !== "mark") continue;
+    // A dense lattice puts a line within a few pixels of everything, so grid
+    // furniture would win "nearest" against whatever a label actually names.
+    // Excluded in its mark form for the same reason it is excluded in its
+    // block form: it is what the figure is drawn ON.
+    if (element.kind === "mark" && element.gridOf !== undefined) continue;
     const points = element.points;
     candidates.push({
       id: element.id,

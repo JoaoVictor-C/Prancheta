@@ -257,6 +257,7 @@ export function buildMarks(scenes: SceneRecord[], measured: PageMeasurement): Pl
       placed.push({
         kind: "mark",
         id: mark.id ?? `${record.id}-mark-${i + 1}`,
+        ...(mark.gridOf === undefined ? {} : { gridOf: mark.gridOf }),
         points,
         closed,
         fill: mark.fill ?? "none",

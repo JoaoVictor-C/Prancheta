@@ -1016,6 +1016,16 @@ Reproducing a real exam figure -- UFRGS 2016, two cyclists' distance against tim
 
 The figure reproduced with zero failures and, after the change, with NO relaxation toggles at all -- the connector version needed `allowConnectorCrossing` for lines crossing gridlines and `allowOverlap` for markers on them, and both went away once the ink was ink. 943 -> 946.
 
+### 2026-08-29 - Ink is nameable, and grid furniture still is not
+
+Drawing a trajectory for a FEI kinematics problem needed a label on an origin tick -- "O" naming a mark -- and `annotates` refused it: block ids and connector ids only. The workaround is to invent an invisible block at the same spot and hang the label on that, which is precisely the move this feature exists to remove. Marks are nameable now, for the same reason connectors are: a caption on a shaded region and a letter on a tick are labels on INK, and ink is most of what a geometry figure is made of. `annotation-nearest-its-owner` measures a mark exactly as it measures a connector -- by its polyline, since a bounding box would beat every real neighbour.
+
+**Which immediately broke a fixture, and the fixture sweep is what caught it.** Gridlines had become marks one commit earlier; marks became annotation candidates in this one; and `transformation-grid.json` went red with all four vertex labels "nearer a gridline" than the point each names. That is not a defect in the figure -- on a dense lattice a line is within a few pixels of everything -- it is the same substrate argument already made for grid BLOCKS, arriving at the mark form of the same furniture. `Mark.gridOf` carries it, and the check skips it.
+
+Worth recording how the whole thing surfaced, because it was not the checks. The render was reported as passing on the strength of a `grep -cE "FAIL|unrepaired"` that returned zero -- while the CLI had actually printed `invalid spec: ... annotates names "origin-tick"` and drawn nothing at all. The grep matched neither word, the exit code was never read, and a stale PNG from the previous run was mistaken for the new one. A verification that greps for the failure modes it expects will keep passing on the ones it does not; the exit code was right there and says so unconditionally.
+
+949 tests. Failure set across all 67 fixtures unchanged.
+
 ## Where this goes next
 
 Every milestone in the original plan reached a ✅ at some point, but a 2026-08-24 reachability audit found several were marked done on the strength of a passing test file rather than a real consumer — the same failure mode step 36 caught first. See [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md)'s stage 5 and 6 tables and the entry below for what is and is not actually wired. What follows here is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.

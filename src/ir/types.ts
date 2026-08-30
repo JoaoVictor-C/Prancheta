@@ -305,6 +305,13 @@ export type FramedPoint = { frame: string; x: number; y: number };
  */
 export type Mark = {
   id: string;
+  /**
+   * Set by frame resolution on the lattice lines a `GridSpec` expands into.
+   * Never authored. Grid furniture is substrate in whichever form it takes --
+   * a numbered tick is a block, a ruled line is a mark -- and neither
+   * competes to be the nearest thing to a label.
+   */
+  gridOf?: string;
   from: Point | FramedPoint;
   segments: MarkSegment[];
   /** Close the outline back to `from`. Default true when a fill is given. */
@@ -749,6 +756,8 @@ export type PlacedElement = PlacedBox | PlacedText | PlacedConnector | PlacedMar
 export type PlacedMark = {
   kind: "mark";
   id: string;
+  /** Carried straight from the spec's Mark.gridOf; see there. */
+  gridOf?: string;
   points: Point[];
   closed: boolean;
   fill: string;
@@ -1323,6 +1332,16 @@ function validateNode(
         if (edge.id !== undefined) connectorIds.add(edge.id);
       }
     }
+    // Marks are nameable for the same reason connectors are: "O" names an
+    // origin tick and a caption names a shaded region, and both are ink
+    // rather than boxes. Refusing them sent an author back to inventing an
+    // invisible block to hang the label on, which is the workaround this
+    // whole feature exists to remove.
+    if (Array.isArray(node.marks)) {
+      for (const mark of node.marks as { id?: string }[]) {
+        if (mark.id !== undefined) connectorIds.add(mark.id);
+      }
+    }
     if (node.frames !== undefined) {
       if (!Array.isArray(node.frames)) {
         throw new SpecError(`${path}.frames must be an array`);
@@ -1395,7 +1414,7 @@ function validateNode(
       }
       if (!ids.has(child.annotates) && !connectorIds.has(child.annotates)) {
         throw new SpecError(
-          `${path}.children[${i}].annotates names "${child.annotates}", which is not a block or connector in this scene`,
+          `${path}.children[${i}].annotates names "${child.annotates}", which is not a block, connector or mark in this scene`,
         );
       }
     }

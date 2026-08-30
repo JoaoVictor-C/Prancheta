@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { runChecks } from "../src/checks.ts";
 import { parseSpec, SpecError } from "../src/ir/types.ts";
-import type { LaidOutFigure, PlacedBox, PlacedConnector, PlacedText } from "../src/ir/types.ts";
+import type { LaidOutFigure, PlacedBox, PlacedConnector, PlacedMark, PlacedText } from "../src/ir/types.ts";
 
 function box(overrides: Partial<PlacedBox> = {}): PlacedBox {
   return {
@@ -36,11 +36,11 @@ function label(id: string, ownerId: string, rect: { x: number; y: number }): Pla
   };
 }
 
-function figure(elements: (PlacedBox | PlacedText | PlacedConnector)[]): LaidOutFigure {
+function figure(elements: (PlacedBox | PlacedText | PlacedConnector | PlacedMark)[]): LaidOutFigure {
   return { width: 600, height: 600, background: "#fff", elements };
 }
 
-function check(id: string, elements: (PlacedBox | PlacedText | PlacedConnector)[]) {
+function check(id: string, elements: (PlacedBox | PlacedText | PlacedConnector | PlacedMark)[]) {
   return runChecks(figure(elements)).find((c) => c.id === id);
 }
 
@@ -81,6 +81,25 @@ test("a block may name a CONNECTOR, which is what a force label actually does", 
   );
 });
 
+test("a block may name a MARK — ink is nameable too", () => {
+  // Found by drawing an origin tick: "O" names a mark, and refusing it sent
+  // the author back to inventing an invisible block to hang the label on,
+  // which is the workaround this feature exists to remove.
+  assert.doesNotThrow(() =>
+    parseSpec({
+      version: 1,
+      root: {
+        type: "scene", layout: "absolute", width: 400, height: 300,
+        children: [
+          { type: "block", id: "tag", x: 0, y: 40, width: 30, height: 20, label: "O", annotates: "tick" },
+        ],
+        marks: [{ id: "tick", from: { x: 10, y: 0 }, segments: [{ line: { x: 10, y: 20 } }],
+                  close: false, stroke: "#000", strokeWidth: 2 }],
+      },
+    }),
+  );
+});
+
 test("naming itself is refused — an annotation names something else", () => {
   assert.throws(
     () =>
@@ -98,7 +117,7 @@ test("naming something that is not in the scene is refused at parse time", () =>
         scene([{ type: "block", id: "tag", x: 0, y: 0, width: 30, height: 20, label: "N", annotates: "ghost" }]),
       ),
     (error: unknown) =>
-      error instanceof SpecError && /not a block or connector in this scene/.test(error.message),
+      error instanceof SpecError && /not a block, connector or mark in this scene/.test(error.message),
   );
 });
 
@@ -163,6 +182,22 @@ test("a figure with no annotations is not-applicable, not a vacuous pass", () =>
   const result = check("annotation-nearest-its-owner", [box({ id: "a" })]);
   assert.equal(result?.status, "not-applicable");
   assert.equal(result?.examined, 0);
+});
+
+test("a mark competes for nearest like a connector, by its line", () => {
+  const tick: PlacedMark = {
+    kind: "mark", id: "tick", points: [{ x: 100, y: 0 }, { x: 100, y: 20 }],
+    closed: false, fill: "none", stroke: "#000", strokeWidth: 2, lineStyle: "solid",
+    arcCentres: [],
+  };
+  const owner = box({ id: "owner", x: 0, y: 0, width: 20, height: 20 });
+  // Sits 5px from the tick it does NOT name and 75px from the box it does.
+  const tag = box({ id: "tag", x: 90, y: 5, width: 5, height: 5, annotates: "owner" });
+  const result = runChecks(figure([owner, tag, tick])).find(
+    (c) => c.id === "annotation-nearest-its-owner",
+  );
+  assert.equal(result?.status, "fail");
+  assert.match(result?.detail ?? "", /tick/);
 });
 
 test("a connector is measured by its LINE, not by its bounding box", () => {

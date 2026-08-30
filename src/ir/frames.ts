@@ -124,6 +124,7 @@ function expandGrid(
     const segments: MarkSegment[] = [{ line: b }];
     lines.push({
       id,
+      gridOf: frame.id,
       from: a,
       segments,
       close: false,
