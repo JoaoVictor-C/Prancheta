@@ -327,11 +327,24 @@ export type Block = {
    */
   height?: number;
   /**
-   * "none" forbids wrapping. Needed for labels that must not be broken
-   * (identifiers, axis ticks, short codes), and the second way a label can
-   * overflow — sideways.
+   * How a label may be broken.
+   *
+   * "normal" (the default) breaks between words and never inside one, so an
+   * unbreakable run overflows SIDEWAYS — the second way a label can overflow,
+   * and the one the repair loop can actually act on by growing the width.
+   *
+   * "none" forbids wrapping altogether. Needed for labels that must not be
+   * broken at all (identifiers, axis ticks, short codes).
+   *
+   * "anywhere" permits a break inside a word, for a genuinely long
+   * unbreakable run — a URL, a hash, a chemical name — where growing the box
+   * to hold it whole would blow out the layout instead. It is opt-in
+   * precisely because it used to be the unconditional default: applied to
+   * every label it turned "30°" into "3" / "0" / "°" the moment that label
+   * missed its box by two pixels, and left the repair loop no horizontal
+   * overflow to respond to.
    */
-  wrap?: "normal" | "none";
+  wrap?: "normal" | "none" | "anywhere";
   padding?: number;
   /** Horizontal alignment of the label inside the block. */
   textAlign?: Align;

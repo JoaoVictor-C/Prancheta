@@ -25,7 +25,7 @@ import { inkBounds, isEmpty as bleedIsEmpty, unionRects } from "./effects/bleed.
 import type { Bleed } from "./effects/bleed.ts";
 import { containsPoint } from "./geometry/shapes.ts";
 import { rotatedBounds } from "./geometry/rotate.ts";
-import { WCAG_AA_NORMAL, contrastRatio, isTransparent } from "./colour/contrast.ts";
+import { WCAG_AA_NORMAL, compositeOver, contrastRatio, isTransparent } from "./colour/contrast.ts";
 import {
   DICHROMACY_KINDS,
   MIN_DISTINGUISHABLE_DISTANCE,
@@ -563,6 +563,64 @@ function contentWithinCanvas(figure: LaidOutFigure): Check {
  * wrong" and "nothing could be checked" never look the same in the
  * manifest.
  */
+/**
+ * What a label actually sits on.
+ *
+ * Its owner's own fill whenever the owner has one -- unchanged, and the case
+ * nearly every figure takes.
+ *
+ * Otherwise the question is geometric, and answering it structurally was a
+ * real defect rather than a simplification: a label whose own box is unfilled
+ * fell straight through to the canvas background even when it sat squarely
+ * inside a filled shape it did not happen to own. Text at #141414 centred in
+ * a rect filled #101010 is invisible on the page, and this check reported
+ * 18.42:1 and passed it -- while `text-clear-of-other-boxes` passed the same
+ * figure too, because that box CONTAINS the label's owner and containment is
+ * excused there as ancestry. Two checks stood down on one illegible label.
+ *
+ * Painted later wins, because that is the surface a reader sees; `boxes` is
+ * built in element order, so the last match is the topmost. A label whose ink
+ * is not fully covered by that surface gets both it and the background, and
+ * the caller reports the worse -- it lies on both, and choosing one would be
+ * a guess dressed as a measurement.
+ */
+function surfacesUnder(
+  text: PlacedText,
+  boxes: Map<string, PlacedBox>,
+  background: string,
+): string[] {
+  const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
+  if (owner !== undefined && !isTransparent(owner.fill)) return [owner.fill];
+
+  const ink = unionOf(text.lines.map((line) => line.box));
+
+  // Paint order, so each layer composites onto what is already beneath it.
+  // Covering layers hide the whole label; straddling ones only part of it, so
+  // they are kept apart -- see the return below.
+  let covered = background;
+  const straddling: PlacedBox[] = [];
+  for (const [id, box] of boxes) {
+    if (id === text.ownerId) continue;
+    if (isTransparent(box.fill)) continue;
+    const rect = checkRect(box);
+    if (!intersects(ink, rect)) continue;
+    if (contains(rect, ink)) {
+      covered = compositeOver(box.fill, covered) ?? box.fill;
+    } else {
+      straddling.push(box);
+    }
+  }
+
+  if (straddling.length === 0) return [covered];
+  // Part of the label lies on the covered stack and part on that stack plus
+  // whatever it half-crosses. Both are real surfaces under real glyphs, and
+  // the caller reports the worse of them.
+  return [
+    covered,
+    ...straddling.map((box) => compositeOver(box.fill, covered) ?? box.fill),
+  ];
+}
+
 function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check[] {
   const texts = figure.elements.filter((element): element is PlacedText => element.kind === "text");
   if (texts.length === 0) {
@@ -578,10 +636,24 @@ function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>
   }
 
   return texts.map((text) => {
-    const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
-    const background =
-      owner === undefined || isTransparent(owner.fill) ? figure.background : owner.fill;
-    const ratio = contrastRatio(text.fill, background);
+    const surfaces = surfacesUnder(text, boxes, figure.background);
+    // Worst surface wins: a label straddling two of them has to be legible
+    // against both, and reporting the kinder one would be the same silent
+    // pass this check exists to prevent.
+    let background = surfaces[0]!;
+    let ratio = contrastRatio(text.fill, background);
+    for (const surface of surfaces.slice(1)) {
+      const other = contrastRatio(text.fill, surface);
+      if (other === null) {
+        background = surface;
+        ratio = null;
+        break;
+      }
+      if (ratio !== null && other < ratio) {
+        background = surface;
+        ratio = other;
+      }
+    }
 
     if (ratio === null) {
       return {

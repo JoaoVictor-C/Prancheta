@@ -90,6 +90,60 @@ test("half arrowhead is a filled, closed three-point wedge (not the full closed 
   assert.notEqual(halfArrow, closedArrow, "half must not be geometrically identical to closed");
 });
 
+// --- the shaft stops where the head starts -----------------------------------
+
+function shaftOf(svg: string): string {
+  // The shaft is the only path carrying data-pr-id; heads are anonymous.
+  const match = /<path data-pr-id="[^"]*" d="([^"]*)"/.exec(svg);
+  return match?.[1] ?? "";
+}
+
+test("a filled head's apex is the drawn end: the shaft stops short of the tip", () => {
+  // The defect: the shaft ran to the tip underneath the head, so its round
+  // linecap (radius strokeWidth/2) protruded PAST the apex and the arrow read
+  // as a flare on a line that carried on beyond it.
+  for (const arrowStyle of ["closed", "half", "diamond", "circle"] as ArrowStyle[]) {
+    const svg = toSvg(figure([connector({ arrowStyle })]));
+    const shaft = shaftOf(svg);
+    assert.ok(shaft !== "", `expected a shaft for ${arrowStyle}`);
+    const end = /L (-?[\d.]+) 0$/.exec(shaft);
+    assert.ok(end, `expected a horizontal shaft for ${arrowStyle}, got ${shaft}`);
+    assert.ok(
+      Number(end![1]) < 100,
+      `${arrowStyle}: shaft must stop before the tip at x=100, ended at ${end![1]}`,
+    );
+  }
+});
+
+test("an open head keeps the shaft running to the tip -- the line shows through it", () => {
+  // Not an oversight: "open" and "crowsfoot" are chevrons with nothing to
+  // hide the shaft behind, and their own caps sit on the same tip.
+  for (const arrowStyle of ["open", "crowsfoot"] as ArrowStyle[]) {
+    assert.equal(shaftOf(toSvg(figure([connector({ arrowStyle })]))), "M 0 0 L 100 0");
+  }
+});
+
+test("trimming the shaft leaves the arrowhead's apex on the route's own endpoint", () => {
+  // The whole point: shorten the drawing, not the geometry. Every check walks
+  // connector.points, so the head must still reach where the route ends.
+  const svg = toSvg(figure([connector({ arrowStyle: "closed" })]));
+  const head = /<path d="M ([\d.]+) ([\d.]+) L/.exec(svg);
+  assert.ok(head, "expected a filled arrowhead path");
+  assert.equal(Number(head![1]), 100);
+  assert.equal(Number(head![2]), 0);
+});
+
+test("a head longer than its segment consumes the shaft rather than reversing it", () => {
+  // arrowSize is 9 and a diamond reaches 18 back; a 6px connector cannot host
+  // one. The old pull-back would have flipped the segment; instead the shaft
+  // is dropped and the head stands alone.
+  const svg = toSvg(
+    figure([connector({ arrowStyle: "diamond", points: [{ x: 0, y: 0 }, { x: 6, y: 0 }] })]),
+  );
+  assert.equal(shaftOf(svg), "", "expected no shaft path at all");
+  assert.match(svg, /<path d="M 6 0 L/, "the head must still sit on the endpoint");
+});
+
 test("every ArrowStyle renders without throwing", () => {
   const styles: ArrowStyle[] = ["closed", "open", "diamond", "circle", "crowsfoot", "half"];
   for (const arrowStyle of styles) {

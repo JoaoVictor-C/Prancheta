@@ -498,7 +498,16 @@ function dashPattern(style: LineStyle): string {
 
 function connectorToSvg(connector: PlacedConnector, defs: DefsRegistry): string {
   if (connector.points.length < 2) return "";
-  const path = connector.points
+  // The shaft stops where the head takes over (see shaftInset). Only the
+  // DRAWING is shortened: the arrowheads below are still aimed with the
+  // untrimmed points, so an apex lands exactly on the route's own endpoint.
+  const inset = shaftInset(connector.arrowStyle);
+  const shaft = trimForHeads(
+    connector.points,
+    connector.arrow === "both" ? inset : 0,
+    connector.arrow === "end" || connector.arrow === "both" ? inset : 0,
+  );
+  const path = shaft
     .map((point, index) => `${index === 0 ? "M" : "L"} ${num(point.x)} ${num(point.y)}`)
     .join(" ");
   // Connectors only ever draw a single stroked line -- "double"/"ridge"/
@@ -506,11 +515,17 @@ function connectorToSvg(connector: PlacedConnector, defs: DefsRegistry): string 
   // rendering of their own, so they fall back to a plain solid line here.
   const connectorDash = dashPattern(connector.lineStyle);
   const dash = connectorDash === "" ? "" : ` stroke-dasharray="${connectorDash}"`;
-  const parts = [
-    `<path data-pr-id="${attr(connector.id)}" d="${path}" fill="none" ` +
-      `stroke="${attr(connector.stroke)}" stroke-width="${num(connector.strokeWidth)}" ` +
-      `stroke-linejoin="round" stroke-linecap="round"${dash}/>`,
-  ];
+  // A head longer than the segment it terminates can consume the shaft
+  // entirely; the head alone is then the whole connector, and emitting a
+  // zero-length path would draw a round-capped dot under its own apex.
+  const parts =
+    shaft.length >= 2
+      ? [
+          `<path data-pr-id="${attr(connector.id)}" d="${path}" fill="none" ` +
+            `stroke="${attr(connector.stroke)}" stroke-width="${num(connector.strokeWidth)}" ` +
+            `stroke-linejoin="round" stroke-linecap="round"${dash}/>`,
+        ]
+      : [];
 
   const last = connector.points.length - 1;
   if (connector.arrow === "end" || connector.arrow === "both") {
@@ -564,6 +579,90 @@ function connectorToSvg(connector: PlacedConnector, defs: DefsRegistry): string 
  * along it, and a `half`-width perpendicular offset for the back corners --
  * so adding a shape is extending this frame, not inventing a new one.
  */
+/**
+ * How far back from the tip a head's own ink reaches, and therefore where the
+ * shaft has to stop.
+ *
+ * The shaft used to run the whole way to the tip *underneath* the head, which
+ * put its round linecap -- radius strokeWidth/2 -- PAST the point of the
+ * arrow. At a 2px stroke on a 9px head that is a visible nub beyond the apex,
+ * and the head reads as a flare partway along a line that continues past it
+ * rather than as the line's end. A filled head owns the ground from its back
+ * edge to the tip, so the shaft stops at that back edge and the head's apex
+ * becomes the drawn end.
+ *
+ * The two OPEN heads are deliberately zero. "open" exists precisely so the
+ * line stays visible through the middle of the chevron (see its case below),
+ * and a crow's foot is two splayed strokes with nothing to hide behind. Both
+ * put their own round caps on the same tip, so nothing protrudes there
+ * either -- the shaft's cap lands inside theirs.
+ */
+function shaftInset(style: ArrowStyle): number {
+  const size = connectorTheme.arrowSize;
+  switch (style) {
+    case "closed":
+    case "half":
+      // Both are filled wedges from the back edge to the tip.
+      return size;
+    case "diamond":
+      // The rhombus reaches one further `size` behind its own back corners.
+      return size * 2;
+    case "circle":
+      // Centred half a head back with radius half: the disc ends on the tip
+      // and starts one diameter -- 2 * size * 0.3 -- behind it.
+      return size * 0.6;
+    case "open":
+    case "crowsfoot":
+      return 0;
+    default: {
+      const exhaustive: never = style;
+      return exhaustive;
+    }
+  }
+}
+
+/**
+ * The route as DRAWN: the same polyline with each arrowed end pulled back by
+ * its head's reach.
+ *
+ * `connector.points` itself is untouched, which is what keeps this a drawing
+ * change and not a geometry one -- every check walks the original polyline,
+ * `connectorInk` bounds it and already pads by a whole arrowSize, and the
+ * head still lands on the original endpoint. The ink a reader sees therefore
+ * ends exactly where it did before; only the overshoot goes away.
+ */
+function trimForHeads(points: Point[], startInset: number, endInset: number): Point[] {
+  let route = points;
+  if (endInset > 0) route = pullBack(route, endInset, "end");
+  if (startInset > 0) route = pullBack(route, startInset, "start");
+  return route;
+}
+
+function pullBack(points: Point[], inset: number, which: "start" | "end"): Point[] {
+  if (points.length < 2) return points;
+  const route = points.slice();
+  const tipIndex = which === "end" ? route.length - 1 : 0;
+  const nextIndex = which === "end" ? route.length - 2 : 1;
+  const tip = route[tipIndex]!;
+  const next = route[nextIndex]!;
+  const dx = next.x - tip.x;
+  const dy = next.y - tip.y;
+  const length = Math.hypot(dx, dy);
+  if (length === 0) return route;
+  if (inset >= length) {
+    // The head is longer than the final segment. Drop the point rather than
+    // pull it back past its neighbour, which would reverse the segment and
+    // draw the shaft pointing the wrong way.
+    route.splice(tipIndex, 1);
+    return route;
+  }
+  route[tipIndex] = {
+    x: tip.x + (dx / length) * inset,
+    y: tip.y + (dy / length) * inset,
+  };
+  return route;
+}
+
 function arrowHead(
   from: Point,
   tip: Point,

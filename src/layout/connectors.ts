@@ -13,6 +13,7 @@
 import type { ConnectorCurve, PlacedBox, Point, Rect } from "../ir/types.ts";
 import type { PathCommand } from "../geometry/paths.ts";
 import { flattenPath } from "../geometry/paths.ts";
+import { shapeVertices } from "../geometry/shapes.ts";
 import { connector as connectorTheme } from "../theme.ts";
 
 /** Straight route between two boxes, clipped to both borders. */
@@ -119,11 +120,27 @@ export function centreOf(box: PlacedBox): Point {
 /**
  * Walk from `inside` towards `towards` and return the point where the ray
  * leaves the box, pushed out by `gap`.
+ *
+ * `box.shape` decides which boundary "leaves the box" means. Most shapes here
+ * (diamond, hexagon, triangle, ...) are polygons whose vertices are the exact
+ * outline `svg.ts` draws, via `shapeVertices` -- so a connector aimed at a
+ * triangle stops on the triangle's slanted edge, not on the rectangle that
+ * would bound it. "circle" and "ellipse" also return null from
+ * `shapeVertices` but are knowingly left on the rectangular path below: an
+ * exact ellipse-ray intersection is a different computation, and closing that
+ * gap is out of scope for this fix. "rect" and "stadium" are rectangular by
+ * definition and were never wrong.
  */
 function clipToBox(inside: Point, towards: Point, box: PlacedBox, gap: number): Point {
   const dx = towards.x - inside.x;
   const dy = towards.y - inside.y;
   if (dx === 0 && dy === 0) return inside;
+
+  const vertices = box.shape === undefined ? null : shapeVertices(box.shape, box);
+  if (vertices !== null) {
+    const clipped = clipToPolygon(inside, dx, dy, vertices, gap);
+    if (clipped !== null) return clipped;
+  }
 
   const halfWidth = box.width / 2 + gap;
   const halfHeight = box.height / 2 + gap;
@@ -135,6 +152,42 @@ function clipToBox(inside: Point, towards: Point, box: PlacedBox, gap: number): 
   const scale = Math.min(scaleX, scaleY);
 
   return { x: centre.x + dx * scale, y: centre.y + dy * scale };
+}
+
+/**
+ * Cast the ray `origin + t * (dx, dy)` against a polygon's edges and return
+ * the point where it first leaves, pushed out by `gap` along the same
+ * direction. Returns null when the ray meets no edge (degenerate polygon, or
+ * `origin` already outside it), so the caller can fall back to the
+ * rectangular clip rather than draw an endpoint at `origin` itself.
+ *
+ * Takes the minimum positive `t` rather than assuming convexity, because
+ * "cross" and "star" are not convex: for a shape like that the ray can cross
+ * more than one edge, and the first crossing is the one that is actually the
+ * shape's boundary as seen from an interior point.
+ */
+function clipToPolygon(origin: Point, dx: number, dy: number, vertices: Point[], gap: number): Point | null {
+  let bestT = Infinity;
+  for (let i = 0; i < vertices.length; i += 1) {
+    const a = vertices[i]!;
+    const b = vertices[(i + 1) % vertices.length]!;
+    const edgeX = b.x - a.x;
+    const edgeY = b.y - a.y;
+    const denom = dx * edgeY - dy * edgeX;
+    if (denom === 0) continue; // Parallel to this edge -- no single crossing.
+
+    const qpx = a.x - origin.x;
+    const qpy = a.y - origin.y;
+    const t = (qpx * edgeY - qpy * edgeX) / denom;
+    const u = (qpx * dy - qpy * dx) / denom;
+    if (t > 1e-9 && u >= 0 && u <= 1 && t < bestT) bestT = t;
+  }
+  if (!Number.isFinite(bestT)) return null;
+
+  const length = Math.hypot(dx, dy);
+  if (length === 0) return null;
+  const pushed = bestT + gap / length;
+  return { x: origin.x + dx * pushed, y: origin.y + dy * pushed };
 }
 
 /** Move `point` towards `towards` by `distance`. */

@@ -29,7 +29,8 @@
         "type": "block",
         "id": "unbreakable-url",
         "label": "https://example.com/a/very/long/path/that/contains/no/spaces/at/all?and=a&query=string",
-        "width": 340
+        "width": 340,
+        "wrap": "anywhere"
       },
       {
         "type": "stack",
@@ -50,7 +51,8 @@
             "id": "narrow-right",
             "label": "Antidisestablishmentarianism",
             "width": 162,
-            "textAlign": "end"
+            "textAlign": "end",
+            "wrap": "anywhere"
           }
         ]
       }
