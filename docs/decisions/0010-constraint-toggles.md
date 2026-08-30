@@ -2,7 +2,7 @@
 
 **Status:** Accepted  
 **Date:** 2026-08-23  
-**Deciders:** Terza reasoning session (confidence 0.82, 2 iterations, 1 pass)
+**Deciders:** Reasoning session (confidence 0.82, 2 iterations, 1 pass)
 
 ## Context
 
@@ -115,7 +115,7 @@ Can ship incrementally if needed:
 
 ## References
 
-- Terza reasoning session transcript (2026-08-23)
+- Reasoning session transcript (2026-08-23)
 - Original constraint list analysis
 - [ADR 0003: Repairs are edits](0003-repairs-are-edits.md) — repair loop termination properties
 - [ADR 0009: Termination for translation repair](0009-termination-for-translation-repair.md) — constraints and movement

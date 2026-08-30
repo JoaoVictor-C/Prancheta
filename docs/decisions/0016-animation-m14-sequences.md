@@ -25,7 +25,7 @@ tool."* [ADR 0015](0015-animation-m13-stagger.md), which followed it, never
 restates the claim but inherits it by not questioning it.
 
 That non-goal turns out to have bundled two different questions under one
-answer, and reasoning through it properly (a Terza session, 9 iterations)
+answer, and reasoning through it properly (a reasoning session, 9 iterations)
 gives them **different verdicts**.
 
 ## Decision
@@ -167,7 +167,7 @@ of the original bundled non-goal is retired.
 
 ## References
 
-- Terza reasoning session transcript (2026-08-25), 9 G/C/S iterations
+- Reasoning session transcript (2026-08-25), 9 iterations
 - [ADR 0013](0013-animation-m11-1-check-what-renders.md) — the population and delegation rules this generalises
 - [ADR 0015](0015-animation-m13-stagger.md) — the piecewise-affine argument this reuses without change
 - [src/anim/sequence.ts](../../src/anim/sequence.ts) — the orchestration layer

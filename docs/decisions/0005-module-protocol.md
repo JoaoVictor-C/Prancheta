@@ -2,7 +2,7 @@
 
 **Status:** committed · 2026-08-19 (during M4)
 **Decision:** A figure module returns SVG with stable ids plus a *semantic* manifest. The core measures every coordinate itself, normalised into one canvas space, and answers containment with the browser's own hit-testing. Declared geometry is a checkable claim, never input.
-**Method:** Terza session `c00c7923` — 3 iterations, 2 passes, halt on signal, final confidence 0.88.
+**Method:** Reasoning session `c00c7923` — 3 iterations, 2 passes, halt on signal, final confidence 0.88.
 
 ---
 

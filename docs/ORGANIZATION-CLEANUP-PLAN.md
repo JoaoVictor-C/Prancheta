@@ -2,11 +2,11 @@
 
 **Status:** In Progress  
 **Date:** 2026-08-23  
-**Confidence:** 0.80 (from terza deep reasoning)
+**Confidence:** 0.80 (from deep reasoning)
 
 ## Problem Statement
 
-Terza reasoning analysis identified mixed discipline: strong technical foundations but weak process discipline. Specific issues:
+Reasoning analysis identified mixed discipline: strong technical foundations but weak process discipline. Specific issues:
 
 1. **Root directory cluttered** - 11+ stray experiment files
 2. **Security/hygiene issues** - `api.env`, `err.txt` in root

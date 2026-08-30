@@ -31,7 +31,7 @@ Three toggles, all shipped (M10; see ROADMAP and the README's constraint-toggle 
 - [x] **`allowConnectorCrossing`** — disables `connector-clear-of-boxes` check when true (enables callout/leader patterns crossing dense fields)
 - [x] **`allowCurvedConnectors`** — enables bezier/arc connectors in IR (enables curved flowcharts, mind maps, org charts)
 
-All default to `false` (constraints active). Per-diagram scope via `canvas.constraints`. Reasoned through terza (confidence 0.82, 2 iterations).
+All default to `false` (constraints active). Per-diagram scope via `canvas.constraints`. Reasoned through a full session (confidence 0.82, 2 iterations).
 
 **Why these three:** Each blocks specific legitimate diagram types without being load-bearing for the layout solver. Constraints 3 (axis-aligned), 5 (flat-color), and 6 (text limits) are kept as-is because they're either foundational to the solver or add complexity without structural value.
 
@@ -153,9 +153,9 @@ Refused outright, on current evidence: skew/flip/tile/scale transforms (ceiling,
 
 Together these resolve the gap [docs/selection/SELECTION.md](docs/selection/SELECTION.md) used to state plainly: "when the request wants a chart, this repertoire does not have one." It does now, split honestly across the preset/module boundary by what each chart shape actually needs.
 
-## Chart/CLI usability, from the terza-reasoned priority pass — all three shipped
+## Chart/CLI usability, from the reasoned priority pass — all three shipped
 
-Decided via a full terza reasoning session (prelude → G/C/S loop → coda, confidence 0.92) — see the session transcript for the full derivation. Order mattered here: each shipped and was verified by the full suite in isolation, never bundled, so a regression would be traceable to the change that caused it. All three are now done; full suite green throughout.
+Decided via a full reasoning session (confidence 0.92) — see the session transcript for the full derivation. Order mattered here: each shipped and was verified by the full suite in isolation, never bundled, so a regression would be traceable to the change that caused it. All three are now done; full suite green throughout.
 
 - [x] **Stacked / 100%-stacked bar mode** — [src/presets/chart](src/presets/chart/PRESET.md). `stacking: "stacked" | "stacked100"`, cumulative segments instead of side-by-side grouping; pure arithmetic on the existing chart preset, no new IR. Scale reference switches to the largest category *total* rather than the largest single value; per-segment value labels are dropped (the repair loop growing one to fit would inflate that segment past its true value) in favour of one total label per stack, since the legend already names every series. `series[0]` always sits closest to the axis. Two new fixtures, unit tests on the raw arithmetic, e2e proportionality tests on the rendered geometry.
 - [x] **CLI `--args` comma-delimiter fix** — [src/cli.ts](src/cli.ts)'s `parseArgs` and [src/commands.ts](src/commands.ts)'s `toStringArray`. Four modules (dendrogram, circuit, genomic, topology) had independently discovered that `node src/cli.ts module`'s own `--args` flag comma-split a single occurrence, and independently invented the same `;`/`:`/`\|` workaround, each documenting it separately in its own `MODULE.md`. Fixed at the source: `--args` (and any other `string[]` param) is now repeatable — `--args a --args b` — and a repeated flag's values are taken verbatim, comma included, while a single occurrence still comma-splits exactly as before for backward compatibility. Shipped and verified alone, full suite green (358/358) both before and after; each affected module's `MODULE.md` now notes the fix without removing its own dataset-shape convention, which was never the workaround, only ever the data's own grammar.
