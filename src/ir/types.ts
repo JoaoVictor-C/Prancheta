@@ -203,6 +203,37 @@ export type Frame = {
   xUnit?: number;
   /** Canvas px per unit along y. Defaults to `xUnit`, so a frame is square unless told otherwise. */
   yUnit?: number;
+  /**
+   * Draw this frame as a coordinate plane: a lattice, its axes, and numbered
+   * ticks along them.
+   *
+   * Expanded into ordinary blocks when the frame is resolved, so every line
+   * and every tick label is measured and checked like anything else rather
+   * than being a private drawing path nothing can see. Their geometry is
+   * DERIVED from the frame, so a gridline cannot land somewhere the frame
+   * does not put it.
+   */
+  grid?: GridSpec;
+};
+
+/**
+ * A coordinate lattice over a frame's own units.
+ *
+ * `from` and `to` are inclusive bounds in frame units; `step` is the spacing
+ * between lines, also in frame units.
+ */
+export type GridSpec = {
+  x: { from: number; to: number; step?: number };
+  y: { from: number; to: number; step?: number };
+  /** Draw the x = 0 and y = 0 lines more heavily. Default true. */
+  axes?: boolean;
+  /** Number the ticks along the axes. Default true. */
+  labels?: boolean;
+  /** Every `labels`-th tick is numbered. Default 1. */
+  labelEvery?: number;
+  stroke?: string;
+  axisStroke?: string;
+  labelColor?: string;
 };
 
 /** A point stated in a named frame rather than in canvas coordinates. */
@@ -513,6 +544,31 @@ export type Block = {
    */
   frame?: string;
   /**
+   * Where a `frame` position lands on this block: its top-left corner
+   * (default, and what a laid-out box means everywhere else) or its centre.
+   *
+   * "center" is what a MARKER wants. A dot at (1, 1) on a coordinate plane
+   * means a dot centred on that lattice point, and making an author subtract
+   * half its size in frame units to say so puts arithmetic back in the
+   * document — the one thing frames exist to take out of it. Ignored when the
+   * block declares no `frame`.
+   */
+  anchor?: "corner" | "center";
+  /**
+   * Set by frame resolution on the lines and tick labels a `GridSpec`
+   * expands into, naming the frame that produced them. Never authored.
+   *
+   * Grid furniture is SUBSTRATE: a lattice crosses itself at every
+   * intersection and passes under everything drawn on the plane, so it takes
+   * no part in the collision checks and is not treated as the surface a label
+   * sits on. Both are recorded rather than silent — the checks say how many
+   * elements they set aside — and both are earned rather than assumed: this
+   * geometry is derived from the frame, so unlike authored geometry it cannot
+   * be in the wrong place. What CAN go wrong is that its numbers become
+   * unreadable, and `tick-labels-do-not-collide` is what guards that.
+   */
+  gridOf?: string;
+  /**
    * The shape drawn in this block's bounding box. Default "rect", unchanged
    * from every figure rendered before this existed. Every shape shares the
    * block's own axis-aligned bounding box exactly -- the browser lays out a
@@ -647,6 +703,8 @@ export type PlacedBox = {
   categoryGroup?: string;
   /** Carried straight from the spec's Block.annotates; see there. */
   annotates?: string;
+  /** Carried straight from the spec's Block.gridOf; see there. */
+  gridOf?: string;
   /** Carried straight from the spec's Block.motion; see there. Absent means the whole transition. */
   motion?: MotionWindow;
   /** Carried straight from the spec's Block.shape. Default "rect" when unset. */

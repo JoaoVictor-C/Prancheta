@@ -193,7 +193,7 @@ printed angle**. That last one is the entire point: an arc whose sweep can
 disagree with its label reproduces the original defect inside the primitive
 meant to cure it.
 
-### M2 — the gridded plane
+### M2 — the gridded plane — **DONE (2026-08-29)**
 
 The Frame gains a grid and axes, and pays what a grid costs: extend
 `tick-labels-do-not-collide` to frame axes, and decide gridline-as-substrate now

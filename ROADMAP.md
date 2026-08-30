@@ -950,6 +950,24 @@ ADR 0019 shipped naming its own residue: the fixture's arc was checked against t
 
 [fixtures/fbd-incline.json](fixtures/fbd-incline.json) is rebuilt entirely in frames. The scene declares `world` and `incline` sharing an origin, `incline` rotated 30; the slope, the block and the surface-relative forces live in `incline`, the weight lives in an unrotated frame whose origin is stated in `incline`, and the angle mark runs between THE SAME POINT EXPRESSED IN BOTH FRAMES -- so its sweep is the angle between them, and `sweep-matches-its-label` checks that against the printed 30. **The angle appears exactly once in the document.** Zero failures, zero unrepaired. 921 -> 934.
 
+### 2026-08-29 - The gridded plane, and what a lattice is allowed to be excused from
+
+M1 built frames; M2 is the one thing a frame was always going to be asked for. `Frame.grid` states bounds and a step in the frame's OWN units and expands into ordinary blocks -- one thin rect per line, numbered ticks along the axes -- so every line and every number is measured and checked like anything else instead of taking a private drawing path nothing can see. The geometry is derived from the frame, so a gridline cannot land somewhere the frame does not put it.
+
+**Blocks and not connectors, for a reason worth recording.** A lattice built from connectors would have been simpler -- connectors have no overlap check to trip over -- and would have been drawn ON TOP of the figure standing on it, because pipeline.ts paints every box, then every connector, then every label. Painter's order decided this, not taste.
+
+**Which meant facing what a lattice does to the collision checks.** It crosses itself at every intersection and passes under everything drawn on it, so grid furniture takes no part in `boxes-do-not-overlap` or `text-clear-of-other-boxes`, and is not treated as the surface a label sits on. Three exemptions is a lot to hand out at once, so each is argued rather than assumed:
+
+- They are **earned** by the geometry being derived. Authored coordinates can be in the wrong place and these cannot, which is the same reasoning ADR 0019 uses for the sweep.
+- They are **paid for** by `tick-labels-do-not-collide`, which is what a grid actually gets wrong. That check has been in the repertoire since M8 keyed on an id pattern its own comment calls a temporary heuristic, and had exactly one fixture in range; the grid is its first real producer, and it now guards 20 tick labels on the new figure.
+- They are **reported, not silent**: `boxes-do-not-overlap` says how many elements it set aside. A check that quietly ignores half a figure reads exactly like one that examined it.
+
+The gridline-as-substrate question the plan left open is answered explicitly rather than left to fall out of the geometry: a 1px line does not decide whether text is legible, and treating it as substrate would fail a perfectly readable figure for crossing one.
+
+**A unit error, found by scaling a frame for the first time.** Placing a sized block computed its centre by adding half its width -- in PIXELS -- to its x -- in FRAME UNITS. The two are the same number only while `xUnit` is 1, which is every figure built until this one; at 42px per unit it threw a marker 550px off the plane. The offset is now applied along the frame's directions in pixels. `Block.anchor: "center"` arrived with it, because a dot at (1, 1) means a dot CENTRED there, and making an author subtract half its size in frame units to say so puts arithmetic back in the document.
+
+[fixtures/transformation-grid.json](fixtures/transformation-grid.json) is the deliverable: a numbered coordinate plane from -5 to 5, triangle ABC on exact lattice points, the centre of rotation marked -- a GCSE transformations question, zero failures. Across all 67 fixtures the failure set remains byte-identical to before this work began. 934 -> 944.
+
 ## Where this goes next
 
 Every milestone in the original plan reached a ✅ at some point, but a 2026-08-24 reachability audit found several were marked done on the strength of a passing test file rather than a real consumer — the same failure mode step 36 caught first. See [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md)'s stage 5 and 6 tables and the entry below for what is and is not actually wired. What follows here is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.

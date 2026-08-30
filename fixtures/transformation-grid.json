@@ -1,0 +1,227 @@
+{
+  "version": 1,
+  "title": "Rotate triangle ABC 90\u00b0 clockwise about the origin",
+  "canvas": {
+    "padding": 24,
+    "theme": "print",
+    "constraints": {
+      "allowOverlap": true,
+      "allowConnectorCrossing": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 520,
+    "height": 520,
+    "frames": [
+      {
+        "id": "plane",
+        "origin": {
+          "x": 250,
+          "y": 250
+        },
+        "xUnit": 42,
+        "grid": {
+          "x": {
+            "from": -5,
+            "to": 5
+          },
+          "y": {
+            "from": -5,
+            "to": 5
+          },
+          "labelEvery": 1
+        }
+      }
+    ],
+    "children": [
+      {
+        "type": "block",
+        "id": "A",
+        "frame": "plane",
+        "x": 1,
+        "y": 1,
+        "width": 9,
+        "height": 9,
+        "padding": 0,
+        "radius": 5,
+        "fill": "#04a",
+        "stroke": "none",
+        "label": "",
+        "anchor": "center"
+      },
+      {
+        "type": "block",
+        "id": "B",
+        "frame": "plane",
+        "x": 4,
+        "y": 1,
+        "width": 9,
+        "height": 9,
+        "padding": 0,
+        "radius": 5,
+        "fill": "#04a",
+        "stroke": "none",
+        "label": "",
+        "anchor": "center"
+      },
+      {
+        "type": "block",
+        "id": "C",
+        "frame": "plane",
+        "x": 1,
+        "y": 4,
+        "width": 9,
+        "height": 9,
+        "padding": 0,
+        "radius": 5,
+        "fill": "#04a",
+        "stroke": "none",
+        "label": "",
+        "anchor": "center"
+      },
+      {
+        "type": "block",
+        "id": "A-label",
+        "frame": "plane",
+        "x": 0.62,
+        "y": 1.34,
+        "width": 24,
+        "height": 18,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "fontSize": 13,
+        "textAlign": "center",
+        "textColor": "#04a",
+        "label": "A",
+        "annotates": "A",
+        "anchor": "center"
+      },
+      {
+        "type": "block",
+        "id": "B-label",
+        "frame": "plane",
+        "x": 4.45,
+        "y": 1.45,
+        "width": 24,
+        "height": 18,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "fontSize": 13,
+        "textAlign": "center",
+        "textColor": "#04a",
+        "label": "B",
+        "annotates": "B",
+        "anchor": "center"
+      },
+      {
+        "type": "block",
+        "id": "C-label",
+        "frame": "plane",
+        "x": 0.55,
+        "y": 4.45,
+        "width": 24,
+        "height": 18,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "fontSize": 13,
+        "textAlign": "center",
+        "textColor": "#04a",
+        "label": "C",
+        "annotates": "C",
+        "anchor": "center"
+      },
+      {
+        "type": "block",
+        "id": "centre",
+        "frame": "plane",
+        "x": 0,
+        "y": 0,
+        "width": 9,
+        "height": 9,
+        "padding": 0,
+        "radius": 5,
+        "fill": "#a00",
+        "stroke": "none",
+        "label": "",
+        "anchor": "center"
+      },
+      {
+        "type": "block",
+        "id": "centre-label",
+        "frame": "plane",
+        "x": -0.5,
+        "y": -0.45,
+        "width": 30,
+        "height": 18,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "fontSize": 12,
+        "textAlign": "end",
+        "textColor": "#a00",
+        "label": "O",
+        "annotates": "centre",
+        "anchor": "center"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "AB",
+        "from": {
+          "frame": "plane",
+          "x": 1,
+          "y": 1
+        },
+        "to": {
+          "frame": "plane",
+          "x": 4,
+          "y": 1
+        },
+        "arrow": "none",
+        "stroke": "#04a",
+        "strokeWidth": 2
+      },
+      {
+        "id": "BC",
+        "from": {
+          "frame": "plane",
+          "x": 4,
+          "y": 1
+        },
+        "to": {
+          "frame": "plane",
+          "x": 1,
+          "y": 4
+        },
+        "arrow": "none",
+        "stroke": "#04a",
+        "strokeWidth": 2
+      },
+      {
+        "id": "CA",
+        "from": {
+          "frame": "plane",
+          "x": 1,
+          "y": 4
+        },
+        "to": {
+          "frame": "plane",
+          "x": 1,
+          "y": 1
+        },
+        "arrow": "none",
+        "stroke": "#04a",
+        "strokeWidth": 2
+      }
+    ]
+  }
+}

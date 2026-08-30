@@ -322,6 +322,7 @@ export function toLaidOutFigure(
       // categoryGroup it changes no layout, so it is copied onto the placed
       // figure by id once measurement has finished.
       ...(asked?.annotates === undefined ? {} : { annotates: asked.annotates }),
+      ...(asked?.gridOf === undefined ? {} : { gridOf: asked.gridOf }),
       fill: box.fill,
       stroke: box.stroke,
       strokeWidth: box.borderWidth,

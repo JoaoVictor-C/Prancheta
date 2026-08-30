@@ -183,7 +183,15 @@ function relaxed(id: CheckId, target: string, toggle: keyof ConstraintToggles & 
  * (a case holds its parts); partial overlap never is.
  */
 function boxesDoNotOverlap(boxes: Map<string, PlacedBox>): Check[] {
-  const entries = [...boxes.values()];
+  // A lattice crosses itself at every intersection and passes under
+  // everything standing on it, so grid furniture takes no part in collision.
+  // Set aside rather than skipped: the count is reported, because a check
+  // that quietly ignores half a figure reads exactly like one that examined
+  // it. This is earned by the geometry being DERIVED from its frame -- it
+  // cannot be in the wrong place -- and paid for by
+  // tick-labels-do-not-collide, which guards the way a grid really fails.
+  const furniture = [...boxes.values()].filter((box) => box.gridOf !== undefined).length;
+  const entries = [...boxes.values()].filter((box) => box.gridOf === undefined);
   const pairs = (entries.length * (entries.length - 1)) / 2;
 
   // Fewer than two boxes means no pair could be resolved at all. Reporting
@@ -196,7 +204,9 @@ function boxesDoNotOverlap(boxes: Map<string, PlacedBox>): Check[] {
         target: "figure",
         status: "not-applicable",
         examined: 0,
-        detail: "not applicable: fewer than two boxes, so no pair could overlap",
+        detail:
+          "not applicable: fewer than two boxes, so no pair could overlap" +
+          (furniture === 0 ? "" : ` (${furniture} grid element(s) set aside as substrate)`),
       },
     ];
   }
@@ -438,6 +448,9 @@ function textClearOfOtherBoxes(text: PlacedText, boxes: Map<string, PlacedBox>):
     // it. Only this box -- everything else still collides, and the annotation
     // pays for the relief with `annotation-nearest-its-owner`.
     if (owner?.annotates !== undefined && owner.annotates === id) continue;
+    // Grid furniture is what the figure is drawn ON; a label crossing a
+    // gridline is not a collision. See PlacedBox.gridOf.
+    if (box.gridOf !== undefined) continue;
     if (overlapsBox(bounds, box)) collided.push(id);
   }
   return collided.length === 0
@@ -683,6 +696,11 @@ function surfacesUnder(
   for (const [id, box] of boxes) {
     if (id === text.ownerId) continue;
     if (isTransparent(box.fill)) continue;
+    // A 1px gridline does not decide whether text is legible, and treating it
+    // as the surface under a label would fail a perfectly readable figure for
+    // crossing one. Recorded as a decision here rather than left to fall out
+    // of the geometry: grid furniture is not substrate.
+    if (box.gridOf !== undefined) continue;
     // The label's ink in THIS box's own frame. checkRect would hand back the
     // rotated bounding box, and for a long thin bar drawn on a diagonal that
     // box covers most of the figure -- every label in the picture would be
@@ -933,6 +951,7 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
   const candidates: { id: string; distance: (from: Point) => number; encloses: (r: Rect) => boolean }[] =
     [];
   for (const [id, box] of boxes) {
+    if (box.gridOf !== undefined) continue;
     const rect = localRect(box);
     candidates.push({
       id,

@@ -25,7 +25,7 @@
  * is the one sharp edge here and it is tested directly.
  */
 
-import type { Block, FigureNode, FigureSpec, Frame, FramedPoint, Point, Scene } from "./types.ts";
+import type { Block, FigureNode, FigureSpec, Frame, FramedPoint, GridSpec, Point, Scene } from "./types.ts";
 import { SpecError } from "./types.ts";
 
 /** A point stated in a frame, or one already in canvas coordinates. */
@@ -64,6 +64,137 @@ export function resolveInFrame(frame: Frame & { origin: Point }, x: number, y: n
  * and nowhere else -- forward references would admit cycles, and a cycle here
  * is a frame defined in terms of itself with no fixed point to fall back on.
  */
+
+/** Every value from `from` to `to` inclusive, stepping by `step`. */
+function ticksOf(axis: { from: number; to: number; step?: number }): number[] {
+  const step = Math.abs(axis.step ?? 1);
+  if (step === 0 || !Number.isFinite(step)) return [];
+  const out: number[] = [];
+  // Counted rather than accumulated: adding a float repeatedly drifts, and a
+  // gridline half a pixel out of true is exactly the kind of defect this
+  // project spends its time removing.
+  const count = Math.floor((axis.to - axis.from) / step + 1e-9);
+  for (let i = 0; i <= count; i += 1) out.push(axis.from + i * step);
+  return out;
+}
+
+const GRID_LINE_PX = 1;
+const AXIS_LINE_PX = 2;
+
+/**
+ * A frame's `grid` as ordinary blocks: one thin rect per line, plus numbered
+ * ticks along the axes.
+ *
+ * Blocks and not connectors, and the reason is painter's order: pipeline.ts
+ * draws every box, then every connector, then every label, so a lattice built
+ * from connectors would be drawn ON TOP of the figure standing on it. Blocks
+ * prepended to the scene's children paint first, which is where a grid
+ * belongs.
+ *
+ * Each line is a rect in CANVAS space spanning the two ends the frame maps,
+ * which keeps a rotated frame honest: the line runs between the points the
+ * frame actually puts at its ends rather than being drawn axis-aligned and
+ * rotated afterwards.
+ */
+function expandGrid(frame: Frame & { origin: Point }, grid: GridSpec): Block[] {
+  const out: Block[] = [];
+  const stroke = grid.stroke ?? "#D8DCE3";
+  const axisStroke = grid.axisStroke ?? "#8A93A3";
+  const labelColor = grid.labelColor ?? "#6B7280";
+  const drawAxes = grid.axes !== false;
+  const drawLabels = grid.labels !== false;
+  const every = Math.max(1, Math.round(grid.labelEvery ?? 1));
+
+  const xs = ticksOf(grid.x);
+  const ys = ticksOf(grid.y);
+
+  const line = (id: string, a: Point, b: Point, width: number, colour: string): Block => {
+    const length = Math.hypot(b.x - a.x, b.y - a.y);
+    const angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+    const centre = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+    return {
+      type: "block",
+      id,
+      x: centre.x - length / 2,
+      y: centre.y - width / 2,
+      width: length,
+      height: width,
+      padding: 0,
+      radius: 0,
+      fill: colour,
+      stroke: "none",
+      strokeWidth: 0,
+      label: "",
+      ...(angle === 0 ? {} : { rotation: angle, rotateBox: true }),
+      gridOf: frame.id,
+    };
+  };
+
+  for (const [i, x] of xs.entries()) {
+    const isAxis = drawAxes && x === 0;
+    out.push(
+      line(
+        `${frame.id}-grid-v-${i}`,
+        resolveInFrame(frame, x, grid.y.from),
+        resolveInFrame(frame, x, grid.y.to),
+        isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
+        isAxis ? axisStroke : stroke,
+      ),
+    );
+  }
+  for (const [i, y] of ys.entries()) {
+    const isAxis = drawAxes && y === 0;
+    out.push(
+      line(
+        `${frame.id}-grid-h-${i}`,
+        resolveInFrame(frame, grid.x.from, y),
+        resolveInFrame(frame, grid.x.to, y),
+        isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
+        isAxis ? axisStroke : stroke,
+      ),
+    );
+  }
+
+  if (!drawLabels) return out;
+
+  // Ticks are numbered along the axis when there is one in range, and along
+  // the low edge otherwise -- a plane showing only positive values still
+  // needs its numbers somewhere.
+  const yBase = ys.includes(0) ? 0 : grid.y.from;
+  const xBase = xs.includes(0) ? 0 : grid.x.from;
+  const tick = (id: string, at: Point, text: string, align: "center" | "end"): Block => ({
+    type: "block",
+    id,
+    x: align === "center" ? at.x - 18 : at.x - 40,
+    y: at.y - 9,
+    width: align === "center" ? 36 : 34,
+    height: 18,
+    padding: 0,
+    fill: "none",
+    stroke: "none",
+    strokeWidth: 0,
+    wrap: "none",
+    fontSize: 11,
+    textAlign: align === "center" ? "center" : "end",
+    textColor: labelColor,
+    label: text,
+    gridOf: frame.id,
+  });
+
+  const format = (value: number): string => String(Math.round(value * 1000) / 1000);
+  for (const [i, x] of xs.entries()) {
+    if (x === 0 || i % every !== 0) continue;
+    const at = resolveInFrame(frame, x, yBase);
+    out.push(tick(`${frame.id}-tick-x-${i}`, { x: at.x, y: at.y + 14 }, format(x), "center"));
+  }
+  for (const [i, y] of ys.entries()) {
+    if (y === 0 || i % every !== 0) continue;
+    const at = resolveInFrame(frame, xBase, y);
+    out.push(tick(`${frame.id}-tick-y-${i}`, { x: at.x - 8, y: at.y }, format(y), "end"));
+  }
+  return out;
+}
+
 function framesOf(
   scene: Scene,
   inherited: Map<string, Frame & { origin: Point }>,
@@ -129,9 +260,16 @@ function resolveNode(
     // A scene's own frames win over an enclosing scene's, by id.
     const frames = framesOf(node, inherited);
 
-    const children = node.children.map(
-      (child) => resolveNode(child, frames) as Block,
-    );
+    // Generated first so it paints first: a grid is what the figure stands on.
+    const furniture: Block[] = [];
+    for (const declared of node.frames ?? []) {
+      if (declared.grid === undefined) continue;
+      furniture.push(...expandGrid(frames.get(declared.id)!, declared.grid));
+    }
+    const children = [
+      ...furniture,
+      ...node.children.map((child) => resolveNode(child, frames) as Block),
+    ];
     const connectors = node.connectors?.map((connector, i) => {
       const where = `connectors[${i}]`;
       const curve =
@@ -175,14 +313,29 @@ function resolveNode(
   // A block with no declared size has no centre to map, so its corner is
   // mapped and it sits where an unrotated frame would have put it anyway.
   const sized = block.width !== undefined && block.height !== undefined;
-  const x = block.x ?? 0;
-  const y = block.y ?? 0;
-  const placed = sized
-    ? (() => {
-        const centre = resolveInFrame(frame, x + block.width! / 2, y - block.height! / 2);
-        return { x: centre.x - block.width! / 2, y: centre.y - block.height! / 2 };
-      })()
-    : resolveInFrame(frame, x, y);
+  const at = resolveInFrame(frame, block.x ?? 0, block.y ?? 0);
+  // The half-box offset is applied along the frame's DIRECTIONS but in CANVAS
+  // pixels, because width and height are pixels and x and y are frame units.
+  // Adding one to the other -- which a first version did -- is a unit error
+  // that stays invisible while xUnit is 1 and throws a marker 550px off the
+  // plane the moment a frame scales.
+  const radians = ((frame.rotation ?? 0) * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  const along = (dx: number, dy: number): Point => ({
+    x: at.x + dx * cos + dy * sin,
+    y: at.y - dx * sin + dy * cos,
+  });
+  const placed = !sized
+    ? at
+    : block.anchor === "center"
+      ? { x: at.x - block.width! / 2, y: at.y - block.height! / 2 }
+      : (() => {
+          // Default: the stated point is the box's top-left corner IN THE
+          // FRAME, so the box extends along the frame's own axes from there.
+          const centre = along(block.width! / 2, block.height! / 2);
+          return { x: centre.x - block.width! / 2, y: centre.y - block.height! / 2 };
+        })();
   const resolved: Block = {
     ...block,
     x: placed.x,
