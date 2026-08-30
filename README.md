@@ -297,6 +297,7 @@ Generated files are generated for a reason: a hand-written table of effect bleed
 - **Effects are checked geometry** — a shadow is ink, its reach is computed, and a clipped halo is a defect. [0006-effects-are-checked-geometry](docs/decisions/0006-effects-are-checked-geometry.md)
 - **Three constraints may be stood down, and say so** — a relaxed check reports not-applicable, never pass. [0010-constraint-toggles](docs/decisions/0010-constraint-toggles.md)
 - **Animation is checked motion, or it is not shipped** — six ADRs, each new freedom arriving with the check that constrains it, and a camera refused because no check for it can exist. [0012](docs/decisions/0012-animation-m11-scope.md)–[0017](docs/decisions/0017-animation-m15-routes.md)
+- **Geometry a figure derives, and labels that may sit on what they name** — where a figure can compute its geometry from the quantity it asserts, the two cannot disagree; a check is for the gap derivation cannot reach. [0019-derived-geometry-and-annotation](docs/decisions/0019-derived-geometry-and-annotation.md)
 - **The preset input is validated, and the line against the checks is drawn at repair** — the one surface an agent authors was the one surface nothing read. [0018-preset-input-validation](docs/decisions/0018-preset-input-validation.md)
 
 ## Further reading
