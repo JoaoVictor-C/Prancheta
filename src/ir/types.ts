@@ -8,6 +8,7 @@
 
 import { EffectError, resolveEffects } from "../effects/types.ts";
 import { STYLE_IDS, styleById } from "../effects/styles.ts";
+import { resolveFrames } from "./frames.ts";
 import { TYPE_IDS, TYPE_LEVELS, typeById } from "../typography.ts";
 import type { TypeLevel } from "../typography.ts";
 import type { EffectRef, ResolvedEffect } from "../effects/types.ts";
@@ -138,6 +139,11 @@ export type Scene = {
   children: Block[];
   connectors?: Connector[];
   graph?: GraphOptions;
+  /**
+   * Coordinate systems this scene's children and connectors may state their
+   * positions in. A nested scene's frames win over an enclosing scene's by id.
+   */
+  frames?: Frame[];
 };
 
 export type GraphOptions = {
@@ -162,6 +168,45 @@ export type GraphOptions = {
 };
 
 export type Point = { x: number; y: number };
+
+/**
+ * A coordinate system a figure states its positions in (ADR 0019).
+ *
+ * The point is that a number appears ONCE. An incline drawn at 30 degrees is
+ * a frame rotated 30 degrees; the slope, the block resting on it and the
+ * normal force are all positioned in that frame, so none of them can disagree
+ * with it -- where hand-placed coordinates computed outside the document can
+ * and did.
+ *
+ * Axes point UP, unlike the canvas, because every figure this serves is
+ * written by someone for whom +y is up. `rotation` is degrees
+ * COUNTER-CLOCKWISE to match. Resolved to canvas coordinates before anything
+ * measures or checks; see ir/frames.ts.
+ */
+export type Frame = {
+  id: string;
+  /**
+   * Where this frame's (0, 0) sits — in canvas coordinates, or in ANOTHER
+   * frame declared before it in the same scene.
+   *
+   * Composition is what makes a frame worth having. A block resting on an
+   * incline has an application point that is natural to state in the
+   * incline's coordinates, while the weight acting there is natural to state
+   * as straight down. Two frames sharing that origin -- one tilted, one not
+   * -- express both without either number being computed outside the
+   * document, which is the whole purpose.
+   */
+  origin: Point | FramedPoint;
+  /** Degrees counter-clockwise. Unset is axis-aligned. */
+  rotation?: number;
+  /** Canvas px per unit along x. Default 1. */
+  xUnit?: number;
+  /** Canvas px per unit along y. Defaults to `xUnit`, so a frame is square unless told otherwise. */
+  yUnit?: number;
+};
+
+/** A point stated in a named frame rather than in canvas coordinates. */
+export type FramedPoint = { frame: string; x: number; y: number };
 
 /**
  * The arrowhead shape drawn at every end `arrow` selects. "closed" (the
@@ -289,7 +334,7 @@ export type ConnectorCurve =
    *
    * `centre` is scene-local, exactly like a bare endpoint.
    */
-  | { kind: "sweep"; centre: Point };
+  | { kind: "sweep"; centre: Point | FramedPoint };
 
 /** Runtime mirror of `ConnectorCurve`'s tags, so validation reads one list. */
 export const CURVE_KINDS: readonly ConnectorCurve["kind"][] = ["arc", "bezier", "spline", "sweep"];
@@ -307,9 +352,9 @@ export type Connector = {
    * box, so it earns no exemption from `connector-clear-of-boxes` and a
    * figure that wants one crossing a shape must say so.
    */
-  from: string | Point;
+  from: string | Point | FramedPoint;
   /** Block id it arrives at, or a bare point — a callout needs to aim at a place. */
-  to: string | Point;
+  to: string | Point | FramedPoint;
   arrow?: "none" | "end" | "both";
   /** The shape drawn at each end `arrow` selects. Default "closed". */
   arrowStyle?: ArrowStyle;
@@ -458,6 +503,15 @@ export type Block = {
    * a connector's endpoints.
    */
   annotates?: string;
+  /**
+   * The frame this block's `x`/`y` are stated in. Unset means canvas
+   * coordinates, exactly as before frames existed.
+   *
+   * A block in a rotated frame is rotated with it -- with `rotateBox`, since
+   * a frame turns the box and not merely the glyphs in it -- unless it
+   * declares its own `rotation`.
+   */
+  frame?: string;
   /**
    * The shape drawn in this block's bounding box. Default "rect", unchanged
    * from every figure rendered before this existed. Every shape shares the
@@ -718,7 +772,12 @@ export function parseSpec(input: unknown): FigureSpec {
   // Whether a curve is legal depends on the canvas, so the toggles are
   // resolved once here and carried down rather than looked up per node.
   validateNode(spec.root, "root", resolveConstraints(spec.canvas as CanvasSpec | undefined));
-  return spec as FigureSpec;
+  // Frames are resolved here rather than in the pipeline so that `validate`
+  // -- which answers about a document without launching a browser -- refuses
+  // a reference to a frame the scene never declared. Resolution strips the
+  // references it consumes, so a resolved spec passing through here again is
+  // unchanged (ir/frames.ts).
+  return resolveFrames(spec as FigureSpec);
 }
 
 const CONSTRAINT_KINDS = ["align", "distribute", "keepClear", "sameSize", "anchor"] as const;
@@ -1094,6 +1153,48 @@ function validateNode(
       for (const edge of node.connectors as Connector[]) {
         if (edge.id !== undefined) connectorIds.add(edge.id);
       }
+    }
+    if (node.frames !== undefined) {
+      if (!Array.isArray(node.frames)) {
+        throw new SpecError(`${path}.frames must be an array`);
+      }
+      const frameIds = new Set<string>();
+      (node.frames as Frame[]).forEach((frame, i) => {
+        const where = `${path}.frames[${i}]`;
+        if (typeof frame !== "object" || frame === null) {
+          throw new SpecError(`${where} must be an object`);
+        }
+        if (typeof frame.id !== "string" || frame.id === "") {
+          throw new SpecError(`${where}.id must be a non-empty string`);
+        }
+        if (frameIds.has(frame.id)) {
+          throw new SpecError(`${where}.id "${frame.id}" is declared twice in this scene`);
+        }
+        frameIds.add(frame.id);
+        const origin = frame.origin as Point | undefined;
+        if (
+          typeof origin !== "object" || origin === null ||
+          typeof origin.x !== "number" || typeof origin.y !== "number" ||
+          !Number.isFinite(origin.x) || !Number.isFinite(origin.y)
+        ) {
+          throw new SpecError(`${where}.origin must be an {x, y} point`);
+        }
+        for (const key of ["rotation", "xUnit", "yUnit"] as const) {
+          const value = frame[key];
+          if (value === undefined) continue;
+          if (typeof value !== "number" || !Number.isFinite(value)) {
+            throw new SpecError(`${where}.${key} must be a finite number, got ${JSON.stringify(value)}`);
+          }
+        }
+        // A zero scale collapses every position in the frame onto its origin,
+        // which is never what an author means and would silently stack the
+        // whole figure on one point.
+        for (const key of ["xUnit", "yUnit"] as const) {
+          if (frame[key] !== undefined && frame[key] === 0) {
+            throw new SpecError(`${where}.${key} must not be zero`);
+          }
+        }
+      });
     }
     // Checked here rather than in the block branch because this is where a
     // block's SIBLINGS are known -- the same reason a connector's endpoints

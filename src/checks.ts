@@ -438,7 +438,7 @@ function textClearOfOtherBoxes(text: PlacedText, boxes: Map<string, PlacedBox>):
     // it. Only this box -- everything else still collides, and the annotation
     // pays for the relief with `annotation-nearest-its-owner`.
     if (owner?.annotates !== undefined && owner.annotates === id) continue;
-    if (intersects(bounds, rect)) collided.push(id);
+    if (overlapsBox(bounds, box)) collided.push(id);
   }
   return collided.length === 0
     ? { id: "text-clear-of-other-boxes", target: text.id, status: "pass" }
@@ -591,6 +591,32 @@ function contentWithinCanvas(figure: LaidOutFigure): Check {
  * wrong" and "nothing could be checked" never look the same in the
  * manifest.
  */
+/** A world-space point expressed in one box's own unrotated frame. */
+function inFramePoint(point: Point, box: PlacedBox): Point {
+  if (box.rotation === undefined || box.rotationCenter === undefined) return point;
+  return rotatePoint(point, box.rotationCenter, -box.rotation);
+}
+
+/** This box's own unrotated rect — what `inFrameOf` maps a world rect into. */
+function localRect(box: PlacedBox): Rect {
+  return { x: box.x, y: box.y, width: box.width, height: box.height };
+}
+
+/**
+ * Does `rect` overlap the box AS DRAWN, rather than its rotated bounding box?
+ *
+ * `checkRect` returns `bounds` for a rotated box, which is exact as a bound
+ * and hopeless as an answer for a long thin bar on a diagonal: a 430px rule
+ * at 30 degrees has a 372x215 bounding box covering most of the figure, and
+ * every label in the picture reads as overlapping it. Mapping the rect into
+ * the box's own frame first is still conservative -- an axis-aligned bound is
+ * taken of the mapped corners -- but conservative about the LABEL, which is
+ * small, instead of about the bar, which is not.
+ */
+function overlapsBox(rect: Rect, box: PlacedBox): boolean {
+  return intersects(inFrameOf(rect, box), localRect(box));
+}
+
 /**
  * A world-space rect expressed in one box's own unrotated frame.
  *
@@ -907,11 +933,13 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
   const candidates: { id: string; distance: (from: Point) => number; encloses: (r: Rect) => boolean }[] =
     [];
   for (const [id, box] of boxes) {
-    const rect = checkRect(box);
+    const rect = localRect(box);
     candidates.push({
       id,
-      distance: (from) => distancePointToRect(from, rect),
-      encloses: (r) => contains(rect, r),
+      // Measured in the box's own frame, for the same reason overlapsBox is:
+      // a diagonal bar's bounding box is nobody's true nearest neighbour.
+      distance: (from) => distancePointToRect(inFramePoint(from, box), rect),
+      encloses: (r) => contains(rect, inFrameOf(r, box)),
     });
   }
   for (const element of figure.elements) {

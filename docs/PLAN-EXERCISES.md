@@ -128,7 +128,7 @@ Only the drawing is shortened — `connector.points` is untouched, so every
 check still walks the original polyline and the apex still lands on the
 route's real endpoint.
 
-### M1 — derived position ([ADR 0019](decisions/0019-derived-geometry-and-annotation.md)) — **M1.1, M1.3, M1.4 DONE; M1.2 deferred**
+### M1 — derived position ([ADR 0019](decisions/0019-derived-geometry-and-annotation.md)) — **DONE (2026-08-29)**
 
 Four items, one ADR, one fixture. **Deliverable:
 `fixtures/fbd-incline.json`** — an inclined-plane free-body diagram in which

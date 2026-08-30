@@ -41,7 +41,7 @@ Both are arithmetic over the figure's own declared numbers. Neither needs a mode
 
 ## What was refused
 
-**A Frame, for now.** The plan proposed a named coordinate system — origin, units, rotation — as M1's centrepiece, on the reasoning that it would let the incline's angle be stated once. A day-one experiment refused it: `Block.rotation` with `rotateBox` already exists and is analytically exact, so a rotated rect gives a *true* slope today with no new vocabulary. The Frame's remaining value is real but narrower than claimed — it would move the trigonometry from a script into the spec — and it is not needed for the deliverable. It is deferred rather than dropped, and the gap it leaves is named below.
+**A Frame, at first.** The plan proposed a named coordinate system as M1's centrepiece. A day-one experiment deferred it: `Block.rotation` with `rotateBox` already exists and is analytically exact, so a rotated rect gives a *true* slope with no new vocabulary, and the deliverable did not need more. **It was then built anyway**, because the cost recorded below turned out to be the whole point rather than an acceptable residue — see "The cost, stated".
 
 **An Annotation node.** `annotates` is a field on `Block`, not a new node kind. A new kind would need its own layout path, measurement path and renderer branch to deliver a thing the existing Block already is: text with a measured box.
 
@@ -51,7 +51,9 @@ Both are arithmetic over the figure's own declared numbers. Neither needs a mode
 
 ## The cost, stated
 
-**The slope is still not tied to its own label.** The fixture's arc is checked against the `30°` it prints, and the arc's arms and the slope's `rotation: -30` both come from one number *in the script that generated the file* — but nothing in the spec connects them. A hand-edited slope rotation would render green. This is the residue the Frame was meant to remove, and it is the honest reason the Frame is deferred rather than cancelled.
+**The slope was not tied to its own label, and that is why the Frame shipped.** In the first version of the fixture the arc was checked against the `30°` it printed, and the arc's arms and the slope's `rotation: -30` both came from one number *in the script that generated the file* — nothing in the spec connected them, and a hand-edited slope rotation would have rendered green.
+
+Frames close it, and the mechanism is worth stating exactly. The scene declares `world` and `incline` sharing an origin, `incline` rotated 30°. The slope, the block and the surface-relative forces are positioned in `incline`; the weight is positioned in an unrotated frame whose ORIGIN is stated in `incline`, so "at the block, straight down" needs no arithmetic. The angle mark runs between **the same point expressed in both frames**, so its sweep IS the angle between them — and `sweep-matches-its-label` then checks that against the printed `30°`. The number appears once, as `"rotation": 30`, and everything else follows.
 
 **`annotation-nearest-its-owner` measures from the annotation's centre.** One metric so a box and a connector compare on the same terms; a connector is measured against its polyline rather than its bounding box, which for a long diagonal would beat every real neighbour. A large annotation whose centre is misleading is a case this does not model.
 

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "title": "Free-body diagram: block on a 30 degree incline (every coordinate derived from the angle)",
+  "title": "Block on an incline: the angle is stated once, as a frame's rotation",
   "canvas": {
     "padding": 28,
     "theme": "print",
@@ -13,15 +13,50 @@
   "root": {
     "type": "scene",
     "layout": "absolute",
-    "width": 680,
-    "height": 470,
+    "width": 640,
+    "height": 430,
+    "frames": [
+      {
+        "id": "world",
+        "origin": {
+          "x": 60,
+          "y": 384
+        }
+      },
+      {
+        "id": "incline",
+        "origin": {
+          "x": 60,
+          "y": 384
+        },
+        "rotation": 30
+      },
+      {
+        "id": "contact",
+        "origin": {
+          "frame": "incline",
+          "x": 244,
+          "y": 26
+        }
+      },
+      {
+        "id": "surface",
+        "origin": {
+          "frame": "incline",
+          "x": 244,
+          "y": 26
+        },
+        "rotation": 30
+      }
+    ],
     "children": [
       {
         "type": "block",
         "id": "ground",
-        "x": 70.0,
-        "y": 400.0,
-        "width": 430.0,
+        "frame": "world",
+        "x": 0,
+        "y": 0,
+        "width": 470,
         "height": 3,
         "padding": 0,
         "fill": "#222",
@@ -31,13 +66,12 @@
       {
         "type": "block",
         "id": "slope",
-        "x": 39.833395016045955,
-        "y": 285.916697508023,
-        "width": 450.3332099679081,
+        "frame": "incline",
+        "x": 0,
+        "y": 0,
+        "width": 430,
         "height": 3,
         "padding": 0,
-        "rotation": -30.0,
-        "rotateBox": true,
         "fill": "#222",
         "stroke": "none",
         "label": ""
@@ -45,12 +79,11 @@
       {
         "type": "block",
         "id": "mass",
-        "x": 226.8,
-        "y": 240.12875571751738,
+        "frame": "incline",
+        "x": 210,
+        "y": 48,
         "width": 68,
-        "height": 44.0,
-        "rotation": -30.0,
-        "rotateBox": true,
+        "height": 44,
         "fill": "none",
         "stroke": "#222",
         "strokeWidth": 2,
@@ -59,10 +92,47 @@
       },
       {
         "type": "block",
-        "id": "W-label",
-        "x": 262.8,
-        "y": 323.1287557175174,
+        "id": "N-label",
+        "frame": "surface",
+        "x": -30,
+        "y": 104,
         "width": 30,
+        "height": 22,
+        "padding": 0,
+        "rotation": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#04a",
+        "label": "N",
+        "annotates": "N"
+      },
+      {
+        "type": "block",
+        "id": "f-label",
+        "frame": "surface",
+        "x": 92,
+        "y": 26,
+        "width": 30,
+        "height": 22,
+        "padding": 0,
+        "rotation": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#050",
+        "label": "f",
+        "annotates": "f"
+      },
+      {
+        "type": "block",
+        "id": "W-label",
+        "frame": "contact",
+        "x": 20,
+        "y": -80,
+        "width": 34,
         "height": 22,
         "padding": 0,
         "fill": "none",
@@ -75,42 +145,11 @@
       },
       {
         "type": "block",
-        "id": "N-label",
-        "x": 190.07756813566456,
-        "y": 188.6146726071934,
-        "width": 30,
-        "height": 22,
-        "padding": 0,
-        "fill": "none",
-        "stroke": "none",
-        "wrap": "none",
-        "textAlign": "center",
-        "textColor": "#04a",
-        "label": "N",
-        "annotates": "N"
-      },
-      {
-        "type": "block",
-        "id": "f-label",
-        "x": 297.9217782649107,
-        "y": 201.40632385318193,
-        "width": 30,
-        "height": 22,
-        "padding": 0,
-        "fill": "none",
-        "stroke": "none",
-        "wrap": "none",
-        "textAlign": "center",
-        "textColor": "#050",
-        "label": "f",
-        "annotates": "f"
-      },
-      {
-        "type": "block",
         "id": "theta-label",
-        "x": 144.26543458855986,
-        "y": 356.14242173620676,
-        "width": 34,
+        "frame": "world",
+        "x": 88,
+        "y": 40,
+        "width": 36,
         "height": 22,
         "padding": 0,
         "fill": "none",
@@ -124,28 +163,16 @@
     ],
     "connectors": [
       {
-        "id": "W",
-        "from": {
-          "x": 260.8,
-          "y": 262.1287557175174
-        },
-        "to": {
-          "x": 260.8,
-          "y": 348.1287557175174
-        },
-        "arrow": "end",
-        "stroke": "#a00",
-        "strokeWidth": 2
-      },
-      {
         "id": "N",
         "from": {
-          "x": 260.8,
-          "y": 262.1287557175174
+          "frame": "surface",
+          "x": 0,
+          "y": 0
         },
         "to": {
-          "x": 212.8,
-          "y": 178.99031695421127
+          "frame": "surface",
+          "x": 0,
+          "y": 96
         },
         "arrow": "end",
         "stroke": "#04a",
@@ -154,32 +181,53 @@
       {
         "id": "f",
         "from": {
-          "x": 260.8,
-          "y": 262.1287557175174
+          "frame": "surface",
+          "x": 0,
+          "y": 0
         },
         "to": {
-          "x": 333.54613391789286,
-          "y": 220.12875571751738
+          "frame": "surface",
+          "x": 84,
+          "y": 0
         },
         "arrow": "end",
         "stroke": "#050",
         "strokeWidth": 2
       },
       {
-        "id": "theta",
+        "id": "W",
         "from": {
-          "x": 148.0,
-          "y": 400.0
+          "frame": "contact",
+          "x": 0,
+          "y": 0
         },
         "to": {
-          "x": 137.54998149518622,
-          "y": 361.0
+          "frame": "contact",
+          "x": 0,
+          "y": -96
+        },
+        "arrow": "end",
+        "stroke": "#a00",
+        "strokeWidth": 2
+      },
+      {
+        "id": "theta",
+        "from": {
+          "frame": "world",
+          "x": 86,
+          "y": 0
+        },
+        "to": {
+          "frame": "incline",
+          "x": 86,
+          "y": 0
         },
         "curve": {
           "kind": "sweep",
           "centre": {
-            "x": 70.0,
-            "y": 400.0
+            "frame": "world",
+            "x": 0,
+            "y": 0
           }
         },
         "arrow": "none",
