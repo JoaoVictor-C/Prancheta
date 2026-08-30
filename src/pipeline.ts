@@ -318,6 +318,10 @@ export function toLaidOutFigure(
       width: box.width,
       height: box.height,
       ...(declared === undefined ? {} : { declared }),
+      // Carried from the same lookup rather than a second attach pass: like
+      // categoryGroup it changes no layout, so it is copied onto the placed
+      // figure by id once measurement has finished.
+      ...(asked?.annotates === undefined ? {} : { annotates: asked.annotates }),
       fill: box.fill,
       stroke: box.stroke,
       strokeWidth: box.borderWidth,

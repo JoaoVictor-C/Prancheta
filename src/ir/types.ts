@@ -425,6 +425,25 @@ export type Block = {
    */
   categoryGroup?: string;
   /**
+   * The id of the element this block NAMES, rather than one it sits beside.
+   *
+   * A label on a figure has always had to be a Block, and a Block collides
+   * with everything: writing "N" beside a force arrow failed
+   * text-clear-of-other-boxes and boxes-do-not-overlap against the very thing
+   * it was labelling. Every figure in the physics and maths repertoire does
+   * this, so those checks were firing on well-formed work.
+   *
+   * Declaring an owner buys exactly one relief -- an annotation may overlap
+   * the element it names, and nothing else -- and costs a new obligation in
+   * exchange: `annotation-nearest-its-owner` refuses a label that has drifted
+   * closer to some other element than to the one it claims to name, because a
+   * reader attributes a label to whatever it is nearest.
+   *
+   * Must name a sibling in the same scene, refused at parse time exactly like
+   * a connector's endpoints.
+   */
+  annotates?: string;
+  /**
    * The shape drawn in this block's bounding box. Default "rect", unchanged
    * from every figure rendered before this existed. Every shape shares the
    * block's own axis-aligned bounding box exactly -- the browser lays out a
@@ -557,6 +576,8 @@ export type PlacedBox = {
   bleed?: Bleed;
   /** Carried straight from the spec's Block.categoryGroup; see there. */
   categoryGroup?: string;
+  /** Carried straight from the spec's Block.annotates; see there. */
+  annotates?: string;
   /** Carried straight from the spec's Block.motion; see there. Absent means the whole transition. */
   motion?: MotionWindow;
   /** Carried straight from the spec's Block.shape. Default "rect" when unset. */
@@ -1037,6 +1058,36 @@ function validateNode(
     const ids = new Set<string>();
     for (const child of node.children as Block[]) {
       if (child.id !== undefined) ids.add(child.id);
+    }
+    // A connector is nameable too: in a free-body diagram every force label
+    // names an ARROW, not a box, so restricting `annotates` to children would
+    // refuse the case the feature exists for. An id is required to be named,
+    // which is why only authored ids count here -- normalise's generated ones
+    // do not exist yet, and naming one would be naming a coincidence.
+    const connectorIds = new Set<string>();
+    if (Array.isArray(node.connectors)) {
+      for (const edge of node.connectors as Connector[]) {
+        if (edge.id !== undefined) connectorIds.add(edge.id);
+      }
+    }
+    // Checked here rather than in the block branch because this is where a
+    // block's SIBLINGS are known -- the same reason a connector's endpoints
+    // are validated here and not where the connector is shaped.
+    for (const [i, child] of (node.children as Block[]).entries()) {
+      if (child.annotates === undefined) continue;
+      if (typeof child.annotates !== "string") {
+        throw new SpecError(`${path}.children[${i}].annotates must be an element id`);
+      }
+      if (child.annotates === child.id) {
+        throw new SpecError(
+          `${path}.children[${i}].annotates names itself; an annotation names something else`,
+        );
+      }
+      if (!ids.has(child.annotates) && !connectorIds.has(child.annotates)) {
+        throw new SpecError(
+          `${path}.children[${i}].annotates names "${child.annotates}", which is not a block or connector in this scene`,
+        );
+      }
     }
     if (node.connectors !== undefined) {
       if (!Array.isArray(node.connectors)) {

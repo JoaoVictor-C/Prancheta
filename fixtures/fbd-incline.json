@@ -2,7 +2,7 @@
   "version": 1,
   "title": "Free-body diagram: block on a 30 degree incline (every coordinate derived from the angle)",
   "canvas": {
-    "padding": 24,
+    "padding": 28,
     "theme": "print",
     "constraints": {
       "allowOverlap": true,
@@ -12,15 +12,15 @@
   "root": {
     "type": "scene",
     "layout": "absolute",
-    "width": 640,
+    "width": 680,
     "height": 470,
     "children": [
       {
         "type": "block",
         "id": "ground",
-        "x": 60.0,
-        "y": 380.0,
-        "width": 420.0,
+        "x": 70.0,
+        "y": 400.0,
+        "width": 430.0,
         "height": 3,
         "padding": 0,
         "fill": "#222",
@@ -30,9 +30,9 @@
       {
         "type": "block",
         "id": "slope",
-        "x": 30.60689770794221,
-        "y": 268.8034488539711,
-        "width": 438.7862045841156,
+        "x": 39.833395016045955,
+        "y": 285.916697508023,
+        "width": 450.3332099679081,
         "height": 3,
         "padding": 0,
         "rotation": -30.0,
@@ -44,8 +44,8 @@
       {
         "type": "block",
         "id": "mass",
-        "x": 223.0,
-        "y": 216.5491840485417,
+        "x": 226.8,
+        "y": 240.12875571751738,
         "width": 68,
         "height": 44.0,
         "rotation": -30.0,
@@ -55,49 +55,97 @@
         "strokeWidth": 2,
         "wrap": "none",
         "label": ""
+      },
+      {
+        "type": "block",
+        "id": "W-label",
+        "x": 262.8,
+        "y": 323.1287557175174,
+        "width": 30,
+        "height": 22,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#a00",
+        "label": "mg",
+        "annotates": "W"
+      },
+      {
+        "type": "block",
+        "id": "N-label",
+        "x": 190.07756813566456,
+        "y": 188.6146726071934,
+        "width": 30,
+        "height": 22,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#04a",
+        "label": "N",
+        "annotates": "N"
+      },
+      {
+        "type": "block",
+        "id": "f-label",
+        "x": 297.9217782649107,
+        "y": 201.40632385318193,
+        "width": 30,
+        "height": 22,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#050",
+        "label": "f",
+        "annotates": "f"
       }
     ],
     "connectors": [
       {
         "id": "W",
         "from": {
-          "x": 257.0,
-          "y": 238.5491840485417
+          "x": 260.8,
+          "y": 262.1287557175174
         },
         "to": {
-          "x": 257.0,
-          "y": 353.5491840485417
+          "x": 260.8,
+          "y": 348.1287557175174
         },
         "arrow": "end",
-        "stroke": "#c00",
+        "stroke": "#a00",
         "strokeWidth": 2
       },
       {
         "id": "N",
         "from": {
-          "x": 257.0,
-          "y": 238.5491840485417
+          "x": 260.8,
+          "y": 262.1287557175174
         },
         "to": {
-          "x": 209.5,
-          "y": 156.27677068902
+          "x": 212.8,
+          "y": 178.99031695421127
         },
         "arrow": "end",
-        "stroke": "#06c",
+        "stroke": "#04a",
         "strokeWidth": 2
       },
       {
         "id": "f",
         "from": {
-          "x": 257.0,
-          "y": 238.5491840485417
+          "x": 260.8,
+          "y": 262.1287557175174
         },
         "to": {
-          "x": 330.61215932167727,
-          "y": 196.0491840485417
+          "x": 333.54613391789286,
+          "y": 220.12875571751738
         },
         "arrow": "end",
-        "stroke": "#080",
+        "stroke": "#050",
         "strokeWidth": 2
       }
     ]
