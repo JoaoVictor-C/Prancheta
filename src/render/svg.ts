@@ -561,7 +561,7 @@ function connectorToSvg(connector: PlacedConnector, defs: DefsRegistry): string 
   // the head as two objects, with a seam where they meet.
   return wrapElement({
     id: connector.id,
-    descText: `Connects ${connector.fromId} to ${connector.toId ?? "a point"}`,
+    descText: `Connects ${connector.fromId ?? "a point"} to ${connector.toId ?? "a point"}`,
     filterId,
     inner: parts.join("\n"),
   });

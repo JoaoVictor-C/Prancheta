@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "title": "Free-body diagram: block on a 30 degree incline (every coordinate derived from the angle)",
+  "canvas": {
+    "padding": 24,
+    "theme": "print",
+    "constraints": {
+      "allowOverlap": true,
+      "allowConnectorCrossing": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 640,
+    "height": 470,
+    "children": [
+      {
+        "type": "block",
+        "id": "ground",
+        "x": 60.0,
+        "y": 380.0,
+        "width": 420.0,
+        "height": 3,
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "slope",
+        "x": 30.60689770794221,
+        "y": 268.8034488539711,
+        "width": 438.7862045841156,
+        "height": 3,
+        "padding": 0,
+        "rotation": -30.0,
+        "rotateBox": true,
+        "fill": "#222",
+        "stroke": "none",
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "mass",
+        "x": 223.0,
+        "y": 216.5491840485417,
+        "width": 68,
+        "height": 44.0,
+        "rotation": -30.0,
+        "rotateBox": true,
+        "fill": "none",
+        "stroke": "#222",
+        "strokeWidth": 2,
+        "wrap": "none",
+        "label": ""
+      }
+    ],
+    "connectors": [
+      {
+        "id": "W",
+        "from": {
+          "x": 257.0,
+          "y": 238.5491840485417
+        },
+        "to": {
+          "x": 257.0,
+          "y": 353.5491840485417
+        },
+        "arrow": "end",
+        "stroke": "#c00",
+        "strokeWidth": 2
+      },
+      {
+        "id": "N",
+        "from": {
+          "x": 257.0,
+          "y": 238.5491840485417
+        },
+        "to": {
+          "x": 209.5,
+          "y": 156.27677068902
+        },
+        "arrow": "end",
+        "stroke": "#06c",
+        "strokeWidth": 2
+      },
+      {
+        "id": "f",
+        "from": {
+          "x": 257.0,
+          "y": 238.5491840485417
+        },
+        "to": {
+          "x": 330.61215932167727,
+          "y": 196.0491840485417
+        },
+        "arrow": "end",
+        "stroke": "#080",
+        "strokeWidth": 2
+      }
+    ]
+  }
+}

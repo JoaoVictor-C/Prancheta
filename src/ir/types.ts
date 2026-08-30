@@ -281,8 +281,18 @@ export const CURVE_KINDS: readonly ConnectorCurve["kind"][] = ["arc", "bezier", 
 
 export type Connector = {
   id?: string;
-  /** Block id the connector leaves from. */
-  from: string;
+  /**
+   * Block id the connector leaves from, or a bare point.
+   *
+   * A point origin is what a vector needs. Several forces acting at one place
+   * have to LEAVE one place: routed from a block they each start on that
+   * block's own boundary, at three different spots, and a free-body diagram
+   * whose forces do not share an application point is not a free-body
+   * diagram. Both ends may be points, which is a free vector -- it joins no
+   * box, so it earns no exemption from `connector-clear-of-boxes` and a
+   * figure that wants one crossing a shape must say so.
+   */
+  from: string | Point;
   /** Block id it arrives at, or a bare point — a callout needs to aim at a place. */
   to: string | Point;
   arrow?: "none" | "end" | "both";
@@ -497,7 +507,8 @@ export type PlacedElement = PlacedBox | PlacedText | PlacedConnector;
 export type PlacedConnector = {
   kind: "connector";
   id: string;
-  fromId: string;
+  /** Null when the connector leaves from a bare point rather than a block. */
+  fromId: string | null;
   /** Null when the connector aims at a bare point rather than a block. */
   toId: string | null;
   /**
@@ -1034,9 +1045,19 @@ function validateNode(
       node.connectors.forEach((connector, i) => {
         const where = `${path}.connectors[${i}]`;
         const edge = connector as Connector;
-        if (typeof edge.from !== "string") throw new SpecError(`${where}.from must be a block id`);
-        if (!ids.has(edge.from)) {
-          throw new SpecError(`${where}.from names "${edge.from}", which is not a child of this scene`);
+        if (typeof edge.from === "string") {
+          if (!ids.has(edge.from)) {
+            throw new SpecError(
+              `${where}.from names "${edge.from}", which is not a child of this scene`,
+            );
+          }
+        } else if (
+          typeof edge.from !== "object" ||
+          edge.from === null ||
+          typeof edge.from.x !== "number" ||
+          typeof edge.from.y !== "number"
+        ) {
+          throw new SpecError(`${where}.from must be a block id or a {x, y} point`);
         }
         if (typeof edge.to === "string") {
           if (!ids.has(edge.to)) {

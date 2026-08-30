@@ -23,6 +23,8 @@ import {
   liftCurve,
   routeBetweenBoxes,
   routeSelfLoop,
+  routeFromPoint,
+  routePointToPoint,
   routeToPoint,
   trimRoute,
 } from "./connectors.ts";
@@ -139,29 +141,42 @@ export function buildConnectors(
   for (const record of scenes) {
     const origin = sceneById.get(record.id);
     for (const [connector, id] of record.connectorIds) {
-      const from = boxById.get(connector.from);
-      if (!from) continue;
+      const from = typeof connector.from === "string" ? boxById.get(connector.from) : undefined;
+      if (typeof connector.from === "string" && !from) continue;
       const toBox = typeof connector.to === "string" ? boxById.get(connector.to) : undefined;
       if (typeof connector.to === "string" && !toBox) continue;
 
+      // A stated endpoint is scene-local, exactly as `to` already was, so it
+      // is lifted into page space before anything routes against it.
+      const lift = (point: Point): Point =>
+        origin === undefined ? point : { x: point.x + origin.x, y: point.y + origin.y };
+      const fromPoint =
+        typeof connector.from === "string" ? undefined : lift(connector.from as Point);
+
       let points: Point[];
       const route = routes[id];
-      if (toBox !== undefined && toBox.id === from.id) {
+      if (fromPoint !== undefined) {
+        // ELK never routed this edge -- it keys on node ids and this one has
+        // no source node -- so a stated origin always takes the direct route.
+        points =
+          toBox === undefined
+            ? routePointToPoint(fromPoint, lift(connector.to as Point))
+            : routeFromPoint(fromPoint, toBox);
+      } else if (from !== undefined && toBox !== undefined && toBox.id === from.id) {
         // A box joined to itself: both ends would clip against the same border
         // from the same centre and collapse to a point. See routeSelfLoop.
         points = routeSelfLoop(from);
-      } else if (route !== undefined && origin !== undefined) {
+      } else if (from !== undefined && route !== undefined && origin !== undefined) {
         // ELK works scene-local; lift into page space, then pull the ends back
         // off the borders it routed to.
         const lifted = route.map((point) => ({ x: point.x + origin.x, y: point.y + origin.y }));
         points = trimRoute(lifted, from, toBox ?? null);
-      } else if (toBox) {
+      } else if (from !== undefined && toBox !== undefined) {
         points = routeBetweenBoxes(from, toBox);
+      } else if (from !== undefined) {
+        points = routeToPoint(from, lift(connector.to as Point));
       } else {
-        const target = connector.to as Point;
-        const absolute =
-          origin === undefined ? target : { x: target.x + origin.x, y: target.y + origin.y };
-        points = routeToPoint(from, absolute);
+        continue;
       }
 
       // Bend the route before anything else sees it, so the polyline every
@@ -174,7 +189,7 @@ export function buildConnectors(
       placed.push({
         kind: "connector",
         id,
-        fromId: connector.from,
+        fromId: typeof connector.from === "string" ? connector.from : null,
         toId: typeof connector.to === "string" ? connector.to : null,
         points,
         curve: connector.curve,

@@ -898,6 +898,18 @@ Worse than cosmetic on the stacked bars: `segmentLength(value)` is the datum, an
 
 Across all 66 fixtures the new check reports 62 pass and 4 not-applicable, none failing. Suite 880 -> 889, `check:all`, `check:independent` and `check:fonts-travel` all exit 0.
 
+### 2026-08-29 - Forces that could not share an application point: a connector may now leave a bare point
+
+`Connector.to` has accepted a bare point since callouts existed; `from` demanded a block id. Routed from a block, three force arrows leave that block's own BOUNDARY at three different spots -- and a free-body diagram whose forces do not share an application point is not a free-body diagram. It was the first thing to fail when the inclined plane was attempted, and it failed silently: `boxById.get(connector.from)` returning undefined dropped the connector with no message at all.
+
+`from` is now `string | Point`, validated by the same rule that already guarded `to`, and `PlacedConnector.fromId` is nullable to match `toId`. Two routers join the two that existed: `routeFromPoint` clips only the box end, and `routePointToPoint` clips neither. A stated coordinate is left exactly where it was stated at both ends -- the reason `routeToPoint` never clipped a target is that a coordinate the author chose is a claim the figure makes, and an origin is the same claim in the other direction. The test asserts it as an identity rather than against a literal: the same scene-local point must land on the same page coordinate whichever end of a connector it sits on, since a scene is lifted by its own placement and a raw number would have been testing the padding.
+
+**Both ends may be points, and that earns no exemption.** A free vector joins no box, so `connector-clear-of-boxes` grants it none of the endpoint relief a block-to-block connector gets, and the manifest reports `joins: []` rather than inventing an owner. A vector drawn out of the middle of a block IS crossing that block, and a figure that wants one says so with `allowConnectorCrossing` instead of having it excused quietly.
+
+[fixtures/fbd-incline.json](fixtures/fbd-incline.json) is the deliverable: a block on a 30 degree incline where the slope, the block's rotation, the contact point and all three force bearings are computed from one number. The normal is perpendicular because it is drawn at the angle the slope was drawn at, not because it was placed there by eye.
+
+Worth recording that the first version of that fixture was WRONG and rendered green -- the normal was given a bearing 90 degrees out, along the surface rather than across it, and every check passed a figure asserting nonsense. That is the declared non-goal working exactly as documented, and it is the case for M1.4's angle arc carrying a check that its swept angle equals the angle its label prints. 889 -> 899.
+
 ## Where this goes next
 
 Every milestone in the original plan reached a ✅ at some point, but a 2026-08-24 reachability audit found several were marked done on the strength of a passing test file rather than a real consumer — the same failure mode step 36 caught first. See [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md)'s stage 5 and 6 tables and the entry below for what is and is not actually wired. What follows here is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.

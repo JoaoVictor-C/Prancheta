@@ -32,6 +32,31 @@ export function routeToPoint(from: PlacedBox, target: Point): Point[] {
   return [clipToBox(start, target, from, connectorTheme.gap), target];
 }
 
+/**
+ * Straight route from a bare point INTO a box — routeToPoint reversed.
+ *
+ * Only the box end is clipped, exactly as in routeToPoint: a stated point is
+ * a place the author chose, and pulling it back off itself would move the
+ * arrow away from the coordinate the figure claims it starts at.
+ */
+export function routeFromPoint(source: Point, to: PlacedBox): Point[] {
+  const end = centreOf(to);
+  return [source, clipToBox(end, source, to, connectorTheme.gap)];
+}
+
+/**
+ * A free vector: both ends stated, neither clipped.
+ *
+ * This is what several forces sharing one application point need. It joins no
+ * box, so `connector-clear-of-boxes` grants it no endpoint exemption -- a
+ * vector drawn out of the middle of a block is crossing that block, and the
+ * figure has to say so with `allowConnectorCrossing` rather than have it
+ * excused silently.
+ */
+export function routePointToPoint(source: Point, target: Point): Point[] {
+  return [source, target];
+}
+
 /** How far above a box a self-loop reaches, in px. */
 const SELF_LOOP_HEIGHT = 26;
 

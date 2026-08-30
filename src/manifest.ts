@@ -73,8 +73,11 @@ export function buildManifest(figure: LaidOutFigure, options: ManifestOptions = 
         box: unionOf(
           element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
         ),
-        ownerId: element.fromId,
-        joins: element.toId === null ? [element.fromId] : [element.fromId, element.toId],
+        // Either end may be a bare point rather than a block, so `joins` lists
+        // the boxes this connector actually attaches to -- which for a free
+        // vector is none at all, and saying so is the honest report.
+        ownerId: element.fromId ?? undefined,
+        joins: [element.fromId, element.toId].filter((id): id is string => id !== null),
       });
       continue;
     }
