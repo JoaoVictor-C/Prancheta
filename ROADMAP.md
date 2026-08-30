@@ -1002,6 +1002,18 @@ Nothing is lost by removing it. Unicode subscripts, superscripts, Greek letters 
 
 Step 28 is marked ✗ in [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md) with the reason, not ◐. Two historical entries lose their link and keep their text. 948 -> 943, five tests removed with the module they covered.
 
+### 2026-08-29 - A lattice is ink, and so is a plotted line
+
+Reproducing a real exam figure -- UFRGS 2016, two cyclists' distance against time -- found two things the grid could not do and one thing a plotted series should never have been.
+
+**Gridlines are dashed in every scientific plot, and a filled rect cannot dash.** The lattice was blocks, which was right about painter's order and wrong about what a line is: a rect can be a 1px line but not a dashed one, and faking it with a run of short rects would put a drawing trick where a stroke belongs. Gridlines are `Mark`s now, which is what they always were -- ink, painted beneath everything, taking no part in collision -- and `GridSpec.lineStyle` follows for free. The axes stay solid whatever the gridlines do, because an axis dashed like its own gridlines stops reading as an axis. Tick NUMBERS stay blocks: they are measured text.
+
+**Zero was not being labelled**, on the reasoning that the origin should not be numbered twice. That was over-caution dressed as care: the two zeros sit in different places, one below the plot and one to its left, and where they genuinely would collide `tick-labels-do-not-collide` already says so. Deciding it quietly here took a judgement away from the check that exists to make it.
+
+**And a plotted series is not a connector.** A connector joins two elements; a line through data points joins nothing -- it is ink, and the difference shows up in painter's order. Drawn as connectors, the series lines painted OVER the markers, so the dashed line ran visibly through the middle of every hollow diamond. Drawn as marks they paint beneath, and the markers sit on the line the way a reader expects. Reported by eye rather than by a check, which is the honest description: no check knows what a plot is supposed to look like.
+
+The figure reproduced with zero failures and, after the change, with NO relaxation toggles at all -- the connector version needed `allowConnectorCrossing` for lines crossing gridlines and `allowOverlap` for markers on them, and both went away once the ink was ink. 943 -> 944.
+
 ## Where this goes next
 
 Every milestone in the original plan reached a ✅ at some point, but a 2026-08-24 reachability audit found several were marked done on the strength of a passing test file rather than a real consumer — the same failure mode step 36 caught first. See [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md)'s stage 5 and 6 tables and the entry below for what is and is not actually wired. What follows here is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.

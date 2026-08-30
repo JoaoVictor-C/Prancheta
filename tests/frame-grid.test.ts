@@ -22,13 +22,26 @@ const smallGrid = { x: { from: -2, to: 2 }, y: { from: -2, to: 2 } };
 
 // --- expansion ---------------------------------------------------------------
 
-test("a grid expands into ordinary blocks, every one marked as the frame's furniture", () => {
+test("a grid expands into stroked lines and numbered ticks", () => {
   const s = planeScene(smallGrid).root as Scene;
-  const furniture = s.children.filter((c) => (c as Block).gridOf === "plane");
-  // 5 vertical + 5 horizontal lines, and 4 numbered ticks on each axis (zero
-  // is skipped, since the origin is not labelled twice).
-  assert.equal(furniture.filter((c) => c.id!.includes("-grid-")).length, 10);
-  assert.equal(furniture.filter((c) => c.id!.includes("-tick-")).length, 8);
+  // The lattice is MARKS: a filled rect can be a 1px line but not a dashed
+  // one, and dashed gridlines are the norm in a plot. 5 vertical + 5
+  // horizontal.
+  assert.equal(s.marks!.filter((m) => m.id.includes("-grid-")).length, 10);
+  // The numbers are blocks, because they are measured text -- 5 on each axis,
+  // zero included: the two zeros land in different places, and where they
+  // genuinely would collide, tick-labels-do-not-collide says so.
+  const ticks = s.children.filter((c) => (c as Block).gridOf === "plane");
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-")).length, 10);
+});
+
+test("gridlines can be dashed, and the axes stay solid", () => {
+  const s = planeScene({ ...smallGrid, lineStyle: "dashed" }).root as Scene;
+  const dashed = s.marks!.filter((m) => m.lineStyle === "dashed");
+  const solid = s.marks!.filter((m) => m.lineStyle === undefined);
+  assert.equal(dashed.length, 8, "every line but the two axes");
+  // An axis dashed like its own gridlines stops reading as an axis.
+  assert.equal(solid.length, 2);
 });
 
 test("grid furniture is generated FIRST, so it paints under the figure", () => {
@@ -53,7 +66,7 @@ test("tick ids carry the marker tick-labels-do-not-collide keys on", () => {
 test("a grid can be asked for lines without numbers", () => {
   const s = planeScene({ ...smallGrid, labels: false }).root as Scene;
   assert.equal(s.children.filter((c) => c.id!.includes("-tick-")).length, 0);
-  assert.ok(s.children.filter((c) => c.id!.includes("-grid-")).length > 0);
+  assert.ok(s.marks!.filter((m) => m.id.includes("-grid-")).length > 0);
 });
 
 // --- placement ---------------------------------------------------------------

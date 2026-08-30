@@ -251,6 +251,17 @@ export type GridSpec = {
   stroke?: string;
   axisStroke?: string;
   labelColor?: string;
+  /**
+   * Stroke pattern for the lattice lines. Default "solid".
+   *
+   * Dashed gridlines are the norm in a scientific plot, and they are the
+   * reason the lattice is drawn as MARKS rather than filled rects: a rect can
+   * be a 1px line but it cannot be a dashed one, and faking it with a run of
+   * short rects would put a drawing trick where a stroke belongs. The axes
+   * are always solid — an axis dashed like its own gridlines stops reading as
+   * an axis.
+   */
+  lineStyle?: LineStyle;
 };
 
 /** A point stated in a named frame rather than in canvas coordinates. */

@@ -25,7 +25,7 @@
  * is the one sharp edge here and it is tested directly.
  */
 
-import type { Block, FigureNode, FigureSpec, Frame, FramedPoint, GridSpec, Mark, Point, Scene } from "./types.ts";
+import type { Block, FigureNode, FigureSpec, Frame, FramedPoint, GridSpec, Mark, MarkSegment, Point, Scene } from "./types.ts";
 import { SpecError } from "./types.ts";
 
 /** A point stated in a frame, or one already in canvas coordinates. */
@@ -96,8 +96,12 @@ const AXIS_LINE_PX = 2;
  * frame actually puts at its ends rather than being drawn axis-aligned and
  * rotated afterwards.
  */
-function expandGrid(frame: Frame & { origin: Point }, grid: GridSpec): Block[] {
+function expandGrid(
+  frame: Frame & { origin: Point },
+  grid: GridSpec,
+): { blocks: Block[]; marks: Mark[] } {
   const out: Block[] = [];
+  const lines: Mark[] = [];
   const stroke = grid.stroke ?? "#D8DCE3";
   const axisStroke = grid.axisStroke ?? "#8A93A3";
   const labelColor = grid.labelColor ?? "#6B7280";
@@ -108,55 +112,56 @@ function expandGrid(frame: Frame & { origin: Point }, grid: GridSpec): Block[] {
   const xs = ticksOf(grid.x);
   const ys = ticksOf(grid.y);
 
-  const line = (id: string, a: Point, b: Point, width: number, colour: string): Block => {
-    const length = Math.hypot(b.x - a.x, b.y - a.y);
-    const angle = (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
-    const centre = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    return {
-      type: "block",
+  // A stroked mark, not a filled rect: a rect can be a 1px line but it cannot
+  // be a DASHED one, and dashed gridlines are the norm in a plot. Marks are
+  // also what a lattice actually is -- ink, painted beneath everything, taking
+  // no part in collision -- so this is the honest shape as well as the
+  // capable one.
+  const line = (id: string, a: Point, b: Point, width: number, colour: string, dashed: boolean) => {
+    const segments: MarkSegment[] = [{ line: b }];
+    lines.push({
       id,
-      x: centre.x - length / 2,
-      y: centre.y - width / 2,
-      width: length,
-      height: width,
-      padding: 0,
-      radius: 0,
-      fill: colour,
-      stroke: "none",
-      strokeWidth: 0,
-      label: "",
-      ...(angle === 0 ? {} : { rotation: angle, rotateBox: true }),
-      gridOf: frame.id,
-    };
+      from: a,
+      segments,
+      close: false,
+      fill: "none",
+      stroke: colour,
+      strokeWidth: width,
+      ...(dashed && grid.lineStyle !== undefined ? { lineStyle: grid.lineStyle } : {}),
+    });
   };
 
   for (const [i, x] of xs.entries()) {
     const isAxis = drawAxes && x === 0;
-    out.push(
-      line(
-        `${frame.id}-grid-v-${i}`,
-        resolveInFrame(frame, x, grid.y.from),
-        resolveInFrame(frame, x, grid.y.to),
-        isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
-        isAxis ? axisStroke : stroke,
-      ),
+    line(
+      `${frame.id}-grid-v-${i}`,
+      resolveInFrame(frame, x, grid.y.from),
+      resolveInFrame(frame, x, grid.y.to),
+      isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
+      isAxis ? axisStroke : stroke,
+      !isAxis,
     );
   }
   for (const [i, y] of ys.entries()) {
     const isAxis = drawAxes && y === 0;
-    out.push(
-      line(
-        `${frame.id}-grid-h-${i}`,
-        resolveInFrame(frame, grid.x.from, y),
-        resolveInFrame(frame, grid.x.to, y),
-        isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
-        isAxis ? axisStroke : stroke,
-      ),
+    line(
+      `${frame.id}-grid-h-${i}`,
+      resolveInFrame(frame, grid.x.from, y),
+      resolveInFrame(frame, grid.x.to, y),
+      isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
+      isAxis ? axisStroke : stroke,
+      !isAxis,
     );
   }
 
-  if (!drawLabels) return out;
+  if (!drawLabels) return { blocks: out, marks: lines };
 
+  // Zero is numbered like any other tick. An earlier version skipped it to
+  // avoid writing "0" twice at the origin, which was over-caution: the two
+  // zeros sit in different places (one below the plot, one to its left), and
+  // where they genuinely would collide `tick-labels-do-not-collide` says so
+  // rather than this quietly deciding for the author.
+  //
   // Ticks are numbered along the axis when there is one in range, and along
   // the low edge otherwise -- a plane showing only positive values still
   // needs its numbers somewhere.
@@ -183,16 +188,16 @@ function expandGrid(frame: Frame & { origin: Point }, grid: GridSpec): Block[] {
 
   const format = (value: number): string => String(Math.round(value * 1000) / 1000);
   for (const [i, x] of xs.entries()) {
-    if (x === 0 || i % every !== 0) continue;
+    if (i % every !== 0) continue;
     const at = resolveInFrame(frame, x, yBase);
     out.push(tick(`${frame.id}-tick-x-${i}`, { x: at.x, y: at.y + 14 }, format(x), "center"));
   }
   for (const [i, y] of ys.entries()) {
-    if (y === 0 || i % every !== 0) continue;
+    if (i % every !== 0) continue;
     const at = resolveInFrame(frame, xBase, y);
     out.push(tick(`${frame.id}-tick-y-${i}`, { x: at.x - 8, y: at.y }, format(y), "end"));
   }
-  return out;
+  return { blocks: out, marks: lines };
 }
 
 function framesOf(
@@ -277,9 +282,12 @@ function resolveNode(
 
     // Generated first so it paints first: a grid is what the figure stands on.
     const furniture: Block[] = [];
+    const furnitureMarks: Mark[] = [];
     for (const declared of node.frames ?? []) {
       if (declared.grid === undefined) continue;
-      furniture.push(...expandGrid(frames.get(declared.id)!, declared.grid));
+      const expanded = expandGrid(frames.get(declared.id)!, declared.grid);
+      furniture.push(...expanded.blocks);
+      furnitureMarks.push(...expanded.marks);
     }
     const children = [
       ...furniture,
@@ -308,7 +316,7 @@ function resolveNode(
       };
     });
 
-    const marks = node.marks?.map((mark, i) => {
+    const marks = [...furnitureMarks, ...(node.marks ?? [])].map((mark, i) => {
       const where = `marks[${i}]`;
       return {
         ...mark,
@@ -328,7 +336,7 @@ function resolveNode(
       ...node,
       children,
       ...(connectors === undefined ? {} : { connectors }),
-      ...(marks === undefined ? {} : { marks }),
+      ...(marks.length === 0 ? {} : { marks }),
     };
     delete resolved.frames;
     return resolved;
