@@ -200,6 +200,51 @@ author raw IR".
 Read \`docs/selection/SELECTION.md\` for the reasoning. It is hand-written and it
 is the part worth reading.
 
+## Running the tests
+
+**If you are changing this code, reach for the first command, not the last.**
+Every render drives a real browser, so a full run costs about a minute — and
+almost none of that minute concerns the file you just edited.
+
+| command | when | cost |
+| --- | --- | --- |
+| \`npm run test:one <file>\` | you changed one thing | ~2s |
+| \`npm run test:fast\` | a broad sweep while iterating | ~51s |
+| \`npm test\` | before committing — the core suite | ~61s |
+| \`npm run test:modules\` | you touched \`modules/\`; needs Python | slow |
+| \`npm run test:all\` | both, and what \`check:all\` runs | slowest |
+
+\`test:one\` forwards anything \`node --test\` accepts, so
+\`npm run test:one -- --test-name-pattern="sRGB" tests/colour.test.ts\` runs a
+single test.
+
+**The suite is split by dependency, not by strictness.** Fifteen test files
+spawn \`python\` and fail loudly when an interpreter or a module import is
+missing — a probe that goes quietly green is indistinguishable from one that
+never ran. That is right for a maintainer and wrong as a first impression, so
+\`npm test\` is the core suite (Node and Chromium only) and the Python set is
+asked for by name. Membership is derived in \`scripts/run-tests.ts\` by reading
+each test's own source, never from a hand-kept list that would drift silently.
+Install the module dependencies with
+\`python -m pip install -r modules/requirements.txt\`.
+
+\`test:fast\` turns off PNG rasterisation, which is most of a render. It
+therefore does **not** prove the figure a reader receives can be produced, and
+it never substitutes for \`npm test\` at a commit. Only \`tests/render.test.ts\`
+reads the pixels, and it asks for them explicitly so the flag cannot hollow it
+out.
+
+**Do not interrupt a run.** \`node --test\` workers outlive their parent on
+Windows, and each abandoned cohort silently slows every measurement that
+follows — enough to move a 69s baseline past 600s. If a run is killed, reap
+them before trusting another timing:
+
+\`\`\`powershell
+Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
+  Where-Object { $_.CommandLine -match 'trace-event-file-pattern' } |
+  ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
+\`\`\`
+
 ## Commands
 
 ${commandTable()}
