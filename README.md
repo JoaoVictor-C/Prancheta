@@ -78,7 +78,7 @@ That only holds while *the thing measured is the thing drawn*, which is why the 
 
 ## What gets checked
 
-Eleven checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). They answer *is this figure malformed*, not *is this figure right*.
+Fifteen checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). Eleven answer *is this figure malformed*. The last four answer a narrower question that is not the same thing — *does this figure agree with itself* — and they exist because a figure can be perfectly well formed and still assert something untrue (ADR 0019).
 
 | check | what it asks |
 | --- | --- |
@@ -93,6 +93,10 @@ Eleven checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). 
 | `categorical-colours-distinguishable` | Do the colours in a shared `categoryGroup` stay distinct under deuteranopia and protanopia? |
 | `tick-labels-do-not-collide` | Do a scale's tick labels overlap each other? |
 | `constraints-satisfied` | Does every declared layout constraint — align, distribute, keepClear, sameSize, anchor — hold in the figure as laid out? |
+| `declared-size-honoured` | Was every block drawn at the size it asked for? A size below a block's own padding and border cannot be drawn, and the figure stays well formed while the instruction is overruled. |
+| `annotation-nearest-its-owner` | Is every label nearer the element it names than to any other? A reader attributes a label to whatever it sits closest to. |
+| `sweep-matches-its-label` | Does an angle mark sweep the angle its own label prints? |
+| `arc-is-circular` | Are both ends of every arc the same distance from the centre it turns about? An arc stated as two endpoints *and* a centre is over-determined, and the three can disagree. |
 
 Two more live in [src/anim/checks.ts](src/anim/checks.ts) and run over the *interior* of an animated transition rather than over a static figure; see [Animation](#animation) below.
 
@@ -154,6 +158,10 @@ It answers with a preset, a composition of two, or *no preset fits — author ra
 | [`mindmap`](src/presets/mindmap/PRESET.md) | A single-rooted tree radiating outward. |
 | [`annotated-figure`](src/presets/annotated-figure/PRESET.md) | A shape or scene with callouts on leader lines. |
 | [`chart`](src/presets/chart/PRESET.md) | Bar, line and scatter: values with a scale, not a graph. |
+
+**Free outlines** where a box cannot reach. A `Mark` is a start point and a run of segments — lines, and circular arcs about a stated centre — flattened at layout time into the polyline every check walks, at the same 0.05px bound a curved connector uses. It carries no label and takes no part in layout: it is ink, painted beneath everything else, and a filled one is a surface `contrast-sufficient` reads. This is what draws the region between a chord and its arc, which no inscribed polygon can express.
+
+**Frames**, so a figure's own numbers appear once. A frame is a coordinate system — origin, units, and a rotation either stated or *aimed* at another point — resolved to canvas coordinates before anything measures or checks. An incline drawn at 30° is a frame rotated 30°; the slope, the block on it and the normal force are all positioned in that frame, so none of them can disagree with it. Origins compose, `Frame.grid` draws a numbered coordinate plane, and a tick across AB is a block on the y axis of a frame aimed from A at B — which needs no trigonometry, and never writes AB's angle down where it could be wrong.
 
 **Thirteen block shapes** — seven geometric (`rect`, `circle`, `ellipse`, `diamond`, `hexagon`, `stadium`, `triangle`) and six symbols (`parallelogram`, `trapezoid`, `chevron`, `cross`, `star`, `note`). Every one is a polygon, deliberately: `shapeVertices` hands the same vertex list to `inPolygon` for containment and to the `<polygon>` for drawing, so `label-within-shape` answers about the shape on the page rather than an approximation. A curved symbol — a cylinder, a cloud — would break that identity and is not offered. [docs/design/GEOMETRY.generated.md](docs/design/GEOMETRY.generated.md) states each one's inscribed area, which is what tells a container from a marker: a `star` holds 27.6% of its bounding box and a `cross` 55.2%, and neither will take an ordinary label.
 
