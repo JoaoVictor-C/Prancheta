@@ -809,7 +809,23 @@ def _render_political_region(
             label_box = shapely_box(point[0] - half_w, point[1] - half_h, point[0] + half_w, point[1] + half_h)
             return not any(j != i and other["geom"].intersects(label_box) for j, other in enumerate(countries))
 
-        if area > 900 and label_fits(11):
+        if misdeclare:
+            # The probe has to actually PLANT its defect. Outside misdeclare
+            # mode a label that clears no neighbour is dropped, which is the
+            # right answer for a real figure and the wrong one here: the whole
+            # point of this mode is a label placed at a bounding-box centre so
+            # that module-label-within-feature can refuse it, and a label that
+            # was never drawn refuses nothing.
+            #
+            # This is not hypothetical. Once every module started being
+            # measured against the bundled font, the wider face pushed the
+            # concave country past the fit gate, its label vanished, and the
+            # probe quietly went from catching three planted defects to
+            # catching two -- a check standing down on a deliberately broken
+            # figure, which is the exact silent pass --misdeclare exists to
+            # make impossible.
+            font_size = 11.0 if area > 900 else 8.5
+        elif area > 900 and label_fits(11):
             font_size = 11.0
         elif area > 300 and label_fits(8.5):
             font_size = 8.5

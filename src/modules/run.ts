@@ -32,7 +32,29 @@ export type RunModuleOptions = {
  * have, which is the defect this exists to remove. A caller may still override
  * it -- the export layer has a real reason to, and nothing else does.
  */
-export const MODULE_FONT_STACK = `${BUNDLED_FONT_FAMILY}, ${theme.text.family}`;
+export const MODULE_FONT_STACK = attributeSafeFontStack(
+  `${BUNDLED_FONT_FAMILY}, ${theme.text.family}`,
+);
+
+/**
+ * A font stack that survives being written into an XML attribute.
+ *
+ * The theme's stack quotes its families -- `"Segoe UI", "Noto Sans", ...` --
+ * which is correct CSS and fatal here, because a module interpolates what it
+ * is given straight into `font-family="..."` in its own SVG. The first inner
+ * double quote closes the attribute, so the declaration became
+ * `font-family="Prancheta Sans, "` and everything after it was parsed as
+ * garbage attributes. The text then fell back to whatever the machine had,
+ * which is precisely the defect the stack was introduced to remove -- and it
+ * did so INVISIBLY on a machine that happens to own the fallback, so the local
+ * suite went green while CI stayed red.
+ *
+ * Dropping the quotes is safe: an unquoted CSS family name may contain spaces,
+ * as a sequence of identifiers. Every family in this stack qualifies.
+ */
+export function attributeSafeFontStack(stack: string): string {
+  return stack.replace(/["']/g, "");
+}
 
 export async function runModule(options: RunModuleOptions): Promise<ModuleOutput> {
   const payload = JSON.stringify({
