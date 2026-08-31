@@ -26,7 +26,7 @@ ASE builds the real structure: lattice constant, crystal system, atomic basis, a
 
 ## What it declares, and what it does not
 
-Every atom is a `feature` with a `declaredBox` from its real projected circle. Every cell edge is a `decoration` with a declared box from its real endpoints, and its claim says plainly whether it is the visible or hidden kind. Element-symbol labels declare a real `owner`, the same legitimate case as [modules/genomic](../genomic/MODULE.md) and [modules/topology](../topology/MODULE.md): an atom is a filled circle, so `module-label-within-feature` runs for genuine effect.
+Every atom is a `feature` with a `declaredBox` from its real projected circle. Every cell edge is a `decoration` with a declared box from its real endpoints, and its claim says plainly whether it is the visible or hidden kind. Element-symbol labels declare a real `owner`, the same legitimate case as [modules/genomic](../genomic/MODULE.md) and modules/topology: an atom is a filled circle, so `module-label-within-feature` runs for genuine effect.
 
 ## What building it found
 

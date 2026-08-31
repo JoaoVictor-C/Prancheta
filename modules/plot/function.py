@@ -1,11 +1,14 @@
 """General function & data-plot figure module for Prancheta.
 
-modules/plot/derivative.py draws exactly one hand-placed pedagogical figure.
-This module draws a CLASS of figures: any f(x) expression (or several,
-overlaid), with roots and local extrema found numerically rather than
-eyeballed; or a scatter of (x, y) data points with a real least-squares fit
-(numpy.polyfit) and its R^2. See docs/research/candidate-modules.md,
-candidate #3.
+Draws a CLASS of figures: any f(x) expression (or several, overlaid), with
+roots and local extrema found numerically rather than eyeballed; or a scatter
+of (x, y) data points with a real least-squares fit (numpy.polyfit) and its
+R^2. See docs/research/candidate-modules.md, candidate #3.
+
+This directory used to hold a second script, derivative.py, that drew exactly
+one hand-placed pedagogical figure. Being a class of figures rather than one
+figure is the bar it failed, and it was deleted in the module audit -- the
+core draws the same explanation now, animated, in experiments/derivative/.
 
 Why a module rather than a preset: the core's IR has boxes, scenes and
 connectors. It has no notion of a mathematical function, cannot evaluate one,
@@ -193,6 +196,15 @@ def render_functions(width: float, height: float, functions: list[str], xrange: 
                     "kind": "feature",
                     "claim": f"a root of {expr} near x={root_x:.3f}",
                     "declaredBox": {"x": round(cx - 4.5, 2), "y": round(cy - 4.5, 2), "width": 9.0, "height": 9.0},
+                    # What makes a root a root, stated as a relation the core
+                    # can falsify by measuring the drawing rather than by
+                    # trusting the bisection above. BOTH halves are required
+                    # and that is the whole point: a wrong root plotted at
+                    # (x_wrong, 0) misses the curve, and a wrong root plotted
+                    # at (x_wrong, f(x_wrong)) sits on the curve but off the
+                    # axis. Declaring either one alone leaves the module a
+                    # place to be wrong in and still pass.
+                    "on": [curve_id, "axis-x"],
                 }
             )
 
@@ -206,6 +218,13 @@ def render_functions(width: float, height: float, functions: list[str], xrange: 
                     "kind": "feature",
                     "claim": f"a local {kind} of {expr} near ({ex_x:.2f}, {ex_y:.2f})",
                     "declaredBox": {"x": round(cx - 4.5, 2), "y": round(cy - 4.5, 2), "width": 9.0, "height": 9.0},
+                    # An extremum has only one relation to state: it lies on
+                    # its own curve. There is no second drawn line for it to
+                    # meet -- the tangent being horizontal is a fact about the
+                    # samples, not about any ink -- so this is honestly a
+                    # weaker claim than a root's, and saying so is better than
+                    # inventing a second half to make it look symmetrical.
+                    "on": [curve_id],
                 }
             )
 
@@ -346,8 +365,29 @@ def apply_misdeclare(output: dict[str, Any]) -> dict[str, Any]:
             box = element["declaredBox"]
             element["declaredBox"] = {**box, "x": box["x"] + 35.0}
             break
+    # A THIRD planted defect, and the only one that is a lie about MEANING
+    # rather than about form: the drawn root marker is moved off its own
+    # curve while its claim to lie there is left standing. Nothing about the
+    # figure is malformed afterwards -- the marker is a well-sized circle
+    # inside the canvas, colliding with nothing -- so every check that
+    # existed before this one still passes it. What the figure now says is
+    # simply false, and module-feature-on-its-stroke is what says so.
+    moved_root = None
+    for element in output["elements"]:
+        if element["id"].startswith("root-") and "declaredBox" in element:
+            moved_root = element
+            break
+    if moved_root is not None:
+        box = moved_root["declaredBox"]
+        shifted_y = box["y"] - 60.0
+        output["svg"] = output["svg"].replace(
+            f'data-pr-id="{moved_root["id"]}" cx="{box["x"] + 4.5:.2f}" cy="{box["y"] + 4.5:.2f}"',
+            f'data-pr-id="{moved_root["id"]}" cx="{box["x"] + 4.5:.2f}" cy="{shifted_y + 4.5:.2f}"',
+        )
+        moved_root["declaredBox"] = {**box, "y": shifted_y}
     output.setdefault("notes", []).append(
-        "misdeclare mode: a phantom series declared, and one feature's own geometry shifted 35px from what it drew"
+        "misdeclare mode: a phantom series declared, one feature's own geometry shifted 35px from what it drew, "
+        "and a root marker moved 60px off the curve and axis it still claims to lie on"
     )
     return output
 

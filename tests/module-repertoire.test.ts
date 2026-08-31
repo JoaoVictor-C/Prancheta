@@ -31,7 +31,7 @@ function moduleDirectories(): string[] {
 }
 
 test("the repertoire is not empty (guards against a vacuous suite)", () => {
-  assert.ok(MODULES.length >= 10, `expected the full repertoire, found ${MODULES.length}`);
+  assert.ok(MODULES.length >= 7, `expected the full repertoire, found ${MODULES.length}`);
 });
 
 test("every module directory on disk appears in the repertoire", () => {
@@ -110,7 +110,7 @@ test("every declared shortcut appears in its module's source", () => {
 });
 
 test("moduleById finds a real module and rejects an invented one", () => {
-  assert.equal(moduleById("circuit")?.id, "circuit");
+  assert.equal(moduleById("molecule")?.id, "molecule");
   assert.equal(moduleById("not-a-module"), undefined);
 });
 

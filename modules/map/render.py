@@ -24,7 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from pyproj import Transformer
-from shapely.geometry import Polygon, box as shapely_box, shape as shapely_shape
+from shapely.geometry import LineString, Polygon, box as shapely_box, shape as shapely_shape
 from shapely.ops import transform as shapely_transform
 
 # Lon/lat outlines. "harbour" is deliberately L-shaped: the centre of its
@@ -64,6 +64,77 @@ TRANSFORMER = Transformer.from_crs("EPSG:4326", "EPSG:3857", always_xy=True)
 def project(polygon: Polygon) -> Polygon:
     """Lon/lat -> Web Mercator metres."""
     return shapely_transform(lambda x, y, z=None: TRANSFORMER.transform(x, y), polygon)
+
+
+INK_DARK = "#0F1115"
+INK_LIGHT = "#F4F1EA"
+
+
+def _relative_luminance(hex_colour: str) -> float:
+    """WCAG relative luminance of an #rrggbb colour."""
+    h = hex_colour.lstrip("#")
+    channels = [int(h[i : i + 2], 16) / 255.0 for i in (0, 2, 4)]
+    linear = [c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4 for c in channels]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+
+def fitted_label_size(polygon, px: float, py: float, name: str, to_canvas) -> float | None:
+    """The largest of the allowed font sizes whose label fits the territory.
+
+    Returns None when none of them do, and the caller then leaves the
+    territory unlabelled and says so in `notes` -- the same choice the country
+    renderer already makes, and a better one than drawing a name a reader
+    cannot read.
+
+    The available width is the polygon's own horizontal CHORD through the
+    label's anchor, converted to canvas pixels, not the width of its bounding
+    box. For a concave territory those differ by everything that matters: a
+    C-shaped country has a wide box and no room at all through the middle.
+    """
+    x0, _, x1, _ = polygon.bounds
+    chord = polygon.intersection(LineString([(x0, py), (x1, py)]))
+    if chord.is_empty:
+        return None
+    # A multi-part intersection means the scanline leaves and re-enters the
+    # polygon; only the run containing the anchor is usable.
+    runs = list(getattr(chord, "geoms", [chord]))
+    usable = 0.0
+    for run in runs:
+        rx0, _, rx1, _ = run.bounds
+        if rx0 - 1e-9 <= px <= rx1 + 1e-9:
+            a = to_canvas(rx0, py)
+            b = to_canvas(rx1, py)
+            usable = abs(b[0] - a[0])
+            break
+    for size in (9.0, 7.5, 6.5):
+        # Segoe UI semibold runs a little over half its point size per
+        # character. Generous on purpose: over-estimating drops a label that
+        # would have fitted, under-estimating draws one that does not.
+        if len(name) * size * 0.58 <= usable:
+            return size
+    return None
+
+
+def label_ink(fill: str) -> str:
+    """The label colour that is actually legible on `fill`.
+
+    Every territory label used to be the near-black INK_DARK regardless of what
+    it sat on, which is right for the pale categories and wrong for the
+    saturated ones: on #1E3A8A it measured 1.82:1 and on #3B5FC4 3.26:1, both
+    far under WCAG AA, and a reader simply could not make the name out.
+    Nothing caught this until module-contrast-sufficient started compositing
+    the surfaces under a module's own labels.
+
+    The palette here is deliberately mixed -- pale blues and sands alongside
+    deep navies and reds -- so no single ink can serve it. This picks whichever
+    of the two ends of the palette contrasts better, which is a decision about
+    the fill the label is ON rather than about the figure as a whole.
+    """
+    lum = _relative_luminance(fill)
+    against_dark = (lum + 0.05) / (_relative_luminance(INK_DARK) + 0.05)
+    against_light = (_relative_luminance(INK_LIGHT) + 0.05) / (lum + 0.05)
+    return INK_DARK if against_dark >= against_light else INK_LIGHT
 
 
 def render(width: float, height: float, misdeclare: bool) -> dict[str, Any]:
@@ -377,12 +448,26 @@ def render_campaign(width: float, height: float, misdeclare: bool) -> dict[str, 
         # for a genuinely narrow country; shrinking the font is the honest
         # fix, the same way modules/genomic shrinks or relocates labels for
         # features narrower than their own name.
-        overlay.append(
-            f'<text data-pr-id="{label_id}" x="{lcx:.2f}" y="{lcy:.2f}" text-anchor="middle" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#0F1115" '
-            f'font-weight="600">{r["name"]}</text>'
-        )
-        elements.append({"id": label_id, "kind": "label", "owner": r["id"], "claim": f'names {r["id"]}'})
+        #
+        # AND THE SAME FIX AGAIN, THIS TIME MEASURED RATHER THAN GUESSED.
+        # Polvia is a concave territory with a narrow waist: its label sat at
+        # the representative point, comfortably inside the bounding box, and
+        # still ran off the polygon on both sides onto the near-black
+        # background -- where near-black text is not merely low-contrast, it
+        # is absent. module-contrast-sufficient measured it at 1.00:1.
+        # Shapely is here precisely so this does not have to be estimated:
+        # the chord through the label's own anchor is the width the label
+        # actually has to fit in.
+        size = fitted_label_size(polygon, px, py, r["name"], to_canvas)
+        if size is None:
+            notes.append(f'{r["id"]} is too narrow at its label anchor to carry the name "{r["name"]}" legibly; left unlabelled')
+        else:
+            overlay.append(
+                f'<text data-pr-id="{label_id}" x="{lcx:.2f}" y="{lcy:.2f}" text-anchor="middle" '
+                f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="{size}" fill="{label_ink(cat["fill"])}" '
+                f'font-weight="600">{r["name"]}</text>'
+            )
+            elements.append({"id": label_id, "kind": "label", "owner": r["id"], "claim": f'names {r["id"]}'})
 
     # --- an offshore island, drawn like any other territory: it just isn't
     # part of the mainland grid, so it borders nothing and needs no jitter
@@ -409,7 +494,7 @@ def render_campaign(width: float, height: float, misdeclare: bool) -> dict[str, 
     ilx, ily = to_canvas(ipoint.x, ipoint.y)
     overlay.append(
         f'<text data-pr-id="ostholm-label" x="{ilx:.2f}" y="{ily:.2f}" text-anchor="middle" '
-        f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="#0F1115" '
+        f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="{label_ink(island_cat["fill"])}" '
         f'font-weight="600">Ostholm</text>'
     )
     elements.append({"id": "ostholm-label", "kind": "label", "owner": "ostholm", "claim": "names ostholm"})
@@ -727,7 +812,7 @@ def _render_political_region(
             overlay.append(
                 f'<text data-pr-id="{label_id}" x="{lcx:.2f}" y="{lcy:.2f}" text-anchor="middle" '
                 f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="{font_size}" '
-                f'fill="#0F1115" font-weight="600">{c["name"]}</text>'
+                f'fill="{label_ink(fill)}" font-weight="600">{c["name"]}</text>'
             )
             elements.append({"id": label_id, "kind": "label", "owner": cid, "claim": f'names {cid}'})
 

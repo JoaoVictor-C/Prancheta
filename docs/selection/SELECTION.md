@@ -36,13 +36,59 @@ A set of items with no relations between them is a stack of labelled blocks (`S-
 
 Plain flow is the **absence** of an idiom, not a signal. It nudges towards blocks and never carries a figure by itself (`I-plain-flow-favours-blocks`). An earlier version of this table weighted it as real evidence, and every ordinary flowchart came out as a graph composed with a redundant stack of blocks.
 
-A series with a scale is a chart (`S-series-favours-chart`), as is any request that asks to be drawn as one (`I-chart-favours-chart`) — quarterly revenue, request counts by endpoint, anything where length or position stands for a number. Built entirely from the same boxes every other preset composes: a bar's height or width **is** the encoded value, arithmetic rather than new geometry, so the whole pipeline — text measurement, the repair loop, every check — applies with no new code. That is also this preset's boundary: a wedge is not a box, so a pie or donut chart is not this preset's to draw, and asking for one should get told so rather than a bar chart standing in for it.
+A series with a scale is a chart (`S-series-favours-chart`), as is any request that asks to be drawn as one (`I-chart-favours-chart`) — quarterly revenue, request counts by endpoint, anything where length or position stands for a number. Built entirely from the same boxes every other preset composes: a bar's height or width **is** the encoded value, arithmetic rather than new geometry, so the whole pipeline — text measurement, the repair loop, every check — applies with no new code. A pie or donut is this preset's too, as of the Mark: a wedge is not a box, but it is an outline the IR can state and the checks can walk, and a slice's printed share is measured against the angle it actually sweeps. This sentence used to say the opposite, and said so correctly until ADR 0019 changed what the core could express.
 
-## Two answers that are not a preset
+## Answer three questions, not two
+
+There is a third axis, and it is short: **whose geometry is this?**
+
+Almost every request answers "the core's", and the axis stays empty. A few
+answer otherwise — a map is projected, a molecule is depicted, a unit cell is
+built from lattice vectors and drawn through a depth sort — and for those the
+right answer is not a preset at all but a figure module on the far side of
+[decision 0005](../decisions/0005-module-protocol.md)'s process boundary.
+
+This axis exists because delegation cannot be reached by exhaustion. The
+"none" outcome means nothing fit; a request for a map fits something perfectly well, and
+saying "nothing fits" about it would be false. So a domain is something a
+request **positively asserts**, and it reads values no preset rule reads —
+which is also why these rules tie with nothing in the table beside them.
+
+**A domain refuses the presets that would misrepresent it**, the same move the
+scene rule makes one level up. A molecule genuinely *is* a graph — atoms and
+bonds — so the graph preset would score well and render beautifully, and no
+chemist would accept the result, because which bonds are wedges falls out of
+stereocentre perception rather than out of layout
+(`D-molecular-disqualifies-graph`). Territory is genuinely a set of named
+regions, and stacking them as boxes throws away the only thing a map is for
+(`D-cartographic-disqualifies-blocks`).
+
+## Three answers that are not a preset
+
+**Delegate.** Cartographic content goes to the map module
+(`D-cartographic-delegates-map`), molecular content to the molecule module
+(`D-molecular-delegates-molecule`), crystallographic content to the crystal
+module (`D-crystallographic-delegates-crystal`). Delegation is decided before
+preset ranking, and that precedence is deliberate: a request that names a
+domain is answered across the boundary however well some surviving preset
+scores.
+
+Three domains, not seven. The rest of the module repertoire — function plots,
+dendrograms, sequence diagrams, soundings — is reached by asking for it rather
+than by describing content, and inventing predicates nobody would assert would
+make this table longer without making anything more reachable.
+
+**The stated limit.** Delegation is all-or-nothing here: a request that is both
+cartographic *and* wants callouts on leader lines delegates, and the callouts
+are the module's problem or nobody's. Composing a module with a preset is not
+something this table can express, and pretending otherwise by ranking them
+together would produce a figure neither half agrees to.
 
 **Compose.** When two candidates clear the floor on *disjoint* evidence, the figure is genuinely two things — a topology *and* a set of callouts — and flattening it into one preset repeats the failure at the top of this page. Overlapping evidence is not composition: an org chart fires both the hierarchy and graph rules, but on the same fact, so it is one figure.
 
 **None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error.
+
+Until delegation existed, the module repertoire was a list an agent had to already know to consult — nothing in the ranking could reach it, so for selection purposes eleven figure kinds may as well not have been built. That was a real defect in this table and not a missing feature of the modules.
 
 ## What the tests actually prove
 

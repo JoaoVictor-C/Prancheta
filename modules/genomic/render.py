@@ -56,6 +56,59 @@ NAMED: dict[str, dict[str, Any]] = {
 }
 
 
+def label_placement(i, raw, raw_features, features, levels, sx, left, plot_w):
+    """Where feature i's label goes: inside its arrow, beside it, or above it.
+
+    Returns (mode, x, text-anchor). Called before the rows are sized, because
+    the answer decides how tall a row has to be.
+
+    A label centred inside a narrow feature -- a short promoter or terminator,
+    a handful of bp wide -- overlaps its neighbours. No font engine here to
+    measure the glyphs exactly, so this is a generous character-count estimate,
+    not a declared claim -- but the decision it drives is then checked for real
+    by module-labels-do-not-collide, -clear-of-strokes and
+    -contrast-sufficient, so a wrong estimate shows up as a failed check rather
+    than a silent overlap.
+
+    THE ROOM BESIDE AN ARROW IS MEASURED TO THE NEXT FEATURE, NOT TO THE PLOT
+    EDGE. An earlier version reasoned that "same-row features are guaranteed
+    non-overlapping in x by compute_features_levels, so the gap past this
+    feature's tip is real, checked free space" -- and then measured that gap as
+    `plot_w - x1`, the distance to the edge. Those are not the same number. In
+    the operon fixture they differ completely: promoter ends at 260 bp and
+    geneA starts at 260 bp, so there is no gap at all, and "promoter" was drawn
+    in its own blue directly on top of geneA's orange. It scored 1.04:1 --
+    invisible -- and every check that existed before said the figure was fine,
+    because a filled arrow has no stroke for module-labels-clear-of-strokes to
+    test and the label collided with no other LABEL.
+    """
+    x0, x1 = sx(raw["start"]), sx(raw["end"])
+    near, far = min(x0, x1), max(x0, x1)
+    text_w_estimate = len(raw["label"]) * 7.4 + 6.0
+    if far - near >= text_w_estimate:
+        return ("inside", (x0 + x1) / 2, "middle")
+
+    gap = 6.0
+    level = levels[features[i]]
+    same_row = [
+        (min(sx(o["start"]), sx(o["end"])), max(sx(o["start"]), sx(o["end"])))
+        for j, o in enumerate(raw_features)
+        if j != i and levels[features[j]] == level
+    ]
+    right_limit = min([left + plot_w] + [lo for lo, _ in same_row if lo >= far])
+    left_limit = max([left] + [hi for _, hi in same_row if hi <= near])
+    if right_limit - far > text_w_estimate + gap:
+        return ("beside", far + gap, "start")
+    if near - left_limit > text_w_estimate + gap:
+        return ("beside", near - gap, "end")
+    # Neither side has room. The vertical slack is what is left, and the row
+    # is grown to guarantee it. Placed level with the arrow was tried first and
+    # is what put "promoter" on geneA; placed INSIDE a too-narrow arrow was
+    # tried second and scored 1.00:1, because most of the glyphs missed the
+    # arrow and landed on a background of their own colour.
+    return ("band", (x0 + x1) / 2, "middle")
+
+
 def render(width: float, height: float, length: int, raw_features: list[dict[str, Any]], param_overrides: dict[str, float] | None = None) -> dict[str, Any]:
     if length <= 0:
         raise ValueError("length must be positive")
@@ -70,13 +123,26 @@ def render(width: float, height: float, length: int, raw_features: list[dict[str
     left = param_overrides.get("left_margin", 50.0) if param_overrides else 50.0
     right = param_overrides.get("right_margin", 30.0) if param_overrides else 30.0
     row_h = param_overrides.get("row_height", 40.0) if param_overrides else 40.0
-    top = 30.0 + (max_level + 1) * row_h
-    baseline_y = top
     bottom_pad = 40.0
     plot_w = width - left - right
+    arrow_h = 22.0
 
     def sx(bp: float) -> float:
         return left + bp / length * plot_w
+
+    # --- where each label will go, decided BEFORE the rows are sized --------
+    # A label with no horizontal room next to its own arrow goes in the band
+    # above it, and that band has to exist: at the default 40px row an arrow
+    # already takes 22, leaving too little for an 11px label to sit clear of
+    # the arrow's own stroke geometry. So the row grows when -- and only when
+    # -- some feature actually needs the band, the same way canvas_h already
+    # grows to fit however many rows the packing produced. Sizing the layout
+    # to its content is the lesson this repertoire has learned twice.
+    placements = [label_placement(i, raw, raw_features, features, levels, sx, left, plot_w) for i, raw in enumerate(raw_features)]
+    if any(p[0] == "band" for p in placements):
+        row_h = max(row_h, arrow_h + 30.0)
+    top = 30.0 + (max_level + 1) * row_h
+    baseline_y = top
 
     parts: list[str] = []
     elements: list[dict[str, Any]] = []
@@ -112,7 +178,7 @@ def render(width: float, height: float, length: int, raw_features: list[dict[str
         level = levels[feature]
         cy = top - (level + 0.5) * row_h + row_h * 0.15
         x0, x1 = sx(raw["start"]), sx(raw["end"])
-        h = 22.0
+        h = arrow_h
         tip = min(14.0, (x1 - x0) * 0.4)
         colour = COLOURS[i % len(COLOURS)]
         fid = f"feature-{i}"
@@ -155,12 +221,10 @@ def render(width: float, height: float, length: int, raw_features: list[dict[str
         # for real by module-labels-do-not-collide / -clear-of-strokes below,
         # so a wrong estimate shows up as a failed check rather than a silent
         # overlap.
-        arrow_w = abs(x1 - x0)
-        text_w_estimate = len(raw["label"]) * 7.4 + 6.0
-        fits_inside = arrow_w >= text_w_estimate
-        if fits_inside:
+        mode, label_x, anchor = placements[i]
+        if mode == "inside":
             parts.append(
-                f'<text data-pr-id="{lid}" x="{(x0 + x1) / 2:.2f}" y="{cy:.2f}" text-anchor="middle" '
+                f'<text data-pr-id="{lid}" x="{label_x:.2f}" y="{cy:.2f}" text-anchor="middle" '
                 f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="12" '
                 f'font-weight="600" fill="{LABEL_COLOUR}">{raw["label"]}</text>'
             )
@@ -168,25 +232,11 @@ def render(width: float, height: float, length: int, raw_features: list[dict[str
         else:
             # Outside the arrow, in the feature's own colour rather than the
             # inside label's near-black -- reads as a callout, not a mis-set
-            # fill. No owner: it no longer claims to sit inside the feature
-            # it names.
-            #
-            # Placed level with the arrow (same cy), not above it: an earlier
-            # version placed it above, and module-labels-clear-of-strokes
-            # failed on the operon fixture -- regX sits directly below geneB
-            # in the packed rows, and "above" reached straight into geneB's
-            # own row. Same-row features are guaranteed non-overlapping in x
-            # by compute_features_levels itself, so the gap immediately past
-            # this feature's own tip is real, checked free space; the gap
-            # above it, in a different row, is not this feature's to use.
-            gap = 6.0
-            right_room = plot_w - (x1 if raw["strand"] >= 0 else x0)
-            if right_room > text_w_estimate + gap:
-                label_x, anchor = max(x0, x1) + gap, "start"
-            else:
-                label_x, anchor = min(x0, x1) - gap, "end"
+            # fill, and it is the colour that is legible on the background.
+            # No owner: it no longer claims to sit inside the feature it names.
+            label_y = cy if mode == "beside" else cy - arrow_h / 2 - 11.0
             parts.append(
-                f'<text data-pr-id="{lid}" x="{label_x:.2f}" y="{cy:.2f}" text-anchor="{anchor}" '
+                f'<text data-pr-id="{lid}" x="{label_x:.2f}" y="{label_y:.2f}" text-anchor="{anchor}" '
                 f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="11" '
                 f'font-weight="600" fill="{colour}">{raw["label"]}</text>'
             )
@@ -255,7 +305,7 @@ def main() -> int:
     if features_arg is not None:
         # "|" between features, ":" between a feature's start/end/strand/label
         # -- not commas. Same CLI-layer comma-joining trap documented in
-        # modules/dendrogram/MODULE.md and modules/circuit/MODULE.md.
+        # modules/dendrogram/MODULE.md.
         length = int(length_arg.split("=", 1)[1]) if length_arg else 3000
         raw_features = []
         for token in features_arg.split("=", 1)[1].split("|"):

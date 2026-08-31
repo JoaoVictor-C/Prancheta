@@ -21,7 +21,7 @@ import { render } from "./pipeline.ts";
 import type { RenderOptions } from "./pipeline.ts";
 import { rank } from "./selection/rank.ts";
 import { FLOOR, RULES } from "./selection/rules.ts";
-import { IDIOM, PRESETS, STRUCTURE, partitionPredicates } from "./selection/vocabulary.ts";
+import { DOMAIN, IDIOM, PRESETS, STRUCTURE, partitionPredicates } from "./selection/vocabulary.ts";
 import { EFFECT_NAMES, EFFECT_PRESETS, resolveEffects } from "./effects/types.ts";
 import { STYLE_IDS, STYLE_PACKS } from "./effects/styles.ts";
 import { TYPE_IDS, TYPE_LEVELS, TYPE_PACKS, hostDependentLevels, isSelfContained } from "./typography.ts";
@@ -222,11 +222,19 @@ const selectCommand: Command = {
       type: "string[]",
       description: `How it must be DRAWN. One or more of: ${IDIOM.join(", ")}.`,
     },
+    {
+      name: "domain",
+      type: "string[]",
+      description:
+        `Subject matter no preset can compute, which reaches a figure module instead. ` +
+        `One or more of: ${DOMAIN.join(", ")}.`,
+    },
   ],
   async run(args) {
     const predicates = partitionPredicates({
       structure: toStringArray(args.structure),
       idiom: toStringArray(args.idiom),
+      domain: toStringArray(args.domain),
     });
     const selection = rank(predicates);
 
@@ -240,6 +248,14 @@ const selectCommand: Command = {
             : `below floor (${candidate.score})`;
       const cited = candidate.cited.length > 0 ? ` [${candidate.cited.join(", ")}]` : "";
       lines.push(`  ${candidate.preset}: ${state}${cited}`);
+    }
+    if (selection.delegates.length > 0) {
+      lines.push("", "delegates:");
+      for (const delegate of selection.delegates) {
+        lines.push(
+          `  ${delegate.module}: ${delegate.score >= FLOOR ? "viable" : "below floor"} (${delegate.score}) [${delegate.cited.join(", ")}] — ${delegate.summary}`,
+        );
+      }
     }
     if (selection.unknown.length > 0) {
       lines.push(

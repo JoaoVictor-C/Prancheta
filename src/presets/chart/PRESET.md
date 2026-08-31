@@ -1,18 +1,31 @@
 # chart
 
-Bar, line and scatter charts. A value with a scale, not a graph.
+Bar, line, scatter, pie and donut charts. A value with a scale, not a graph.
 
 **Choose it when** the content is a series — values that carry a scale, compared across categories (`S-series-favours-chart`) — or the request explicitly asks to be drawn as a chart (`I-chart-favours-chart`): quarterly revenue, request counts by endpoint, a leaderboard by score.
 
 **Do not choose it when** the content has no scale. A set of items with no numeric comparison is `labelled-blocks` (`S-series-disqualifies-blocks` fires the other way: once values genuinely carry a scale, blocks would show them as unordered text). Nor is a chart a graph: nodes and edges misrepresent a scale exactly as badly as blocks do (`I-chart-disqualifies-everything`).
 
-**What this preset does not cover.** Bar, line and scatter only. A pie or donut chart needs a real wedge — a shape this preset's `Block`-based IR cannot express, the same boundary that puts curve-fitting and function plots in `modules/plot` rather than here. Ask for one and get told plainly rather than a bar chart standing in for it.
+**What this preset does not cover.** Curve fitting and function plots: sampling an expression, bisecting for a root and computing a least-squares fit are arithmetic no `Block` and no `Mark` performs, which is what keeps them in `modules/plot`.
 
-## Two genuinely different code paths, not one preset stretched thin
+**A pie used to be on that list, and no longer is.** This section read "a pie or donut chart needs a real wedge — a shape this preset's `Block`-based IR cannot express", and that was true when it was written. The Mark (ADR 0019) made a wedge expressible: an outline of two radii and an arc, flattened into the polyline every check walks. So the pie came into the core and `modules/piechart` was deleted, which is a strict gain in checking — see "Three code paths" below.
+
+## Three genuinely different code paths, not one preset stretched thin
 
 `chartType: "bar"` (the default) is pure `Stack`/`Block` arithmetic — see below. `chartType: "line" | "scatter"` is a different function entirely, building a `Scene{layout:"absolute"}` with a `Block` per data point and a `Connector` joining consecutive points when `"line"` (bare, unconnected, when `"scatter"`). This isn't a stylistic choice: a `Block` has no way to be "a point joined to another point", only a Scene's `Connector` can, so line/scatter needed the same absolute-coordinate shape `annotated-figure` and `graph` already use, not an extension of the flexbox trick that makes bars free. `orientation`, `stacking`, `maxBarLength`, `barThickness`, `barGap`, `groupGap` and `labelWidth` are bar-only and silently ignored otherwise; `plotWidth`/`plotHeight` are line/scatter-only.
 
 Deliberately minimal, the same restraint the bar chart states for itself: no axis rule, no gridlines. Two end labels on the y axis (`0` and the largest value) say what a ruled line would, without one more shape that could collide with a point sitting exactly on the axis.
+
+`chartType: "pie" | "donut"` is the third, and it is on this list for the same reason the second is rather than as a variant of it: a wedge is neither flexbox arithmetic on a rectangle nor a point joined to another point. It is a `Scene{layout:"absolute"}` whose slices are `Mark`s — a run out to the rim, round an arc, and back — with the share printed on each slice as an annotation that `annotates` it.
+
+**The claim a pie makes, and what refuses it.** A pie asserts one thing: a slice's angle is its share. Both are derived from the same fraction, so they cannot drift apart on their own — and then `sweep-matches-its-label` measures the arc that was actually drawn and compares it against the percentage that was actually printed. That check already existed for angle marks; a share is the same claim in a different unit, so it kept its name rather than growing a near-duplicate beside it.
+
+Two things fell out of building it, both recorded because both were caught rather than foreseen:
+
+- **An arc past a half turn cannot be one segment.** Two endpoints and a centre name two arcs, and the minor one is the convention, so a 58% slice was drawn as the 151° left over. Slices are emitted in spans of at most 120° — not 180°, where the two candidates are the same length and the ambiguity is total; a full circle cut in half came back as an outline that retraced itself and enclosed nothing. `sweep-matches-its-label` adds a sector's rim arcs back up, grouping by radius so a donut's inner rim is not counted twice.
+- **One ink cannot serve a categorical palette.** The theme's default text colour put four of five slice labels between 1.37:1 and 2.66:1, which `contrast-sufficient` reported because the label sits on the Mark and a filled Mark is a surface. Each label's ink is now chosen against the wedge it sits on.
+
+A slice under 6% carries no inline share — there is no room to set one legibly, and a label the repair loop grew to fit would be a box bigger than the wedge it names. The legend lists every category's share regardless, which is why the pie's legend carries numbers and the bar chart's does not.
 
 **Known, stated limit.** Two series with near-identical values at the same category place two markers close enough to partially overlap, which `boxes-do-not-overlap` will genuinely fail on — an honest collision, not a false positive. Real scatter data can produce this; small markers narrow the range of values where it happens, they do not remove it.
 

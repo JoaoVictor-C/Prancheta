@@ -7,6 +7,24 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 
 **FLOOR:** a candidate must reach a score of `2` to be offered at all.
 
+## D-molecular-disqualifies-graph
+
+- **Axis:** domain
+- **When:** `molecular`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 95
+- **Statement:** A molecule is a graph and must still not be drawn as one; nodes and edges destroy the geometry that makes it a structure.
+
+## D-cartographic-disqualifies-blocks
+
+- **Axis:** domain
+- **When:** `cartographic`
+- **Preset:** `labelled-blocks`
+- **Effect:** disqualifies
+- **Priority:** 95
+- **Statement:** Territory is not a stack of boxes; labelled-blocks is refused for cartographic content.
+
 ## S-graph-favours-graph
 
 - **Axis:** structure

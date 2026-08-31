@@ -17,8 +17,9 @@
  * cannot express the shape.
  */
 
-import type { Block, Connector, FigureSpec, FigureNode, Scene } from "../../ir/types.ts";
-import { palette } from "../../theme.ts";
+import type { Block, Connector, FigureSpec, FigureNode, Mark, Scene } from "../../ir/types.ts";
+import { palette, theme } from "../../theme.ts";
+import { mostReadableOn } from "../../colour/contrast.ts";
 import * as v from "../validate.ts";
 import { SpecError } from "../../ir/types.ts";
 
@@ -38,8 +39,19 @@ export type ChartInput = {
    * different code path, not a variant of the bar arithmetic -- a Block has
    * no way to be "a point joined to another point", only a Scene's
    * Connector does.
+   *
+   * "pie"/"donut": a THIRD path, for the same reason there is a second. A
+   * wedge is not a rectangle under any transform and not a point joined to
+   * another point; it is a region bounded by two radii and an arc, which is
+   * what a Mark states. This preset's own documentation used to say a pie was
+   * out of reach, and it was, until the Mark arrived. The restraint that note
+   * was defending is against STRETCHING one path to cover a shape it cannot
+   * hold -- writing a genuinely different path is the thing it asks for.
+   *
+   * Pie and donut take one series: a pie of several series is not a chart,
+   * it is two claims sharing a circle. `categories` are the slices.
    */
-  chartType?: "bar" | "line" | "scatter";
+  chartType?: "bar" | "line" | "scatter" | "pie" | "donut";
   /** "vertical": bars grow upward, categories along the x axis (the default).
    *  "horizontal": bars grow rightward, categories stacked top to bottom.
    *  Ignored by chartType "line"/"scatter", which always plot left-to-right. */
@@ -69,6 +81,10 @@ export type ChartInput = {
   /** chartType "line"/"scatter" only: the plotted area's size in px, axis labels excluded. */
   plotWidth?: number;
   plotHeight?: number;
+  /** chartType "pie"/"donut" only: the pie's outer radius in px. Default 150. */
+  radius?: number;
+  /** chartType "donut" only: the hole's radius as a fraction of `radius`. Default 0.55. */
+  holeRatio?: number;
 };
 
 // Drawn from the same canonical palette every other preset uses (theme.ts) —
@@ -154,6 +170,9 @@ export function expandChart(input: ChartInput): FigureSpec {
 
   if (chartType === "line" || chartType === "scatter") {
     return buildSeriesChart(input, series, chartType, legend);
+  }
+  if (chartType === "pie" || chartType === "donut") {
+    return buildPieChart(input, chartType);
   }
 
   let columns: FigureNode[];
@@ -558,6 +577,215 @@ function buildSeriesChart(
   return { version: 1, title: input.title, root };
 }
 
+
+/**
+ * A pie or donut: every slice a Mark whose angle IS its share.
+ *
+ * The one claim a pie makes is that a slice's angle is proportional to its
+ * value, so that is the claim the figure has to be unable to break. The angle
+ * is computed once, from the value, and the percentage printed on the slice is
+ * computed from the same fraction -- and then `sweep-matches-its-label`
+ * measures the drawn arc and compares it back against the printed number.
+ * Two numbers that agree because one was derived from the other, checked
+ * against the ink that was actually laid down.
+ *
+ * A slice narrower than INLINE_SHARE_FLOOR gets no percentage on it: there is
+ * no room to set one legibly, and a label the repair loop grows to fit would
+ * be a box bigger than the wedge it names. The legend carries every category's
+ * share regardless, so nothing is lost to an unlabelled sliver -- which is
+ * also why the legend here lists shares and the bar chart's does not.
+ */
+const INLINE_SHARE_FLOOR = 0.06;
+
+/**
+ * The two inks a slice label may be set in: the canvas ground and the text
+ * colour the theme already uses everywhere else. Deliberately only two --
+ * this is a legibility decision, not a licence to tint a label to taste.
+ */
+const SLICE_INKS = [theme.canvas.background, theme.text.color] as const;
+
+function buildPieChart(input: ChartInput, chartType: "pie" | "donut"): FigureSpec {
+  const radius = input.radius ?? 150;
+  const holeRatio = chartType === "donut" ? (input.holeRatio ?? 0.55) : 0;
+  const innerRadius = radius * holeRatio;
+  const pad = 8;
+  const size = radius * 2 + pad * 2;
+  const centre = { x: radius + pad, y: radius + pad };
+
+  const values = input.categories.map((category) => category.values[0] ?? 0);
+  const total = values.reduce((sum, value) => sum + value, 0);
+  if (!(total > 0)) {
+    throw new SpecError("chart: a pie needs at least one category with a value above zero");
+  }
+
+  // Degrees clockwise from twelve o'clock, which is where a reader expects a
+  // pie to start and the direction they expect it to run.
+  const pointAt = (degrees: number, r: number): { x: number; y: number } => {
+    const radians = ((degrees - 90) * Math.PI) / 180;
+    return { x: centre.x + r * Math.cos(radians), y: centre.y + r * Math.sin(radians) };
+  };
+
+  const marks: Mark[] = [];
+  const children: Block[] = [];
+  const shares: number[] = [];
+  let cursor = 0;
+
+  for (const [i, value] of values.entries()) {
+    const fraction = value / total;
+    shares.push(fraction);
+    const start = cursor * 360;
+    const end = (cursor + fraction) * 360;
+    cursor += fraction;
+    if (fraction <= 0) continue;
+
+    const id = `slice-${i}`;
+    const fill = SERIES_COLOURS[i % SERIES_COLOURS.length]!;
+    // AN ARC PAST A HALF TURN CANNOT BE DRAWN AS ONE SEGMENT. Two points and
+    // a centre name two arcs, the minor one and the major one, and the IR's
+    // convention is the minor one -- so a 58% slice asked for 208.8 degrees
+    // and was drawn as the 151.2 degrees left over, with its own label then
+    // sitting outside the wedge it named. Both the renderer and the check
+    // caught it, which is the system working; the fix is to say it in pieces
+    // small enough to be unambiguous.
+    //
+    // The pieces are 120 degrees, not 180. At exactly 180 the two candidate
+    // arcs are the same length and the ambiguity is total: a full circle cut
+    // into two half-arcs came back as an outline that ran round and then
+    // retraced itself, enclosing nothing -- so the 100% label was measured
+    // against the canvas rather than against the disc it sits in the middle
+    // of. Below a half turn the minor arc is strictly shorter and therefore
+    // unique. `sweep-matches-its-label` adds a sector's rim arcs back up.
+    const spans: [number, number][] = [];
+    for (let from = start; from < end - 1e-9; ) {
+      const to = Math.min(end, from + 120);
+      spans.push([from, to]);
+      from = to;
+    }
+    const outerArcs = spans.map(([from, to]) => ({ arc: pointAt(to, radius), centre }));
+    marks.push(
+      holeRatio > 0
+        ? {
+            id,
+            from: pointAt(start, innerRadius),
+            segments: [
+              { line: pointAt(start, radius) },
+              ...outerArcs,
+              { line: pointAt(end, innerRadius) },
+              // Back along the hole, in reverse, in the same size pieces.
+              ...spans
+                .slice()
+                .reverse()
+                .map(([from]) => ({ arc: pointAt(from, innerRadius), centre })),
+            ],
+            close: true,
+            fill,
+            stroke: "none",
+          }
+        : {
+            id,
+            from: centre,
+            segments: [{ line: pointAt(start, radius) }, ...outerArcs],
+            close: true,
+            fill,
+            stroke: "none",
+          },
+    );
+
+    if (fraction >= INLINE_SHARE_FLOOR) {
+      const mid = (start + end) / 2;
+      const labelRadius = holeRatio > 0 ? (radius + innerRadius) / 2 : radius * 0.64;
+      const at = pointAt(mid, labelRadius);
+      const width = 46;
+      const height = 18;
+      children.push({
+        type: "block",
+        id: `${id}-share`,
+        x: at.x - width / 2,
+        y: at.y - height / 2,
+        width,
+        height,
+        padding: 0,
+        fill: "transparent",
+        strokeWidth: 0,
+        wrap: "none",
+        textAlign: "center",
+        fontSize: 12,
+        // The ink is chosen from the wedge it sits on, not fixed once for the
+        // whole chart. A categorical palette runs from pale yellow to deep
+        // blue, and one ink cannot serve both: with the theme default, four
+        // of five slices in a five-category pie came back between 1.37:1 and
+        // 2.66:1 -- legible nowhere, and reported by contrast-sufficient
+        // because the label sits on the Mark and the Mark is a surface.
+        textColor: mostReadableOn(fill, SLICE_INKS),
+        label: `${Math.round(fraction * 1000) / 10}%`,
+        // The obligation, and the point: this names the slice, so it is
+        // allowed to sit on it -- and having said so, its printed share is
+        // measured against the angle the slice actually sweeps.
+        annotates: id,
+      });
+    }
+  }
+
+  const scene: Scene = {
+    type: "scene",
+    id: "pie",
+    layout: "absolute",
+    width: size,
+    height: size,
+    children,
+    marks,
+  };
+
+  // Every category appears here with its real share, including the slivers
+  // too narrow to carry one inline. This is the pie's category axis; without
+  // it a small slice is a coloured wedge naming nothing.
+  const legend: FigureNode = {
+    type: "stack",
+    id: "legend",
+    direction: "column",
+    gap: 8,
+    align: "start",
+    children: input.categories.map((category, i) => ({
+      type: "stack",
+      direction: "row",
+      gap: 8,
+      align: "center",
+      children: [
+        {
+          type: "block",
+          width: 14,
+          height: 14,
+          padding: 0,
+          fill: SERIES_COLOURS[i % SERIES_COLOURS.length],
+          strokeWidth: 0,
+          radius: 3,
+          categoryGroup: "slice",
+        },
+        {
+          type: "block",
+          label: `${category.label} — ${Math.round((shares[i] ?? 0) * 1000) / 10}%`,
+          role: "muted",
+          fill: "transparent",
+          strokeWidth: 0,
+          padding: 0,
+          wrap: "none",
+        },
+      ],
+    })),
+  };
+
+  const root: FigureNode = {
+    type: "stack",
+    id: "chart",
+    direction: "row",
+    gap: 28,
+    align: "center",
+    children: [scene, legend],
+  };
+
+  return { version: 1, title: input.title, root };
+}
+
 /**
  * Preconditions expandChart relies on.
  *
@@ -572,7 +800,7 @@ function buildSeriesChart(
  */
 export function validateChartInput(input: Record<string, unknown>, path = "chart"): void {
   v.optionalString(input, "title", path);
-  v.optionalEnum(input, "chartType", path, ["bar", "line", "scatter"] as const);
+  v.optionalEnum(input, "chartType", path, ["bar", "line", "scatter", "pie", "donut"] as const);
   v.optionalEnum(input, "orientation", path, ["vertical", "horizontal"] as const);
   const stacking = v.optionalEnum(input, "stacking", path, [
     "grouped",
@@ -588,6 +816,8 @@ export function validateChartInput(input: Record<string, unknown>, path = "chart
     "labelWidth",
     "plotWidth",
     "plotHeight",
+    "radius",
+    "holeRatio",
   ]) {
     v.optionalNumber(input, key, path);
   }

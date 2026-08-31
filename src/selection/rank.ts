@@ -9,16 +9,26 @@
  *   compose  — two clear it on DISJOINT evidence, so the figure is genuinely
  *              two things and flattening it would repeat the failure this
  *              project exists to fix
+ *   delegate — the content belongs to a domain whose geometry a real library
+ *              computes and this core does not, so the answer is a figure
+ *              module rather than a preset (decision 0005)
  *   none     — nothing clears the floor; author raw IR instead of forcing the
  *              request into the nearest genre
+ *
+ * "delegate" is fourth rather than a flavour of "none" because it is reached
+ * POSITIVELY. "none" is exhaustion — nothing fit — and a request for a map
+ * fits something perfectly well; it simply does not fit anything on this side
+ * of the process boundary. Until this existed the module repertoire was a list
+ * an agent had to already know to consult, which made it, for selection
+ * purposes, invisible.
  *
  * No model, no network, no randomness: same predicates in, same ranking out.
  */
 
-import { FLOOR, RULES } from "./rules.ts";
+import { DELEGATE_RULES, FLOOR, RULES } from "./rules.ts";
 import type { Rule } from "./rules.ts";
-import { PRESETS } from "./vocabulary.ts";
-import type { Predicates, PresetId } from "./vocabulary.ts";
+import { DELEGATES, PRESETS } from "./vocabulary.ts";
+import type { ModuleId, Predicates, PresetId } from "./vocabulary.ts";
 
 export type Candidate = {
   preset: PresetId;
@@ -34,12 +44,25 @@ export type Candidate = {
   implemented: boolean;
 };
 
+/** A figure module the request reached, with the rules that reached it. */
+export type DelegateCandidate = {
+  module: ModuleId;
+  score: number;
+  priority: number;
+  cited: string[];
+  summary: string;
+};
+
 export type Selection = {
-  outcome: "single" | "compose" | "none";
+  outcome: "single" | "compose" | "delegate" | "none";
   /** Ordered best-first. Disqualified candidates are included, last, for transparency. */
   candidates: Candidate[];
-  /** The chosen preset(s). Empty when the outcome is "none". */
+  /** The chosen preset(s). Empty when the outcome is "none" or "delegate". */
   chosen: PresetId[];
+  /** Ordered best-first. Empty unless a domain predicate was asserted. */
+  delegates: DelegateCandidate[];
+  /** The chosen module. Set only when the outcome is "delegate". */
+  delegateTo?: ModuleId;
   /** Human-readable justification, built from the cited rule statements. */
   rationale: string;
   /** Unknown predicates, preserved. Their presence means the vocabulary may be short. */
@@ -52,6 +75,7 @@ export function rank(predicates: Predicates): Selection {
   const values = new Set<string>([
     ...predicates.structure.map((value) => `structure:${value}`),
     ...predicates.idiom.map((value) => `idiom:${value}`),
+    ...predicates.domain.map((value) => `domain:${value}`),
   ]);
 
   const candidates: Candidate[] = PRESETS.map((preset) => {
@@ -73,13 +97,45 @@ export function rank(predicates: Predicates): Selection {
 
   candidates.sort(compareCandidates);
 
+  const delegates: DelegateCandidate[] = DELEGATES.map((entry) => {
+    const fired = DELEGATE_RULES.filter(
+      (rule) => predicates.domain.includes(rule.when) && rule.module === entry.id,
+    );
+    return {
+      module: entry.id,
+      score: fired.reduce((total, rule) => total + rule.weight, 0),
+      priority: fired.reduce((best, rule) => Math.max(best, rule.priority), 0),
+      cited: fired.map((rule) => rule.id),
+      summary: entry.summary,
+    };
+  })
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) =>
+      b.score !== a.score
+        ? b.score - a.score
+        : b.priority !== a.priority
+          ? b.priority - a.priority
+          : a.module.localeCompare(b.module),
+    );
+
   const viable = candidates.filter(
     (candidate) => candidate.disqualifiedBy === undefined && candidate.score >= FLOOR,
   );
 
   let outcome: Selection["outcome"] = "none";
   let chosen: PresetId[] = [];
-  if (viable.length >= 2 && disjoint(viable[0]!, viable[1]!)) {
+  let delegateTo: ModuleId | undefined;
+
+  // Delegation is decided FIRST, and that is a precedence claim worth stating:
+  // a request that names a domain is answered on the far side of the boundary
+  // however well some preset scores, for the same reason a scene is refused
+  // the graph preset however well it would render. The domain refusals in
+  // RULES already knock out the presets that would misrepresent; this stops
+  // the survivors quietly winning anyway.
+  if (delegates.length > 0 && delegates[0]!.score >= FLOOR) {
+    outcome = "delegate";
+    delegateTo = delegates[0]!.module;
+  } else if (viable.length >= 2 && disjoint(viable[0]!, viable[1]!)) {
     outcome = "compose";
     chosen = [viable[0]!.preset, viable[1]!.preset];
   } else if (viable.length >= 1) {
@@ -91,7 +147,9 @@ export function rank(predicates: Predicates): Selection {
     outcome,
     candidates,
     chosen,
-    rationale: explain(outcome, chosen, candidates),
+    delegates,
+    delegateTo,
+    rationale: explain(outcome, chosen, candidates, delegates),
     unknown: predicates.unknown ?? [],
     notYetImplemented: chosen.filter(
       (id) => PRESETS.find((preset) => preset.id === id)?.implemented === false,
@@ -122,6 +180,7 @@ function explain(
   outcome: Selection["outcome"],
   chosen: PresetId[],
   candidates: Candidate[],
+  delegates: DelegateCandidate[],
 ): string {
   const statementsFor = (preset: PresetId): string => {
     const candidate = candidates.find((entry) => entry.preset === preset);
@@ -131,6 +190,17 @@ function explain(
       .join(" ");
   };
 
+  if (outcome === "delegate") {
+    const chosenDelegate = delegates[0]!;
+    const why = chosenDelegate.cited
+      .map((id) => DELEGATE_RULES.find((rule) => rule.id === id)?.statement ?? id)
+      .join(" ");
+    const refused = candidates
+      .filter((candidate) => candidate.disqualifiedBy !== undefined)
+      .map((candidate) => `${candidate.preset} (${candidate.disqualifiedBy})`);
+    const suffix = refused.length > 0 ? ` Refused: ${refused.join(", ")}.` : "";
+    return `Delegate to the ${chosenDelegate.module} module: ${why}${suffix}`;
+  }
   if (outcome === "none") {
     const blocked = candidates
       .filter((candidate) => candidate.disqualifiedBy !== undefined)

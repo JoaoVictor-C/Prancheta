@@ -145,3 +145,32 @@ export function contrastRatio(a: string, b: string): number | null {
   const lo = Math.min(la, lb);
   return (hi + 0.05) / (lo + 0.05);
 }
+
+/**
+ * Whichever of `candidates` a reader can actually make out on `surface`.
+ *
+ * Not a new policy, just the one place to apply the existing one. A figure
+ * that picks its fills from a categorical palette cannot also pick one ink for
+ * all of them: the same near-black that is right on a pale yellow is
+ * unreadable on a deep blue. Callers that hand-pick a single ink and hope are
+ * how a pie chart ends up with four labels at 2:1, which is precisely what
+ * `contrast-sufficient` reports and precisely what this exists to prevent
+ * before it does.
+ *
+ * Returns the best candidate by contrast ratio, which is a choice about
+ * legibility and not about whether the result clears WCAG AA -- if no
+ * candidate does, the check still says so, and it should.
+ */
+export function mostReadableOn(surface: string, candidates: readonly string[]): string {
+  let best = candidates[0]!;
+  let bestRatio = -1;
+  for (const candidate of candidates) {
+    const ratio = contrastRatio(candidate, surface);
+    if (ratio === null) continue;
+    if (ratio > bestRatio) {
+      bestRatio = ratio;
+      best = candidate;
+    }
+  }
+  return best;
+}
