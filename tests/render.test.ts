@@ -15,7 +15,9 @@ test(
   { timeout: 120000 },
   async () => {
     const spec = parseSpec(JSON.parse(readFileSync(fixturePath, "utf8")));
-    const result = await render(spec);
+    // raster: true explicitly -- this is the one test that reads the pixels,
+    // so it must keep them even under PRANCHETA_SKIP_RASTER.
+    const result = await render(spec, { raster: true });
 
     assert.equal(result.manifest.ok, true);
 
@@ -27,6 +29,7 @@ test(
 
     assert.ok(!result.svg.includes("foreignObject"));
 
+    assert.ok(result.png !== undefined);
     assert.ok(result.png.length >= 8);
     assert.deepEqual(
       [...result.png.subarray(0, 4)],

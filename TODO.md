@@ -2,18 +2,36 @@
 
 Full rationale, what's genuinely hard about each, and what check would give it real teeth: [docs/research/candidate-modules.md](docs/research/candidate-modules.md).
 
-## Constraint toggles — designed, ready to implement
+## Exercise figures: what M0 through M4 left behind
+
+Shipped against [ADR 0019](docs/decisions/0019-derived-geometry-and-annotation.md) and [docs/PLAN-EXERCISES.md](docs/PLAN-EXERCISES.md); see [ROADMAP.md](ROADMAP.md) for what each milestone found. Open, in the order the evidence favours:
+
+- [ ] **`length-matches-its-label` — the twin `sweep-matches-its-label` never got.** An arc that disagrees with its printed angle is caught; a LINE that disagrees with its printed length is not. Both figures reproduced from real exam papers depend on one: `"50m"` and the `50` that draws the dimension are two numbers free to disagree, exactly as the angle case was before M1.4, and so are `vA = 50 m/s` and an arrow scaled at 2px per m/s. Same shape as the existing check — find the label through `annotates`, compare only labels that state a number, tolerate what a reader could not see. The one wrinkle is units: an angle is always degrees, a length is px unless a frame says otherwise, so the check has to know the frame scale a mark or connector was stated in, which frame resolution currently strips.
+
+- [ ] **A label that names a PLACE, not an element.** `annotation-nearest-its-owner` assumes every label names something drawn. Twice now the honest fix has been to DELETE the annotation rather than move the label: a legend row (association is by row, not proximity — the two texts are always nearer each other than their own swatches) and the `0` on a trajectory (it names the origin, a point where two lines meet, not either line). Deleting means the figure claims nothing and nothing checks it, which is the wrong end state for the commonest labels in the repertoire. Needs either an anchor-point form of `annotates` or an explicit "names a location" that the check measures differently.
+
+- [ ] **`tick-labels-do-not-collide` still identifies ticks by id substring.** `id.startsWith("tick-") || id.includes("-tick-")`, and the comment beside it calls this "temporary heuristic until metadata exists". It had zero real producers when written and has two now, so the heuristic is load-bearing: any block whose id happens to contain `-tick-` is treated as an axis tick. The metadata it is waiting for is a one-field change; the reason to do it is that the check is now guarding something.
+
+- [ ] **Four modules are still unreachable from any spec, preset or CLI path.** `presets/chart/data-binding.ts` — and `scales.ts`, which only *it* imports, so the two are dead as a pair — plus `layout/solver.ts`, `layout/repair.ts` and `layout/grouping.ts`. Two others on the original audit list are now resolved: `math/mathjax.ts` and `dimension/annotation.ts` were both deleted rather than wired, for reasons recorded in the ROADMAP.
+
+  `layout/repair.ts` is the one with a visible consequence: it is why a failed `constraints-satisfied` reports "no repair strategy for this check" while a correct implementation of ADR 0009's proof sits unused. **It is not a wiring job.** It works on a parallel `PlacementSolution`/`PlacementViolation` world; connecting it needs a POSITION edit kind, and a position edit does not satisfy the existing loop's termination argument ("every edit strictly increases one bounded quantity") — ADR 0009 proves termination a different way, by lexicographic potential, so the two loops would carry two proofs. It also collides with frames: moving a frame-positioned element silently breaks the coordinate it claims, which is the falseness class ADR 0019 exists to close. Its own ADR, or leave it and say so.
+
+- [ ] **The suite's Playwright screenshot flake.** `page.screenshot: Protocol error (Page.captureScreenshot): Unable to capture screenshot`, four occurrences across four different test files in one session, never reproducible when the file is run alone. Each `render()` launches its own Chromium and the suite runs files in parallel, so the likely cause is contention rather than a defect in any test. Prefer removing the contention over retrying the screenshot: a retry makes the symptom rarer without making the suite honest.
+
+- [ ] **README and the plan docs are hand-written and nothing checks them.** `check:refs` and `check:views` cover the four generated references and the two generated host views; the README's own tables are neither. It said "Eleven checks" through four milestones that added four more, and the repertoire section predated frames and marks. No mechanical fix is proposed here — a generator for prose would be worse — but the failure mode is worth stating: the parts of the docs that go stale fastest are exactly the parts no check reads.
+
+## Constraint toggles — shipped
 
 **Decision recorded:** [ADR 0010](docs/decisions/0010-constraint-toggles.md) — make constraints 1, 2, and 4 toggleable; keep 3, 5, 6 as-is.
 
 **Implementation plan:** [docs/CONSTRAINT-TOGGLES-PLAN.md](docs/CONSTRAINT-TOGGLES-PLAN.md) — 6 phases, 21-33 hours estimated.
 
-Three toggles to implement:
-- [ ] **`allowOverlap`** — disables `boxes-do-not-overlap` check when true (enables Venn diagrams, circle packings, overlapping annotations)
-- [ ] **`allowConnectorCrossing`** — disables `connector-clear-of-boxes` check when true (enables callout/leader patterns crossing dense fields)
-- [ ] **`allowCurvedConnectors`** — enables bezier/arc connectors in IR (enables curved flowcharts, mind maps, org charts)
+Three toggles, all shipped (M10; see ROADMAP and the README's constraint-toggle table):
+- [x] **`allowOverlap`** — disables `boxes-do-not-overlap` check when true (enables Venn diagrams, circle packings, overlapping annotations)
+- [x] **`allowConnectorCrossing`** — disables `connector-clear-of-boxes` check when true (enables callout/leader patterns crossing dense fields)
+- [x] **`allowCurvedConnectors`** — enables bezier/arc connectors in IR (enables curved flowcharts, mind maps, org charts)
 
-All default to `false` (constraints active). Per-diagram scope via `canvas.constraints`. Reasoned through terza (confidence 0.82, 2 iterations).
+All default to `false` (constraints active). Per-diagram scope via `canvas.constraints`. Reasoned through a full session (confidence 0.82, 2 iterations).
 
 **Why these three:** Each blocks specific legitimate diagram types without being load-bearing for the layout solver. Constraints 3 (axis-aligned), 5 (flat-color), and 6 (text limits) are kept as-is because they're either foundational to the solver or add complexity without structural value.
 
@@ -135,9 +153,9 @@ Refused outright, on current evidence: skew/flip/tile/scale transforms (ceiling,
 
 Together these resolve the gap [docs/selection/SELECTION.md](docs/selection/SELECTION.md) used to state plainly: "when the request wants a chart, this repertoire does not have one." It does now, split honestly across the preset/module boundary by what each chart shape actually needs.
 
-## Chart/CLI usability, from the terza-reasoned priority pass — all three shipped
+## Chart/CLI usability, from the reasoned priority pass — all three shipped
 
-Decided via a full terza reasoning session (prelude → G/C/S loop → coda, confidence 0.92) — see the session transcript for the full derivation. Order mattered here: each shipped and was verified by the full suite in isolation, never bundled, so a regression would be traceable to the change that caused it. All three are now done; full suite green throughout.
+Decided via a full reasoning session (confidence 0.92) — see the session transcript for the full derivation. Order mattered here: each shipped and was verified by the full suite in isolation, never bundled, so a regression would be traceable to the change that caused it. All three are now done; full suite green throughout.
 
 - [x] **Stacked / 100%-stacked bar mode** — [src/presets/chart](src/presets/chart/PRESET.md). `stacking: "stacked" | "stacked100"`, cumulative segments instead of side-by-side grouping; pure arithmetic on the existing chart preset, no new IR. Scale reference switches to the largest category *total* rather than the largest single value; per-segment value labels are dropped (the repair loop growing one to fit would inflate that segment past its true value) in favour of one total label per stack, since the legend already names every series. `series[0]` always sits closest to the axis. Two new fixtures, unit tests on the raw arithmetic, e2e proportionality tests on the rendered geometry.
 - [x] **CLI `--args` comma-delimiter fix** — [src/cli.ts](src/cli.ts)'s `parseArgs` and [src/commands.ts](src/commands.ts)'s `toStringArray`. Four modules (dendrogram, circuit, genomic, topology) had independently discovered that `node src/cli.ts module`'s own `--args` flag comma-split a single occurrence, and independently invented the same `;`/`:`/`\|` workaround, each documenting it separately in its own `MODULE.md`. Fixed at the source: `--args` (and any other `string[]` param) is now repeatable — `--args a --args b` — and a repeated flag's values are taken verbatim, comma included, while a single occurrence still comma-splits exactly as before for backward compatibility. Shipped and verified alone, full suite green (358/358) both before and after; each affected module's `MODULE.md` now notes the fix without removing its own dataset-shape convention, which was never the workaround, only ever the data's own grammar.

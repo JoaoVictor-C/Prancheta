@@ -136,6 +136,7 @@ export function expandChart(input: ChartInput): FigureSpec {
                 type: "block",
                 width: 14,
                 height: 14,
+                padding: 0,
                 fill: SERIES_COLOURS[i % SERIES_COLOURS.length],
                 strokeWidth: 0,
                 radius: 3,
@@ -168,6 +169,10 @@ export function expandChart(input: ChartInput): FigureSpec {
             fill: SERIES_COLOURS[si % SERIES_COLOURS.length],
             strokeWidth: 0,
             radius: 3,
+            // A bar is pure geometry: its size IS the datum, so it must not
+            // carry the block default padding, which sets a floor of padding
+            // plus border and silently drew every short bar at that floor.
+            padding: 0,
           }));
           const barUnits: FigureNode[] = bars.map((bar, si) => ({
             type: "stack",
@@ -225,6 +230,7 @@ export function expandChart(input: ChartInput): FigureSpec {
                 fill: SERIES_COLOURS[si % SERIES_COLOURS.length],
                 strokeWidth: 0,
                 radius: 3,
+                padding: 0,
               },
               ...(showValues
                 ? [
@@ -287,6 +293,7 @@ export function expandChart(input: ChartInput): FigureSpec {
         fill: SERIES_COLOURS[si % SERIES_COLOURS.length],
         strokeWidth: 0,
         radius: 0,
+        padding: 0,
       }));
 
       // Vertical: CSS stacks a column top-to-bottom, but series[0] belongs
@@ -510,6 +517,7 @@ function buildSeriesChart(
         width: markerSize,
         height: markerSize,
         radius: markerSize / 2,
+        padding: 0,
         fill: SERIES_COLOURS[si % SERIES_COLOURS.length],
         strokeWidth: 0,
       });

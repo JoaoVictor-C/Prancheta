@@ -8,6 +8,7 @@
 
 import { EffectError, resolveEffects } from "../effects/types.ts";
 import { STYLE_IDS, styleById } from "../effects/styles.ts";
+import { resolveFrames } from "./frames.ts";
 import { TYPE_IDS, TYPE_LEVELS, typeById } from "../typography.ts";
 import type { TypeLevel } from "../typography.ts";
 import type { EffectRef, ResolvedEffect } from "../effects/types.ts";
@@ -138,6 +139,13 @@ export type Scene = {
   children: Block[];
   connectors?: Connector[];
   graph?: GraphOptions;
+  /**
+   * Coordinate systems this scene's children and connectors may state their
+   * positions in. A nested scene's frames win over an enclosing scene's by id.
+   */
+  frames?: Frame[];
+  /** Free outlines — regions the thirteen block shapes cannot express. */
+  marks?: Mark[];
 };
 
 export type GraphOptions = {
@@ -162,6 +170,169 @@ export type GraphOptions = {
 };
 
 export type Point = { x: number; y: number };
+
+/**
+ * A coordinate system a figure states its positions in (ADR 0019).
+ *
+ * The point is that a number appears ONCE. An incline drawn at 30 degrees is
+ * a frame rotated 30 degrees; the slope, the block resting on it and the
+ * normal force are all positioned in that frame, so none of them can disagree
+ * with it -- where hand-placed coordinates computed outside the document can
+ * and did.
+ *
+ * Axes point UP, unlike the canvas, because every figure this serves is
+ * written by someone for whom +y is up. `rotation` is degrees
+ * COUNTER-CLOCKWISE to match. Resolved to canvas coordinates before anything
+ * measures or checks; see ir/frames.ts.
+ */
+export type Frame = {
+  id: string;
+  /**
+   * Where this frame's (0, 0) sits — in canvas coordinates, or in ANOTHER
+   * frame declared before it in the same scene.
+   *
+   * Composition is what makes a frame worth having. A block resting on an
+   * incline has an application point that is natural to state in the
+   * incline's coordinates, while the weight acting there is natural to state
+   * as straight down. Two frames sharing that origin -- one tilted, one not
+   * -- express both without either number being computed outside the
+   * document, which is the whole purpose.
+   */
+  origin: Point | FramedPoint;
+  /** Degrees counter-clockwise. Unset is axis-aligned. Refused alongside `towards`. */
+  rotation?: number;
+  /**
+   * Point this frame's +x axis aims at, instead of a stated `rotation`.
+   *
+   * The same idea as the rest of frames, one level further out: an equal-side
+   * tick across AB is perpendicular to AB, and saying so should not require
+   * an author to work out AB's angle and type it in — the moment that angle
+   * is typed, it can disagree with where A and B actually are. A frame aimed
+   * from A at B has AB as its x axis and the perpendicular as its y axis, so
+   * a tick is a small rect on the y axis and a right-angle mark is a square
+   * in the corner. Neither knows any trigonometry.
+   *
+   * May be a framed point, so a frame can be aimed using coordinates stated
+   * in another frame.
+   */
+  towards?: Point | FramedPoint;
+  /** Canvas px per unit along x. Default 1. */
+  xUnit?: number;
+  /** Canvas px per unit along y. Defaults to `xUnit`, so a frame is square unless told otherwise. */
+  yUnit?: number;
+  /**
+   * Draw this frame as a coordinate plane: a lattice, its axes, and numbered
+   * ticks along them.
+   *
+   * Expanded into ordinary blocks when the frame is resolved, so every line
+   * and every tick label is measured and checked like anything else rather
+   * than being a private drawing path nothing can see. Their geometry is
+   * DERIVED from the frame, so a gridline cannot land somewhere the frame
+   * does not put it.
+   */
+  grid?: GridSpec;
+};
+
+/**
+ * A coordinate lattice over a frame's own units.
+ *
+ * `from` and `to` are inclusive bounds in frame units; `step` is the spacing
+ * between lines, also in frame units.
+ */
+export type GridSpec = {
+  x: GridAxis;
+  y: GridAxis;
+  /** Draw the x = 0 and y = 0 lines more heavily. Default true. */
+  axes?: boolean;
+  /** Number the ticks along the axes. Default true. */
+  labels?: boolean;
+  /**
+   * Fallback for an axis that states no `labelEvery` of its own. Default 1.
+   *
+   * Per-axis because the two axes rarely want the same density: a plot of
+   * metres against seconds might rule every 50s and every 200m, and want a
+   * number on every fourth line of one and every second line of the other.
+   * A single value for both forces the denser axis to carry labels it has no
+   * room for.
+   */
+  labelEvery?: number;
+  stroke?: string;
+  axisStroke?: string;
+  labelColor?: string;
+  /**
+   * Stroke pattern for the lattice lines. Default "solid".
+   *
+   * Dashed gridlines are the norm in a scientific plot, and they are the
+   * reason the lattice is drawn as MARKS rather than filled rects: a rect can
+   * be a 1px line but it cannot be a dashed one, and faking it with a run of
+   * short rects would put a drawing trick where a stroke belongs. The axes
+   * are always solid — an axis dashed like its own gridlines stops reading as
+   * an axis.
+   */
+  lineStyle?: LineStyle;
+};
+
+/** One axis of a grid: its extent, its line spacing, and how often it is numbered. */
+export type GridAxis = {
+  from: number;
+  to: number;
+  /** Spacing between lines, in frame units. Default 1. */
+  step?: number;
+  /** Number every nth line on this axis. Falls back to `GridSpec.labelEvery`. */
+  labelEvery?: number;
+};
+
+/** A point stated in a named frame rather than in canvas coordinates. */
+export type FramedPoint = { frame: string; x: number; y: number };
+
+/**
+ * Free geometry: an outline the shape system cannot express.
+ *
+ * The thirteen block shapes are polygons inscribed in a bounding box, which
+ * covers a great deal and stops exactly where a figure needs a region rather
+ * than a box — a shaded circular segment, a sector, the area between a chord
+ * and its arc. A Mark is that region, stated as a start point and a run of
+ * segments.
+ *
+ * It is FLATTENED at layout time into the polyline every check walks, at the
+ * same 0.05px bound a curved connector uses, so admitting curves here costs
+ * none of the precision the polygon-only rule was protecting.
+ *
+ * A mark is ink and nothing else: it carries no label, takes no part in the
+ * layout, and is never repaired. What it does carry is a FILL, which makes it
+ * a surface a label can sit on — so `contrast-sufficient` reads it, and a
+ * mark added under a label changes what that label is measured against.
+ */
+export type Mark = {
+  id: string;
+  /**
+   * Set by frame resolution on the lattice lines a `GridSpec` expands into.
+   * Never authored. Grid furniture is substrate in whichever form it takes --
+   * a numbered tick is a block, a ruled line is a mark -- and neither
+   * competes to be the nearest thing to a label.
+   */
+  gridOf?: string;
+  from: Point | FramedPoint;
+  segments: MarkSegment[];
+  /** Close the outline back to `from`. Default true when a fill is given. */
+  close?: boolean;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  lineStyle?: LineStyle;
+};
+
+/**
+ * One run of a mark's outline: a straight line, or a circular arc about a
+ * stated centre.
+ *
+ * The arc is the same construction `ConnectorCurve`'s "sweep" uses, and for
+ * the same reason: its curvature is DERIVED from the two ends and the centre
+ * rather than stated beside them.
+ */
+export type MarkSegment =
+  | { line: Point | FramedPoint }
+  | { arc: Point | FramedPoint; centre: Point | FramedPoint };
 
 /**
  * The arrowhead shape drawn at every end `arrow` selects. "closed" (the
@@ -274,17 +445,42 @@ export type PerSideBorder = {
 export type ConnectorCurve =
   | { kind: "arc"; bulge?: number }
   | { kind: "bezier"; control: Point[] }
-  | { kind: "spline"; radius?: number };
+  | { kind: "spline"; radius?: number }
+  /**
+   * A true circular arc about `centre`, from this connector's start to its
+   * end. This is the angle mark of school geometry and physics: the theta
+   * between an incline and the horizontal, the angle at a triangle's vertex.
+   *
+   * The sweep is DERIVED from the two endpoints and the centre rather than
+   * stated alongside them, which is the whole point. An author computes the
+   * arm endpoints from the angle they mean and the arc's sweep follows; the
+   * number appears once, so the drawing and the label cannot disagree. What
+   * they can still do is disagree with a label that was typed independently,
+   * which is what `sweep-matches-its-label` is for.
+   *
+   * `centre` is scene-local, exactly like a bare endpoint.
+   */
+  | { kind: "sweep"; centre: Point | FramedPoint };
 
 /** Runtime mirror of `ConnectorCurve`'s tags, so validation reads one list. */
-export const CURVE_KINDS: readonly ConnectorCurve["kind"][] = ["arc", "bezier", "spline"];
+export const CURVE_KINDS: readonly ConnectorCurve["kind"][] = ["arc", "bezier", "spline", "sweep"];
 
 export type Connector = {
   id?: string;
-  /** Block id the connector leaves from. */
-  from: string;
+  /**
+   * Block id the connector leaves from, or a bare point.
+   *
+   * A point origin is what a vector needs. Several forces acting at one place
+   * have to LEAVE one place: routed from a block they each start on that
+   * block's own boundary, at three different spots, and a free-body diagram
+   * whose forces do not share an application point is not a free-body
+   * diagram. Both ends may be points, which is a free vector -- it joins no
+   * box, so it earns no exemption from `connector-clear-of-boxes` and a
+   * figure that wants one crossing a shape must say so.
+   */
+  from: string | Point | FramedPoint;
   /** Block id it arrives at, or a bare point — a callout needs to aim at a place. */
-  to: string | Point;
+  to: string | Point | FramedPoint;
   arrow?: "none" | "end" | "both";
   /** The shape drawn at each end `arrow` selects. Default "closed". */
   arrowStyle?: ArrowStyle;
@@ -316,22 +512,48 @@ export type Block = {
   type: "block";
   id?: string;
   label?: string;
-  /** Fixed total width, border included. Text wraps to it. */
+  /**
+   * Total width, border included. Text wraps to it.
+   *
+   * Honoured exactly, with ONE unsatisfiable case: the box is laid out
+   * `box-sizing: border-box`, so a width smaller than this block's own
+   * padding plus border cannot be drawn at all, and CSS resolves it by
+   * growing the box. Honouring the width there would mean silently violating
+   * the padding instead — there is no size that satisfies both. When it
+   * happens the figure is still well-formed, so no other check notices;
+   * `declared-size-honoured` is what reports it.
+   */
   width?: number;
   maxWidth?: number;
   minWidth?: number;
   /**
-   * Fixed total height. Real schematics need shapes that keep their size, and
-   * a fixed height is the first way a label can overflow downward — which is
+   * Total height. Real schematics need shapes that keep their size, and a
+   * fixed height is the first way a label can overflow downward — which is
    * precisely what the repair loop exists to fix.
+   *
+   * Subject to the same padding-and-border floor as `width`, and reported the
+   * same way.
    */
   height?: number;
   /**
-   * "none" forbids wrapping. Needed for labels that must not be broken
-   * (identifiers, axis ticks, short codes), and the second way a label can
-   * overflow — sideways.
+   * How a label may be broken.
+   *
+   * "normal" (the default) breaks between words and never inside one, so an
+   * unbreakable run overflows SIDEWAYS — the second way a label can overflow,
+   * and the one the repair loop can actually act on by growing the width.
+   *
+   * "none" forbids wrapping altogether. Needed for labels that must not be
+   * broken at all (identifiers, axis ticks, short codes).
+   *
+   * "anywhere" permits a break inside a word, for a genuinely long
+   * unbreakable run — a URL, a hash, a chemical name — where growing the box
+   * to hold it whole would blow out the layout instead. It is opt-in
+   * precisely because it used to be the unconditional default: applied to
+   * every label it turned "30°" into "3" / "0" / "°" the moment that label
+   * missed its box by two pixels, and left the repair loop no horizontal
+   * overflow to respond to.
    */
-  wrap?: "normal" | "none";
+  wrap?: "normal" | "none" | "anywhere";
   padding?: number;
   /** Horizontal alignment of the label inside the block. */
   textAlign?: Align;
@@ -388,6 +610,59 @@ export type Block = {
    * that it needs to differ from anything.
    */
   categoryGroup?: string;
+  /**
+   * The id of the element this block NAMES, rather than one it sits beside.
+   *
+   * A label on a figure has always had to be a Block, and a Block collides
+   * with everything: writing "N" beside a force arrow failed
+   * text-clear-of-other-boxes and boxes-do-not-overlap against the very thing
+   * it was labelling. Every figure in the physics and maths repertoire does
+   * this, so those checks were firing on well-formed work.
+   *
+   * Declaring an owner buys exactly one relief -- an annotation may overlap
+   * the element it names, and nothing else -- and costs a new obligation in
+   * exchange: `annotation-nearest-its-owner` refuses a label that has drifted
+   * closer to some other element than to the one it claims to name, because a
+   * reader attributes a label to whatever it is nearest.
+   *
+   * Must name a sibling in the same scene, refused at parse time exactly like
+   * a connector's endpoints.
+   */
+  annotates?: string;
+  /**
+   * The frame this block's `x`/`y` are stated in. Unset means canvas
+   * coordinates, exactly as before frames existed.
+   *
+   * A block in a rotated frame is rotated with it -- with `rotateBox`, since
+   * a frame turns the box and not merely the glyphs in it -- unless it
+   * declares its own `rotation`.
+   */
+  frame?: string;
+  /**
+   * Where a `frame` position lands on this block: its top-left corner
+   * (default, and what a laid-out box means everywhere else) or its centre.
+   *
+   * "center" is what a MARKER wants. A dot at (1, 1) on a coordinate plane
+   * means a dot centred on that lattice point, and making an author subtract
+   * half its size in frame units to say so puts arithmetic back in the
+   * document — the one thing frames exist to take out of it. Ignored when the
+   * block declares no `frame`.
+   */
+  anchor?: "corner" | "center";
+  /**
+   * Set by frame resolution on the lines and tick labels a `GridSpec`
+   * expands into, naming the frame that produced them. Never authored.
+   *
+   * Grid furniture is SUBSTRATE: a lattice crosses itself at every
+   * intersection and passes under everything drawn on the plane, so it takes
+   * no part in the collision checks and is not treated as the surface a label
+   * sits on. Both are recorded rather than silent — the checks say how many
+   * elements they set aside — and both are earned rather than assumed: this
+   * geometry is derived from the frame, so unlike authored geometry it cannot
+   * be in the wrong place. What CAN go wrong is that its numbers become
+   * unreadable, and `tick-labels-do-not-collide` is what guards that.
+   */
+  gridOf?: string;
   /**
    * The shape drawn in this block's bounding box. Default "rect", unchanged
    * from every figure rendered before this existed. Every shape shares the
@@ -466,12 +741,38 @@ export type LaidOutFigure = {
   layoutConstraints?: Constraint[];
 };
 
-export type PlacedElement = PlacedBox | PlacedText | PlacedConnector;
+export type PlacedElement = PlacedBox | PlacedText | PlacedConnector | PlacedMark;
+
+/**
+ * A mark as drawn: its outline already FLATTENED to a polyline, exactly as a
+ * curved connector is.
+ *
+ * Every check that reasons about a mark reads these points, and the renderer
+ * emits the same ones, so a filled region cannot bulge somewhere a check just
+ * cleared. That identity is the same one `shapeVertices` gives a polygon
+ * block -- one vertex list, used for containment and for drawing -- extended
+ * to geometry the author supplies rather than the shape system.
+ */
+export type PlacedMark = {
+  kind: "mark";
+  id: string;
+  /** Carried straight from the spec's Mark.gridOf; see there. */
+  gridOf?: string;
+  points: Point[];
+  closed: boolean;
+  fill: string;
+  stroke: string;
+  strokeWidth: number;
+  lineStyle: LineStyle;
+  /** The centre of every arc segment, kept so `arc-is-circular` can check it. */
+  arcCentres: { centre: Point; from: Point; to: Point }[];
+};
 
 export type PlacedConnector = {
   kind: "connector";
   id: string;
-  fromId: string;
+  /** Null when the connector leaves from a bare point rather than a block. */
+  fromId: string | null;
   /** Null when the connector aims at a bare point rather than a block. */
   toId: string | null;
   /**
@@ -520,10 +821,29 @@ export type PlacedBox = {
   bleed?: Bleed;
   /** Carried straight from the spec's Block.categoryGroup; see there. */
   categoryGroup?: string;
+  /** Carried straight from the spec's Block.annotates; see there. */
+  annotates?: string;
+  /** Carried straight from the spec's Block.gridOf; see there. */
+  gridOf?: string;
   /** Carried straight from the spec's Block.motion; see there. Absent means the whole transition. */
   motion?: MotionWindow;
   /** Carried straight from the spec's Block.shape. Default "rect" when unset. */
   shape?: ShapeKind;
+  /**
+   * The size the block ASKED FOR, carried from the spec that was actually
+   * drawn -- so a repaired block declares its repaired size, not its original
+   * one. Only the axes the author fixed appear; an auto-sized axis is absent
+   * and claims nothing.
+   *
+   * This exists so `declared-size-honoured` can compare a request against the
+   * measurement, which is the one relationship no other core check covers. It
+   * is deliberately NOT called `declaredBox`, the module protocol's name for
+   * the superficially similar field: a module's declared box is a CLAIM by a
+   * foreign process about what it already drew, and this is an INSTRUCTION
+   * from the author about what to draw. Compared the same way, earned
+   * differently.
+   */
+  declared?: { width?: number; height?: number };
   /**
    * Where the label actually sits in this box, read back from computed style
    * rather than copied from the spec — so the repair loop reasons about what
@@ -630,7 +950,12 @@ export function parseSpec(input: unknown): FigureSpec {
   // Whether a curve is legal depends on the canvas, so the toggles are
   // resolved once here and carried down rather than looked up per node.
   validateNode(spec.root, "root", resolveConstraints(spec.canvas as CanvasSpec | undefined));
-  return spec as FigureSpec;
+  // Frames are resolved here rather than in the pipeline so that `validate`
+  // -- which answers about a document without launching a browser -- refuses
+  // a reference to a frame the scene never declared. Resolution strips the
+  // references it consumes, so a resolved spec passing through here again is
+  // unchanged (ir/frames.ts).
+  return resolveFrames(spec as FigureSpec);
 }
 
 const CONSTRAINT_KINDS = ["align", "distribute", "keepClear", "sameSize", "anchor"] as const;
@@ -816,6 +1141,16 @@ function validateCurve(
       }
     });
   }
+  if (curve.kind === "sweep") {
+    const centre = curve.centre as Point | undefined;
+    if (
+      typeof centre !== "object" || centre === null ||
+      typeof centre.x !== "number" || typeof centre.y !== "number" ||
+      !Number.isFinite(centre.x) || !Number.isFinite(centre.y)
+    ) {
+      throw new SpecError(`${path}.centre must be an {x, y} point`);
+    }
+  }
   if (curve.kind === "spline" && curve.radius !== undefined) {
     // Zero is refused rather than treated as "no rounding": a spline with no
     // rounding is a straight route, and asking for one by way of a curve is
@@ -986,6 +1321,103 @@ function validateNode(
     for (const child of node.children as Block[]) {
       if (child.id !== undefined) ids.add(child.id);
     }
+    // A connector is nameable too: in a free-body diagram every force label
+    // names an ARROW, not a box, so restricting `annotates` to children would
+    // refuse the case the feature exists for. An id is required to be named,
+    // which is why only authored ids count here -- normalise's generated ones
+    // do not exist yet, and naming one would be naming a coincidence.
+    const connectorIds = new Set<string>();
+    if (Array.isArray(node.connectors)) {
+      for (const edge of node.connectors as Connector[]) {
+        if (edge.id !== undefined) connectorIds.add(edge.id);
+      }
+    }
+    // Marks are nameable for the same reason connectors are: "O" names an
+    // origin tick and a caption names a shaded region, and both are ink
+    // rather than boxes. Refusing them sent an author back to inventing an
+    // invisible block to hang the label on, which is the workaround this
+    // whole feature exists to remove.
+    if (Array.isArray(node.marks)) {
+      for (const mark of node.marks as { id?: string }[]) {
+        if (mark.id !== undefined) connectorIds.add(mark.id);
+      }
+    }
+    if (node.frames !== undefined) {
+      if (!Array.isArray(node.frames)) {
+        throw new SpecError(`${path}.frames must be an array`);
+      }
+      const frameIds = new Set<string>();
+      (node.frames as Frame[]).forEach((frame, i) => {
+        const where = `${path}.frames[${i}]`;
+        if (typeof frame !== "object" || frame === null) {
+          throw new SpecError(`${where} must be an object`);
+        }
+        if (typeof frame.id !== "string" || frame.id === "") {
+          throw new SpecError(`${where}.id must be a non-empty string`);
+        }
+        if (frameIds.has(frame.id)) {
+          throw new SpecError(`${where}.id "${frame.id}" is declared twice in this scene`);
+        }
+        frameIds.add(frame.id);
+        const origin = frame.origin as Point | undefined;
+        if (
+          typeof origin !== "object" || origin === null ||
+          typeof origin.x !== "number" || typeof origin.y !== "number" ||
+          !Number.isFinite(origin.x) || !Number.isFinite(origin.y)
+        ) {
+          throw new SpecError(`${where}.origin must be an {x, y} point`);
+        }
+        if (frame.towards !== undefined) {
+          if (frame.rotation !== undefined) {
+            throw new SpecError(
+              `${where} declares both rotation and towards; a frame is aimed one way or the other`,
+            );
+          }
+          const towards = frame.towards as Point;
+          if (
+            typeof towards !== "object" || towards === null ||
+            typeof towards.x !== "number" || typeof towards.y !== "number" ||
+            !Number.isFinite(towards.x) || !Number.isFinite(towards.y)
+          ) {
+            throw new SpecError(`${where}.towards must be an {x, y} point`);
+          }
+        }
+        for (const key of ["rotation", "xUnit", "yUnit"] as const) {
+          const value = frame[key];
+          if (value === undefined) continue;
+          if (typeof value !== "number" || !Number.isFinite(value)) {
+            throw new SpecError(`${where}.${key} must be a finite number, got ${JSON.stringify(value)}`);
+          }
+        }
+        // A zero scale collapses every position in the frame onto its origin,
+        // which is never what an author means and would silently stack the
+        // whole figure on one point.
+        for (const key of ["xUnit", "yUnit"] as const) {
+          if (frame[key] !== undefined && frame[key] === 0) {
+            throw new SpecError(`${where}.${key} must not be zero`);
+          }
+        }
+      });
+    }
+    // Checked here rather than in the block branch because this is where a
+    // block's SIBLINGS are known -- the same reason a connector's endpoints
+    // are validated here and not where the connector is shaped.
+    for (const [i, child] of (node.children as Block[]).entries()) {
+      if (child.annotates === undefined) continue;
+      if (typeof child.annotates !== "string") {
+        throw new SpecError(`${path}.children[${i}].annotates must be an element id`);
+      }
+      if (child.annotates === child.id) {
+        throw new SpecError(
+          `${path}.children[${i}].annotates names itself; an annotation names something else`,
+        );
+      }
+      if (!ids.has(child.annotates) && !connectorIds.has(child.annotates)) {
+        throw new SpecError(
+          `${path}.children[${i}].annotates names "${child.annotates}", which is not a block, connector or mark in this scene`,
+        );
+      }
+    }
     if (node.connectors !== undefined) {
       if (!Array.isArray(node.connectors)) {
         throw new SpecError(`${path}.connectors must be an array`);
@@ -993,9 +1425,19 @@ function validateNode(
       node.connectors.forEach((connector, i) => {
         const where = `${path}.connectors[${i}]`;
         const edge = connector as Connector;
-        if (typeof edge.from !== "string") throw new SpecError(`${where}.from must be a block id`);
-        if (!ids.has(edge.from)) {
-          throw new SpecError(`${where}.from names "${edge.from}", which is not a child of this scene`);
+        if (typeof edge.from === "string") {
+          if (!ids.has(edge.from)) {
+            throw new SpecError(
+              `${where}.from names "${edge.from}", which is not a child of this scene`,
+            );
+          }
+        } else if (
+          typeof edge.from !== "object" ||
+          edge.from === null ||
+          typeof edge.from.x !== "number" ||
+          typeof edge.from.y !== "number"
+        ) {
+          throw new SpecError(`${where}.from must be a block id or a {x, y} point`);
         }
         if (typeof edge.to === "string") {
           if (!ids.has(edge.to)) {

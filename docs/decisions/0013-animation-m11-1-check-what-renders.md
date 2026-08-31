@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-08-24
-**Deciders:** Terza reasoning session (confidence 0.90, 4 iterations, 1 pass)
+**Deciders:** Reasoning session (confidence 0.90, 4 iterations, 1 pass)
 
 ## Context
 
@@ -183,7 +183,7 @@ the SVG that is emitted.
 
 ## References
 
-- Terza reasoning session transcript (2026-08-24), 4 G/C/S iterations
+- Reasoning session transcript (2026-08-24), 4 iterations
 - [ADR 0012](0012-animation-m11-scope.md) — the milestone this corrects
 - [ADR 0010](0010-constraint-toggles.md) — the toggle the delegation respects
 - [src/anim/trajectory.ts](../../src/anim/trajectory.ts) — the shared derivation

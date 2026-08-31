@@ -11,3 +11,8 @@ err.txt
 out.txt
 debug*.txt
 experiments/*/states/
+
+# Local agent config: holds API keys. Ignored here rather than relying on a
+# developer's global gitignore, which does not travel with the clone.
+.claude/settings.local.json
+.env

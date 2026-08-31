@@ -120,10 +120,28 @@ export function buildHtml(spec: FigureSpec, options: HtmlOptions = {}): IdAssign
   #pr-root { display: inline-block; padding: ${padding}px; }
   [data-pr-box] { box-sizing: border-box; }
   [data-pr-text] {
-    /* Long unbreakable strings must wrap rather than overflow their box.
-       "anywhere" (not "break-word") also shrinks min-content width, so an
-       auto-width block is not forced wide by a single long URL. */
-    overflow-wrap: anywhere;
+    /* Break between words, never inside one.
+
+       Intra-word breaking used to be the global default here, chosen so a
+       long unbreakable string would wrap rather than overflow and so
+       min-content width would stay small for an auto-width block. Both
+       effects were real; the cost was not worth them. Applied to EVERY
+       label, a three-glyph one that missed its box by 2px came apart into
+       "3" / "0" / "°" -- and the repair loop could not undo it, because once
+       a label has wrapped each line fits horizontally by construction, so
+       text-fits-box reports a DOWNWARD overflow and only the height branch
+       ever fires. The box grew 153% taller around mangled text instead of
+       12% wider around intact text.
+
+       Leaving the word whole makes the overflow horizontal, which is the one
+       signal planRepairs can act on: it grows the width, and if the budget
+       will not stretch that far it reports the node as unrepaired and says
+       so. A wide box or an honest refusal, never silently shattered text.
+       Block.wrap opts a genuinely unbreakable run back in, per label.
+
+       (No backticks in this comment: it lives inside a template literal.) */
+    overflow-wrap: normal;
+    word-break: normal;
   }
 </style></head>
 <body><div id="pr-root">${body}</div></body></html>`;
@@ -309,11 +327,17 @@ function renderBlock(
   // `wrap: "none"` forbids *wrapping*, which an explicit break is not. The
   // legacy shorthand cannot say "keep breaks, never wrap", so it is written
   // first as a fallback and then narrowed by the two longhands.
+  //
+  // "anywhere" is the third case and it is per-label on purpose: as a global
+  // rule it broke every short label that missed its box, and as a per-label
+  // one it stays available for the run that genuinely needs it.
   const labelStyle =
     node.wrap === "none"
       ? ' style="white-space: nowrap; white-space-collapse: preserve-breaks;' +
         ' text-wrap-mode: nowrap; overflow-wrap: normal"'
-      : ' style="white-space: pre-line"';
+      : node.wrap === "anywhere"
+        ? ' style="white-space: pre-line; overflow-wrap: anywhere"'
+        : ' style="white-space: pre-line"';
   const label =
     node.label === undefined || node.label === ""
       ? ""

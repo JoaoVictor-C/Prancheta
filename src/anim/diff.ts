@@ -157,7 +157,7 @@ function boxOf(element: PlacedElement): Rect {
   if (element.kind === "box") {
     return { x: element.x, y: element.y, width: element.width, height: element.height };
   }
-  if (element.kind === "connector") {
+  if (element.kind === "connector" || element.kind === "mark") {
     return union(element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })));
   }
   return union(element.lines.map((line) => line.box));

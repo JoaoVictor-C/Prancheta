@@ -15,14 +15,19 @@
  */
 
 import type { Block, Connector, FigureNode, FigureSpec, Point, Scene } from "../ir/types.ts";
-import type { PlacedBox, PlacedConnector } from "../ir/types.ts";
+import type { PlacedBox, PlacedConnector, PlacedMark } from "../ir/types.ts";
+import type { PathCommand } from "../geometry/paths.ts";
+import { flattenPath } from "../geometry/paths.ts";
 import { layoutGraph } from "./graph.ts";
 import type { NodeSize } from "./graph.ts";
 import {
   curveRoute,
   liftCurve,
   routeBetweenBoxes,
+  sweepCommands,
   routeSelfLoop,
+  routeFromPoint,
+  routePointToPoint,
   routeToPoint,
   trimRoute,
 } from "./connectors.ts";
@@ -139,45 +144,65 @@ export function buildConnectors(
   for (const record of scenes) {
     const origin = sceneById.get(record.id);
     for (const [connector, id] of record.connectorIds) {
-      const from = boxById.get(connector.from);
-      if (!from) continue;
+      const from = typeof connector.from === "string" ? boxById.get(connector.from) : undefined;
+      if (typeof connector.from === "string" && !from) continue;
       const toBox = typeof connector.to === "string" ? boxById.get(connector.to) : undefined;
       if (typeof connector.to === "string" && !toBox) continue;
 
+      // A stated endpoint is scene-local, exactly as `to` already was, so it
+      // is lifted into page space before anything routes against it.
+      const lift = (point: Point): Point =>
+        origin === undefined ? point : { x: point.x + origin.x, y: point.y + origin.y };
+      const fromPoint =
+        typeof connector.from === "string" ? undefined : lift(connector.from as Point);
+
       let points: Point[];
       const route = routes[id];
-      if (toBox !== undefined && toBox.id === from.id) {
+      if (fromPoint !== undefined) {
+        // ELK never routed this edge -- it keys on node ids and this one has
+        // no source node -- so a stated origin always takes the direct route.
+        points =
+          toBox === undefined
+            ? routePointToPoint(fromPoint, lift(connector.to as Point))
+            : routeFromPoint(fromPoint, toBox);
+      } else if (from !== undefined && toBox !== undefined && toBox.id === from.id) {
         // A box joined to itself: both ends would clip against the same border
         // from the same centre and collapse to a point. See routeSelfLoop.
         points = routeSelfLoop(from);
-      } else if (route !== undefined && origin !== undefined) {
+      } else if (from !== undefined && route !== undefined && origin !== undefined) {
         // ELK works scene-local; lift into page space, then pull the ends back
         // off the borders it routed to.
         const lifted = route.map((point) => ({ x: point.x + origin.x, y: point.y + origin.y }));
         points = trimRoute(lifted, from, toBox ?? null);
-      } else if (toBox) {
+      } else if (from !== undefined && toBox !== undefined) {
         points = routeBetweenBoxes(from, toBox);
+      } else if (from !== undefined) {
+        points = routeToPoint(from, lift(connector.to as Point));
       } else {
-        const target = connector.to as Point;
-        const absolute =
-          origin === undefined ? target : { x: target.x + origin.x, y: target.y + origin.y };
-        points = routeToPoint(from, absolute);
+        continue;
       }
 
       // Bend the route before anything else sees it, so the polyline every
       // check reads is the one the renderer draws (decision 0010). The curve
       // is lifted into page space first, for the same reason the route was.
-      if (connector.curve !== undefined) {
-        points = curveRoute(points, liftCurve(connector.curve, origin ?? ZERO));
+      // Lifted once and kept, not lifted and thrown away. `points` are in
+      // page space, so a curve carried alongside them in SCENE space is a
+      // trap for anything that reads both: `sweep-matches-its-label` compared
+      // a page-space arc against a scene-space centre and measured 21.4
+      // degrees for an arc that subtends exactly 30.
+      const lifted =
+        connector.curve === undefined ? undefined : liftCurve(connector.curve, origin ?? ZERO);
+      if (lifted !== undefined) {
+        points = curveRoute(points, lifted);
       }
 
       placed.push({
         kind: "connector",
         id,
-        fromId: connector.from,
+        fromId: typeof connector.from === "string" ? connector.from : null,
         toId: typeof connector.to === "string" ? connector.to : null,
         points,
-        curve: connector.curve,
+        curve: lifted,
         arrow: connector.arrow ?? "end",
         arrowStyle: connector.arrowStyle ?? "closed",
         dashed: connector.dashed ?? false,
@@ -188,5 +213,60 @@ export function buildConnectors(
     }
   }
 
+  return placed;
+}
+
+/**
+ * A scene's marks, flattened into the polylines every check reads.
+ *
+ * Flattening happens HERE and once, for the same reason `curveRoute` does it
+ * for connectors: the renderer emits these very points, so a filled region
+ * cannot bulge through something a check just cleared. The arc segments reuse
+ * `sweepCommands`, so a mark's curvature is derived from its ends and centre
+ * exactly as an angle mark's is.
+ */
+export function buildMarks(scenes: SceneRecord[], measured: PageMeasurement): PlacedMark[] {
+  const sceneById = new Map(measured.scenes.map((scene) => [scene.id, scene as Point]));
+  const placed: PlacedMark[] = [];
+  for (const record of scenes) {
+    const origin = sceneById.get(record.id) ?? ZERO;
+    for (const [i, mark] of (record.scene.marks ?? []).entries()) {
+      const lift = (point: Point): Point => ({ x: point.x + origin.x, y: point.y + origin.y });
+      const start = lift(mark.from as Point);
+      const commands: PathCommand[] = [{ kind: "M", x: start.x, y: start.y }];
+      const arcCentres: { centre: Point; from: Point; to: Point }[] = [];
+      let cursor = start;
+      for (const segment of mark.segments) {
+        if ("line" in segment) {
+          const to = lift(segment.line as Point);
+          commands.push({ kind: "L", x: to.x, y: to.y });
+          cursor = to;
+          continue;
+        }
+        const to = lift(segment.arc as Point);
+        const centre = lift(segment.centre as Point);
+        arcCentres.push({ centre, from: cursor, to });
+        // [0] is the M that sweepCommands emits for its own start, which this
+        // path already has; only the A is wanted.
+        commands.push(...sweepCommands(cursor, to, centre).slice(1));
+        cursor = to;
+      }
+      const closed = mark.close ?? mark.fill !== undefined;
+      if (closed) commands.push({ kind: "Z" });
+      const points = flattenPath(commands);
+      placed.push({
+        kind: "mark",
+        id: mark.id ?? `${record.id}-mark-${i + 1}`,
+        ...(mark.gridOf === undefined ? {} : { gridOf: mark.gridOf }),
+        points,
+        closed,
+        fill: mark.fill ?? "none",
+        stroke: mark.stroke ?? "none",
+        strokeWidth: mark.strokeWidth ?? 0,
+        lineStyle: mark.lineStyle ?? "solid",
+        arcCentres,
+      });
+    }
+  }
   return placed;
 }

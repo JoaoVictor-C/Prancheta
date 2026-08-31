@@ -13,6 +13,7 @@
 import type { ConnectorCurve, PlacedBox, Point, Rect } from "../ir/types.ts";
 import type { PathCommand } from "../geometry/paths.ts";
 import { flattenPath } from "../geometry/paths.ts";
+import { shapeVertices } from "../geometry/shapes.ts";
 import { connector as connectorTheme } from "../theme.ts";
 
 /** Straight route between two boxes, clipped to both borders. */
@@ -29,6 +30,31 @@ export function routeBetweenBoxes(from: PlacedBox, to: PlacedBox): Point[] {
 export function routeToPoint(from: PlacedBox, target: Point): Point[] {
   const start = centreOf(from);
   return [clipToBox(start, target, from, connectorTheme.gap), target];
+}
+
+/**
+ * Straight route from a bare point INTO a box — routeToPoint reversed.
+ *
+ * Only the box end is clipped, exactly as in routeToPoint: a stated point is
+ * a place the author chose, and pulling it back off itself would move the
+ * arrow away from the coordinate the figure claims it starts at.
+ */
+export function routeFromPoint(source: Point, to: PlacedBox): Point[] {
+  const end = centreOf(to);
+  return [source, clipToBox(end, source, to, connectorTheme.gap)];
+}
+
+/**
+ * A free vector: both ends stated, neither clipped.
+ *
+ * This is what several forces sharing one application point need. It joins no
+ * box, so `connector-clear-of-boxes` grants it no endpoint exemption -- a
+ * vector drawn out of the middle of a block is crossing that block, and the
+ * figure has to say so with `allowConnectorCrossing` rather than have it
+ * excused silently.
+ */
+export function routePointToPoint(source: Point, target: Point): Point[] {
+  return [source, target];
 }
 
 /** How far above a box a self-loop reaches, in px. */
@@ -87,12 +113,19 @@ export function routeSelfLoop(box: PlacedBox, height = SELF_LOOP_HEIGHT): Point[
  * which is why they are the two that survive being re-routed.
  */
 export function liftCurve(curve: ConnectorCurve, origin: Point): ConnectorCurve {
-  if (curve.kind !== "bezier") return curve;
   if (origin.x === 0 && origin.y === 0) return curve;
-  return {
-    kind: "bezier",
-    control: curve.control.map((point) => ({ x: point.x + origin.x, y: point.y + origin.y })),
-  };
+  if (curve.kind === "bezier") {
+    return {
+      kind: "bezier",
+      control: curve.control.map((point) => ({ x: point.x + origin.x, y: point.y + origin.y })),
+    };
+  }
+  // A sweep's centre is a coordinate in the same scene-local space as the
+  // endpoints, so it travels with them.
+  if (curve.kind === "sweep") {
+    return { kind: "sweep", centre: { x: curve.centre.x + origin.x, y: curve.centre.y + origin.y } };
+  }
+  return curve;
 }
 
 /**
@@ -119,11 +152,27 @@ export function centreOf(box: PlacedBox): Point {
 /**
  * Walk from `inside` towards `towards` and return the point where the ray
  * leaves the box, pushed out by `gap`.
+ *
+ * `box.shape` decides which boundary "leaves the box" means. Most shapes here
+ * (diamond, hexagon, triangle, ...) are polygons whose vertices are the exact
+ * outline `svg.ts` draws, via `shapeVertices` -- so a connector aimed at a
+ * triangle stops on the triangle's slanted edge, not on the rectangle that
+ * would bound it. "circle" and "ellipse" also return null from
+ * `shapeVertices` but are knowingly left on the rectangular path below: an
+ * exact ellipse-ray intersection is a different computation, and closing that
+ * gap is out of scope for this fix. "rect" and "stadium" are rectangular by
+ * definition and were never wrong.
  */
 function clipToBox(inside: Point, towards: Point, box: PlacedBox, gap: number): Point {
   const dx = towards.x - inside.x;
   const dy = towards.y - inside.y;
   if (dx === 0 && dy === 0) return inside;
+
+  const vertices = box.shape === undefined ? null : shapeVertices(box.shape, box);
+  if (vertices !== null) {
+    const clipped = clipToPolygon(inside, dx, dy, vertices, gap);
+    if (clipped !== null) return clipped;
+  }
 
   const halfWidth = box.width / 2 + gap;
   const halfHeight = box.height / 2 + gap;
@@ -135,6 +184,42 @@ function clipToBox(inside: Point, towards: Point, box: PlacedBox, gap: number): 
   const scale = Math.min(scaleX, scaleY);
 
   return { x: centre.x + dx * scale, y: centre.y + dy * scale };
+}
+
+/**
+ * Cast the ray `origin + t * (dx, dy)` against a polygon's edges and return
+ * the point where it first leaves, pushed out by `gap` along the same
+ * direction. Returns null when the ray meets no edge (degenerate polygon, or
+ * `origin` already outside it), so the caller can fall back to the
+ * rectangular clip rather than draw an endpoint at `origin` itself.
+ *
+ * Takes the minimum positive `t` rather than assuming convexity, because
+ * "cross" and "star" are not convex: for a shape like that the ray can cross
+ * more than one edge, and the first crossing is the one that is actually the
+ * shape's boundary as seen from an interior point.
+ */
+function clipToPolygon(origin: Point, dx: number, dy: number, vertices: Point[], gap: number): Point | null {
+  let bestT = Infinity;
+  for (let i = 0; i < vertices.length; i += 1) {
+    const a = vertices[i]!;
+    const b = vertices[(i + 1) % vertices.length]!;
+    const edgeX = b.x - a.x;
+    const edgeY = b.y - a.y;
+    const denom = dx * edgeY - dy * edgeX;
+    if (denom === 0) continue; // Parallel to this edge -- no single crossing.
+
+    const qpx = a.x - origin.x;
+    const qpy = a.y - origin.y;
+    const t = (qpx * edgeY - qpy * edgeX) / denom;
+    const u = (qpx * dy - qpy * dx) / denom;
+    if (t > 1e-9 && u >= 0 && u <= 1 && t < bestT) bestT = t;
+  }
+  if (!Number.isFinite(bestT)) return null;
+
+  const length = Math.hypot(dx, dy);
+  if (length === 0) return null;
+  const pushed = bestT + gap / length;
+  return { x: origin.x + dx * pushed, y: origin.y + dy * pushed };
 }
 
 /** Move `point` towards `towards` by `distance`. */
@@ -217,6 +302,62 @@ function segmentIntersectsRect(
  * boxes and pulled them back off the borders, and a curve that moved them
  * would undo that.
  */
+/**
+ * The SVG arc commands for a circular sweep from `first` to `last` about
+ * `centre`, taking the shorter way round.
+ *
+ * The radius is the mean of the two arms. They should be equal -- an author
+ * computing both from one angle gets that for free -- and when they are not,
+ * `sweep-is-circular` says so rather than this quietly drawing an ellipse
+ * that matches neither arm.
+ */
+export function sweepCommands(first: Point, last: Point, centre: Point): PathCommand[] {
+  const r1 = Math.hypot(first.x - centre.x, first.y - centre.y);
+  const r2 = Math.hypot(last.x - centre.x, last.y - centre.y);
+  const radius = (r1 + r2) / 2;
+  if (radius === 0) return [{ kind: "M", x: first.x, y: first.y }];
+  return [
+    { kind: "M", x: first.x, y: first.y },
+    {
+      kind: "A",
+      rx: radius,
+      ry: radius,
+      rotation: 0,
+      largeArc: false,
+      // SVG's sweep flag means "drawn in the direction of INCREASING angle".
+      // Endpoint parameterisation offers two centres for the same pair of
+      // points and radius, and picking the wrong one silently draws an arc
+      // about the mirror centre -- the points still sit at the stated radius,
+      // just not from the centre that was asked for. The cross product of the
+      // two arms says which way the shorter path runs.
+      sweep: crossSign(first, last, centre) > 0,
+      x: last.x,
+      y: last.y,
+    },
+  ];
+}
+
+function crossSign(first: Point, last: Point, centre: Point): number {
+  const ax = first.x - centre.x;
+  const ay = first.y - centre.y;
+  const bx = last.x - centre.x;
+  const by = last.y - centre.y;
+  return ax * by - ay * bx;
+}
+
+/** The angle the two arms subtend at `centre`, in degrees, always 0..180. */
+export function sweptDegrees(first: Point, last: Point, centre: Point): number {
+  const ax = first.x - centre.x;
+  const ay = first.y - centre.y;
+  const bx = last.x - centre.x;
+  const by = last.y - centre.y;
+  const la = Math.hypot(ax, ay);
+  const lb = Math.hypot(bx, by);
+  if (la === 0 || lb === 0) return 0;
+  const cosine = Math.min(1, Math.max(-1, (ax * bx + ay * by) / (la * lb)));
+  return (Math.acos(cosine) * 180) / Math.PI;
+}
+
 export function curveRoute(points: Point[], curve: ConnectorCurve): Point[] {
   if (points.length < 2) return points;
   const first = points[0]!;
@@ -245,6 +386,14 @@ export function curveRoute(points: Point[], curve: ConnectorCurve): Point[] {
             { kind: "C", x1: c1!.x, y1: c1!.y, x2: c2.x, y2: c2.y, x: last.x, y: last.y },
           ];
     return withEnds(flattenPath(commands), first, last);
+  }
+
+  if (curve.kind === "sweep") {
+    // A real circular arc, not a bowed chord: the sweep is whatever the two
+    // endpoints subtend at `centre`, so it cannot disagree with the geometry
+    // that produced them. Flattened through the same adaptive flattener every
+    // other curve uses, so what the checks walk is what the renderer draws.
+    return withEnds(flattenPath(sweepCommands(first, last, curve.centre)), first, last);
   }
 
   // "arc": bow the chord by `bulge` of its own length. Intermediate waypoints

@@ -94,6 +94,34 @@ export function isTransparent(value: string): boolean {
   return parsed !== null && parsed.a === 0;
 }
 
+/**
+ * `over` painted on top of `under`: the colour a reader actually sees.
+ *
+ * Source-over alpha compositing, and it exists because measuring contrast
+ * against a semi-transparent fill's own channels is measuring a colour that
+ * was never on the page. A Venn diagram's `rgba(57, 102, 201, 0.34)` circle
+ * on white is a pale blue; scored raw it reads as saturated blue and fails a
+ * label that is perfectly legible.
+ *
+ * `under` is assumed opaque -- it is a canvas background or an already
+ * composited stack -- so the result is opaque too and can be composited again
+ * as the next layer down. Returns null if either colour is unparseable, which
+ * the callers already report as not-applicable rather than guessing.
+ */
+export function compositeOver(over: string, under: string): string | null {
+  const top = parseColour(over);
+  const bottom = parseColour(under);
+  if (top === null || bottom === null) return null;
+  const alpha = Math.min(1, Math.max(0, top.a));
+  // An opaque layer hides everything under it, so compositing is arithmetic
+  // with no effect -- return the colour the author wrote rather than an
+  // equivalent rgb() triple, so a manifest keeps naming "#171A21" and only a
+  // genuinely blended surface reports a colour nobody typed.
+  if (alpha >= 1) return over;
+  const mix = (t: number, b: number): number => Math.round(t * alpha + b * (1 - alpha));
+  return `rgb(${mix(top.r, bottom.r)}, ${mix(top.g, bottom.g)}, ${mix(top.b, bottom.b)})`;
+}
+
 function channelToLinear(channel: number): number {
   const c = channel / 255;
   return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);

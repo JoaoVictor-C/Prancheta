@@ -1,0 +1,239 @@
+{
+  "version": 1,
+  "title": "Block on an incline: the angle is stated once, as a frame's rotation",
+  "canvas": {
+    "padding": 28,
+    "theme": "print",
+    "constraints": {
+      "allowOverlap": true,
+      "allowConnectorCrossing": true,
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 640,
+    "height": 430,
+    "frames": [
+      {
+        "id": "world",
+        "origin": {
+          "x": 60,
+          "y": 384
+        }
+      },
+      {
+        "id": "incline",
+        "origin": {
+          "x": 60,
+          "y": 384
+        },
+        "rotation": 30
+      },
+      {
+        "id": "contact",
+        "origin": {
+          "frame": "incline",
+          "x": 244,
+          "y": 26
+        }
+      },
+      {
+        "id": "surface",
+        "origin": {
+          "frame": "incline",
+          "x": 244,
+          "y": 26
+        },
+        "rotation": 30
+      }
+    ],
+    "children": [
+      {
+        "type": "block",
+        "id": "ground",
+        "frame": "world",
+        "x": 0,
+        "y": 0,
+        "width": 470,
+        "height": 3,
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "slope",
+        "frame": "incline",
+        "x": 0,
+        "y": 0,
+        "width": 430,
+        "height": 3,
+        "padding": 0,
+        "fill": "#222",
+        "stroke": "none",
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "mass",
+        "frame": "incline",
+        "x": 210,
+        "y": 48,
+        "width": 68,
+        "height": 44,
+        "fill": "none",
+        "stroke": "#222",
+        "strokeWidth": 2,
+        "wrap": "none",
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "N-label",
+        "frame": "surface",
+        "x": -30,
+        "y": 104,
+        "width": 30,
+        "height": 22,
+        "padding": 0,
+        "rotation": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#04a",
+        "label": "N",
+        "annotates": "N"
+      },
+      {
+        "type": "block",
+        "id": "f-label",
+        "frame": "surface",
+        "x": 92,
+        "y": 26,
+        "width": 30,
+        "height": 22,
+        "padding": 0,
+        "rotation": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#050",
+        "label": "f",
+        "annotates": "f"
+      },
+      {
+        "type": "block",
+        "id": "W-label",
+        "frame": "contact",
+        "x": 20,
+        "y": -80,
+        "width": 34,
+        "height": 22,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#a00",
+        "label": "mg",
+        "annotates": "W"
+      },
+      {
+        "type": "block",
+        "id": "theta-label",
+        "frame": "world",
+        "x": 88,
+        "y": 40,
+        "width": 36,
+        "height": 22,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#333",
+        "label": "30\u00b0",
+        "annotates": "theta"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "N",
+        "from": {
+          "frame": "surface",
+          "x": 0,
+          "y": 0
+        },
+        "to": {
+          "frame": "surface",
+          "x": 0,
+          "y": 96
+        },
+        "arrow": "end",
+        "stroke": "#04a",
+        "strokeWidth": 2
+      },
+      {
+        "id": "f",
+        "from": {
+          "frame": "surface",
+          "x": 0,
+          "y": 0
+        },
+        "to": {
+          "frame": "surface",
+          "x": 84,
+          "y": 0
+        },
+        "arrow": "end",
+        "stroke": "#050",
+        "strokeWidth": 2
+      },
+      {
+        "id": "W",
+        "from": {
+          "frame": "contact",
+          "x": 0,
+          "y": 0
+        },
+        "to": {
+          "frame": "contact",
+          "x": 0,
+          "y": -96
+        },
+        "arrow": "end",
+        "stroke": "#a00",
+        "strokeWidth": 2
+      },
+      {
+        "id": "theta",
+        "from": {
+          "frame": "world",
+          "x": 86,
+          "y": 0
+        },
+        "to": {
+          "frame": "incline",
+          "x": 86,
+          "y": 0
+        },
+        "curve": {
+          "kind": "sweep",
+          "centre": {
+            "frame": "world",
+            "x": 0,
+            "y": 0
+          }
+        },
+        "arrow": "none",
+        "stroke": "#333",
+        "strokeWidth": 1.5
+      }
+    ]
+  }
+}

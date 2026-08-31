@@ -33,7 +33,13 @@ export type Manifest = {
 
 export type ManifestElement = {
   id: string;
-  kind: "box" | "text" | "connector";
+  /**
+   * "decoration" is a mark: ink that names nothing and joins nothing. The
+   * word is borrowed from the module protocol, which has used it for exactly
+   * this since decision 0005, rather than minting a second one for the same
+   * idea in the core.
+   */
+  kind: "box" | "text" | "connector" | "decoration";
   box: Rect;
   ownerId?: string;
   /** For text: the exact strings drawn, one per rendered line. */
@@ -73,8 +79,23 @@ export function buildManifest(figure: LaidOutFigure, options: ManifestOptions = 
         box: unionOf(
           element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
         ),
-        ownerId: element.fromId,
-        joins: element.toId === null ? [element.fromId] : [element.fromId, element.toId],
+        // Either end may be a bare point rather than a block, so `joins` lists
+        // the boxes this connector actually attaches to -- which for a free
+        // vector is none at all, and saying so is the honest report.
+        ownerId: element.fromId ?? undefined,
+        joins: [element.fromId, element.toId].filter((id): id is string => id !== null),
+      });
+      continue;
+    }
+    if (element.kind === "mark") {
+      // A mark declares no semantics of its own -- it names nothing and joins
+      // nothing -- so the manifest records only where its ink went.
+      elements.push({
+        id: element.id,
+        kind: "decoration",
+        box: unionOf(
+          element.points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })),
+        ),
       });
       continue;
     }

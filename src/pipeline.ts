@@ -12,7 +12,7 @@
  */
 
 import { chromium } from "playwright";
-import type { Page } from "playwright";
+import type { Browser, Page } from "playwright";
 import type { FigureSpec, LaidOutFigure, PlacedBox, PlacedElement, Point } from "./ir/types.ts";
 import { normalise } from "./ir/normalise.ts";
 import { applyStyle } from "./effects/styles.ts";
@@ -22,7 +22,7 @@ import type { FontEmbedMode, HtmlOptions } from "./layout/html.ts";
 import { lineNeedsTextFallback, loadOutlineFont } from "./export/fonts.ts";
 import { rasterisePdf } from "./export/pdf.ts";
 import type { PdfOptions } from "./export/pdf.ts";
-import { buildConnectors, collectScenes, placeScenes } from "./layout/place.ts";
+import { buildConnectors, buildMarks, collectScenes, placeScenes } from "./layout/place.ts";
 import { measureInPage } from "./layout/measure.ts";
 import type { PageMeasurement } from "./layout/measure.ts";
 import { quoteFamily, resolvePlatformFonts } from "./layout/fonts.ts";
@@ -53,7 +53,8 @@ import { resolveTheme } from "./theme.ts";
 export type RenderResult = {
   figure: LaidOutFigure;
   svg: string;
-  png: Buffer;
+  /** Absent when rasterising was turned off -- see `RenderOptions.raster`. */
+  png?: Buffer;
   /** Present only when `options.pdf` was set (decision 0008). */
   pdf?: Buffer;
   manifest: Manifest;
@@ -79,7 +80,63 @@ export type RenderOptions = {
   fontEmbed?: FontEmbedMode;
   /** Also produce a PDF alongside the SVG and PNG. Unset: no PDF is built. */
   pdf?: PdfOptions;
+  /**
+   * Whether to rasterise the SVG into a PNG. Default true.
+   *
+   * The PNG costs a second page at `scale` device pixels over the whole
+   * canvas, which is most of a render when nobody looks at the result -- a
+   * caller wanting only the SVG or the check verdicts can decline it. Setting
+   * PRANCHETA_SKIP_RASTER=1 flips the DEFAULT for a whole process (the
+   * `test:fast` script uses it); an explicit value here always wins, so a
+   * caller that genuinely needs the pixels keeps them regardless.
+   */
+  raster?: boolean;
 };
+
+// Every render wants the same Chromium: subpixel AA off so monochrome glyphs
+// carry no colour fringes into the PNG, and a fixed sRGB profile so the same
+// figure is the same colours on every machine.
+const LAUNCH_ARGS = ["--disable-lcd-text", "--force-color-profile=srgb"];
+
+/**
+ * Launching Chromium costs roughly half a second, and a full test run pays it
+ * 195 times. PRANCHETA_REUSE_BROWSER lets a batch caller -- the test suite --
+ * amortise one browser over every render in its process. It is deliberately
+ * opt-in: the CLI is short-lived and the MCP server is long-lived, and neither
+ * should silently acquire a browser that outlives the call that wanted it.
+ *
+ * Reuse is safe because browser.newPage() opens its own BrowserContext, so
+ * renders still share no cookies, storage or cache -- only the process.
+ *
+ * Whoever sets the flag OWNS the teardown and must call closeSharedBrowser().
+ * There is no automatic hook: a live browser is an active handle, so the event
+ * loop never empties and 'beforeExit' never fires -- relying on it hangs the
+ * process instead of closing the browser. scripts/test-browser.ts does this for
+ * the test suite.
+ */
+let shared: Promise<Browser> | undefined;
+
+const reuseBrowser = () => process.env.PRANCHETA_REUSE_BROWSER === "1";
+
+function acquireBrowser(): Promise<Browser> {
+  if (!reuseBrowser()) return chromium.launch({ args: LAUNCH_ARGS });
+  if (shared === undefined) {
+    shared = chromium.launch({ args: LAUNCH_ARGS });
+  }
+  return shared;
+}
+
+async function releaseBrowser(browser: Browser): Promise<void> {
+  if (!reuseBrowser()) await browser.close();
+}
+
+/** Closes the reused browser, if one was ever opened. Safe to call twice. */
+export async function closeSharedBrowser(): Promise<void> {
+  const pending = shared;
+  if (pending === undefined) return;
+  shared = undefined;
+  await (await pending).close();
+}
 
 export async function render(spec: FigureSpec, options: RenderOptions = {}): Promise<RenderResult> {
   const repairEnabled = options.repair !== false;
@@ -87,18 +144,11 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
   const budget = newBudget(options.maxScale ?? 3);
   const fontEmbed = options.fontEmbed ?? "none";
 
-  const browser = await chromium.launch({
-    args: [
-      // Subpixel (LCD) antialiasing paints colour fringes on monochrome glyphs,
-      // and those fringes survive into the PNG the reader judges.
-      "--disable-lcd-text",
-      // Same colours on every machine that renders the same figure.
-      "--force-color-profile=srgb",
-    ],
-  });
+  const browser = await acquireBrowser();
 
+  let page: Page | undefined;
   try {
-    const page = await browser.newPage({
+    page = await browser.newPage({
       // Wide enough that nothing wraps for want of room and no scrollbar
       // appears; the figure shrink-wraps its own content.
       viewport: { width: 2400, height: 2400 },
@@ -165,7 +215,8 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
     warnings = [...warnings, ...outlineFallbackWarnings(figure, fontEmbed)];
 
     const svg = toSvg(figure, working.title, { fontEmbed });
-    const png = await rasterise(browser, svg, figure, options.scale ?? 2);
+    const rasterWanted = options.raster ?? process.env.PRANCHETA_SKIP_RASTER !== "1";
+    const png = rasterWanted ? await rasterise(browser, svg, figure, options.scale ?? 2) : undefined;
     const pdf =
       options.pdf === undefined ? undefined : await rasterisePdf(browser, svg, figure, options.pdf);
     const manifest = buildManifest(figure, {
@@ -178,7 +229,11 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
 
     return { figure, svg, png, pdf, manifest, effectiveSpec: working };
   } finally {
-    await browser.close();
+    // The layout page is closed explicitly rather than left for browser.close()
+    // to reap: under a reused browser there is no close to reap it, and one
+    // leaked page (plus its implicit context) per render exhausts Chromium.
+    await page?.close();
+    await releaseBrowser(browser);
   }
 }
 
@@ -222,10 +277,12 @@ async function layOut(
     const boxes = figure.elements.filter((element) => element.kind === "box");
     const rest = figure.elements.filter((element) => element.kind !== "box");
     const connectors = buildConnectors(scenes, measured, routes, boxes);
-    // Painter's order: boxes, then connectors over them, then text over both.
+    const marks = buildMarks(scenes, measured);
+    // Painter's order: marks, then boxes over them, then connectors, then text.
     // A connector under a box would vanish; a label under a connector would be
-    // crossed out by it.
-    figure.elements = [...boxes, ...connectors, ...rest];
+    // crossed out by it; and a shaded region is what the rest is drawn ON, so
+    // it goes underneath all three.
+    figure.elements = [...marks, ...boxes, ...connectors, ...rest];
   }
 
   // Last, and only now: layout is finished, so nothing an effect records can
@@ -292,8 +349,24 @@ export function toLaidOutFigure(
 ): LaidOutFigure {
   const elements: PlacedElement[] = [];
 
+  // What each block asked for, so `declared-size-honoured` can compare the
+  // request against the measurement. `spec` here is the spec that was
+  // actually laid out -- repaired, if the loop edited it -- so a repair that
+  // set a new size is the declaration this compares against, not the author's
+  // superseded original.
+  const { index } = normalise(spec);
+
   // Boxes first, then text: painter's order, so labels are never buried.
   for (const box of measured.boxes) {
+    const node = index.get(box.id);
+    const asked = node !== undefined && node.type === "block" ? node : undefined;
+    const declared =
+      asked === undefined || (asked.width === undefined && asked.height === undefined)
+        ? undefined
+        : {
+            ...(asked.width === undefined ? {} : { width: asked.width }),
+            ...(asked.height === undefined ? {} : { height: asked.height }),
+          };
     elements.push({
       kind: "box",
       id: box.id,
@@ -301,6 +374,12 @@ export function toLaidOutFigure(
       y: box.y,
       width: box.width,
       height: box.height,
+      ...(declared === undefined ? {} : { declared }),
+      // Carried from the same lookup rather than a second attach pass: like
+      // categoryGroup it changes no layout, so it is copied onto the placed
+      // figure by id once measurement has finished.
+      ...(asked?.annotates === undefined ? {} : { annotates: asked.annotates }),
+      ...(asked?.gridOf === undefined ? {} : { gridOf: asked.gridOf }),
       fill: box.fill,
       stroke: box.stroke,
       strokeWidth: box.borderWidth,

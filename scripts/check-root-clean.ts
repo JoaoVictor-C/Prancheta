@@ -27,6 +27,10 @@ const APPROVED_ROOT_ITEMS = new Set([
   'AGENTS.md',
   'CONTRIBUTING.md',
 
+  // Licence. Root is the only place GitHub, npm and every licence scanner
+  // look for it; a LICENSE under docs/ is a licence nobody finds.
+  'LICENSE',
+
   // Directories
   'src',
   'tests',
@@ -41,6 +45,11 @@ const APPROVED_ROOT_ITEMS = new Set([
 
   // Hidden config
   '.claude',
+
+  // Community health files and CI. GitHub reads SECURITY.md,
+  // CODE_OF_CONDUCT.md and the templates from here, which keeps them out of
+  // the root while still being found -- exactly what ADR 0011 wants.
+  '.github',
 
   // The repository itself, not a project file -- but readdirSync sees it like
   // any other entry, and ADR 0011 lists `.git/` among approved hidden items.

@@ -30,3 +30,39 @@ test("a label containing <script> is escaped so the raw tag does not appear", ()
   assert.ok(!html.includes("<script>alert"));
   assert.ok(html.includes("&lt;script&gt;alert(1)&lt;/script&gt;"));
 });
+
+// --- how a label may be broken ----------------------------------------------
+
+function labelSpec(wrap?: "normal" | "none" | "anywhere") {
+  return parseSpec({
+    version: 1,
+    root: {
+      type: "block",
+      id: "solo",
+      label: "Antidisestablishmentarianism",
+      width: 60,
+      ...(wrap === undefined ? {} : { wrap }),
+    },
+  });
+}
+
+test("the default never permits a break inside a word", () => {
+  // It used to. "overflow-wrap: anywhere" was a global rule, so a label that
+  // missed its box by two pixels came apart mid-word -- and once wrapped,
+  // every line fits horizontally, so the repair loop saw a DOWNWARD overflow
+  // and grew the box taller around the damage instead of wider around the
+  // word.
+  const { html } = buildHtml(labelSpec());
+  assert.ok(!html.includes("overflow-wrap: anywhere"), "no label may opt in by default");
+});
+
+test('wrap: "anywhere" is how a genuinely unbreakable run opts back in', () => {
+  const { html } = buildHtml(labelSpec("anywhere"));
+  assert.match(html, /white-space: pre-line; overflow-wrap: anywhere/);
+});
+
+test('wrap: "none" still forbids wrapping outright, and is not "anywhere"', () => {
+  const { html } = buildHtml(labelSpec("none"));
+  assert.match(html, /white-space: nowrap/);
+  assert.ok(!html.includes("overflow-wrap: anywhere"));
+});

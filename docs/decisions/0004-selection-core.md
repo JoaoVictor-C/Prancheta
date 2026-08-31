@@ -2,7 +2,7 @@
 
 **Status:** committed · 2026-08-19 (during M2)
 **Decision:** Selection is a two-axis predicate vocabulary, a flat rule table evaluated as a deterministic ranking, and a hand-written narrative that cites rule ids. CI verifies the decision procedure — never a proxy for the model.
-**Method:** Terza session `ff301563` — 3 iterations, 2 passes, halt on signal, final confidence 0.88.
+**Method:** Reasoning session `ff301563` — 3 iterations, 2 passes, halt on signal, final confidence 0.88.
 
 ---
 

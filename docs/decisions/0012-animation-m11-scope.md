@@ -2,7 +2,7 @@
 
 **Status:** Accepted; three factual claims corrected by [ADR 0013](0013-animation-m11-1-check-what-renders.md)
 **Date:** 2026-08-24
-**Deciders:** Terza reasoning session (confidence 0.90, 4 iterations, 1 pass, 1 pivot)
+**Deciders:** Reasoning session (confidence 0.90, 4 iterations, 1 pass, 1 pivot)
 
 ## Context
 
@@ -81,7 +81,7 @@ Rejected: needs no new check, which sounds safe, but concretely fails to answer 
 
 ## References
 
-- Terza reasoning session transcript (2026-08-24), 4 G/C/S iterations, 1 ToT pivot
+- Reasoning session transcript (2026-08-24), 4 iterations, 1 pivot
 - [src/anim/diff.ts](../../src/anim/diff.ts) — the identity/diff mechanism this design builds on
 - [ROADMAP.md](../../ROADMAP.md), 2026-08-23 entry — the curve-flattening precedent for sampling-tolerance discipline
 - [ROADMAP.md](../../ROADMAP.md), 2026-08-24 entries — the reachability audit and the `constraints-satisfied` fix this ADR's guard-refusal convention follows

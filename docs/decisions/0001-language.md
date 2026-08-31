@@ -2,7 +2,7 @@
 
 **Status:** committed · 2026-08-18
 **Decision:** TypeScript. Node is the only mandatory runtime; Python is an optional, on-demand extra.
-**Method:** Terza reasoning session `e2348418` — 4 iterations, 2 passes, halt on signal, final confidence 0.86.
+**Method:** Reasoning session `e2348418` — 4 iterations, 2 passes, halt on signal, final confidence 0.86.
 
 ---
 

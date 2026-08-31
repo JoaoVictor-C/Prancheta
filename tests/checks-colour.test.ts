@@ -77,6 +77,91 @@ test("a callout (transparent-fill owner) is checked against the canvas, not the 
   assert.match(contrast[0]!.detail ?? "", /against #808080/);
 });
 
+test("an unowned label inside a filled box is scored against THAT box, not the canvas", () => {
+  // The defect, demonstrated by render before it was fixed: near-black text
+  // centred in a near-black patch it did not own reported "18.42:1 against
+  // #FFFFFF" and passed, because the substrate was resolved by ownership
+  // rather than by geometry. The word was invisible in the PNG.
+  const patch = box({ id: "patch", fill: "#101010", x: 0, y: 0, width: 100, height: 100 });
+  const label = text({ ownerId: null, fill: "#141414" });
+  const checks = runChecks(figure({ elements: [patch, label], background: "#FFFFFF" }));
+  const contrast = checks.filter((c) => c.id === "contrast-sufficient");
+  assert.equal(contrast.length, 1);
+  assert.equal(contrast[0]!.status, "fail");
+  assert.match(contrast[0]!.detail ?? "", /against #101010/);
+});
+
+test("a label straddling a filled box and the canvas is scored against the worse of the two", () => {
+  // It lies on both. Picking either one alone would be a guess reported as a
+  // measurement, so the worse surface is the one named.
+  const patch = box({ id: "patch", fill: "#101010", x: 0, y: 0, width: 12, height: 100 });
+  const label = text({
+    ownerId: null,
+    fill: "#141414",
+    lines: [{ text: "x", x: 8, y: 10, box: { x: 8, y: 4, width: 20, height: 12 }, baselineUncertain: false }],
+  });
+  const checks = runChecks(figure({ elements: [patch, label], background: "#FFFFFF" }));
+  const contrast = checks.filter((c) => c.id === "contrast-sufficient");
+  assert.equal(contrast[0]!.status, "fail");
+  assert.match(contrast[0]!.detail ?? "", /against #101010/);
+});
+
+test("a semi-transparent fill is composited before it is measured, not scored raw", () => {
+  // Caught by fixtures/allow-overlap.json: a Venn circle filled
+  // rgba(57,102,201,0.34) on white is a PALE blue on the page. Scoring the
+  // raw channels reads it as saturated blue and fails a label that is
+  // perfectly legible -- a false alarm is as much a lie as a silent pass.
+  const circle = box({
+    id: "setA",
+    fill: "rgba(57, 102, 201, 0.34)",
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 100,
+  });
+  const label = text({ ownerId: null, fill: "#1B2A4A" });
+  const checks = runChecks(figure({ elements: [circle, label], background: "#FFFFFF" }));
+  const contrast = checks.filter((c) => c.id === "contrast-sufficient");
+  assert.equal(contrast[0]!.status, "pass");
+  assert.match(contrast[0]!.detail ?? "", /against rgb\(/, "expected a composited surface");
+  assert.doesNotMatch(contrast[0]!.detail ?? "", /0\.34/, "the raw rgba must not be what was measured");
+});
+
+test("stacked semi-transparent fills composite in paint order", () => {
+  // Two 50% blacks over white are darker than one; the check has to see the
+  // stack, not just the topmost layer.
+  const under = box({ id: "under", fill: "rgba(0, 0, 0, 0.5)", x: 0, y: 0, width: 100, height: 100 });
+  const over = box({ id: "over", fill: "rgba(0, 0, 0, 0.5)", x: 0, y: 0, width: 100, height: 100 });
+  const label = text({ ownerId: null, fill: "#FFFFFF" });
+  const one = runChecks(figure({ elements: [under, label], background: "#FFFFFF" }))
+    .filter((c) => c.id === "contrast-sufficient")[0]!;
+  const two = runChecks(figure({ elements: [under, over, label], background: "#FFFFFF" }))
+    .filter((c) => c.id === "contrast-sufficient")[0]!;
+  assert.notEqual(one.detail, two.detail, "a second layer must change the measured surface");
+});
+
+test("a label clear of every filled box still falls back to the canvas background", () => {
+  // The geometric lookup must not drag in a box the label does not touch.
+  const elsewhere = box({ id: "elsewhere", fill: "#101010", x: 500, y: 500, width: 50, height: 50 });
+  const label = text({ ownerId: null, fill: "#141414" });
+  const checks = runChecks(figure({ elements: [elsewhere, label], background: "#FFFFFF" }));
+  const contrast = checks.filter((c) => c.id === "contrast-sufficient");
+  assert.equal(contrast[0]!.status, "pass");
+  assert.match(contrast[0]!.detail ?? "", /against #FFFFFF/);
+});
+
+test("an owner with a fill still wins over anything underneath it", () => {
+  // The common path must be untouched: the owner is what the label sits on,
+  // whatever else the figure stacks behind it.
+  const behind = box({ id: "behind", fill: "#000000", x: 0, y: 0, width: 200, height: 200 });
+  const owner = box({ id: "box-1", fill: "#FFFFFF", x: 0, y: 0, width: 100, height: 100 });
+  const label = text({ fill: "#101010" });
+  const checks = runChecks(figure({ elements: [behind, owner, label], background: "#808080" }));
+  const contrast = checks.filter((c) => c.id === "contrast-sufficient");
+  assert.equal(contrast[0]!.status, "pass");
+  assert.match(contrast[0]!.detail ?? "", /against #FFFFFF/);
+});
+
 test("a named CSS colour (not hex) is reported not-applicable, never a silent pass", () => {
   const owner = box({ fill: "#171A21" });
   const label = text({ fill: "red" });

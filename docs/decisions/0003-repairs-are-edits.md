@@ -2,7 +2,7 @@
 
 **Status:** committed · 2026-08-19 (during M1)
 **Decision:** The repair loop never mutates the caller's spec. It produces an ordered list of typed edits, applies them to a copy, and reports both the edits and the resulting geometry.
-**Method:** decided directly. No Terza session — the alternative loses on a straight superset argument, with no contested trade-off to resolve.
+**Method:** decided directly. No reasoning session — the alternative loses on a straight superset argument, with no contested trade-off to resolve.
 
 ---
 

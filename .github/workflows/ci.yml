@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+# A second push to the same PR makes the first run irrelevant, and these jobs
+# each launch a browser.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: Core suite (Node + Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: npm
+
+      - run: npm ci
+
+      # The browser is the layout oracle: without it there is no measurement,
+      # so this is a dependency, not a test convenience.
+      - run: npx playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Core tests
+        run: npm test
+
+      # Generated views and references are compared byte-for-byte. This job is
+      # also what proves the .gitattributes eol=lf fix holds: a CRLF checkout
+      # used to fail exactly here.
+      - name: Generated docs are current
+        run: npm run check:docs
+
+      - name: Root directory is clean
+        run: npm run check:root-clean
+
+  modules:
+    name: Module suite (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 25
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Install module dependencies
+        run: python -m pip install -r modules/requirements.txt
+
+      # These spawn every module for real and FAIL rather than skip when an
+      # import is missing. That is deliberate: a probe that goes quietly green
+      # is indistinguishable from one that never ran.
+      - name: Module end-to-end tests
+        run: npm run test:modules

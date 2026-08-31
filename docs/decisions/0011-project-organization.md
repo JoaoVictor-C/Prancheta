@@ -24,11 +24,23 @@ The project had good technical patterns but needed structural organization to sc
 The root contains:
 
 - **Package files:** `package.json`, `package-lock.json`, `tsconfig.json`, etc.
-- **Top-level documentation:** `README.md`, `ROADMAP.md`, `TODO.md`, `AGENTS.md`
-- **Directories:** `src/`, `tests/`, `fixtures/`, `modules/`, `docs/`, `assets/`, `out/`, `node_modules/`
-- **Hidden configuration:** `.claude/`, `.gitignore`, `.git/`, `.npmrc`, etc.
+- **Top-level documentation:** `README.md`, `ROADMAP.md`, `TODO.md`, `AGENTS.md`, `CONTRIBUTING.md`
+- **The licence:** `LICENSE`
+- **Directories:** `src/`, `tests/`, `fixtures/`, `modules/`, `docs/`, `assets/`, `out/`, `node_modules/`, `scripts/`, `experiments/`, `temp/`
+- **Hidden configuration:** `.claude/`, `.github/`, `.gitignore`, `.gitattributes`, `.git/`, `.npmrc`, etc.
 
 Everything else must go elsewhere.
+
+### Two amendments from opening the repository ([ADR 0021](0021-opening-the-repository.md))
+
+`LICENSE` is in the root and not under `docs/`, breaking the pattern
+deliberately: GitHub, npm and every licence scanner look in the root, and a
+licence nobody finds is not a licence.
+
+`.github/` holds the community health files — `SECURITY.md`,
+`CODE_OF_CONDUCT.md`, the issue and PR templates — and the CI workflows.
+GitHub finds them there, which is what lets this ADR's root discipline survive
+contact with an open repository: the alternative was four more root files.
 
 ### Experiment locations
 
@@ -51,6 +63,10 @@ Each experiment lives in its own subdirectory with a README explaining its purpo
 - No credentials in root (api.env, .env, tokens.json, etc.)
 - Sensitive files must be in properly-gitignored locations or managed by the build system
 - `.env.example` and `secrets.template.json` document required vars; actual secrets never committed
+- **Ignore rules live in the repository, never in a developer's global config.** A
+  global `~/.config/git/ignore` does not travel with a clone, so a secret it
+  protects is protected on exactly one machine. `.claude/settings.local.json`
+  and `.env` are ignored by the project `.gitignore` for this reason (ADR 0021)
 
 ## Rationale
 

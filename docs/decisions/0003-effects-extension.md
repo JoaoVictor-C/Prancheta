@@ -2,7 +2,7 @@
 
 **Status:** planned · 2026-08-23
 **Decision:** Extend effects system with gradients, patterns, blend modes, distortion, color effects, stroke effects, and transforms through a 5-phase implementation with validation gates.
-**Method:** Terza reasoning session `df45fdfc` — 3 iterations, 2 passes, halt on signal, final confidence 0.94.
+**Method:** Reasoning session `df45fdfc` — 3 iterations, 2 passes, halt on signal, final confidence 0.94.
 **Context:** Current system has rotation, linear gradients, and comprehensive filter effects. Must maintain SVG 1.1 portability for resvg, librsvg, Inkscape, Illustrator export.
 
 ---

@@ -1,5 +1,8 @@
 # Prancheta
 
+[![CI](https://github.com/JoaoVictor-C/Prancheta/actions/workflows/ci.yml/badge.svg)](https://github.com/JoaoVictor-C/Prancheta/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 *Prancheta* — Portuguese for a drafting board: the flat surface a draftsman pins paper to, with a parallel rule and set squares, to draw something that has to be *correct*, not merely pretty.
 
 ## What this is
@@ -24,24 +27,47 @@ Correct figures come from **code, not pixels**, plus a **render–inspect–repa
 
 ## Gallery
 
-Three generator experiments from [experiments/generators](experiments/generators), rendered through the same pipeline as every other figure here.
+Seven generator experiments from [experiments/generators](experiments/generators) and one figure of the pipeline itself, rendered through the same pipeline as every other figure here. Each generator is a program you run once; it writes a spec, and `render` draws it. **Every plate below passes its own checks** — that is the only claim being made for them, and it is not the same as being any good.
+
+### Fields
+
+Computed mark fields. All five are built from discrete separated marks on a lattice, because `boxes-do-not-overlap` leaves no other way to draw a curve that crosses itself.
 
 |  |  |
 |---|---|
 | ![Chladni plate nodal patterns](docs/gallery/chladni.png) | ![Logistic map and Mandelbrot conjugacy](docs/gallery/conjugacy.png) |
 | Four vibration modes of a square plate — sand settling along the nodal curves of `cos(nπx)cos(mπy) − cos(mπx)cos(nπy)`. | The logistic map's bifurcation cascade and the Mandelbrot set's real axis, shown as the same dynamical system in two coordinates. |
-| ![The argument principle as a direction field](docs/gallery/argument.png) | ![How an agent uses Prancheta](docs/gallery/how-the-agent-uses-prancheta.png) |
-| The phase field of `(z²−1)/(z²+1)`: 6,000 strokes each **turned to** `arg f` and lit tail-to-head, with three closed walks whose accumulated argument lands on `+2π`, `−2π` and `0`. Rotation here is the data, not decoration — the plate could not have been drawn before blocks could turn. | The pipeline drawing itself: what an agent does (1–5) and what runs inside (6–15), with the two refusal paths in orange. Wrapped into a square by ELK rather than laid out as one 4004px row — the spec is [beside it](docs/gallery/how-the-agent-uses-prancheta.json). |
+| ![The argument principle as a direction field](docs/gallery/argument.png) | ![Interference from three point sources](docs/gallery/stillwater.png) |
+| The phase field of `(z²−1)/(z²+1)`: 6,000 strokes each **turned to** `arg f` and lit tail-to-head, with three closed walks whose accumulated argument lands on `+2π`, `−2π` and `0`. Rotation here is the data, not decoration — the plate could not have been drawn before blocks could turn. | Three stones dropped together. Mark size carries `\|ψ\|` and hue carries its sign, so the nodal curves draw themselves by being the only places the figure declines to put ink. λ is set against the lattice pitch rather than chosen: below about ten samples per wavelength the lattice beats against the wave and the fringes turn to speckle. |
+| ![Newton basins for the fifth roots of unity](docs/gallery/newton.png) |  |
+| Newton's method for `z⁵ = 1`, 61,143 starting points coloured by the root each one reaches. The strip is a single descent into one boundary point — found by bisection between two basins, not by eye — at ×1, ×40 and ×1600. It looks the same at every scale because the boundary is a Wada set: every point of it borders all five basins at once. |  |
+
+### Figures
+
+Coordinate frames, free marks, connectors and angle marks — the things a mark field never touches.
+
+|  |  |
+|---|---|
+| ![How an agent uses Prancheta](docs/gallery/how-the-agent-uses-prancheta.png) | ![The geometry of a rainbow](docs/gallery/rainbow.png) |
+| The pipeline drawing itself: what an agent does (1–5) and what runs inside (6–15), with the two refusal paths in orange. Wrapped into a square by ELK rather than laid out as one 4004px row — the spec is [beside it](docs/gallery/how-the-agent-uses-prancheta.json). | A rainbow in three panels: one drop, the deviation minimum that makes a bow, and the sky that follows. The local normal at each refraction point is a frame **aimed at** the drop's centre, so no angle is typed twice, and every angle mark prints the value its own arc sweeps. The one relaxation it asks for is `allowCurvedConnectors`, which an angle mark cannot exist without. |
+| ![Projectile from a cliff](docs/gallery/projectile.png) |  |
+| An exercise figure. Markers sit at equal **time** intervals, so constant horizontal spacing against changing vertical spacing says the two axes are independent without a sentence saying it. The path is integrated from `v₀`, `θ` and `g`; every unknown the question asks for is marked `?`, and none of them is answered. |  |
 
 ## Install
 
-Developed and tested on **Node 25**. It runs the TypeScript directly — there is no build step.
+Needs **Node 22.18 or newer** — it runs the TypeScript directly, with no build step, so the runtime must strip types natively. Developed and tested on **Node 25**.
 
 ```bash
 npm install && npx playwright install chromium
 ```
 
-Python is optional, and only for the [figure modules](modules/README.md). Each module declares its own dependencies; several need none.
+Chromium is a dependency, not a test convenience: the browser is the layout oracle, so nothing renders without it.
+
+Python is optional, and only for the [figure modules](modules/README.md). Each module declares its own dependencies and several need none, so install them only if you want the modules:
+
+```bash
+python -m pip install -r modules/requirements.txt
+```
 
 ## Quick start
 
@@ -78,7 +104,7 @@ That only holds while *the thing measured is the thing drawn*, which is why the 
 
 ## What gets checked
 
-Eleven checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). They answer *is this figure malformed*, not *is this figure right*.
+Fifteen checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). Eleven answer *is this figure malformed*. The last four answer a narrower question that is not the same thing — *does this figure agree with itself* — and they exist because a figure can be perfectly well formed and still assert something untrue (ADR 0019).
 
 | check | what it asks |
 | --- | --- |
@@ -93,6 +119,10 @@ Eleven checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). 
 | `categorical-colours-distinguishable` | Do the colours in a shared `categoryGroup` stay distinct under deuteranopia and protanopia? |
 | `tick-labels-do-not-collide` | Do a scale's tick labels overlap each other? |
 | `constraints-satisfied` | Does every declared layout constraint — align, distribute, keepClear, sameSize, anchor — hold in the figure as laid out? |
+| `declared-size-honoured` | Was every block drawn at the size it asked for? A size below a block's own padding and border cannot be drawn, and the figure stays well formed while the instruction is overruled. |
+| `annotation-nearest-its-owner` | Is every label nearer the element it names than to any other? A reader attributes a label to whatever it sits closest to. |
+| `sweep-matches-its-label` | Does an angle mark sweep the angle its own label prints? |
+| `arc-is-circular` | Are both ends of every arc the same distance from the centre it turns about? An arc stated as two endpoints *and* a centre is over-determined, and the three can disagree. |
 
 Two more live in [src/anim/checks.ts](src/anim/checks.ts) and run over the *interior* of an animated transition rather than over a static figure; see [Animation](#animation) below.
 
@@ -154,6 +184,10 @@ It answers with a preset, a composition of two, or *no preset fits — author ra
 | [`mindmap`](src/presets/mindmap/PRESET.md) | A single-rooted tree radiating outward. |
 | [`annotated-figure`](src/presets/annotated-figure/PRESET.md) | A shape or scene with callouts on leader lines. |
 | [`chart`](src/presets/chart/PRESET.md) | Bar, line and scatter: values with a scale, not a graph. |
+
+**Free outlines** where a box cannot reach. A `Mark` is a start point and a run of segments — lines, and circular arcs about a stated centre — flattened at layout time into the polyline every check walks, at the same 0.05px bound a curved connector uses. It carries no label and takes no part in layout: it is ink, painted beneath everything else, and a filled one is a surface `contrast-sufficient` reads. This is what draws the region between a chord and its arc, which no inscribed polygon can express.
+
+**Frames**, so a figure's own numbers appear once. A frame is a coordinate system — origin, units, and a rotation either stated or *aimed* at another point — resolved to canvas coordinates before anything measures or checks. An incline drawn at 30° is a frame rotated 30°; the slope, the block on it and the normal force are all positioned in that frame, so none of them can disagree with it. Origins compose, `Frame.grid` draws a numbered coordinate plane, and a tick across AB is a block on the y axis of a frame aimed from A at B — which needs no trigonometry, and never writes AB's angle down where it could be wrong.
 
 **Thirteen block shapes** — seven geometric (`rect`, `circle`, `ellipse`, `diamond`, `hexagon`, `stadium`, `triangle`) and six symbols (`parallelogram`, `trapezoid`, `chevron`, `cross`, `star`, `note`). Every one is a polygon, deliberately: `shapeVertices` hands the same vertex list to `inPolygon` for containment and to the `<polygon>` for drawing, so `label-within-shape` answers about the shape on the page rather than an approximation. A curved symbol — a cylinder, a cloud — would break that identity and is not offered. [docs/design/GEOMETRY.generated.md](docs/design/GEOMETRY.generated.md) states each one's inscribed area, which is what tells a container from a marker: a `star` holds 27.6% of its bounding box and a `cross` 55.2%, and neither will take an ordinary label.
 
@@ -274,8 +308,10 @@ A hand-written second binding drifts — a flag gets added to the CLI, the MCP t
 
 | script | what it does |
 | --- | --- |
-| `npm run check:all` | Everything below that gates: typecheck, the suite, both staleness checks, and the root-clean check. `npm run validate` is an alias. |
-| `npm test` | The full suite. |
+| `npm run check:all` | Everything below that gates: typecheck, both suites, both staleness checks, and the root-clean check. `npm run validate` is an alias. |
+| `npm test` | The core suite. Node and Chromium only — green on a fresh clone with no Python installed. |
+| `npm run test:modules` | The Python module suite. Spawns every module for real, and **fails rather than skips** when an interpreter or import is missing. |
+| `npm run test:all` | Both. |
 | `npm run typecheck` | `tsc --noEmit`. |
 | `npm run check:independent` | Re-render exported SVGs with resvg — a Rust engine, no browser — to confirm they survive outside the engine that made them. |
 | `npm run check:fonts-travel` | Render with `--fontEmbed outline` and `embed` and confirm both survive with no system fonts available at all. |
@@ -297,6 +333,9 @@ Generated files are generated for a reason: a hand-written table of effect bleed
 - **Effects are checked geometry** — a shadow is ink, its reach is computed, and a clipped halo is a defect. [0006-effects-are-checked-geometry](docs/decisions/0006-effects-are-checked-geometry.md)
 - **Three constraints may be stood down, and say so** — a relaxed check reports not-applicable, never pass. [0010-constraint-toggles](docs/decisions/0010-constraint-toggles.md)
 - **Animation is checked motion, or it is not shipped** — six ADRs, each new freedom arriving with the check that constrains it, and a camera refused because no check for it can exist. [0012](docs/decisions/0012-animation-m11-scope.md)–[0017](docs/decisions/0017-animation-m15-routes.md)
+- **Geometry a figure derives, and labels that may sit on what they name** — where a figure can compute its geometry from the quantity it asserts, the two cannot disagree; a check is for the gap derivation cannot reach. [0019-derived-geometry-and-annotation](docs/decisions/0019-derived-geometry-and-annotation.md)
+- **One browser per process, and a loop you do not dread** — 195 Chromium launches per run was the cost; the fix is a batch resource, and the ladder `test:one` → `test:fast` → the suite. [0020-the-test-loop](docs/decisions/0020-the-test-loop.md)
+- **Opening the repository** — a licence that is granted and not merely declared, secrets ignored by the clone rather than by one developer's machine, and a suite split by dependency so a fresh clone runs green without Python. [0021-opening-the-repository](docs/decisions/0021-opening-the-repository.md)
 - **The preset input is validated, and the line against the checks is drawn at repair** — the one surface an agent authors was the one surface nothing read. [0018-preset-input-validation](docs/decisions/0018-preset-input-validation.md)
 
 ## Further reading
@@ -307,6 +346,18 @@ Generated files are generated for a reason: a hand-written table of effect bleed
 - [docs/research/landscape.md](docs/research/landscape.md) — survey of existing tools, libraries, agent skills, and academic work.
 - [docs/research/language-choice.md](docs/research/language-choice.md) — Python vs TypeScript, with a recommendation.
 - [docs/research/candidate-modules.md](docs/research/candidate-modules.md) — the survey the module repertoire was drawn from.
+
+## Contributing
+
+Issues and pull requests are welcome. [CONTRIBUTING.md](CONTRIBUTING.md) covers setup, where code belongs, and what a review looks for; participation is under the [Code of Conduct](.github/CODE_OF_CONDUCT.md). Security problems go through the [security policy](.github/SECURITY.md) rather than the issue tracker.
+
+The most useful feature request is a **figure you could not draw**. The concrete figure is what says whether the answer is a preset, a module, or a new primitive.
+
+## Licence
+
+MIT — see [LICENSE](LICENSE).
+
+Bundled third-party assets keep their own terms: Inter under the SIL Open Font License, and the Natural Earth and public-domain image data used by the modules and experiments. Each one's source and licence is recorded in [assets/README.md](assets/README.md).
 
 ## Non-goals
 

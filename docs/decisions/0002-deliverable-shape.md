@@ -2,7 +2,7 @@
 
 **Status:** committed · 2026-08-18
 **Decision:** One repository, one version. Three entry points in strict order: **typed TS library** (contract holder) → **CLI** (first binding) → **MCP adapter** (second binding). The Claude skill is a *generated view*, not the product.
-**Method:** Terza reasoning session `99ba9b31` — 2 iterations, 1 pass, halt on signal, final confidence 0.86.
+**Method:** Reasoning session `99ba9b31` — 2 iterations, 1 pass, halt on signal, final confidence 0.86.
 **Context:** used with Claude Code today; must port to other agent hosts later.
 
 ---
