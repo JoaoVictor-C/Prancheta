@@ -124,3 +124,40 @@ test("exampleArgs produces a runnable --args value", () => {
     }
   }
 });
+
+/**
+ * No module may name a font the measuring machine might not have.
+ *
+ * Every module used to write `font-family="Segoe UI, sans-serif"` into its own
+ * SVG. Segoe UI is proprietary and absent from every Linux machine, so the
+ * browser that MEASURES the result resolved something else, the glyphs came
+ * out a different width, and the same figure was a different figure depending
+ * on who rendered it. Three module tests failed that way the first time CI
+ * ran -- and one of them was a PLANTED defect in the map probe that stopped
+ * being detected at all, which is the silent pass this repertoire exists to
+ * refuse.
+ *
+ * The core now hands the family down with the canvas size and supplies the
+ * matching @font-face when it loads the SVG. This is the guard that keeps a
+ * hardcoded face from creeping back in one render at a time.
+ */
+test("no module hardcodes a font family instead of using the one it was given", () => {
+  const offenders: string[] = [];
+  for (const module of MODULES) {
+    for (const entry of module.entries) {
+      const source = readFileSync(join(root, entry.path), "utf8");
+      for (const [i, line] of source.split("\n").entries()) {
+        // The declaration the core supplies, and the module-level default that
+        // exists only for running the script by hand, are both fine.
+        if (!line.includes("font-family=")) continue;
+        if (line.includes("{FONT_STACK}")) continue;
+        offenders.push(`${entry.path}:${i + 1}`);
+      }
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    `these lines name a font directly instead of using FONT_STACK: ${offenders.join(", ")}`,
+  );
+});

@@ -10,6 +10,8 @@
 
 import { spawn } from "node:child_process";
 import { chromium } from "playwright";
+import { BUNDLED_FONT_FAMILY } from "../export/fonts.ts";
+import { theme } from "../theme.ts";
 import { parseModuleOutput } from "./protocol.ts";
 import type { ModuleOutput } from "./protocol.ts";
 import { verifyModuleFigure } from "./verify.ts";
@@ -22,8 +24,21 @@ export type RunModuleOptions = {
   timeoutMs?: number;
 };
 
+/**
+ * The face every module is told to draw in, and the core measures against.
+ *
+ * Injected here rather than left to each caller: a module invoked without it
+ * would silently fall back to naming a font the measuring browser may not
+ * have, which is the defect this exists to remove. A caller may still override
+ * it -- the export layer has a real reason to, and nothing else does.
+ */
+export const MODULE_FONT_STACK = `${BUNDLED_FONT_FAMILY}, ${theme.text.family}`;
+
 export async function runModule(options: RunModuleOptions): Promise<ModuleOutput> {
-  const payload = JSON.stringify(options.input);
+  const payload = JSON.stringify({
+    fontFamily: MODULE_FONT_STACK,
+    ...options.input,
+  });
   return new Promise<ModuleOutput>((resolve, reject) => {
     const child = spawn(options.command, options.args, { stdio: ["pipe", "pipe", "pipe"] });
     let stdout = "";

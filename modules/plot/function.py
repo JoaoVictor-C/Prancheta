@@ -30,6 +30,14 @@ from typing import Any, Callable
 
 import numpy as np
 
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
+
 ALLOWED_NAMES: dict[str, Any] = {
     "sin": math.sin, "cos": math.cos, "tan": math.tan,
     "asin": math.asin, "acos": math.acos, "atan": math.atan,
@@ -240,7 +248,7 @@ def render_functions(width: float, height: float, functions: list[str], xrange: 
         )
         parts.append(
             f'<text data-pr-id="{lid}" x="{swatch_x + 26:.2f}" y="{row_y:.2f}" text-anchor="start" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="13" '
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="13" '
             f'font-weight="600" fill="{colour}">{expr}</text>'
         )
         # No owner: a stroked <path> (fill="none") has no isPointInFill area
@@ -339,13 +347,13 @@ def render_fit(width: float, height: float, points: list[list[float]], degree: i
     )
     parts.append(
         f'<text data-pr-id="fit-equation" x="{width - right:.2f}" y="{top + 14:.2f}" text-anchor="end" '
-        f'font-family="Segoe UI, sans-serif" font-size="13" font-weight="600" fill="{COLOURS[1]}">y = {terms}</text>'
+        f'font-family="{FONT_STACK}" font-size="13" font-weight="600" fill="{COLOURS[1]}">y = {terms}</text>'
     )
     # No owner: same reasoning as the curve legend in render_functions above.
     elements.append({"id": "fit-equation", "kind": "label", "claim": f"the fitted equation, R^2={r2:.4f}"})
     parts.append(
         f'<text data-pr-id="fit-r2" x="{width - right:.2f}" y="{top + 30:.2f}" text-anchor="end" '
-        f'font-family="Segoe UI, sans-serif" font-size="12" fill="{DIM}">R² = {r2:.4f}</text>'
+        f'font-family="{FONT_STACK}" font-size="12" fill="{DIM}">R² = {r2:.4f}</text>'
     )
     elements.append({"id": "fit-r2", "kind": "label", "claim": "the coefficient of determination"})
 
@@ -403,6 +411,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 760))
     height = float(request.get("height", 470))
 

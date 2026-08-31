@@ -110,6 +110,20 @@ export type ModuleInput = {
   width: number;
   height: number;
   /**
+   * The font family stack the module must set its text in.
+   *
+   * Supplied because the CORE measures the result, and the two have to agree
+   * about which glyphs were drawn. Every module used to hardcode "Segoe UI",
+   * which is proprietary and absent from every Linux machine, so Chromium
+   * resolved something else and the same figure measured differently
+   * elsewhere -- three module tests failed that way the first time CI ran, one
+   * of them a planted defect that stopped being detected at all.
+   *
+   * The core provides the matching @font-face when it loads the SVG, so a
+   * module can name this face and rely on it resolving.
+   */
+  fontFamily?: string;
+  /**
    * Amended parameter values for repair. Keys are parameter names from a prior
    * invocation's `output.parameters[]`. The module applies these overrides,
    * within their declared bounds, and renders again.

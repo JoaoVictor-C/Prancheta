@@ -33,6 +33,14 @@ import numpy as np
 from metpy.calc import dry_lapse, lcl, parcel_profile
 from metpy.units import units
 
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
+
 P_TOP, P_BOTTOM = 100.0, 1000.0
 T_MIN, T_MAX = -40.0, 40.0
 SKEW_K = 22.0  # degC per log-decade of pressure; tilts isotherms toward 45 degrees
@@ -101,7 +109,7 @@ def render(width: float, height: float, pressure: list[float], temperature: list
         tick_id = f"isobar-{p}"
         parts.append(
             f'<text data-pr-id="{tick_id}" x="{left - 8:.2f}" y="{cy:.2f}" text-anchor="end" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="10" fill="{TICK_COLOUR}">{p}</text>'
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="10" fill="{TICK_COLOUR}">{p}</text>'
         )
         elements.append({"id": tick_id, "kind": "label", "claim": f"the {p} hPa isobar"})
     for t in range(-80, 41, 10):
@@ -118,7 +126,7 @@ def render(width: float, height: float, pressure: list[float], temperature: list
                 # same corner -- module-labels-do-not-collide caught it on
                 # the first honest render.
                 f'<text data-pr-id="{tick_id}" x="{x0:.2f}" y="{top + plot_h + 22:.2f}" text-anchor="middle" '
-                f'font-family="Segoe UI, sans-serif" font-size="10" fill="{TICK_COLOUR}">{t}°</text>'
+                f'font-family="{FONT_STACK}" font-size="10" fill="{TICK_COLOUR}">{t}°</text>'
             )
             elements.append({"id": tick_id, "kind": "label", "claim": f"the {t}°C isotherm"})
 
@@ -215,7 +223,7 @@ def render(width: float, height: float, pressure: list[float], temperature: list
     # own fill, so it was never a real containment claim to begin with.
     parts.append(
         f'<text data-pr-id="lcl-label" x="{lcl_cx + 26:.2f}" y="{lcl_cy - 26:.2f}" text-anchor="start" '
-        f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="{LCL_COLOUR}">LCL</text>'
+        f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="11" font-weight="600" fill="{LCL_COLOUR}">LCL</text>'
     )
     elements.append({"id": "lcl-label", "kind": "label", "claim": "names the LCL marker"})
 
@@ -260,6 +268,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 640))
     height = float(request.get("height", 640))
 

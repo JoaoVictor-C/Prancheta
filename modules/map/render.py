@@ -27,6 +27,14 @@ from pyproj import Transformer
 from shapely.geometry import LineString, Polygon, box as shapely_box, shape as shapely_shape
 from shapely.ops import transform as shapely_transform
 
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
+
 # Lon/lat outlines. "harbour" is deliberately L-shaped: the centre of its
 # bounding box lies in the notch, outside the polygon itself.
 REGIONS: dict[str, dict[str, Any]] = {
@@ -205,7 +213,7 @@ def render(width: float, height: float, misdeclare: bool) -> dict[str, Any]:
         labels.append(
             f'<text data-pr-id="{label_id}" x="{cx:.2f}" y="{cy:.2f}" '
             f'text-anchor="middle" dominant-baseline="middle" '
-            f'font-family="Segoe UI, sans-serif" font-size="15" fill="#E6E9EF">{name}</text>'
+            f'font-family="{FONT_STACK}" font-size="15" fill="#E6E9EF">{name}</text>'
         )
         # NO declaredBox for a label. The first version of this module guessed
         # one from the character count and was wrong by up to 16px, which the
@@ -464,7 +472,7 @@ def render_campaign(width: float, height: float, misdeclare: bool) -> dict[str, 
         else:
             overlay.append(
                 f'<text data-pr-id="{label_id}" x="{lcx:.2f}" y="{lcy:.2f}" text-anchor="middle" '
-                f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="{size}" fill="{label_ink(cat["fill"])}" '
+                f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="{size}" fill="{label_ink(cat["fill"])}" '
                 f'font-weight="600">{r["name"]}</text>'
             )
             elements.append({"id": label_id, "kind": "label", "owner": r["id"], "claim": f'names {r["id"]}'})
@@ -494,7 +502,7 @@ def render_campaign(width: float, height: float, misdeclare: bool) -> dict[str, 
     ilx, ily = to_canvas(ipoint.x, ipoint.y)
     overlay.append(
         f'<text data-pr-id="ostholm-label" x="{ilx:.2f}" y="{ily:.2f}" text-anchor="middle" '
-        f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="9" fill="{label_ink(island_cat["fill"])}" '
+        f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="9" fill="{label_ink(island_cat["fill"])}" '
         f'font-weight="600">Ostholm</text>'
     )
     elements.append({"id": "ostholm-label", "kind": "label", "owner": "ostholm", "claim": "names ostholm"})
@@ -507,7 +515,7 @@ def render_campaign(width: float, height: float, misdeclare: bool) -> dict[str, 
         f'<path d="M {rose_cx:.1f} {rose_cy - rose_r + 3:.1f} L {rose_cx - 5:.1f} {rose_cy + 6:.1f} '
         f'L {rose_cx:.1f} {rose_cy + 2:.1f} L {rose_cx + 5:.1f} {rose_cy + 6:.1f} Z" fill="#0F1115" opacity="0.75"/>'
         f'<text x="{rose_cx:.1f}" y="{rose_cy - rose_r - 6:.1f}" text-anchor="middle" '
-        f'font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#0F1115" opacity="0.75">N</text>'
+        f'font-family="{FONT_STACK}" font-size="11" font-weight="700" fill="#0F1115" opacity="0.75">N</text>'
     )
 
     # --- movement arrows: real polylines, declared box from real points -----
@@ -573,7 +581,7 @@ def render_campaign(width: float, height: float, misdeclare: bool) -> dict[str, 
     )
     overlay.append(
         f'<text data-pr-id="legend-title" x="{legend_x + legend_w / 2:.2f}" y="{legend_y + 18:.2f}" text-anchor="middle" '
-        f'font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#0F1115">Fictional campaign map</text>'
+        f'font-family="{FONT_STACK}" font-size="12" font-weight="700" fill="#0F1115">Fictional campaign map</text>'
     )
     elements.append({"id": "legend-title", "kind": "label", "claim": "the legend title"})
     for i, (cat_id, cat) in enumerate(CAMPAIGN_CATEGORIES.items()):
@@ -589,7 +597,7 @@ def render_campaign(width: float, height: float, misdeclare: bool) -> dict[str, 
         text_id = f"legend-label-{cat_id}"
         overlay.append(
             f'<text data-pr-id="{text_id}" x="{legend_x + 32:.2f}" y="{ry + 10:.2f}" text-anchor="start" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#0F1115">{cat["label"]}</text>'
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="11" fill="#0F1115">{cat["label"]}</text>'
         )
         # No owner: the label sits BESIDE its swatch, not inside its fill --
         # module-label-within-feature correctly refused this the first time,
@@ -811,7 +819,7 @@ def _render_political_region(
         if font_size > 0:
             overlay.append(
                 f'<text data-pr-id="{label_id}" x="{lcx:.2f}" y="{lcy:.2f}" text-anchor="middle" '
-                f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="{font_size}" '
+                f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="{font_size}" '
                 f'fill="{label_ink(fill)}" font-weight="600">{c["name"]}</text>'
             )
             elements.append({"id": label_id, "kind": "label", "owner": cid, "claim": f'names {cid}'})
@@ -832,7 +840,7 @@ def _render_political_region(
     )
     overlay.append(
         f'<text data-pr-id="legend-title" x="{legend_x + legend_w / 2:.2f}" y="{legend_y + 18:.2f}" text-anchor="middle" '
-        f'font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#0F1115">{legend_title}</text>'
+        f'font-family="{FONT_STACK}" font-size="12" font-weight="700" fill="#0F1115">{legend_title}</text>'
     )
     elements.append({"id": "legend-title", "kind": "label", "claim": "the legend title"})
     for i, (category, fill) in enumerate(category_colors.items()):
@@ -848,7 +856,7 @@ def _render_political_region(
         text_id = f"legend-label-{i}"
         overlay.append(
             f'<text data-pr-id="{text_id}" x="{legend_x + 32:.2f}" y="{ry + 10:.2f}" text-anchor="start" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="11" fill="#0F1115">{category}</text>'
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="11" fill="#0F1115">{category}</text>'
         )
         elements.append({"id": text_id, "kind": "label", "claim": f"names the {category} category"})
 
@@ -903,6 +911,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 720))
     height = float(request.get("height", 520))
 

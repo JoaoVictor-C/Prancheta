@@ -25,6 +25,14 @@ from typing import Any
 from dna_features_viewer import GraphicFeature
 from dna_features_viewer.compute_features_levels import compute_features_levels
 
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
+
 BASELINE = "#3D4757"
 TICK_COLOUR = "#9AA4B2"
 LABEL_COLOUR = "#0F1115"
@@ -169,7 +177,7 @@ def render(width: float, height: float, length: int, raw_features: list[dict[str
         tick_id = f"tick-{i}"
         parts.append(
             f'<text data-pr-id="{tick_id}" x="{tx:.2f}" y="{ty + 22:.2f}" text-anchor="middle" '
-            f'font-family="Segoe UI, sans-serif" font-size="11" fill="{TICK_COLOUR}">{bp}</text>'
+            f'font-family="{FONT_STACK}" font-size="11" fill="{TICK_COLOUR}">{bp}</text>'
         )
         elements.append({"id": tick_id, "kind": "label", "claim": f"the coordinate {bp} bp"})
 
@@ -225,7 +233,7 @@ def render(width: float, height: float, length: int, raw_features: list[dict[str
         if mode == "inside":
             parts.append(
                 f'<text data-pr-id="{lid}" x="{label_x:.2f}" y="{cy:.2f}" text-anchor="middle" '
-                f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="12" '
+                f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="12" '
                 f'font-weight="600" fill="{LABEL_COLOUR}">{raw["label"]}</text>'
             )
             elements.append({"id": lid, "kind": "label", "owner": fid, "claim": f"names {fid} as {raw['label']}"})
@@ -237,7 +245,7 @@ def render(width: float, height: float, length: int, raw_features: list[dict[str
             label_y = cy if mode == "beside" else cy - arrow_h / 2 - 11.0
             parts.append(
                 f'<text data-pr-id="{lid}" x="{label_x:.2f}" y="{label_y:.2f}" text-anchor="{anchor}" '
-                f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="11" '
+                f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="11" '
                 f'font-weight="600" fill="{colour}">{raw["label"]}</text>'
             )
             elements.append({"id": lid, "kind": "label", "claim": f"names {fid} as {raw['label']}"})
@@ -321,6 +329,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 820))
     height = float(request.get("height", 260))
     param_overrides = request.get("parameterOverrides")

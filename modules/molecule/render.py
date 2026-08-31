@@ -26,6 +26,14 @@ from typing import Any
 from rdkit import Chem
 from rdkit.Chem import AllChem
 
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
+
 # A handful of named molecules so a request needs no SMILES literacy. Anything
 # else is accepted straight through --smiles=<SMILES>, which is the general
 # case: this module draws whatever valid SMILES it is given.
@@ -45,7 +53,8 @@ SUBSCRIPT = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 BOND_STROKE = "#E6E9EF"
 LABEL_FILL = "#E6E9EF"
 BG = "#0F1115"
-TRIM_PX = 11.0  # how far a bond retreats from a labelled atom, so the glyph has room
+TRIM_PX = 11.0  # base clearance a bond keeps from a labelled atom; see trim_for()
+LABEL_FONT_PX = 15.0  # must match the font-size the atom labels are drawn at
 GAP = 3.2  # perpendicular offset between the two strokes of a double bond
 WEDGE_WIDTH = 6.5  # half-width at the wide end of a stereo wedge/dash
 
@@ -125,20 +134,33 @@ def render(width: float, height: float, smiles: str, misdeclare: bool) -> dict[s
             "height": round(max(ys) - min(ys), 2),
         }
 
-    def trim_for(idx: int) -> float:
-        # A one-character label (a bare "H", once an explicit hydrogen atom
-        # is on the canvas at all -- see modules/reaction's structural_smiles())
-        # is the tightest case TRIM_PX has to cover: real font ascent for a
-        # single capital glyph at dominant-baseline="middle" reaches closer to
-        # a vertical bond's trimmed endpoint than a wider two-character label
-        # like "OH" ever does at the same nominal retreat, found by measuring
-        # a real render rather than assumed -- module-labels-clear-of-strokes
-        # failed on exactly this case with only ~1px of real clearance left.
-        # Bumping TRIM_PX itself to cover it regressed sucrose's own tightly
-        # packed two-ring layout instead, so the fix is scoped to the one
-        # label width that actually needs it.
+    def trim_for(idx: int, ux: float, uy: float) -> float:
+        """How far a bond retreats from atom `idx`, along the bond's own direction.
+
+        DIRECTIONAL, because a label is not a circle. "OH" is about twice as
+        wide as it is tall, so a bond arriving horizontally has to clear
+        roughly a whole character more than one arriving vertically, and a
+        single retreat distance cannot be right for both.
+
+        This replaced a flat TRIM_PX with a 1.4x special case for one-character
+        labels. That constant was measured against Segoe UI on one machine, and
+        when the core started measuring every module against the bundled font
+        instead -- because Segoe UI is proprietary and absent from CI -- the
+        wider face put sucrose's own "OH" back on top of the bond it labels.
+        Tuning the constant again would only move the problem to the next face;
+        deriving the retreat from the label's own extent does not.
+
+        The extent is estimated, not measured: this process has no font engine,
+        which is why it declares no box for any label. Generous on purpose --
+        over-retreating leaves a visible gap, under-retreating puts a glyph on
+        a line, and only one of those is a defect.
+        """
         label = labels[idx]
-        return TRIM_PX * 1.4 if label is not None and len(label) == 1 else TRIM_PX
+        if label is None:
+            return 0.0
+        half_width = len(label) * LABEL_FONT_PX * 0.34
+        half_height = LABEL_FONT_PX * 0.42
+        return abs(ux) * half_width + abs(uy) * half_height + TRIM_PX * 0.45
 
     def trimmed(a: int, b: int) -> tuple[tuple[float, float], tuple[float, float]]:
         """The segment for bond a->b, retreating from either end that carries a label."""
@@ -146,8 +168,9 @@ def render(width: float, height: float, smiles: str, misdeclare: bool) -> dict[s
         dx, dy = bx - ax, by - ay
         length = max((dx * dx + dy * dy) ** 0.5, 1e-6)
         ux, uy = dx / length, dy / length
-        p0 = (ax + ux * trim_for(a), ay + uy * trim_for(a)) if labels[a] else (ax, ay)
-        p1 = (bx - ux * trim_for(b), by - uy * trim_for(b)) if labels[b] else (bx, by)
+        ta, tb = trim_for(a, ux, uy), trim_for(b, ux, uy)
+        p0 = (ax + ux * ta, ay + uy * ta) if labels[a] else (ax, ay)
+        p1 = (bx - ux * tb, by - uy * tb) if labels[b] else (bx, by)
         return p0, p1
 
     svg_parts: list[str] = []
@@ -256,7 +279,7 @@ def render(width: float, height: float, smiles: str, misdeclare: bool) -> dict[s
         label_id = f"atom-{idx}-label"
         svg_parts.append(
             f'<text data-pr-id="{label_id}" x="{cx:.2f}" y="{cy:.2f}" text-anchor="middle" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="15" '
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="15" '
             f'fill="{LABEL_FILL}">{text}</text>'
         )
         # NO declaredBox: measuring text needs a font engine this process does
@@ -309,6 +332,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 720))
     height = float(request.get("height", 520))
     json.dump(render(width, height, smiles, misdeclare), sys.stdout)

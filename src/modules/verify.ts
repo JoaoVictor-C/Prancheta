@@ -19,6 +19,7 @@ import type { Browser } from "playwright";
 import type { Check, CheckId } from "../checks.ts";
 import { EPSILON } from "../checks.ts";
 import { WCAG_AA_NORMAL, compositeOver, contrastRatio, parseColour } from "../colour/contrast.ts";
+import { bundledFontFaceCssSync } from "../export/fonts.ts";
 import type { Rect } from "../ir/types.ts";
 import { geometryTolerance } from "./protocol.ts";
 import type { ModuleElement, ModuleOutput } from "./protocol.ts";
@@ -68,8 +69,14 @@ export async function verifyModuleFigure(
 ): Promise<ModuleVerification> {
   const page = await browser.newPage({ viewport: { width: 1600, height: 1200 } });
   try {
+    // The module named a face in its own SVG; this is where that face comes
+    // from. Without it the browser resolves whatever the host machine happens
+    // to have, and a figure that measures clean on one machine collides on
+    // another -- which is not a flaky test, it is the same spec being two
+    // different figures.
     await page.setContent(
       `<!doctype html><html><head><meta charset="utf-8"><style>
+         ${bundledFontFaceCssSync()}
          html, body { margin: 0; padding: 0; }
          svg { display: block; }
        </style></head><body>${output.svg}</body></html>`,
