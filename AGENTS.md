@@ -67,7 +67,7 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | --- | --- | --- |
 | `render` | <spec> [--out] [--scale] [--repair] [--maxPasses] [--maxScale] [--fontEmbed] [--pdf] [--pdfSize] | Render a figure spec or preset input to SVG, PNG and a manifest.. |
 | `validate` | <spec> | Check a spec or preset input WITHOUT drawing it -- shape, references and arithmetic only, never whether the figure is any good. |
-| `select` | [--structure] [--idiom] | Rank presets for a set of content predicates, with the rules that decided it. |
+| `select` | [--structure] [--idiom] [--domain] | Rank presets for a set of content predicates, with the rules that decided it. |
 | `presets` | — | List the repertoire: every preset, whether it is implemented, and what it is for.. |
 | `rules` | — | Print the selection rule table: what each rule reacts to and what it does.. |
 | `effects` | — | List the effect repertoire: every named effect, what it is composed of, and how far past an element's own edges it puts ink.. |
@@ -102,17 +102,13 @@ and each occurrence is taken verbatim, which is why several modules use `;` and
 
 | module | what it draws | needs | example |
 | --- | --- | --- | --- |
-| `circuit` | A single-loop series circuit with real electrical symbols — resistor zigzag, capacitor plates, inductor bumps, switch gap, diode triangle. | — | `--args "modules/circuit/render.py,--name=rc_lowpass"` |
 | `crystal` | One conventional crystallographic unit cell, orthographically projected, with visible and hidden cell edges distinguished by real depth. | `numpy`, `ase` | `--args "modules/crystal/render.py,--name=nacl_rocksalt"` |
 | `dendrogram` | A hierarchical-clustering dendrogram where height is real merge distance. | `numpy`, `scipy` | `--args "modules/dendrogram/render.py,--name=cluster_demo"` |
 | `genomic` | Gene arrows on a real base-pair axis; arrow direction is the strand. | `dna_features_viewer` | `--args "modules/genomic/render.py,--name=plasmid_simple"` |
 | `map` | Region and country maps, longitude/latitude projected to Web Mercator, with labels placed at each region's representative point. | `pyproj`, `shapely` | `--args "modules/map/render.py,--name=campaign"` |
-| `molecule` | A 2D skeletal chemical structure from a SMILES string, with stereo wedges. | `rdkit` | `--args "modules/molecule/render.py,--name=glucose"` |
-| `piechart` | Pie and donut charts drawn as real circular-sector paths, with a legend. | — | `--args "modules/piechart/render.py,--name=market_share"` |
-| `plot` | Function curves with their roots and extrema, or a scatter with a least-squares fit; plus a fixed figure explaining the derivative. | `numpy` | `--args "modules/plot/function.py,--name=quadratic"` |
-| `reaction` | A reaction scheme: an equation row of formulas and coefficients, and a real structural drawing of every unique participant. | `rdkit` | `--args "modules/reaction/render.py,--name=glucose_combustion"` |
+| `molecule` | 2D skeletal chemical structures from SMILES, with stereo wedges -- one molecule, or a whole reaction scheme laid out as an equation and its participants. | `rdkit` | `--args "modules/molecule/render.py,--name=glucose"` |
+| `plot` | Function curves with their roots and extrema, or a scatter with a least-squares fit. Every root is declared to lie on its own curve and on the x axis, and both are checked. | `numpy` | `--args "modules/plot/function.py,--name=quadratic"` |
 | `skewt` | A Skew-T log-P atmospheric sounding with temperature and dewpoint traces, a lifted-parcel profile and the LCL. | `numpy`, `metpy` | `--args "modules/skewt/render.py,--name=midlatitude_summer"` |
-| `topology` | A protein secondary-structure cartoon — helices as capsules, strands as directional arrows, joined in sequence. | — | `--args "modules/topology/render.py,--name=four_helix_bundle"` |
 
 Read `modules/README.md` for the protocol, what the core checks, and the
 standing limit: these verify malformation, never misrepresentation.
@@ -136,14 +132,10 @@ resources:
 | `prancheta://preset/annotated-figure` | annotated-figure preset |
 | `prancheta://preset/chart` | chart preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
-| `prancheta://module/circuit` | circuit module |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |
 | `prancheta://module/genomic` | genomic module |
 | `prancheta://module/map` | map module |
 | `prancheta://module/molecule` | molecule module |
-| `prancheta://module/piechart` | piechart module |
 | `prancheta://module/plot` | plot module |
-| `prancheta://module/reaction` | reaction module |
 | `prancheta://module/skewt` | skewt module |
-| `prancheta://module/topology` | topology module |

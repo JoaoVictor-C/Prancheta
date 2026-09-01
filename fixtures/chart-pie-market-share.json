@@ -1,0 +1,12 @@
+{
+  "preset": "chart",
+  "title": "Market share by vendor",
+  "chartType": "pie",
+  "categories": [
+    { "label": "Northwind", "values": [42] },
+    { "label": "Contoso", "values": [27] },
+    { "label": "Fabrikam", "values": [18] },
+    { "label": "Adventure Works", "values": [9] },
+    { "label": "Others", "values": [4] }
+  ]
+}

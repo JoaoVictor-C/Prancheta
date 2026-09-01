@@ -5,8 +5,8 @@ import { fileURLToPath } from "node:url";
 
 import { rank, replayMatches } from "../src/selection/rank.ts";
 import type { Candidate, Selection } from "../src/selection/rank.ts";
-import { FLOOR, RULES } from "../src/selection/rules.ts";
-import { IDIOM, STRUCTURE, partitionPredicates } from "../src/selection/vocabulary.ts";
+import { DELEGATE_RULES, FLOOR, RULES } from "../src/selection/rules.ts";
+import { DELEGATES, DOMAIN, IDIOM, STRUCTURE, partitionPredicates } from "../src/selection/vocabulary.ts";
 import type { PresetId } from "../src/selection/vocabulary.ts";
 
 const fixturePath = fileURLToPath(
@@ -125,6 +125,7 @@ for (const c of cases) {
     const reordered = {
       structure: [...predicates.structure].reverse(),
       idiom: [...predicates.idiom].reverse(),
+      domain: [...predicates.domain].reverse(),
       unknown: predicates.unknown ? [...predicates.unknown].reverse() : undefined,
     };
     const original = rank(predicates);
@@ -233,6 +234,50 @@ test("fixtures carry unknown predicates only where expect.unknown is declared", 
   }
 });
 
+test("every DOMAIN value reaches exactly one module, and every delegate rule names a real one", () => {
+  const reached = new Map<string, string[]>();
+  for (const rule of DELEGATE_RULES) {
+    assert.ok(
+      DOMAIN.includes(rule.when),
+      `delegate rule ${rule.id} names domain "${rule.when}", which is not in the vocabulary`,
+    );
+    assert.ok(
+      DELEGATES.some((entry) => entry.id === rule.module),
+      `delegate rule ${rule.id} names module "${rule.module}", which is not delegable`,
+    );
+    reached.set(rule.when, [...(reached.get(rule.when) ?? []), rule.module]);
+  }
+  for (const domain of DOMAIN) {
+    const modules = reached.get(domain) ?? [];
+    assert.equal(
+      modules.length,
+      1,
+      `domain "${domain}" should reach exactly one module, reaches ${modules.length}: ${modules.join(", ")}`,
+    );
+  }
+});
+
+test("a domain delegates, and refuses the preset that would misrepresent it", () => {
+  // A molecule IS a graph. That is precisely why the graph preset has to be
+  // refused rather than merely out-scored: it would render beautifully.
+  const selection = rank(partitionPredicates({ structure: ["graph"], domain: ["molecular"] }));
+  assert.equal(selection.outcome, "delegate");
+  assert.equal(selection.delegateTo, "molecule");
+  assert.deepEqual(selection.chosen, [], "a delegation chooses no preset");
+  const graph = selection.candidates.find((candidate) => candidate.preset === "graph");
+  assert.equal(graph?.disqualifiedBy, "D-molecular-disqualifies-graph");
+});
+
+test("no domain predicate leaves selection unchanged", () => {
+  // The axis has to be inert when empty, or every existing figure's recorded
+  // reasoning would start replaying differently.
+  const withoutDomain = rank(partitionPredicates({ structure: ["graph"], idiom: ["plain-flow"] }));
+  assert.equal(withoutDomain.outcome, "single");
+  assert.deepEqual(withoutDomain.chosen, ["graph"]);
+  assert.deepEqual(withoutDomain.delegates, []);
+  assert.equal(withoutDomain.delegateTo, undefined);
+});
+
 // --- 7. REPLAY ----------------------------------------------------------------
 
 for (const c of cases) {
@@ -270,8 +315,10 @@ test("every IDIOM value is referenced by at least one rule", () => {
 test("every rule's `when` belongs to its axis's vocabulary", () => {
   const structureSet = new Set<string>(STRUCTURE);
   const idiomSet = new Set<string>(IDIOM);
+  const domainSet = new Set<string>(DOMAIN);
   for (const rule of RULES) {
-    const vocabulary = rule.axis === "structure" ? structureSet : idiomSet;
+    const vocabulary =
+      rule.axis === "structure" ? structureSet : rule.axis === "idiom" ? idiomSet : domainSet;
     assert.ok(
       vocabulary.has(rule.when),
       `rule ${rule.id} has axis ${rule.axis} but when="${rule.when}" is not in that axis's vocabulary`,

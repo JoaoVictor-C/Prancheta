@@ -1,0 +1,12 @@
+{
+  "preset": "chart",
+  "title": "Where the budget went",
+  "chartType": "donut",
+  "categories": [
+    { "label": "Salaries", "values": [58] },
+    { "label": "Infrastructure", "values": [21] },
+    { "label": "Tooling", "values": [12] },
+    { "label": "Travel", "values": [6] },
+    { "label": "Contingency", "values": [3] }
+  ]
+}

@@ -1,11 +1,14 @@
 """General function & data-plot figure module for Prancheta.
 
-modules/plot/derivative.py draws exactly one hand-placed pedagogical figure.
-This module draws a CLASS of figures: any f(x) expression (or several,
-overlaid), with roots and local extrema found numerically rather than
-eyeballed; or a scatter of (x, y) data points with a real least-squares fit
-(numpy.polyfit) and its R^2. See docs/research/candidate-modules.md,
-candidate #3.
+Draws a CLASS of figures: any f(x) expression (or several, overlaid), with
+roots and local extrema found numerically rather than eyeballed; or a scatter
+of (x, y) data points with a real least-squares fit (numpy.polyfit) and its
+R^2. See docs/research/candidate-modules.md, candidate #3.
+
+This directory used to hold a second script, derivative.py, that drew exactly
+one hand-placed pedagogical figure. Being a class of figures rather than one
+figure is the bar it failed, and it was deleted in the module audit -- the
+core draws the same explanation now, animated, in experiments/derivative/.
 
 Why a module rather than a preset: the core's IR has boxes, scenes and
 connectors. It has no notion of a mathematical function, cannot evaluate one,
@@ -26,6 +29,14 @@ import sys
 from typing import Any, Callable
 
 import numpy as np
+
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
 
 ALLOWED_NAMES: dict[str, Any] = {
     "sin": math.sin, "cos": math.cos, "tan": math.tan,
@@ -193,6 +204,15 @@ def render_functions(width: float, height: float, functions: list[str], xrange: 
                     "kind": "feature",
                     "claim": f"a root of {expr} near x={root_x:.3f}",
                     "declaredBox": {"x": round(cx - 4.5, 2), "y": round(cy - 4.5, 2), "width": 9.0, "height": 9.0},
+                    # What makes a root a root, stated as a relation the core
+                    # can falsify by measuring the drawing rather than by
+                    # trusting the bisection above. BOTH halves are required
+                    # and that is the whole point: a wrong root plotted at
+                    # (x_wrong, 0) misses the curve, and a wrong root plotted
+                    # at (x_wrong, f(x_wrong)) sits on the curve but off the
+                    # axis. Declaring either one alone leaves the module a
+                    # place to be wrong in and still pass.
+                    "on": [curve_id, "axis-x"],
                 }
             )
 
@@ -206,6 +226,13 @@ def render_functions(width: float, height: float, functions: list[str], xrange: 
                     "kind": "feature",
                     "claim": f"a local {kind} of {expr} near ({ex_x:.2f}, {ex_y:.2f})",
                     "declaredBox": {"x": round(cx - 4.5, 2), "y": round(cy - 4.5, 2), "width": 9.0, "height": 9.0},
+                    # An extremum has only one relation to state: it lies on
+                    # its own curve. There is no second drawn line for it to
+                    # meet -- the tangent being horizontal is a fact about the
+                    # samples, not about any ink -- so this is honestly a
+                    # weaker claim than a root's, and saying so is better than
+                    # inventing a second half to make it look symmetrical.
+                    "on": [curve_id],
                 }
             )
 
@@ -221,7 +248,7 @@ def render_functions(width: float, height: float, functions: list[str], xrange: 
         )
         parts.append(
             f'<text data-pr-id="{lid}" x="{swatch_x + 26:.2f}" y="{row_y:.2f}" text-anchor="start" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="13" '
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="13" '
             f'font-weight="600" fill="{colour}">{expr}</text>'
         )
         # No owner: a stroked <path> (fill="none") has no isPointInFill area
@@ -320,13 +347,13 @@ def render_fit(width: float, height: float, points: list[list[float]], degree: i
     )
     parts.append(
         f'<text data-pr-id="fit-equation" x="{width - right:.2f}" y="{top + 14:.2f}" text-anchor="end" '
-        f'font-family="Segoe UI, sans-serif" font-size="13" font-weight="600" fill="{COLOURS[1]}">y = {terms}</text>'
+        f'font-family="{FONT_STACK}" font-size="13" font-weight="600" fill="{COLOURS[1]}">y = {terms}</text>'
     )
     # No owner: same reasoning as the curve legend in render_functions above.
     elements.append({"id": "fit-equation", "kind": "label", "claim": f"the fitted equation, R^2={r2:.4f}"})
     parts.append(
         f'<text data-pr-id="fit-r2" x="{width - right:.2f}" y="{top + 30:.2f}" text-anchor="end" '
-        f'font-family="Segoe UI, sans-serif" font-size="12" fill="{DIM}">R² = {r2:.4f}</text>'
+        f'font-family="{FONT_STACK}" font-size="12" fill="{DIM}">R² = {r2:.4f}</text>'
     )
     elements.append({"id": "fit-r2", "kind": "label", "claim": "the coefficient of determination"})
 
@@ -346,8 +373,29 @@ def apply_misdeclare(output: dict[str, Any]) -> dict[str, Any]:
             box = element["declaredBox"]
             element["declaredBox"] = {**box, "x": box["x"] + 35.0}
             break
+    # A THIRD planted defect, and the only one that is a lie about MEANING
+    # rather than about form: the drawn root marker is moved off its own
+    # curve while its claim to lie there is left standing. Nothing about the
+    # figure is malformed afterwards -- the marker is a well-sized circle
+    # inside the canvas, colliding with nothing -- so every check that
+    # existed before this one still passes it. What the figure now says is
+    # simply false, and module-feature-on-its-stroke is what says so.
+    moved_root = None
+    for element in output["elements"]:
+        if element["id"].startswith("root-") and "declaredBox" in element:
+            moved_root = element
+            break
+    if moved_root is not None:
+        box = moved_root["declaredBox"]
+        shifted_y = box["y"] - 60.0
+        output["svg"] = output["svg"].replace(
+            f'data-pr-id="{moved_root["id"]}" cx="{box["x"] + 4.5:.2f}" cy="{box["y"] + 4.5:.2f}"',
+            f'data-pr-id="{moved_root["id"]}" cx="{box["x"] + 4.5:.2f}" cy="{shifted_y + 4.5:.2f}"',
+        )
+        moved_root["declaredBox"] = {**box, "y": shifted_y}
     output.setdefault("notes", []).append(
-        "misdeclare mode: a phantom series declared, and one feature's own geometry shifted 35px from what it drew"
+        "misdeclare mode: a phantom series declared, one feature's own geometry shifted 35px from what it drew, "
+        "and a root marker moved 60px off the curve and axis it still claims to lie on"
     )
     return output
 
@@ -363,6 +411,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 760))
     height = float(request.get("height", 470))
 

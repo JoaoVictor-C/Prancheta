@@ -1,9 +1,21 @@
 # Figure modules
 
-Eleven figure kinds that live outside the TypeScript core, each a separate
+Seven figure kinds that live outside the TypeScript core, each a separate
 process in Python. This page is the index; every module has its own
 `MODULE.md` with the reasoning, the findings from building it, and its stated
 limits.
+
+**It was eleven.** Four rows stopped clearing the bar and were removed rather
+than kept for the sake of the count: `circuit` and `topology` never cleared it
+(both were stdlib-only and said so in their own documentation, which makes
+them the "a bit of arithmetic in the core would do" case the bar names),
+`piechart` cleared it until the Mark arrived and a wedge became something the
+core can state and check, and `plot/derivative.py` drew one fixed figure
+rather than a class of them. `reaction` was never a separate module at all --
+it imports `molecule`'s own `render()` -- so it is an entry point of
+`molecule` here rather than a row of its own. The reasoning, and what building
+each of them taught, is recorded in
+[docs/research/candidate-modules.md](../docs/research/candidate-modules.md).
 
 Everything below was verified by reading each module's source and running it.
 
@@ -16,13 +28,18 @@ chart is arithmetic on a rectangle's height, which is why
 
 A module exists where that vocabulary genuinely runs out:
 
-- A **pie wedge** is not a rectangle under any transform. It needs a real
-  circular-sector path.
 - A **map** needs Shapely and pyproj *inside* its layout loop.
 - A **molecule** needs RDKit's 2D coordinate generation and stereo perception.
+- A **unit cell** needs ASE to build it and a depth sort to draw it.
 
 That is the line: geometry the core cannot compute, not a stylistic preference.
 [Decision 0005](../docs/decisions/0005-module-protocol.md) states it.
+
+**A pie wedge used to be the first example on that list**, and it was a good
+one until ADR 0019 gave the IR a Mark. The line moved; the module went. That is
+the intended direction of travel, and a module whose reason has expired is
+worth strictly less than the same figure drawn by the core, which gets the
+full check set instead of this protocol's smaller one.
 
 ## The contract
 
@@ -56,7 +73,7 @@ geospatial C extension would take the core down with it.
 ## Running one
 
 ```bash
-node src/cli.ts module python --args "modules/circuit/render.py,--name=rlc_series"
+node src/cli.ts module python --args "modules/molecule/render.py,--name=glucose"
 ```
 
 `--width`, `--height` and `--out` are accepted too. `--args` is **repeatable**,
@@ -64,48 +81,23 @@ and each occurrence is taken verbatim — that matters because a single
 `--args "a,b,c"` invocation comma-joins everything at the CLI layer, which is
 why several modules use `;` and `:` as their own delimiters instead of commas.
 
-## Shared leaf symbols
-
-Most modules are self-contained on purpose — the process boundary exists
-precisely so no module's numbers become the path of least resistance for
-another (see [decision 0005](../docs/decisions/0005-module-protocol.md)). The
-one exception is a **leaf symbol with no dependency on its caller's layout**:
-[`symbols_electrical.py`](symbols_electrical.py) holds `circuit`'s resistor,
-capacitor, inductor, switch, diode and battery — each a pure function of a
-centre point, each returning `(svg, width, height, y_offset)`, the same
-`declaredBox` claim any module makes, checked the same way. A module that
-needs one imports it (`sys.path.insert(0, str(Path(__file__).resolve().parent.parent))`
-then `from symbols_electrical import ...`) rather than rediscovering the same
-measured-not-guessed asymmetric boxes.
-
 ## The repertoire
 
 | module | draws | Python dependencies |
 | --- | --- | --- |
-| [circuit](circuit/MODULE.md) | A single-loop series circuit with real EE symbols — resistor zigzag, capacitor plates, inductor bumps, switch gap, diode triangle | none (stdlib) |
 | [crystal](crystal/MODULE.md) | One conventional crystallographic unit cell, orthographic, with visible/hidden edges from real depth | `numpy`, `ase` |
 | [dendrogram](dendrogram/MODULE.md) | A hierarchical-clustering dendrogram where height is real merge distance | `numpy`, `scipy` |
 | [genomic](genomic/MODULE.md) | Gene arrows on a real base-pair axis; arrow direction is strand | `dna_features_viewer` |
 | [map](map/MODULE.md) | Region and country maps, lon/lat projected to Web Mercator | `pyproj`, `shapely` |
-| [molecule](molecule/MODULE.md) | A 2D skeletal chemical structure from a SMILES string | `rdkit` |
-| [piechart](piechart/MODULE.md) | Pie and donut charts as real circular-sector paths | none (stdlib) |
-| [plot](plot/MODULE.md) | Function curves with roots and extrema, or a scatter with a least-squares fit; plus a fixed derivative explainer | `numpy` (fit mode only) |
-| [reaction](reaction/MODULE.md) | A reaction scheme: an equation row, and a structural drawing of every participant | `rdkit` (and calls `molecule`) |
+| [molecule](molecule/MODULE.md) | A 2D skeletal structure from SMILES — and, through its second entry point, a whole reaction scheme | `rdkit` |
+| [plot](plot/MODULE.md) | Function curves with roots and extrema, or a scatter with a least-squares fit | `numpy` |
 | [skewt](skewt/MODULE.md) | A Skew-T log-P atmospheric sounding with a lifted-parcel profile and LCL | `numpy`, `metpy` |
-| [topology](topology/MODULE.md) | A protein secondary-structure cartoon — helices as capsules, strands as arrows | none (stdlib) |
 
 ## Inputs, per module
 
 Every module takes `--misdeclare` (see below) unless noted. Named shortcuts are
 selected with `--name=<key>`; the **first** key listed is the default when no
 selecting flag is given.
-
-### circuit
-- `--name=` `rc_lowpass` · `led_circuit` · `rlc_series` · `switched_lamp`
-- `--components=resistor:R1;switch:S1;diode:D1` — `;` between components, `:`
-  between type and label. Types: `resistor`, `capacitor`, `inductor`, `switch`,
-  `diode`.
-- `--battery=9V` — source label, used with `--components`.
 
 ### crystal
 - `--name=` `nacl_rocksalt` · `diamond_cubic` · `fcc_copper`
@@ -134,13 +126,7 @@ selecting flag is given.
   `water` · `ethanol` · `benzene`
 - `--smiles=CCO` — any SMILES string. Takes priority over `--name=`.
 
-### piechart
-- `--name=` `market_share` (a pie) · `budget_breakdown` (a donut)
-- `--donut` — only consulted when `--name=` is absent.
-- No custom-data input yet.
-
 ### plot
-Two entry points, one module.
 - `function.py --name=` `quadratic` · `sine_cosine` · `damped_oscillation` ·
   `linear_fit_demo` · `quadratic_fit_demo`
 - `function.py --functions=sin(x);x**2 --range=-6,6` — `;` between expressions,
@@ -148,10 +134,8 @@ Two entry points, one module.
   atan exp log log10 sqrt abs pow pi e`.
 - `function.py --points=1,2;3,4 --fit=linear|quadratic` — `;` between points,
   `,` inside one. Points mode takes priority over `--functions=`.
-- `derivative.py` — a fixed pedagogical figure. **No flags at all**, not even
-  `--misdeclare`; it reads only the canvas size.
 
-### reaction
+### molecule, second entry point: `reaction/render.py`
 - `--name=` `glucose_combustion` · `photosynthesis` · `combustion_methane` ·
   `esterification`
 - `--reaction=CCO.O>>CC=O` — SMILES, `.` between components, `>>` between
@@ -162,47 +146,89 @@ Two entry points, one module.
 - `--name=` `midlatitude_summer` · `unstable_afternoon`
 - No custom-sounding input.
 
-### topology
-- `--name=` `four_helix_bundle` · `rossmann_pattern`
-- `--elements=helix:20:A|sheet:8:B1` — `|` between elements, `:` between an
-  element's three fields. Types are `helix` and `sheet`.
-
 ## What the core checks
 
-Six checks, in [src/modules/verify.ts](../src/modules/verify.ts). Each reports
-`pass`, `fail`, or **`not-applicable`** — a real third state, never a polite
+Eight checks, in [src/modules/verify.ts](../src/modules/verify.ts). Each reports
+`pass`, `fail`, or **`not-applicable`** -- a real third state, never a polite
 pass. A check that examined zero elements has verified nothing, and reporting
 that as a pass would read as coverage.
 
 | check | what it asks | reported not-applicable when |
 | --- | --- | --- |
-| `module-ids-resolve` | Does every declared id exist in the SVG? | never — it is always pass or fail |
+| `module-ids-resolve` | Does every declared id exist in the SVG? | never -- it is always pass or fail |
 | `module-geometry-agrees` | Does each `declaredBox` match what was measured? | no element declared a box |
 | `module-label-within-feature` | Does each owned label sit inside its feature's fill? | no label declares an `owner` |
 | `module-labels-do-not-collide` | Do any two labels overlap? | no label resolved to a measured box |
 | `module-labels-clear-of-strokes` | Does a label sit on a stroke that is not its owner's? | no labels were declared at all |
+| `module-feature-on-its-stroke` | Does an element that claims to lie ON a drawn stroke actually lie on it? | nothing declared an `on` relation |
+| `module-contrast-sufficient` | Can a reader make out each label against what is painted under it? | no label sits over a surface the module drew |
 | `content-within-canvas` | Is everything inside the canvas? | no element resolved a box |
 
 `content-within-canvas` deliberately keeps its core name: same method, same
 meaning in both worlds. The others are named apart because the method genuinely
-differs — a foreign SVG has no content boxes and no wrapped line boxes, so a
+differs -- a foreign SVG has no content boxes and no wrapped line boxes, so a
 check called `text-fits-box` would promise something it cannot deliver.
 
 Geometry agreement is not exact. The tolerance is
-`max(1, 0.02 × max(width, height))` — relative, with an absolute floor.
+`max(1, 0.02 * max(width, height))` -- relative, with an absolute floor.
 
-**A note on `not-applicable` in this repertoire.** Most modules leave
-`module-label-within-feature` at `not-applicable`, and that is correct rather
-than a gap: declaring `owner` is only meaningful when the owner is a *filled*
-shape the label can be tested against. A label over a stroked path or a bare
-line has no fill for the test to use, and claiming ownership there was the
-recurring bug in early modules. The modules where it genuinely runs are
-`topology` (capsules and arrows), `crystal` (atoms), `piechart` (sectors),
-`genomic` (gene arrows, for inside-placed labels only) and `map` (regions).
+### The one check here that is about meaning
+
+`module-feature-on-its-stroke` is different in kind from the rest of this
+table, and it is the only place this protocol reaches past the limit stated at
+the bottom of this page. Everything else asks whether the figure is well
+formed. This asks whether a relation the module **asserted about its own
+arithmetic** survives being measured on the drawing.
+
+A module states it with `on`, a list of ids the element claims to lie on:
+
+```json
+{ "id": "root-0-1", "kind": "feature", "on": ["curve-0", "axis-x"] }
+```
+
+The instrument is the browser's `isPointInStroke` against the real stroke
+width -- the same call `module-labels-clear-of-strokes` already makes, with its
+sense inverted, so nothing new is measured. What changes is which answer counts
+as a failure.
+
+**State the conjunction, not half of it.** A root is on the curve *and* on the
+x axis. Declare only the first and a module whose root-finder is wrong, but
+which then plots the marker by evaluating its own curve at that wrong x, sits
+exactly on the curve and passes. Declare only the second and a marker at
+(x_wrong, 0) passes the axis test. Both together have no hiding place, and
+`modules/plot` declares both.
+
+What it still cannot reach: a relation nobody states is never checked, and a
+figure whose every stated relation holds can still misrepresent its data.
+
+### Contrast, and a known gap
+
+`module-contrast-sufficient` composites, in paint order, every filled shape
+drawn **under** a label -- measured from the SVG rather than from the manifest,
+because an undeclared background rect covers a label exactly as thoroughly as a
+declared one. Only surfaces painted *before* the label count; a shape drawn
+over it is occlusion, which is a different problem and a different check. Where
+no opaque ground is reached, the check reports not-applicable rather than
+inventing a ratio against an assumed white.
+
+Adding it found two real defects that had been passing every other check:
+`genomic` drew a gene's label in its own colour directly on a neighbouring
+gene's fill at 1.04:1, and `map` set every territory name in near-black
+regardless of whether the territory beneath it was pale sand or deep navy.
+
+**The known gap, recorded rather than quietly left:**
+`module-labels-clear-of-strokes` skips any declared element that resolves to a
+`<g>` rather than a drawable -- which is how both `map` and `reaction` declare
+their arrows, since one id has to name a shaft and a head together. Descending
+into the group surfaces two real collisions and two artefacts of sampling a
+glyph box's empty corners; separating them needs a sampling policy for strokes
+and a reroute in the map's arrow data, and that is its own change.
+`module-feature-on-its-stroke` is new and has no legacy behaviour to preserve,
+so it does descend.
 
 ## The `--misdeclare` probe
 
-Every module except `plot/derivative.py` accepts `--misdeclare`, which plants
+Every module accepts `--misdeclare`, which plants
 deliberate defects in the *declaration* while drawing the figure correctly:
 typically a phantom element that was never drawn, plus one real element's
 `declaredBox` shifted by 20–60px.
@@ -211,14 +237,32 @@ This is how the verifier is tested rather than assumed. A checker that reports
 everything as fine is indistinguishable from a checker that is not running, and
 `--misdeclare` is the difference: it must make `module-ids-resolve` and
 `module-geometry-agrees` fail. Each module's e2e test asserts exactly that.
+`modules/plot` plants a third defect that is a lie about *meaning* rather than
+form -- a root marker moved off the curve and axis it still claims to lie on,
+leaving a figure that is not malformed in any way -- and asserts that
+`module-feature-on-its-stroke` names both broken halves.
+
+**The protocol's own self-test needs none of this.** Running it used to require
+a module, and therefore whichever scientific Python that module imports. It now
+also lives as a checked-in SVG-and-manifest pair in
+[tests/fixtures](../tests/fixtures), driven by
+`tests/module-protocol-selftest.test.ts`: no subprocess, no dependencies, and
+it runs in the core suite rather than the module one. That is what made
+deleting four modules a change to the repertoire rather than a hole in the
+protocol's own coverage.
 
 ## What is never checked
 
-**Malformation, not misrepresentation.** This is the stated limit of every
-module here, and it is worth being blunt about: a diode drawn the right way
-round for a circuit where it should be reversed passes every check; a pie chart
-whose values were computed from a misleading baseline passes every check; a map
-with the wrong country shaded passes every check.
+**Malformation, not misrepresentation** -- with one narrow exception, named
+above. This is the stated limit of every module here, and it is worth being
+blunt about: a fit computed on a dataset too small to mean anything passes
+every check; a map with the wrong country shaded passes every check; a sounding
+whose numbers were transcribed wrongly passes every check.
+
+`module-feature-on-its-stroke` narrows that gap without closing it. It can
+refuse a claim the module *made* and the drawing refutes. It cannot refuse a
+claim nobody made, and it says nothing about whether the underlying data means
+what the figure implies.
 
 Nothing here verifies that a figure is *true*. It verifies that what the module
 declared is what the module actually drew, and that the result is not
@@ -236,9 +280,12 @@ worth nothing while labels still overflow their boxes.
    to draw with; that is the drift the check exists to catch, and it will agree
    with itself perfectly while being wrong.
 4. Only set `owner` on a label whose owner is a filled shape.
-5. Implement `--misdeclare`, and write an e2e test asserting it fails the
+5. If the figure contains a computed relation between two things you draw -- a
+   marker on a curve, a point where two traces meet -- declare it with `on`,
+   and declare the whole conjunction rather than half of it.
+6. Implement `--misdeclare`, and write an e2e test asserting it fails the
    checks it should.
-6. Write a `MODULE.md` saying why the core cannot do this, what building it
+7. Write a `MODULE.md` saying why the core cannot do this, what building it
    found, and what it does not attempt.
 
 [docs/research/candidate-modules.md](../docs/research/candidate-modules.md) has

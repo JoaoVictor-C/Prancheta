@@ -88,7 +88,17 @@ export type CheckId =
   | "module-geometry-agrees"
   | "module-label-within-feature"
   | "module-labels-do-not-collide"
-  | "module-labels-clear-of-strokes";
+  | "module-labels-clear-of-strokes"
+  // The one module check that is about MEANING rather than malformation. A
+  // module may claim a feature lies on a stroke it also drew -- a root on its
+  // curve, an LCL where two traces meet -- and that claim is falsified by
+  // measuring the drawing, not by trusting the arithmetic behind it.
+  | "module-feature-on-its-stroke"
+  // A module's own surfaces, composited under its labels. Decision 0005
+  // excluded the content-box checks because a bare SVG has no box model;
+  // contrast was never excluded on that ground, and since the substrate
+  // became geometric it needs only ink bounds and the fills beneath them.
+  | "module-contrast-sufficient";
 
 export type Overflow = {
   /** Positive numbers only; each is how far past that edge the content went. */
@@ -881,13 +891,31 @@ function sweepMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedBo
     (element): element is PlacedConnector =>
       element.kind === "connector" && element.curve?.kind === "sweep",
   );
-  if (sweeps.length === 0) {
+  // A SECTOR is a swept angle too. A pie slice runs out to the rim, round an
+  // arc and back; a donut slice adds a second arc along the hole. Both are
+  // closed regions whose arcs turn about ONE centre, and that is the test --
+  // not the number of arcs, which would have quietly excused every donut in
+  // the repertoire from the check its slices most need. `arcCentres` already
+  // keeps the three points each arc needs, for `arc-is-circular`, so nothing
+  // new is measured here.
+  const sectors = figure.elements.filter(
+    (element): element is PlacedMark =>
+      element.kind === "mark" &&
+      element.closed &&
+      element.arcCentres.length > 0 &&
+      element.arcCentres.every(
+        (arc) =>
+          Math.abs(arc.centre.x - element.arcCentres[0]!.centre.x) < EPSILON &&
+          Math.abs(arc.centre.y - element.arcCentres[0]!.centre.y) < EPSILON,
+      ),
+  );
+  if (sweeps.length === 0 && sectors.length === 0) {
     return {
       id: "sweep-matches-its-label",
       target: "figure",
       status: "not-applicable",
       examined: 0,
-      detail: "not applicable: no connector draws an angle sweep",
+      detail: "not applicable: nothing in this figure draws a swept angle",
     };
   }
 
@@ -895,14 +923,19 @@ function sweepMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedBo
   const disagreements: string[] = [];
   let compared = 0;
 
-  for (const sweep of sweeps) {
-    const centre = (sweep.curve as { kind: "sweep"; centre: Point }).centre;
-    const first = sweep.points[0]!;
-    const last = sweep.points[sweep.points.length - 1]!;
-    const drawn = sweptDegrees(first, last, centre);
+  const swept: { id: string; drawn: number }[] = [
+    ...sweeps.map((sweep) => {
+      const centre = (sweep.curve as { kind: "sweep"; centre: Point }).centre;
+      const first = sweep.points[0]!;
+      const last = sweep.points[sweep.points.length - 1]!;
+      return { id: sweep.id, drawn: sweptDegrees(first, last, centre) };
+    }),
+    ...sectors.map((sector) => ({ id: sector.id, drawn: sectorDegrees(sector) })),
+  ];
 
+  for (const { id: sweptId, drawn } of swept) {
     for (const [id, box] of boxes) {
-      if (box.annotates !== sweep.id) continue;
+      if (box.annotates !== sweptId) continue;
       const text = texts.find((candidate) => candidate.ownerId === id);
       if (text === undefined) continue;
       const stated = statedDegrees(text.lines.map((line) => line.text).join(""));
@@ -910,7 +943,7 @@ function sweepMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedBo
       compared += 1;
       if (Math.abs(stated - drawn) > SWEEP_LABEL_TOLERANCE_DEGREES) {
         disagreements.push(
-          `${id} says ${fmt(stated)} but ${sweep.id} sweeps ${fmt(drawn)} degrees`,
+          `${id} says ${fmt(stated)} but ${sweptId} sweeps ${fmt(drawn)} degrees`,
         );
       }
     }
@@ -1017,8 +1050,53 @@ function arcIsCircular(figure: LaidOutFigure): Check {
 }
 
 /** The number a label claims, in degrees, or null when it claims none. */
+/**
+ * The angle a label claims, in degrees, or null when it claims no value.
+ *
+ * A PERCENTAGE counts, and converts. A pie slice's label says "34%", not
+ * "122.4 degrees", but it is making exactly the same kind of claim about
+ * exactly the same drawn sweep -- and a slice whose angle does not match its
+ * own percentage is the classic pie-chart lie. Decision 0005's rule is a
+ * distinct name where the method differs and the same name where it does not;
+ * here the method is identical (measure the sweep, read the label, compare)
+ * and only the unit differs, so this check keeps its name rather than growing
+ * a near-duplicate beside it.
+ */
+/**
+ * How far round a sector actually goes, in degrees.
+ *
+ * Not `sweptDegrees` of its first and last arc points, which is what this
+ * tried first and what a reflex slice defeats: that function is an `acos`, so
+ * it cannot return more than 180, and a 58% slice reported itself as the 151
+ * degrees of its own complement. The arc a Mark draws is subject to the same
+ * limit from the other side -- an arc named by two endpoints and a centre is
+ * genuinely ambiguous about which way round it goes, and the minor arc is the
+ * convention -- so a sector past a half turn has to be BUILT from more than
+ * one arc, and is.
+ *
+ * Summing every arc would then double-count a donut, whose slice is bounded by
+ * an outer rim and an inner one covering the same angle in reverse. So the
+ * arcs are grouped by their radius and the largest group's total wins: the
+ * angle a sector subtends is the angle its rim covers, once.
+ */
+function sectorDegrees(sector: PlacedMark): number {
+  const byRadius = new Map<number, number>();
+  for (const arc of sector.arcCentres) {
+    const radius = Math.round(Math.hypot(arc.from.x - arc.centre.x, arc.from.y - arc.centre.y) * 2) / 2;
+    const swept = sweptDegrees(arc.from, arc.to, arc.centre);
+    byRadius.set(radius, (byRadius.get(radius) ?? 0) + swept);
+  }
+  return Math.max(0, ...byRadius.values());
+}
+
 function statedDegrees(text: string): number | null {
-  const match = /^\s*([+-]?\d+(?:\.\d+)?)\s*(?:°|deg|degrees)?\s*$/.exec(text);
+  const trimmed = text.trim();
+  const share = /^\s*([+-]?\d+(?:\.\d+)?)\s*%\s*$/.exec(trimmed);
+  if (share !== null) {
+    const percent = Number(share[1]);
+    return Number.isFinite(percent) ? (percent / 100) * 360 : null;
+  }
+  const match = /^\s*([+-]?\d+(?:\.\d+)?)\s*(?:°|deg|degrees)?\s*$/.exec(trimmed);
   if (match === null) return null;
   const value = Number(match[1]);
   return Number.isFinite(value) ? value : null;

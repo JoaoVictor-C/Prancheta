@@ -38,6 +38,35 @@ export type ModuleElement = {
    * and this is the only thing that catches it.
    */
   declaredBox?: { x: number; y: number; width: number; height: number };
+  /**
+   * Ids of drawn strokes this element claims to LIE ON.
+   *
+   * Every other claim in this protocol is about malformation: is the thing
+   * where the module said it is, does a label escape its region, do two
+   * labels collide. This one is about MEANING, and it is the only one that
+   * is — because "the marker labelled `root` sits on the curve" is a claim
+   * the module's own arithmetic can get wrong, and measuring the drawing
+   * falsifies it.
+   *
+   * The instrument is the one `module-labels-clear-of-strokes` already uses,
+   * with its sense inverted: `isPointInStroke` against the real stroke width,
+   * in the target's own user space. Nothing new is measured; what changes is
+   * which answer counts as a failure.
+   *
+   * STATE THE CONJUNCTION, NOT HALF OF IT. A root is on the curve AND on the
+   * x axis; an LCL is on the parcel trace AND on the mixing line; a merge
+   * crossbar meets both of its children. Declare one of a pair and a module
+   * that computes wrongly, then draws consistently with its own error, still
+   * passes: a bisection that returns the wrong x, plotted at f(x) rather than
+   * at 0, sits exactly on the curve. Both relations together have no such
+   * hiding place.
+   *
+   * What this cannot reach is unchanged and worth naming: a relation the
+   * module never states is never checked, and a figure whose every stated
+   * relation holds can still misrepresent its data. This narrows decision
+   * 0005's malformation limit; it does not remove it.
+   */
+  on?: string[];
 };
 
 /**
@@ -81,6 +110,20 @@ export type ModuleInput = {
   width: number;
   height: number;
   /**
+   * The font family stack the module must set its text in.
+   *
+   * Supplied because the CORE measures the result, and the two have to agree
+   * about which glyphs were drawn. Every module used to hardcode "Segoe UI",
+   * which is proprietary and absent from every Linux machine, so Chromium
+   * resolved something else and the same figure measured differently
+   * elsewhere -- three module tests failed that way the first time CI ran, one
+   * of them a planted defect that stopped being detected at all.
+   *
+   * The core provides the matching @font-face when it loads the SVG, so a
+   * module can name this face and rely on it resolving.
+   */
+  fontFamily?: string;
+  /**
    * Amended parameter values for repair. Keys are parameter names from a prior
    * invocation's `output.parameters[]`. The module applies these overrides,
    * within their declared bounds, and renders again.
@@ -114,6 +157,21 @@ export function parseModuleOutput(value: unknown): ModuleOutput {
       throw new Error(
         `module output.elements[${index}].kind must be one of ${kinds.join(", ")}`,
       );
+    }
+    if (element.on !== undefined) {
+      // Refused at the boundary rather than ignored downstream: an `on` that
+      // is not a list of ids is a claim nobody can check, and a claim nobody
+      // can check must not be able to reach a manifest that says "pass".
+      if (!Array.isArray(element.on) || element.on.some((id) => typeof id !== "string" || id === "")) {
+        throw new Error(
+          `module output.elements[${index}].on must be an array of non-empty element ids`,
+        );
+      }
+      if ((element.on as string[]).includes(element.id as string)) {
+        throw new Error(
+          `module output.elements[${index}].on names itself; an element lies on something else`,
+        );
+      }
     }
   }
   return output as unknown as ModuleOutput;

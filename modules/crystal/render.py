@@ -34,6 +34,14 @@ from typing import Any
 import numpy as np
 from ase.build import bulk
 
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
+
 ELEMENT_COLOURS: dict[str, str] = {
     "Na": "#5B8DEF", "Cl": "#48A9A6", "C": "#9AA4B2", "Cu": "#E9C46A",
     "Si": "#9D7BE8", "Fe": "#E76F51",
@@ -233,7 +241,7 @@ def render(width: float, height: float, formula: str, structure: str, a: float) 
             lid = f"{aid}-label"
             parts.append(
                 f'<text data-pr-id="{lid}" x="{cx:.2f}" y="{cy:.2f}" text-anchor="middle" dominant-baseline="middle" '
-                f'font-family="Segoe UI, sans-serif" font-size="{max(9.0, r * 0.9):.1f}" font-weight="700" fill="{LABEL_COLOUR}">{sym}</text>'
+                f'font-family="{FONT_STACK}" font-size="{max(9.0, r * 0.9):.1f}" font-weight="700" fill="{LABEL_COLOUR}">{sym}</text>'
             )
             elements.append({"id": lid, "kind": "label", "owner": aid, "claim": f"names {aid} as {sym}"})
 
@@ -284,6 +292,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 560))
     height = float(request.get("height", 560))
 

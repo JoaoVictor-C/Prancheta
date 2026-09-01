@@ -3,9 +3,22 @@
  *
  * Modules live outside the core as separate processes (decision 0005), which
  * made them invisible: nothing in the CLI, the generated views or the MCP
- * resource tree mentioned that eleven of them exist. An agent cannot choose a
- * module it has never heard of, so the whole repertoire may as well not have
- * been built. This table is what makes it discoverable.
+ * resource tree mentioned that they exist. An agent cannot choose a module it
+ * has never heard of, so the whole repertoire may as well not have been
+ * built. This table is what makes it discoverable.
+ *
+ * IT IS SHORTER THAN IT WAS, ON PURPOSE. The bar in
+ * docs/research/candidate-modules.md is that a real library computes geometry
+ * no TypeScript reimplementation is worth writing -- "if ELK or a bit of
+ * arithmetic in the core would do, it isn't a module candidate, it's a preset
+ * or a fixture". Four entries stopped clearing it: circuit and topology never
+ * did (both were stdlib-only and said so in their own MODULE.md), piechart's
+ * reason expired when the Mark arrived and a sector became something the core
+ * can state and check, and plot/derivative.py drew one fixed figure rather
+ * than a class of them. reaction was never a separate module at all -- it
+ * imports molecule's own render() -- so it is an entry point here, not a row.
+ * The deletions are recorded, with what was learned building them, in
+ * docs/research/candidate-modules.md.
  *
  * It is hand-curated on purpose. A summary is editorial — "what is this for,
  * in one line" is exactly what a generator cannot write — and the parts that
@@ -40,16 +53,6 @@ export type ModuleInfo = {
 };
 
 export const MODULES: ModuleInfo[] = [
-  {
-    id: "circuit",
-    summary:
-      "A single-loop series circuit with real electrical symbols — resistor zigzag, " +
-      "capacitor plates, inductor bumps, switch gap, diode triangle.",
-    entries: [{ path: "modules/circuit/render.py" }],
-    dependencies: [],
-    shortcuts: ["rc_lowpass", "led_circuit", "rlc_series", "switched_lamp"],
-    misdeclare: true,
-  },
   {
     id: "crystal",
     summary:
@@ -88,8 +91,19 @@ export const MODULES: ModuleInfo[] = [
   },
   {
     id: "molecule",
-    summary: "A 2D skeletal chemical structure from a SMILES string, with stereo wedges.",
-    entries: [{ path: "modules/molecule/render.py" }],
+    summary:
+      "2D skeletal chemical structures from SMILES, with stereo wedges -- one molecule, " +
+      "or a whole reaction scheme laid out as an equation and its participants.",
+    entries: [
+      { path: "modules/molecule/render.py", note: "one molecule; takes the shortcuts below" },
+      {
+        path: "modules/reaction/render.py",
+        note:
+          "a reaction scheme; imports this module's own render() rather than computing " +
+          "any chemistry of its own, and takes --name=glucose_combustion, photosynthesis, " +
+          "combustion_methane or esterification",
+      },
+    ],
     dependencies: ["rdkit"],
     shortcuts: [
       "glucose",
@@ -104,25 +118,11 @@ export const MODULES: ModuleInfo[] = [
     misdeclare: true,
   },
   {
-    id: "piechart",
-    summary: "Pie and donut charts drawn as real circular-sector paths, with a legend.",
-    entries: [{ path: "modules/piechart/render.py" }],
-    dependencies: [],
-    shortcuts: ["market_share", "budget_breakdown"],
-    misdeclare: true,
-  },
-  {
     id: "plot",
     summary:
-      "Function curves with their roots and extrema, or a scatter with a least-squares " +
-      "fit; plus a fixed figure explaining the derivative.",
-    entries: [
-      { path: "modules/plot/function.py", note: "curves and fits; takes the shortcuts below" },
-      {
-        path: "modules/plot/derivative.py",
-        note: "one fixed pedagogical figure; no flags at all, not even --misdeclare",
-      },
-    ],
+      "Function curves with their roots and extrema, or a scatter with a least-squares fit. " +
+      "Every root is declared to lie on its own curve and on the x axis, and both are checked.",
+    entries: [{ path: "modules/plot/function.py" }],
     dependencies: ["numpy"],
     shortcuts: [
       "quadratic",
@@ -134,16 +134,6 @@ export const MODULES: ModuleInfo[] = [
     misdeclare: true,
   },
   {
-    id: "reaction",
-    summary:
-      "A reaction scheme: an equation row of formulas and coefficients, and a real " +
-      "structural drawing of every unique participant.",
-    entries: [{ path: "modules/reaction/render.py" }],
-    dependencies: ["rdkit"],
-    shortcuts: ["glucose_combustion", "photosynthesis", "combustion_methane", "esterification"],
-    misdeclare: true,
-  },
-  {
     id: "skewt",
     summary:
       "A Skew-T log-P atmospheric sounding with temperature and dewpoint traces, a " +
@@ -151,16 +141,6 @@ export const MODULES: ModuleInfo[] = [
     entries: [{ path: "modules/skewt/render.py" }],
     dependencies: ["numpy", "metpy"],
     shortcuts: ["midlatitude_summer", "unstable_afternoon"],
-    misdeclare: true,
-  },
-  {
-    id: "topology",
-    summary:
-      "A protein secondary-structure cartoon — helices as capsules, strands as " +
-      "directional arrows, joined in sequence.",
-    entries: [{ path: "modules/topology/render.py" }],
-    dependencies: [],
-    shortcuts: ["four_helix_bundle", "rossmann_pattern"],
     misdeclare: true,
   },
 ];

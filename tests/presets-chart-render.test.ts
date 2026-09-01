@@ -21,6 +21,8 @@ const fixtures = [
   "chart-stacked100-horizontal.json",
   "chart-line-latency.json",
   "chart-scatter-single.json",
+  "chart-pie-market-share.json",
+  "chart-donut-budget.json",
 ];
 
 for (const name of fixtures) {
@@ -191,3 +193,77 @@ test(
     assert.ok(Math.abs(naWidth - euWidth) < 2, `stacked100 bars should share one total width: NA=${naWidth}, EU=${euWidth}`);
   },
 );
+
+/**
+ * The claim a pie makes, and the check that can refuse it.
+ *
+ * A pie says one thing: this slice's angle is its share. The preset derives
+ * both from the same fraction, so they cannot drift on their own -- which
+ * means the only way to prove the check works is to break the figure by hand
+ * and watch it fail. That is the same bargain `--misdeclare` strikes for a
+ * figure module.
+ */
+test("a slice whose printed share disagrees with the angle it sweeps is caught", { timeout: 240000 }, async () => {
+  const spec = expand({
+    preset: "chart",
+    chartType: "pie",
+    categories: [
+      { label: "Northwind", values: [42] },
+      { label: "Contoso", values: [27] },
+      { label: "Fabrikam", values: [18] },
+      { label: "Others", values: [13] },
+    ],
+  } as unknown as PresetInput);
+
+  // Reach into the expanded spec and print a share nobody drew.
+  const scene = (spec.root as { children: { children: { id?: string; label?: string }[] }[] })
+    .children[0]!;
+  const share = scene.children.find((child) => child.id === "slice-0-share");
+  assert.ok(share, "the largest slice should carry an inline share");
+  assert.equal(share!.label, "42%");
+  share!.label = "12%";
+
+  const result = await render(spec, {});
+  const sweep = result.manifest.checks.find((check) => check.id === "sweep-matches-its-label");
+  assert.ok(sweep, "sweep-matches-its-label must be present for a pie");
+  assert.equal(
+    sweep!.status,
+    "fail",
+    `a 12% label on a 42% slice must fail: ${JSON.stringify(sweep)}`,
+  );
+  assert.match(sweep!.detail ?? "", /slice-0/);
+});
+
+test("every slice's angle is its share of the whole, measured from the drawn arcs", { timeout: 240000 }, async () => {
+  const values = [42, 27, 18, 9, 4];
+  const total = values.reduce((a, b) => a + b, 0);
+  const spec = expand({
+    preset: "chart",
+    chartType: "pie",
+    categories: values.map((value, i) => ({ label: `C${i}`, values: [value] })),
+  } as unknown as PresetInput);
+  const result = await render(spec, {});
+
+  // Summed straight off the rendered marks, not off the input: this is the
+  // figure being read back, which is the only reading that proves anything.
+  const marks = result.figure.elements.filter((element) => element.kind === "mark");
+  assert.equal(marks.length, values.length, "one mark per slice");
+  for (const [i, value] of values.entries()) {
+    const mark = marks.find((candidate) => candidate.id === `slice-${i}`);
+    assert.ok(mark, `slice-${i} should be drawn`);
+    const arcs = (mark as { arcCentres: { centre: { x: number; y: number }; from: { x: number; y: number }; to: { x: number; y: number } }[] }).arcCentres;
+    const swept = arcs.reduce((sum, arc) => {
+      const a = Math.hypot(arc.from.x - arc.centre.x, arc.from.y - arc.centre.y);
+      const b = Math.hypot(arc.to.x - arc.centre.x, arc.to.y - arc.centre.y);
+      const dot =
+        (arc.from.x - arc.centre.x) * (arc.to.x - arc.centre.x) +
+        (arc.from.y - arc.centre.y) * (arc.to.y - arc.centre.y);
+      return sum + (Math.acos(Math.min(1, Math.max(-1, dot / (a * b)))) * 180) / Math.PI;
+    }, 0);
+    const expected = (value / total) * 360;
+    assert.ok(
+      Math.abs(swept - expected) < 0.5,
+      `slice-${i} should sweep ${expected.toFixed(1)} degrees, drew ${swept.toFixed(1)}`,
+    );
+  }
+});

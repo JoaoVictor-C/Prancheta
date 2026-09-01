@@ -1,0 +1,42 @@
+{
+  "elements": [
+    {
+      "id": "region-a",
+      "kind": "feature",
+      "claim": "the area of Region A",
+      "declaredBox": { "x": 60, "y": 40, "width": 160, "height": 120 }
+    },
+    {
+      "id": "trace",
+      "kind": "decoration",
+      "claim": "a drawn trace across the figure"
+    },
+    {
+      "id": "marker",
+      "kind": "feature",
+      "claim": "a point the module computed to lie on the trace",
+      "declaredBox": { "x": 195, "y": 195, "width": 10, "height": 10 },
+      "on": ["trace", "region-a"]
+    },
+    {
+      "id": "phantom",
+      "kind": "feature",
+      "claim": "a region that was never drawn"
+    },
+    {
+      "id": "region-a-label",
+      "kind": "label",
+      "owner": "region-a",
+      "claim": "names region-a"
+    },
+    {
+      "id": "caption",
+      "kind": "label",
+      "owner": "region-a",
+      "claim": "falsely claims to sit inside region-a"
+    }
+  ],
+  "notes": [
+    "planted: a phantom id, a box shifted 40px from what was drawn, a relation the drawing refutes, and a label outside the feature it claims"
+  ]
+}

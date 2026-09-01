@@ -17,13 +17,13 @@
  * REFUSE, and refusal is what these express.
  */
 
-import type { Idiom, PresetId, Structure } from "./vocabulary.ts";
+import type { Domain, Idiom, ModuleId, PresetId, Structure } from "./vocabulary.ts";
 
 export type Rule = {
   id: string;
-  axis: "structure" | "idiom";
+  axis: "structure" | "idiom" | "domain";
   /** The predicate value this rule reacts to. */
-  when: Structure | Idiom;
+  when: Structure | Idiom | Domain;
   preset: PresetId;
   effect: "favour" | "disqualify";
   /** Only meaningful for "favour". */
@@ -37,7 +37,85 @@ export type Rule = {
 /** A candidate must reach this to be offered at all. Never tuned per preset. */
 export const FLOOR = 2;
 
+/**
+ * Delegation rules: which figure module a domain reaches.
+ *
+ * A separate table, not more rows in RULES, because the target is a different
+ * kind of thing -- a process on the far side of decision 0005's boundary, not
+ * a preset the core expands. Keeping them apart means `Rule.preset` stays
+ * honestly typed and the generated preset reference stays about presets.
+ *
+ * They share the FLOOR with everything else, and they tie with nothing:
+ * a domain predicate is read by no preset rule, so a delegate's score and a
+ * preset's score are never computed from the same evidence.
+ */
+export type DelegateRule = {
+  id: string;
+  when: Domain;
+  module: ModuleId;
+  weight: number;
+  priority: number;
+  statement: string;
+};
+
+export const DELEGATE_RULES: DelegateRule[] = [
+  {
+    id: "D-cartographic-delegates-map",
+    when: "cartographic",
+    module: "map",
+    weight: 4,
+    priority: 60,
+    statement:
+      "Content stated in longitude and latitude is delegated to the map module; a projection is not something the core can compute.",
+  },
+  {
+    id: "D-molecular-delegates-molecule",
+    when: "molecular",
+    module: "molecule",
+    weight: 4,
+    priority: 60,
+    statement:
+      "A chemical structure is delegated to the molecule module; which bonds are wedges falls out of stereocentre perception, not layout.",
+  },
+  {
+    id: "D-crystallographic-delegates-crystal",
+    when: "crystallographic",
+    module: "crystal",
+    weight: 4,
+    priority: 60,
+    statement:
+      "A unit cell is delegated to the crystal module; the cell is built from real lattice vectors and drawn through a depth sort.",
+  },
+];
+
 export const RULES: Rule[] = [
+  // --- domain refusals -----------------------------------------------------
+  // The same move S-nograph-disqualifies-graph makes, one level deeper. A
+  // molecule really is a graph and a map really is a set of regions, so
+  // without these the graph preset would score well on a request the core
+  // cannot honestly serve -- and it would render beautifully, which is the
+  // failure mode this whole table exists to refuse.
+  {
+    id: "D-molecular-disqualifies-graph",
+    axis: "domain",
+    when: "molecular",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 95,
+    statement:
+      "A molecule is a graph and must still not be drawn as one; nodes and edges destroy the geometry that makes it a structure.",
+  },
+  {
+    id: "D-cartographic-disqualifies-blocks",
+    axis: "domain",
+    when: "cartographic",
+    preset: "labelled-blocks",
+    effect: "disqualify",
+    weight: 0,
+    priority: 95,
+    statement: "Territory is not a stack of boxes; labelled-blocks is refused for cartographic content.",
+  },
   // --- graph ---------------------------------------------------------------
   {
     id: "S-graph-favours-graph",

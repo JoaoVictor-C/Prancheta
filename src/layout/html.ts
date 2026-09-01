@@ -90,13 +90,29 @@ export function buildHtml(spec: FigureSpec, options: HtmlOptions = {}): IdAssign
   const background = spec.canvas?.background ?? active.canvas.background;
 
   const fontEmbed = options.fontEmbed ?? "none";
-  // Both modes measure against the bundled font, never only the system stack
-  // -- prepended, not replacing it, so a character the bundled font does not
-  // cover (see export/fonts.ts) still falls back to a real installed face
-  // rather than measuring against nothing.
-  const bodyFontFamily =
-    fontEmbed === "none" ? active.text.family : `"${BUNDLED_FONT_FAMILY}", ${active.text.family}`;
-  const bundledFontFace = fontEmbed === "none" ? "" : `${bundledFontFaceCssSync()}\n  `;
+  // EVERY mode measures against the bundled font, including "none", and that
+  // is a correctness property rather than a convenience.
+  //
+  // The theme's stack starts with "Segoe UI", which is a proprietary Microsoft
+  // face. On a machine without it Chromium resolves the stack to something
+  // else with different advance widths and different line height, so the same
+  // spec measures differently -- and since every check here is a measurement,
+  // the same figure is then genuinely a different figure. CI found this the
+  // first time it ran: four tests failed on Linux and none on Windows, one of
+  // them a PLANTED defect in the map module's --misdeclare probe that stopped
+  // being detected, which is the "goes quietly green" failure the module suite
+  // exists to prevent.
+  //
+  // Installing the missing face is not available -- it cannot be licensed onto
+  // a Linux runner -- so the fix is not to match one machine but to depend on
+  // none of them. The bundled font travels with the repository.
+  //
+  // Prepended, not replacing: a character the bundled font does not cover (see
+  // export/fonts.ts) still falls back to a real installed face rather than
+  // measuring against nothing. `fontEmbed` continues to decide what happens to
+  // the EXPORTED svg, which is a separate question from what was measured.
+  const bodyFontFamily = `"${BUNDLED_FONT_FAMILY}", ${active.text.family}`;
+  const bundledFontFace = `${bundledFontFaceCssSync()}\n  `;
   // outline mode sums each glyph's own advance width to position the next
   // one (render/svg.ts); Chromium's kerning would then measure narrower or
   // wider than that sum for character pairs a font kerns, so kerning is

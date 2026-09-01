@@ -104,7 +104,7 @@ That only holds while *the thing measured is the thing drawn*, which is why the 
 
 ## What gets checked
 
-Fifteen checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). Eleven answer *is this figure malformed*. The last four answer a narrower question that is not the same thing — *does this figure agree with itself* — and they exist because a figure can be perfectly well formed and still assert something untrue (ADR 0019).
+Fifteen checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). Eleven answer *is this figure malformed*. The last four answer a narrower question that is not the same thing — *does this figure agree with itself* — and they exist because a figure can be perfectly well formed and still assert something untrue (ADR 0019). A pie is drawn by that machinery: a slice's printed share is measured against the angle it actually sweeps.
 
 | check | what it asks |
 | --- | --- |
@@ -191,7 +191,7 @@ It answers with a preset, a composition of two, or *no preset fits — author ra
 
 **Thirteen block shapes** — seven geometric (`rect`, `circle`, `ellipse`, `diamond`, `hexagon`, `stadium`, `triangle`) and six symbols (`parallelogram`, `trapezoid`, `chevron`, `cross`, `star`, `note`). Every one is a polygon, deliberately: `shapeVertices` hands the same vertex list to `inPolygon` for containment and to the `<polygon>` for drawing, so `label-within-shape` answers about the shape on the page rather than an approximation. A curved symbol — a cylinder, a cloud — would break that identity and is not offered. [docs/design/GEOMETRY.generated.md](docs/design/GEOMETRY.generated.md) states each one's inscribed area, which is what tells a container from a marker: a `star` holds 27.6% of its bounding box and a `cross` 55.2%, and neither will take an ordinary label.
 
-**Eleven figure modules** (`node src/cli.ts modules`), in Python, for geometry the core cannot compute — circuits, crystal unit cells, dendrograms, gene maps, real maps, molecules, pie charts, function plots, reaction schemes, Skew-T soundings, protein topology. The index is [modules/README.md](modules/README.md).
+**Seven figure modules** (`node src/cli.ts modules`), in Python, for geometry the core cannot compute — crystal unit cells, dendrograms, gene maps, real maps, molecules and reaction schemes, function plots, Skew-T soundings. It was eleven: four rows stopped clearing the bar that puts a figure outside the core at all, and one was never a separate module. The index, and the record of what came out and why, is [modules/README.md](modules/README.md).
 
 The module contract is that **the module declares semantics and the core measures geometry**. A module says what it drew and what each element means; it may not certify that what it drew is correct. Nobody certifies their own work.
 
@@ -363,5 +363,5 @@ Bundled third-party assets keep their own terms: Inter under the SIL Open Font L
 
 - Competing with design tools for human-driven editing.
 - Photorealism or artistic illustration. The effects layer is schematic depth *cues*, deliberately restrained; it is not a rendering engine.
-- Verifying that a figure is **true**. Every check here answers malformation, not misrepresentation: a diode drawn the right way round for a circuit where it should be reversed passes every one of them.
+- Verifying that a figure is **true**. Almost every check here answers malformation, not misrepresentation: a regression fitted to meaningless data, or a map with the wrong country shaded, passes all of them. The exceptions are narrow and stated — a stated angle is checked against the arc drawn for it, and a figure module may declare that one thing it drew lies on another, which the drawing can then refuse.
 - Encoding to video. Animation ships as an SVG that honours `prefers-reduced-motion`; a frame-sequence encoder would destroy exactly that, so it could at most be an explicitly lossy convenience, never the deliverable ([ADR 0016](docs/decisions/0016-animation-m14-sequences.md)). Shape morphing and a camera are refused on the same page, and for a camera permanently: legibility under zoom has no check, and none can exist without a research-grade advance.

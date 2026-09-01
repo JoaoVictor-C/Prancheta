@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 400 240">
+  <rect x="0" y="0" width="400" height="240" fill="#101418"/>
+  <rect data-pr-id="region-a" x="20" y="40" width="160" height="120" fill="#C8D8F0"/>
+  <path data-pr-id="trace" d="M 20 200 L 380 200" stroke="#E0A33C" stroke-width="3" fill="none"/>
+  <circle data-pr-id="marker" cx="200" cy="200" r="5" fill="#E0A33C"/>
+  <text data-pr-id="region-a-label" x="100" y="100" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="14" fill="#101418">Region A</text>
+  <text data-pr-id="caption" x="300" y="60" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="12" fill="#E6E9EF">a caption</text>
+</svg>

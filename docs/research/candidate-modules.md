@@ -1,6 +1,6 @@
 # Candidate figure modules
 
-Research only — nothing here is implemented. [decision 0005](../decisions/0005-module-protocol.md) gave the project a second dimension of repertoire beyond the four core presets: a figure module is a separate process, in whatever language has the real domain library, that computes geometry the browser/ELK core categorically cannot. Two exist today — [map](../../modules/map/MODULE.md) (Shapely/pyproj: projection, point-in-polygon) and [molecule](../../modules/molecule/MODULE.md) (RDKit: 2D depiction, stereo perception) — plus one bespoke pedagogical figure, [plot/derivative.py](../../modules/plot/derivative.py), which is not a general module (it draws one fixed figure, not a class of them).
+Research only — nothing here is implemented. [decision 0005](../decisions/0005-module-protocol.md) gave the project a second dimension of repertoire beyond the four core presets: a figure module is a separate process, in whatever language has the real domain library, that computes geometry the browser/ELK core categorically cannot. Two existed when this was written — [map](../../modules/map/MODULE.md) (Shapely/pyproj: projection, point-in-polygon) and [molecule](../../modules/molecule/MODULE.md) (RDKit: 2D depiction, stereo perception) — plus one bespoke pedagogical figure, plot/derivative.py, which is not a general module (it draws one fixed figure, not a class of them).
 
 This is the search for what belongs on that list next. The bar for a candidate is three things, all required:
 
@@ -96,7 +96,7 @@ Unit cells, lattice planes (Miller indices), packing diagrams — via `pymatgen`
 
 Suggested directly by a user request showing a multi-level gate network (a handful of OR/NOR gates feeding into each other, the exact shape a digital-logic textbook draws). Real gate symbols — the curved AND/OR body, the NOT/NAND/NOR bubble, XOR's double curve — laid out across logic levels so signals flow left to right without a wire crossing back on itself.
 
-**This one is different in kind from every other entry on this list, and worth stating plainly: it does not clear bar 1.** A multi-level combinational network with no feedback is exactly a layered DAG, which is precisely what [graph](../../src/presets/graph/PRESET.md) already delegates to ELK for. There is no real external library computing geometry a TypeScript reimplementation isn't worth writing — the hard part is symbol vocabulary (drawing an OR gate's curved body, a NAND's bubble), which is rendering work, not domain computation. That makes this a **preset candidate, not a module candidate**: a `logic-gates` variant that reuses `graph`'s existing ELK-layered-DAG pipeline but swaps rectangular nodes for gate-shaped SVG paths, the same relationship [modules/circuit](../../modules/circuit/MODULE.md) has to `graph` one level down — except circuit's single-loop topology doesn't fit ELK's layered algorithm, so it earned a full module, while a logic network's feed-forward-only shape is exactly what that algorithm is for.
+**This one is different in kind from every other entry on this list, and worth stating plainly: it does not clear bar 1.** A multi-level combinational network with no feedback is exactly a layered DAG, which is precisely what [graph](../../src/presets/graph/PRESET.md) already delegates to ELK for. There is no real external library computing geometry a TypeScript reimplementation isn't worth writing — the hard part is symbol vocabulary (drawing an OR gate's curved body, a NAND's bubble), which is rendering work, not domain computation. That makes this a **preset candidate, not a module candidate**: a `logic-gates` variant that reuses `graph`'s existing ELK-layered-DAG pipeline but swaps rectangular nodes for gate-shaped SVG paths, the same relationship modules/circuit has to `graph` one level down — except circuit's single-loop topology doesn't fit ELK's layered algorithm, so it earned a full module, while a logic network's feed-forward-only shape is exactly what that algorithm is for.
 
 **What's genuinely hard:** ELK's layered algorithm minimises crossings for boxes; a gate's actual input/output terminal points are not the box's own bounding-box edges, so the connector endpoints ELK computes need translating to each gate symbol's real pin positions (an AND gate's two inputs on the flat left edge, its one output at the point) — a geometry-adaptation problem, not a values-adaptation one.
 
@@ -113,6 +113,138 @@ Suggested directly by a user request showing a multi-level gate network (a handf
 - **Astronomical star charts / orbital diagrams** (`astropy`) — clears bar 1 cleanly (real celestial coordinate transforms) but the audience is the narrowest on this list; revisit if a request pattern actually shows up.
 - **Geographic route/transit diagrams with real routing** (`osmnx` + a road/transit network) — this is an *extension* of the existing map module (real routing rather than static regions) rather than a new one; folding it into `modules/map` when it's needed is more honest than standing up a third geography module.
 - **PCB layout, knitting charts, knot diagrams** — real domain math exists for all three, but none has a request pattern in evidence; listed here so a future search doesn't waste time re-discovering and re-rejecting them without a reason on record.
+
+---
+
+## Built, then removed
+
+Four of the candidates above were built and later deleted, and one turned out
+never to have been a separate module at all. None of them was broken -- every
+one passed its own e2e tests on the day it was removed. They were removed
+because they stopped clearing **bar 1**, which is the only bar that decides
+whether something belongs on the far side of the process boundary.
+
+Recorded here rather than left to the git log, because the git log does not say
+*why*, and because two of these are lessons worth not paying for twice.
+
+### `piechart` -- the bar moved under it
+
+The strongest of the four, and the only one whose reason was genuinely good
+when it was written. Its `MODULE.md` argued: "A pie wedge is not a rectangle
+under any transform; drawing one needs an actual circular-sector path, which
+the core's box-model pipeline has no way to measure, check, or repair." True --
+until [ADR 0019](../decisions/0019-derived-geometry-and-annotation.md) gave the
+IR a **Mark**, which is a start point and a run of line and arc segments,
+flattened at layout time into the polyline every check walks. That is a sector.
+
+A pie is now `chartType: "pie" | "donut"` in
+[the chart preset](../../src/presets/chart/PRESET.md), and moving it in was a
+strict gain in checking rather than a lateral move: the slices' shares are
+verified by `sweep-matches-its-label` against the arcs actually drawn, and the
+labels additionally get `text-fits-box`, `contrast-sufficient` and
+`annotation-nearest-its-owner`, none of which the module protocol can offer.
+
+**Worth keeping:** three separate documents were still asserting the removed
+limitation on the day it was removed -- the chart preset's own `PRESET.md`,
+`SELECTION.md`, and the module's `MODULE.md`. A capability boundary is stated
+in more places than the one that changes, and a stale boundary reads exactly
+like a current one.
+
+### `circuit` and `topology` -- they never cleared it
+
+Both were stdlib-only, and both said so in their own documentation.
+`circuit/MODULE.md`: "This module depends on no schematic-CAD library. Every
+coordinate on every symbol and every wire is computed here."
+`topology/MODULE.md`: "No real structure file is read."
+
+That is precisely the case bar 1 excludes -- "if ELK or a bit of arithmetic in
+the core would do, it isn't a module candidate, it's a preset or a fixture" --
+and this document had already reached the right answer once, for candidate 9
+(digital logic gates), which was refused on the ground that "the hard part is
+symbol vocabulary, which is rendering work, not domain computation". Circuit is
+that same argument, accepted rather than refused. The inconsistency only became
+visible once the Mark removed the excuse.
+
+Neither was ported before deletion, and that was a decision rather than an
+oversight. `SELECTION.md` already licenses it: "A request the repertoire cannot
+serve is information, not an error." Post-Mark, either figure is authorable as
+raw IR the day somebody asks for one. What separates them from the pie is
+evidence of demand: the chart preset anticipated the pie request in writing,
+and nothing anywhere anticipated a request for a series circuit or a
+Rossmann-fold cartoon. **If real demand for circuit diagrams shows up, the
+answer is to port it, not to restore the module.**
+
+**Worth keeping, from `circuit`:** its symbols lived in a shared
+`symbols_electrical.py`, and the valuable part was never the paths -- anyone
+can draw a zigzag -- but the **measured** vertical offsets. An inductor's bumps
+rise only above the placement line and a switch's lever rises further above
+centre than its terminal circles extend below it, so declaring every symbol
+symmetric was wrong for exactly those two, and `module-geometry-agrees` caught
+it. A battery's declared height also included `+4` for its thicker line's
+stroke width, which is wrong because `getBoundingClientRect` returns the
+geometric extent of the path data and adds no stroke padding -- the same
+mistake `molecule` had already made once. Anyone drawing electrical symbols
+again should measure a bare probe of the actual markup rather than reasoning
+about it.
+
+**If `topology` is ever wanted back**, the honest route is not a port but a
+re-founding on the input this document originally proposed: a real `.pdb`
+file's `HELIX`/`SHEET` records, which are fixed-column and parseable without
+the external `mkdssp` binary. That version would clear bar 1 on the strength of
+reading a real structure, which the deleted one never did.
+
+### `plot/derivative.py` -- one figure, not a class of them
+
+Failed **bar 3** in this document's own words, and was named here as the
+counter-example when the bar was written: "it draws exactly one pedagogical
+picture". It took no flags at all, not even `--misdeclare`, and had no e2e
+test. By the time it was removed the core shipped the same pedagogy in
+`experiments/derivative/`, authored in real IR and animated across five states
+-- something the Python version could not do at all.
+
+### `reaction` -- never a second module
+
+It imports `modules/molecule`'s own `render()` and computes no chemistry of its
+own; what it adds is the packing problem of arranging several
+independently-sized molecule drawings in a row. That is a real problem and a
+real reason for the code to exist, but not a reason for a second row in the
+repertoire. It is now `molecule`'s second entry point, the shape `plot` already
+had.
+
+## What the removals cost, and what paid for it
+
+The three stdlib-only modules were the only ones whose e2e tests needed no
+scientific Python, so deleting them would have made the module protocol's own
+`--misdeclare` coverage depend entirely on rdkit, ase, scipy, metpy, pyproj and
+dna_features_viewer being installed. That was the sharpest argument against
+deleting them, and it is an argument about where a test lives rather than about
+whether a module should exist.
+
+So the planted-defect self-test moved first, into
+`tests/module-protocol-selftest.test.ts` with a checked-in SVG and manifest
+pair -- no subprocess, no dependencies, and in the core suite rather than the
+module one. Only then were the modules removed.
+
+## The bar, restated after all this
+
+Bar 1 decides whether a module should exist: does a real library compute
+content no TypeScript reimplementation is worth writing. That is the test, and
+the four removals above are all failures of it.
+
+A second question, independent of the first, decides how much a module that
+*does* exist is worth: **can it state a relation between two things it drew
+that the core can falsify by measuring the drawing?** A root is on its curve
+and on the x axis; an LCL is where two traces meet; a merge crossbar spans both
+of its children. That is what `on` and `module-feature-on-its-stroke` are for,
+and it is the only place this protocol reaches past malformation into meaning.
+
+The two are genuinely independent, and it is worth being explicit about that
+because collapsing them gives the wrong answer at both ends. `piechart` could
+state a falsifiable relation and still failed bar 1. `map` clears bar 1 easily
+and can state nothing falsifiable about the projection that is its whole reason
+for existing -- a wrong Mercator draws a perfectly self-consistent wrong map.
+So the first question decides the table; the second decides how well the
+survivors are checked, and is where the remaining work is.
 
 ## What every candidate above shares
 

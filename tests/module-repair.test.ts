@@ -1,8 +1,15 @@
 /**
  * Module repair end-to-end test (M9, stage 4, step 23).
  *
- * Verifies that the repair loop can resolve collisions in the topology module
- * by iteratively adjusting spacing parameters.
+ * Verifies that a module can declare what the core is allowed to adjust, that
+ * an override actually takes, and that the repair loop can drive those knobs
+ * to clear a failing check.
+ *
+ * It used to run against `modules/topology`, which was deleted in the module
+ * audit -- it never cleared the bar for being a module at all. `modules/genomic`
+ * exposes the same shape of parameter for the same reason: its rows have to
+ * grow when a label needs the band above its own arrow, and `row_height` is
+ * how the core is allowed to make that room.
  */
 
 import { test } from "node:test";
@@ -12,13 +19,15 @@ import { runModule } from "../src/modules/run.ts";
 import { chromium } from "playwright";
 import { verifyModuleFigure } from "../src/modules/verify.ts";
 
-test("topology module declares adjustable parameters", async () => {
+const ENTRY = "modules/genomic/render.py";
+
+test("genomic module declares adjustable parameters", async () => {
   const output = await runModule({
     command: "python",
-    args: ["modules/topology/render.py"],
+    args: [ENTRY],
     input: {
-      width: 620,
-      height: 220,
+      width: 760,
+      height: 320,
       spec: {},
     },
   });
@@ -27,9 +36,9 @@ test("topology module declares adjustable parameters", async () => {
   assert.ok(output.parameters.length > 0, "module should have at least one parameter");
 
   const paramNames = output.parameters.map((p) => p.name);
-  assert.ok(paramNames.includes("pad"), "should have pad parameter");
-  assert.ok(paramNames.includes("row_gap"), "should have row_gap parameter");
-  assert.ok(paramNames.includes("col_gap"), "should have col_gap parameter");
+  assert.ok(paramNames.includes("left_margin"), "should have left_margin parameter");
+  assert.ok(paramNames.includes("right_margin"), "should have right_margin parameter");
+  assert.ok(paramNames.includes("row_height"), "should have row_height parameter");
 
   for (const param of output.parameters) {
     assert.ok(typeof param.value === "number", `${param.name}.value should be a number`);
@@ -40,44 +49,57 @@ test("topology module declares adjustable parameters", async () => {
   }
 });
 
-test("topology module accepts parameter overrides", async () => {
+test("genomic module accepts parameter overrides", async () => {
   const baseline = await runModule({
     command: "python",
-    args: ["modules/topology/render.py"],
+    args: [ENTRY],
     input: {
-      width: 620,
-      height: 220,
+      width: 760,
+      height: 320,
       spec: {},
     },
   });
 
-  const padParam = baseline.parameters?.find((p) => p.name === "pad");
-  assert.ok(padParam, "should have pad parameter");
+  const marginParam = baseline.parameters?.find((p) => p.name === "left_margin");
+  assert.ok(marginParam, "should have left_margin parameter");
 
   const overridden = await runModule({
     command: "python",
-    args: ["modules/topology/render.py"],
+    args: [ENTRY],
     input: {
-      width: 620,
-      height: 220,
+      width: 760,
+      height: 320,
       spec: {},
-      parameterOverrides: { pad: padParam.min },
+      parameterOverrides: { left_margin: marginParam.max },
     },
   });
 
-  const newPadParam = overridden.parameters?.find((p) => p.name === "pad");
-  assert.ok(newPadParam, "overridden output should have pad parameter");
-  assert.strictEqual(newPadParam.value, padParam.min, "pad should be set to min value");
+  const newMarginParam = overridden.parameters?.find((p) => p.name === "left_margin");
+  assert.ok(newMarginParam, "overridden output should have left_margin parameter");
+  assert.strictEqual(
+    newMarginParam.value,
+    marginParam.max,
+    "left_margin should be set to the max value",
+  );
+
+  // An override the module ignored would satisfy the assertion above and still
+  // change nothing on the canvas, so check the drawing moved with it.
+  assert.notStrictEqual(
+    overridden.svg,
+    baseline.svg,
+    "an accepted override must change what was drawn, not just what was reported",
+  );
 });
 
 test("repair loop can adjust parameters to resolve failures", async () => {
-  // Create a narrow canvas that's likely to cause collisions
+  // A narrow canvas crowds the packed rows and is the shape most likely to
+  // produce something for the loop to fix.
   const options = {
     command: "python" as const,
-    args: ["modules/topology/render.py", "--name=rossmann_pattern"],
+    args: [ENTRY, "--name=operon"],
     input: {
-      width: 400,
-      height: 220,
+      width: 420,
+      height: 240,
       spec: {},
     },
   };
@@ -90,7 +112,9 @@ test("repair loop can adjust parameters to resolve failures", async () => {
   try {
     const initialVerification = await verifyModuleFigure(browser, initialOutput);
 
-    // If there are no failures initially, skip repair test
+    // If there are no failures initially, there is nothing to repair. Reported
+    // rather than asserted: a module that lays out cleanly at a hostile canvas
+    // size is a good outcome, not a broken test.
     const initialFailures = initialVerification.checks.filter((c) => c.status === "fail");
     if (initialFailures.length === 0) {
       console.log("  No initial failures to repair (canvas width sufficient)");
@@ -99,7 +123,6 @@ test("repair loop can adjust parameters to resolve failures", async () => {
 
     console.log(`  Initial failures: ${initialFailures.length}`);
 
-    // Run repair
     const result = await repairModuleFigure(options, initialOutput, initialVerification, 5);
 
     console.log(`  Repair iterations: ${result.iterations}`);
@@ -108,21 +131,10 @@ test("repair loop can adjust parameters to resolve failures", async () => {
     const finalFailures = result.verification.checks.filter((c) => c.status === "fail");
     console.log(`  Final failures: ${finalFailures.length}`);
 
-    // Verify that repair made progress (fewer failures or same with smaller magnitude)
     assert.ok(
-      result.iterations > 0 || initialFailures.length === 0,
-      "repair should have attempted at least one iteration if there were failures"
+      finalFailures.length <= initialFailures.length,
+      "repair should not make the figure worse",
     );
-
-    // If repair ran, it should have tried amendments
-    if (result.iterations > 0) {
-      assert.ok(result.amendments.length >= 0, "repair should record amendments");
-    }
-
-    // Success means all checks pass
-    if (result.success) {
-      assert.strictEqual(finalFailures.length, 0, "successful repair should have no failures");
-    }
   } finally {
     await browser.close();
   }

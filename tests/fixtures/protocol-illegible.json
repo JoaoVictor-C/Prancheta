@@ -1,0 +1,17 @@
+{
+  "elements": [
+    {
+      "id": "panel",
+      "kind": "feature",
+      "claim": "a filled panel",
+      "declaredBox": { "x": 20, "y": 20, "width": 200, "height": 100 }
+    },
+    {
+      "id": "panel-label",
+      "kind": "label",
+      "owner": "panel",
+      "claim": "names the panel, in a colour a reader cannot make out on it"
+    }
+  ],
+  "notes": ["planted: a label whose only defect is that nobody can read it"]
+}

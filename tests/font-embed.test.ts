@@ -71,13 +71,26 @@ test("outlineForChar returns empty path data but real advance for a space", () =
 // --- end-to-end (slow: real Chromium) ---------------------------------------
 
 test(
-  "fontEmbed: \"none\" renders exactly as before this feature existed",
+  "fontEmbed: \"none\" is the default, and still ships no font bytes",
   { timeout: 60000 },
   async () => {
     const withoutOption = await render(specWith("Plain text"));
     const withNone = await render(specWith("Plain text"), { fontEmbed: "none" });
     assert.equal(withoutOption.svg, withNone.svg);
-    assert.ok(!withoutOption.svg.includes(BUNDLED_FONT_FAMILY));
+
+    // What "none" means is that no font is INLINED, not that the bundled face
+    // went unused. This assertion used to read `!includes(BUNDLED_FONT_FAMILY)`
+    // -- "renders exactly as before this feature existed" -- and that premise
+    // turned out to be the bug rather than the contract: measuring against
+    // whatever face the host machine happened to resolve made the same spec a
+    // different figure on a different machine, which CI found the first time it
+    // ran on Linux. Every mode now measures against the bundled font, so every
+    // mode names it, and only the export payload differs.
+    assert.ok(!withoutOption.svg.includes("data:font/woff2;base64,"));
+    assert.ok(
+      withoutOption.svg.includes(BUNDLED_FONT_FAMILY),
+      "the exported svg must name the face it was measured against",
+    );
   },
 );
 

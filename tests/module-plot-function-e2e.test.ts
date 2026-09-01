@@ -117,5 +117,21 @@ test(
     const geometryAgrees = verification.checks.find((c) => c.id === "module-geometry-agrees");
     assert.ok(geometryAgrees, "module-geometry-agrees check must be present");
     assert.equal(geometryAgrees!.status, "fail");
+
+    // The planted defect that is a lie about MEANING rather than form: the
+    // root marker is moved off the curve and the axis it still claims to lie
+    // on. Nothing is malformed afterwards, so this is the one defect in the
+    // figure that no other check in the set can see.
+    const onStroke = verification.checks.find((c) => c.id === "module-feature-on-its-stroke");
+    assert.ok(onStroke, "module-feature-on-its-stroke check must be present");
+    assert.equal(onStroke!.status, "fail");
+    assert.ok(
+      onStroke!.detail?.includes("does not lie on curve-0"),
+      `expected the broken curve relation to be named: ${onStroke!.detail}`,
+    );
+    assert.ok(
+      onStroke!.detail?.includes("does not lie on axis-x"),
+      `both halves of the conjunction must be reported, not just the first: ${onStroke!.detail}`,
+    );
   },
 );

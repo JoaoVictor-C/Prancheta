@@ -165,10 +165,18 @@ test(
   "a centred label too tall for its box is repaired, and fits afterwards",
   { timeout: 120000 },
   async () => {
+    // The box starts at 90px, not 40px, and the reason is worth stating: the
+    // repair budget is 3x a node's original size, so at 40px this figure was
+    // only repairable if the label wrapped to few enough lines -- which is a
+    // fact about the FONT, not about the feature under test. It fitted in
+    // Segoe UI and did not fit in the bundled face, so the assertion was
+    // measuring the ambient font of whatever machine ran it. At 90px the
+    // label is still far too tall for its box and the growth needed is
+    // comfortably inside budget either way.
     const spec = parseSpec({
       version: 1,
       root: {
-        type: "block", id: "tight", width: 130, height: 40,
+        type: "block", id: "tight", width: 130, height: 90,
         verticalAlign: "center", textAlign: "center",
         label: "a centred label far too tall for the box it was given",
       },

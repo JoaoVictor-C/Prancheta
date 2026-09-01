@@ -23,7 +23,7 @@ node src/cli.ts <command> [options]
 | --- | --- | --- |
 | `render` | <spec> [--out] [--scale] [--repair] [--maxPasses] [--maxScale] [--fontEmbed] [--pdf] [--pdfSize] | Render a figure spec or preset input to SVG, PNG and a manifest.. |
 | `validate` | <spec> | Check a spec or preset input WITHOUT drawing it -- shape, references and arithmetic only, never whether the figure is any good. |
-| `select` | [--structure] [--idiom] | Rank presets for a set of content predicates, with the rules that decided it. |
+| `select` | [--structure] [--idiom] [--domain] | Rank presets for a set of content predicates, with the rules that decided it. |
 | `presets` | — | List the repertoire: every preset, whether it is implemented, and what it is for.. |
 | `rules` | — | Print the selection rule table: what each rule reacts to and what it does.. |
 | `effects` | — | List the effect repertoire: every named effect, what it is composed of, and how far past an element's own edges it puts ink.. |
@@ -58,17 +58,13 @@ declares what it drew, the core measures it.
 
 | module | what it draws | needs | example |
 | --- | --- | --- | --- |
-| `circuit` | A single-loop series circuit with real electrical symbols — resistor zigzag, capacitor plates, inductor bumps, switch gap, diode triangle. | — | `--args "modules/circuit/render.py,--name=rc_lowpass"` |
 | `crystal` | One conventional crystallographic unit cell, orthographically projected, with visible and hidden cell edges distinguished by real depth. | `numpy`, `ase` | `--args "modules/crystal/render.py,--name=nacl_rocksalt"` |
 | `dendrogram` | A hierarchical-clustering dendrogram where height is real merge distance. | `numpy`, `scipy` | `--args "modules/dendrogram/render.py,--name=cluster_demo"` |
 | `genomic` | Gene arrows on a real base-pair axis; arrow direction is the strand. | `dna_features_viewer` | `--args "modules/genomic/render.py,--name=plasmid_simple"` |
 | `map` | Region and country maps, longitude/latitude projected to Web Mercator, with labels placed at each region's representative point. | `pyproj`, `shapely` | `--args "modules/map/render.py,--name=campaign"` |
-| `molecule` | A 2D skeletal chemical structure from a SMILES string, with stereo wedges. | `rdkit` | `--args "modules/molecule/render.py,--name=glucose"` |
-| `piechart` | Pie and donut charts drawn as real circular-sector paths, with a legend. | — | `--args "modules/piechart/render.py,--name=market_share"` |
-| `plot` | Function curves with their roots and extrema, or a scatter with a least-squares fit; plus a fixed figure explaining the derivative. | `numpy` | `--args "modules/plot/function.py,--name=quadratic"` |
-| `reaction` | A reaction scheme: an equation row of formulas and coefficients, and a real structural drawing of every unique participant. | `rdkit` | `--args "modules/reaction/render.py,--name=glucose_combustion"` |
+| `molecule` | 2D skeletal chemical structures from SMILES, with stereo wedges -- one molecule, or a whole reaction scheme laid out as an equation and its participants. | `rdkit` | `--args "modules/molecule/render.py,--name=glucose"` |
+| `plot` | Function curves with their roots and extrema, or a scatter with a least-squares fit. Every root is declared to lie on its own curve and on the x axis, and both are checked. | `numpy` | `--args "modules/plot/function.py,--name=quadratic"` |
 | `skewt` | A Skew-T log-P atmospheric sounding with temperature and dewpoint traces, a lifted-parcel profile and the LCL. | `numpy`, `metpy` | `--args "modules/skewt/render.py,--name=midlatitude_summer"` |
-| `topology` | A protein secondary-structure cartoon — helices as capsules, strands as directional arrows, joined in sequence. | — | `--args "modules/topology/render.py,--name=four_helix_bundle"` |
 
 `--args` is repeatable and each occurrence is taken verbatim, which is why
 several modules use `;` and `:` as delimiters rather than commas. Read
@@ -114,13 +110,59 @@ A set of items with no relations between them is a stack of labelled blocks (`S-
 
 Plain flow is the **absence** of an idiom, not a signal. It nudges towards blocks and never carries a figure by itself (`I-plain-flow-favours-blocks`). An earlier version of this table weighted it as real evidence, and every ordinary flowchart came out as a graph composed with a redundant stack of blocks.
 
-A series with a scale is a chart (`S-series-favours-chart`), as is any request that asks to be drawn as one (`I-chart-favours-chart`) — quarterly revenue, request counts by endpoint, anything where length or position stands for a number. Built entirely from the same boxes every other preset composes: a bar's height or width **is** the encoded value, arithmetic rather than new geometry, so the whole pipeline — text measurement, the repair loop, every check — applies with no new code. That is also this preset's boundary: a wedge is not a box, so a pie or donut chart is not this preset's to draw, and asking for one should get told so rather than a bar chart standing in for it.
+A series with a scale is a chart (`S-series-favours-chart`), as is any request that asks to be drawn as one (`I-chart-favours-chart`) — quarterly revenue, request counts by endpoint, anything where length or position stands for a number. Built entirely from the same boxes every other preset composes: a bar's height or width **is** the encoded value, arithmetic rather than new geometry, so the whole pipeline — text measurement, the repair loop, every check — applies with no new code. A pie or donut is this preset's too, as of the Mark: a wedge is not a box, but it is an outline the IR can state and the checks can walk, and a slice's printed share is measured against the angle it actually sweeps. This sentence used to say the opposite, and said so correctly until ADR 0019 changed what the core could express.
 
-## Two answers that are not a preset
+## Answer three questions, not two
+
+There is a third axis, and it is short: **whose geometry is this?**
+
+Almost every request answers "the core's", and the axis stays empty. A few
+answer otherwise — a map is projected, a molecule is depicted, a unit cell is
+built from lattice vectors and drawn through a depth sort — and for those the
+right answer is not a preset at all but a figure module on the far side of
+[decision 0005](../../../docs/decisions/0005-module-protocol.md)'s process boundary.
+
+This axis exists because delegation cannot be reached by exhaustion. The
+"none" outcome means nothing fit; a request for a map fits something perfectly well, and
+saying "nothing fits" about it would be false. So a domain is something a
+request **positively asserts**, and it reads values no preset rule reads —
+which is also why these rules tie with nothing in the table beside them.
+
+**A domain refuses the presets that would misrepresent it**, the same move the
+scene rule makes one level up. A molecule genuinely *is* a graph — atoms and
+bonds — so the graph preset would score well and render beautifully, and no
+chemist would accept the result, because which bonds are wedges falls out of
+stereocentre perception rather than out of layout
+(`D-molecular-disqualifies-graph`). Territory is genuinely a set of named
+regions, and stacking them as boxes throws away the only thing a map is for
+(`D-cartographic-disqualifies-blocks`).
+
+## Three answers that are not a preset
+
+**Delegate.** Cartographic content goes to the map module
+(`D-cartographic-delegates-map`), molecular content to the molecule module
+(`D-molecular-delegates-molecule`), crystallographic content to the crystal
+module (`D-crystallographic-delegates-crystal`). Delegation is decided before
+preset ranking, and that precedence is deliberate: a request that names a
+domain is answered across the boundary however well some surviving preset
+scores.
+
+Three domains, not seven. The rest of the module repertoire — function plots,
+dendrograms, sequence diagrams, soundings — is reached by asking for it rather
+than by describing content, and inventing predicates nobody would assert would
+make this table longer without making anything more reachable.
+
+**The stated limit.** Delegation is all-or-nothing here: a request that is both
+cartographic *and* wants callouts on leader lines delegates, and the callouts
+are the module's problem or nobody's. Composing a module with a preset is not
+something this table can express, and pretending otherwise by ranking them
+together would produce a figure neither half agrees to.
 
 **Compose.** When two candidates clear the floor on *disjoint* evidence, the figure is genuinely two things — a topology *and* a set of callouts — and flattening it into one preset repeats the failure at the top of this page. Overlapping evidence is not composition: an org chart fires both the hierarchy and graph rules, but on the same fact, so it is one figure.
 
 **None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error.
+
+Until delegation existed, the module repertoire was a list an agent had to already know to consult — nothing in the ranking could reach it, so for selection purposes eleven figure kinds may as well not have been built. That was a real defect in this table and not a missing feature of the modules.
 
 ## What the tests actually prove
 
@@ -279,19 +321,32 @@ Fixture: [`fixtures/annotated-cell.json`](../../../fixtures/annotated-cell.json)
 
 ### chart
 
-Bar, line and scatter charts. A value with a scale, not a graph.
+Bar, line, scatter, pie and donut charts. A value with a scale, not a graph.
 
 **Choose it when** the content is a series — values that carry a scale, compared across categories (`S-series-favours-chart`) — or the request explicitly asks to be drawn as a chart (`I-chart-favours-chart`): quarterly revenue, request counts by endpoint, a leaderboard by score.
 
 **Do not choose it when** the content has no scale. A set of items with no numeric comparison is `labelled-blocks` (`S-series-disqualifies-blocks` fires the other way: once values genuinely carry a scale, blocks would show them as unordered text). Nor is a chart a graph: nodes and edges misrepresent a scale exactly as badly as blocks do (`I-chart-disqualifies-everything`).
 
-**What this preset does not cover.** Bar, line and scatter only. A pie or donut chart needs a real wedge — a shape this preset's `Block`-based IR cannot express, the same boundary that puts curve-fitting and function plots in `modules/plot` rather than here. Ask for one and get told plainly rather than a bar chart standing in for it.
+**What this preset does not cover.** Curve fitting and function plots: sampling an expression, bisecting for a root and computing a least-squares fit are arithmetic no `Block` and no `Mark` performs, which is what keeps them in `modules/plot`.
 
-## Two genuinely different code paths, not one preset stretched thin
+**A pie used to be on that list, and no longer is.** This section read "a pie or donut chart needs a real wedge — a shape this preset's `Block`-based IR cannot express", and that was true when it was written. The Mark (ADR 0019) made a wedge expressible: an outline of two radii and an arc, flattened into the polyline every check walks. So the pie came into the core and `modules/piechart` was deleted, which is a strict gain in checking — see "Three code paths" below.
+
+## Three genuinely different code paths, not one preset stretched thin
 
 `chartType: "bar"` (the default) is pure `Stack`/`Block` arithmetic — see below. `chartType: "line" | "scatter"` is a different function entirely, building a `Scene{layout:"absolute"}` with a `Block` per data point and a `Connector` joining consecutive points when `"line"` (bare, unconnected, when `"scatter"`). This isn't a stylistic choice: a `Block` has no way to be "a point joined to another point", only a Scene's `Connector` can, so line/scatter needed the same absolute-coordinate shape `annotated-figure` and `graph` already use, not an extension of the flexbox trick that makes bars free. `orientation`, `stacking`, `maxBarLength`, `barThickness`, `barGap`, `groupGap` and `labelWidth` are bar-only and silently ignored otherwise; `plotWidth`/`plotHeight` are line/scatter-only.
 
 Deliberately minimal, the same restraint the bar chart states for itself: no axis rule, no gridlines. Two end labels on the y axis (`0` and the largest value) say what a ruled line would, without one more shape that could collide with a point sitting exactly on the axis.
+
+`chartType: "pie" | "donut"` is the third, and it is on this list for the same reason the second is rather than as a variant of it: a wedge is neither flexbox arithmetic on a rectangle nor a point joined to another point. It is a `Scene{layout:"absolute"}` whose slices are `Mark`s — a run out to the rim, round an arc, and back — with the share printed on each slice as an annotation that `annotates` it.
+
+**The claim a pie makes, and what refuses it.** A pie asserts one thing: a slice's angle is its share. Both are derived from the same fraction, so they cannot drift apart on their own — and then `sweep-matches-its-label` measures the arc that was actually drawn and compares it against the percentage that was actually printed. That check already existed for angle marks; a share is the same claim in a different unit, so it kept its name rather than growing a near-duplicate beside it.
+
+Two things fell out of building it, both recorded because both were caught rather than foreseen:
+
+- **An arc past a half turn cannot be one segment.** Two endpoints and a centre name two arcs, and the minor one is the convention, so a 58% slice was drawn as the 151° left over. Slices are emitted in spans of at most 120° — not 180°, where the two candidates are the same length and the ambiguity is total; a full circle cut in half came back as an outline that retraced itself and enclosed nothing. `sweep-matches-its-label` adds a sector's rim arcs back up, grouping by radius so a donut's inner rim is not counted twice.
+- **One ink cannot serve a categorical palette.** The theme's default text colour put four of five slice labels between 1.37:1 and 2.66:1, which `contrast-sufficient` reported because the label sits on the Mark and a filled Mark is a surface. Each label's ink is now chosen against the wedge it sits on.
+
+A slice under 6% carries no inline share — there is no room to set one legibly, and a label the repair loop grew to fit would be a box bigger than the wedge it names. The legend lists every category's share regardless, which is why the pie's legend carries numbers and the bar chart's does not.
 
 **Known, stated limit.** Two series with near-identical values at the same category place two markers close enough to partially overlap, which `boxes-do-not-overlap` will genuinely fail on — an honest collision, not a false positive. Real scatter data can produce this; small markers narrow the range of values where it happens, they do not remove it.
 

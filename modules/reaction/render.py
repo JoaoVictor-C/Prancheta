@@ -27,10 +27,19 @@ from typing import Any
 # depiction here -- is the whole point: this module owns layout, not
 # chemistry.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "molecule"))
+import render as molecule_module  # noqa: E402
 from render import render as render_molecule  # noqa: E402
 
 from rdkit import Chem  # noqa: E402
 from rdkit.Chem import rdMolDescriptors  # noqa: E402
+
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
 
 NAMED: dict[str, dict[str, Any]] = {
     "glucose_combustion": {
@@ -195,7 +204,7 @@ def render(width: float, height: float, reaction: str, conditions: str, misdecla
         id_attr = f' data-pr-id="{id_}"' if id_ else ""
         equation.append(
             f'<text{id_attr} x="{cursor:.2f}" y="{EQN_Y:.2f}" text-anchor="start" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="{font:.0f}" '
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="{font:.0f}" '
             f'font-weight="{weight}" fill="{colour}">{text}</text>'
         )
         if id_:
@@ -254,7 +263,7 @@ def render(width: float, height: float, reaction: str, conditions: str, misdecla
     if conditions:
         equation.append(
             f'<text data-pr-id="reaction-conditions" x="{(arrow_x0 + arrow_x1) / 2:.2f}" '
-            f'y="{arrow_y - 14:.2f}" text-anchor="middle" font-family="Segoe UI, sans-serif" '
+            f'y="{arrow_y - 14:.2f}" text-anchor="middle" font-family="{FONT_STACK}" '
             f'font-size="13" fill="{DIM}">{conditions}</text>'
         )
         # No owner: the arrow is a decoration, not a filled feature a label
@@ -318,7 +327,7 @@ def render(width: float, height: float, reaction: str, conditions: str, misdecla
             structures.append(
                 f'<text data-pr-id="{label_id}" x="{row2_cursor + TILE_W / 2:.2f}" '
                 f'y="{row2_y - row2_coeff_band / 2:.2f}" text-anchor="middle" '
-                f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" '
+                f'dominant-baseline="middle" font-family="{FONT_STACK}" '
                 f'font-size="16" font-weight="600" fill="{STROKE}">{count}x</text>'
             )
             elements.append(
@@ -385,6 +394,15 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
+    # The embedded molecule tiles are drawn by modules/molecule/render.py, which
+    # keeps its own copy of this constant. Setting only ours would leave every
+    # atom label in a face the core is not measuring against.
+    molecule_module.FONT_STACK = FONT_STACK
     width = float(request.get("width", 900))
     height = float(request.get("height", 260))
     json.dump(render(width, height, reaction, conditions, misdeclare), sys.stdout)

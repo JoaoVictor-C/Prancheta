@@ -27,6 +27,14 @@ from typing import Any
 import numpy as np
 from scipy.cluster.hierarchy import dendrogram, linkage
 
+# The font this figure's text is set in.
+#
+# Handed down by the core with the canvas size, because the core is what
+# MEASURES the result and the two have to agree about which glyphs were drawn.
+# The default is only for running this script by hand; a real invocation always
+# supplies it. See src/modules/protocol.ts.
+FONT_STACK = "Segoe UI, sans-serif"
+
 STROKE = "#5B8DEF"
 LEAF_COLOUR = "#E6E9EF"
 AXIS_COLOUR = "#3D4757"
@@ -109,7 +117,7 @@ def render(width: float, height: float, labels: list[str], data: list[list[float
         tick_id = f"tick-{i}"
         parts.append(
             f'<text data-pr-id="{tick_id}" x="{left - 10:.2f}" y="{ty:.2f}" text-anchor="end" '
-            f'dominant-baseline="middle" font-family="Segoe UI, sans-serif" font-size="11" '
+            f'dominant-baseline="middle" font-family="{FONT_STACK}" font-size="11" '
             f'fill="{TICK_COLOUR}">{dist:.2f}</text>'
         )
         elements.append({"id": tick_id, "kind": "label", "claim": f"distance tick at {dist:.3f}"})
@@ -148,7 +156,7 @@ def render(width: float, height: float, labels: list[str], data: list[list[float
         lid = f"leaf-{i}"
         parts.append(
             f'<text data-pr-id="{lid}" x="{cx:.2f}" y="{leaf_y + 16:.2f}" text-anchor="middle" '
-            f'font-family="Segoe UI, sans-serif" font-size="13" fill="{LEAF_COLOUR}">{name}</text>'
+            f'font-family="{FONT_STACK}" font-size="13" fill="{LEAF_COLOUR}">{name}</text>'
         )
         elements.append({"id": lid, "kind": "label", "claim": f"names leaf {name!r}"})
 
@@ -203,6 +211,11 @@ def main() -> int:
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
+    # The face the CORE will measure this SVG against, handed down with the
+    # canvas size. Naming a font the measuring machine does not have is how the
+    # same figure becomes two different figures.
+    global FONT_STACK
+    FONT_STACK = str(request.get("fontFamily", FONT_STACK))
     width = float(request.get("width", 760))
     height = float(request.get("height", 420))
 
