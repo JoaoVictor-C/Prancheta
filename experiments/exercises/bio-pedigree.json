@@ -1,0 +1,1995 @@
+{
+  "version": 1,
+  "title": "Biology: Who must be a carrier",
+  "canvas": {
+    "padding": 0,
+    "background": "#FCFBF7",
+    "theme": "print"
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 1180,
+    "height": 820,
+    "children": [
+      {
+        "type": "block",
+        "id": "t1",
+        "label": "BIOLOGY",
+        "x": 46,
+        "y": 20,
+        "width": 400,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "start",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 2.6
+      },
+      {
+        "type": "block",
+        "id": "t2",
+        "label": "Who must be a carrier",
+        "x": 46,
+        "y": 47,
+        "width": 680,
+        "height": 38,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "start",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 24,
+        "fontWeight": 600,
+        "letterSpacing": -0.2
+      },
+      {
+        "type": "block",
+        "id": "t18",
+        "label": "I-1",
+        "x": 235,
+        "y": 235,
+        "width": 30,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t22",
+        "label": "I-2",
+        "x": 355,
+        "y": 235,
+        "width": 30,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t24",
+        "label": "II-1",
+        "x": 149.5,
+        "y": 369,
+        "width": 37,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t27",
+        "label": "II-2",
+        "x": 269.5,
+        "y": 369,
+        "width": 37,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t29",
+        "label": "II-3",
+        "x": 389.5,
+        "y": 369,
+        "width": 37,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t32",
+        "label": "II-4",
+        "x": 509.5,
+        "y": 369,
+        "width": 37,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t35",
+        "label": "III-1",
+        "x": 386.5,
+        "y": 503,
+        "width": 43,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t37",
+        "label": "III-2",
+        "x": 506.5,
+        "y": 503,
+        "width": 43,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t39",
+        "label": "male,\nunaffected",
+        "x": 174,
+        "y": 573.5,
+        "width": 150,
+        "height": 37,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "normal",
+        "textAlign": "start",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t42",
+        "label": "female,\naffected",
+        "x": 374,
+        "y": 573.5,
+        "width": 150,
+        "height": 37,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "normal",
+        "textAlign": "start",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t46",
+        "label": "obligate carrier —\ninferred, not assumed",
+        "x": 574,
+        "y": 573.5,
+        "width": 150,
+        "height": 37,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "normal",
+        "textAlign": "start",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t47",
+        "label": "THE MATING THAT PRODUCED II-2",
+        "x": 720.5,
+        "y": 166.5,
+        "width": 247,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 600,
+        "letterSpacing": 2
+      },
+      {
+        "type": "block",
+        "id": "t48",
+        "label": "I-1  ×  I-2   —   both Aa, because their daughter is aa",
+        "x": 643.5,
+        "y": 195,
+        "width": 401,
+        "height": 22,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 12.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t49",
+        "label": "A",
+        "x": 792.5,
+        "y": 223.5,
+        "width": 19,
+        "height": 25,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 15,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t50",
+        "label": "A",
+        "x": 732.5,
+        "y": 279.5,
+        "width": 19,
+        "height": 25,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 15,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t51",
+        "label": "a",
+        "x": 876.5,
+        "y": 223.5,
+        "width": 19,
+        "height": 25,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 15,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t52",
+        "label": "a",
+        "x": 732.5,
+        "y": 363.5,
+        "width": 19,
+        "height": 25,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 15,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t54",
+        "label": "AA",
+        "x": 786,
+        "y": 268.5,
+        "width": 32,
+        "height": 31,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 19,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t55",
+        "label": "homozygous",
+        "x": 765.5,
+        "y": 300.5,
+        "width": 73,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t57",
+        "label": "Aa",
+        "x": 870,
+        "y": 268.5,
+        "width": 32,
+        "height": 31,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 19,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t58",
+        "label": "carrier",
+        "x": 859,
+        "y": 300.5,
+        "width": 54,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t60",
+        "label": "Aa",
+        "x": 786,
+        "y": 352.5,
+        "width": 32,
+        "height": 31,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 19,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t61",
+        "label": "carrier",
+        "x": 775,
+        "y": 384.5,
+        "width": 54,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t63",
+        "label": "aa",
+        "x": 870,
+        "y": 352.5,
+        "width": 32,
+        "height": 31,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#FFFFFF",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 19,
+        "fontWeight": 700,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t64",
+        "label": "affected",
+        "x": 855.5,
+        "y": 384.5,
+        "width": 61,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#E8E6E0",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t67",
+        "label": "No symbol was shaded by hand. The half-filled ones are what the inheritance rules force, given who is affected — and the square is the same inference, drawn again.",
+        "x": 29,
+        "y": 649.5,
+        "width": 1122,
+        "height": 21,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 12,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t69",
+        "label": "THE QUESTION",
+        "x": 46,
+        "y": 702.3,
+        "width": 180,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "start",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 600,
+        "letterSpacing": 2.2
+      },
+      {
+        "type": "block",
+        "id": "t70",
+        "label": "The condition shown is caused by a single gene. II-4 married into the family; in the wider population 1 person in 25 is a carrier.\n(a)  Is the condition dominant or recessive, autosomal or sex-linked? Give the evidence from the pedigree, not from the shading.\n(b)  Why must I-1 and I-2 both be carriers, while II-1 and II-3 only might be?      (c)  What is P(II-3 is a carrier)?\n(d)  Find the probability that III-1 is a carrier.      (e)  What is the chance that III-1 and III-2 are both carriers?",
+        "x": 46,
+        "y": 721.4,
+        "width": 1040,
+        "height": 85,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "normal",
+        "textAlign": "start",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 14,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t71",
+        "label": "Everything drawn is true. Nothing marked ? is answered here.",
+        "x": 734,
+        "y": 690.3,
+        "width": 400,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "end",
+        "verticalAlign": "center",
+        "textColor": "#B3400C",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.2
+      },
+      {
+        "type": "block",
+        "id": "t65",
+        "label": "of the unaffected children, what fraction carry a ?",
+        "x": 657.5,
+        "y": 465,
+        "width": 373,
+        "height": 22,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#B3400C",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 12.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t66",
+        "label": "III-1 is unaffected. Is she a carrier ?",
+        "x": 234.5,
+        "y": 533,
+        "width": 287,
+        "height": 22,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#B3400C",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 12.5,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      }
+    ],
+    "connectors": [],
+    "marks": [
+      {
+        "id": "m3",
+        "from": {
+          "x": 46,
+          "y": 88
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1134,
+              "y": 88
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#C7CDD5",
+        "strokeWidth": 1
+      },
+      {
+        "id": "m4",
+        "from": {
+          "x": 267,
+          "y": 214
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 353,
+              "y": 214
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m5",
+        "from": {
+          "x": 310,
+          "y": 214
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 310,
+              "y": 273
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m6",
+        "from": {
+          "x": 168,
+          "y": 273
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 408,
+              "y": 273
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m7",
+        "from": {
+          "x": 168,
+          "y": 273
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 168,
+              "y": 331
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m8",
+        "from": {
+          "x": 288,
+          "y": 273
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 288,
+              "y": 331
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m9",
+        "from": {
+          "x": 408,
+          "y": 273
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 408,
+              "y": 331
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m10",
+        "from": {
+          "x": 425,
+          "y": 348
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 511,
+              "y": 348
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m11",
+        "from": {
+          "x": 468,
+          "y": 348
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 468,
+              "y": 407
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m12",
+        "from": {
+          "x": 408,
+          "y": 407
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 528,
+              "y": 407
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m13",
+        "from": {
+          "x": 408,
+          "y": 407
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 408,
+              "y": 465
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m14",
+        "from": {
+          "x": 528,
+          "y": 407
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 528,
+              "y": 465
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m15",
+        "from": {
+          "x": 233,
+          "y": 197
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 267,
+              "y": 197
+            }
+          },
+          {
+            "line": {
+              "x": 267,
+              "y": 231
+            }
+          },
+          {
+            "line": {
+              "x": 233,
+              "y": 231
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m16",
+        "from": {
+          "x": 233,
+          "y": 197
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 250,
+              "y": 197
+            }
+          },
+          {
+            "line": {
+              "x": 250,
+              "y": 231
+            }
+          },
+          {
+            "line": {
+              "x": 233,
+              "y": 231
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#23262C",
+        "stroke": "none",
+        "strokeWidth": 0
+      },
+      {
+        "id": "m17",
+        "from": {
+          "x": 233,
+          "y": 197
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 267,
+              "y": 197
+            }
+          },
+          {
+            "line": {
+              "x": 267,
+              "y": 231
+            }
+          },
+          {
+            "line": {
+              "x": 233,
+              "y": 231
+            }
+          }
+        ],
+        "close": true,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m19",
+        "from": {
+          "x": 387,
+          "y": 214
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 370,
+              "y": 197
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          },
+          {
+            "arc": {
+              "x": 353,
+              "y": 214
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          },
+          {
+            "arc": {
+              "x": 370,
+              "y": 231
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          },
+          {
+            "arc": {
+              "x": 387,
+              "y": 214
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "none",
+        "strokeWidth": 0
+      },
+      {
+        "from": {
+          "x": 370,
+          "y": 197
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 370,
+              "y": 231
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          },
+          {
+            "line": {
+              "x": 370,
+              "y": 197
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#23262C",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "id": "m20"
+      },
+      {
+        "id": "m21",
+        "from": {
+          "x": 387,
+          "y": 214
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 370,
+              "y": 197
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          },
+          {
+            "arc": {
+              "x": 353,
+              "y": 214
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          },
+          {
+            "arc": {
+              "x": 370,
+              "y": 231
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          },
+          {
+            "arc": {
+              "x": 387,
+              "y": 214
+            },
+            "centre": {
+              "x": 370,
+              "y": 214
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m23",
+        "from": {
+          "x": 151,
+          "y": 331
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 185,
+              "y": 331
+            }
+          },
+          {
+            "line": {
+              "x": 185,
+              "y": 365
+            }
+          },
+          {
+            "line": {
+              "x": 151,
+              "y": 365
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m25",
+        "from": {
+          "x": 305,
+          "y": 348
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 288,
+              "y": 331
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 271,
+              "y": 348
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 288,
+              "y": 365
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 305,
+              "y": 348
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#23262C",
+        "stroke": "none",
+        "strokeWidth": 0
+      },
+      {
+        "id": "m26",
+        "from": {
+          "x": 305,
+          "y": 348
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 288,
+              "y": 331
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 271,
+              "y": 348
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 288,
+              "y": 365
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 305,
+              "y": 348
+            },
+            "centre": {
+              "x": 288,
+              "y": 348
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m28",
+        "from": {
+          "x": 391,
+          "y": 331
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 425,
+              "y": 331
+            }
+          },
+          {
+            "line": {
+              "x": 425,
+              "y": 365
+            }
+          },
+          {
+            "line": {
+              "x": 391,
+              "y": 365
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m30",
+        "from": {
+          "x": 545,
+          "y": 348
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 528,
+              "y": 331
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 511,
+              "y": 348
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 528,
+              "y": 365
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 545,
+              "y": 348
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "none",
+        "strokeWidth": 0
+      },
+      {
+        "id": "m31",
+        "from": {
+          "x": 545,
+          "y": 348
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 528,
+              "y": 331
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 511,
+              "y": 348
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 528,
+              "y": 365
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          },
+          {
+            "arc": {
+              "x": 545,
+              "y": 348
+            },
+            "centre": {
+              "x": 528,
+              "y": 348
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m33",
+        "from": {
+          "x": 425,
+          "y": 482
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 408,
+              "y": 465
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          },
+          {
+            "arc": {
+              "x": 391,
+              "y": 482
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          },
+          {
+            "arc": {
+              "x": 408,
+              "y": 499
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          },
+          {
+            "arc": {
+              "x": 425,
+              "y": 482
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "none",
+        "strokeWidth": 0
+      },
+      {
+        "id": "m34",
+        "from": {
+          "x": 425,
+          "y": 482
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 408,
+              "y": 465
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          },
+          {
+            "arc": {
+              "x": 391,
+              "y": 482
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          },
+          {
+            "arc": {
+              "x": 408,
+              "y": 499
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          },
+          {
+            "arc": {
+              "x": 425,
+              "y": 482
+            },
+            "centre": {
+              "x": 408,
+              "y": 482
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m36",
+        "from": {
+          "x": 511,
+          "y": 465
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 545,
+              "y": 465
+            }
+          },
+          {
+            "line": {
+              "x": 545,
+              "y": 499
+            }
+          },
+          {
+            "line": {
+              "x": 511,
+              "y": 499
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "#181B21",
+        "strokeWidth": 1.6
+      },
+      {
+        "id": "m38",
+        "from": {
+          "x": 138,
+          "y": 580
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 162,
+              "y": 580
+            }
+          },
+          {
+            "line": {
+              "x": 162,
+              "y": 604
+            }
+          },
+          {
+            "line": {
+              "x": 138,
+              "y": 604
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m40",
+        "from": {
+          "x": 362,
+          "y": 592
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 350,
+              "y": 580
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 338,
+              "y": 592
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 350,
+              "y": 604
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 362,
+              "y": 592
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#23262C",
+        "stroke": "none",
+        "strokeWidth": 0
+      },
+      {
+        "id": "m41",
+        "from": {
+          "x": 362,
+          "y": 592
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 350,
+              "y": 580
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 338,
+              "y": 592
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 350,
+              "y": 604
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 362,
+              "y": 592
+            },
+            "centre": {
+              "x": 350,
+              "y": 592
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m43",
+        "from": {
+          "x": 562,
+          "y": 592
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 550,
+              "y": 580
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 538,
+              "y": 592
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 550,
+              "y": 604
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 562,
+              "y": 592
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "none",
+        "strokeWidth": 0
+      },
+      {
+        "from": {
+          "x": 550,
+          "y": 580
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 550,
+              "y": 604
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          },
+          {
+            "line": {
+              "x": 550,
+              "y": 580
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#23262C",
+        "stroke": "none",
+        "strokeWidth": 0,
+        "id": "m44"
+      },
+      {
+        "id": "m45",
+        "from": {
+          "x": 562,
+          "y": 592
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 550,
+              "y": 580
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 538,
+              "y": 592
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 550,
+              "y": 604
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          },
+          {
+            "arc": {
+              "x": 562,
+              "y": 592
+            },
+            "centre": {
+              "x": 550,
+              "y": 592
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m53",
+        "from": {
+          "x": 760,
+          "y": 250
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 844,
+              "y": 250
+            }
+          },
+          {
+            "line": {
+              "x": 844,
+              "y": 334
+            }
+          },
+          {
+            "line": {
+              "x": 760,
+              "y": 334
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#FFFFFF",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m56",
+        "from": {
+          "x": 844,
+          "y": 250
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 928,
+              "y": 250
+            }
+          },
+          {
+            "line": {
+              "x": 928,
+              "y": 334
+            }
+          },
+          {
+            "line": {
+              "x": 844,
+              "y": 334
+            }
+          }
+        ],
+        "close": true,
+        "fill": "rgba(35,38,44,0.20)",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m59",
+        "from": {
+          "x": 760,
+          "y": 334
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 844,
+              "y": 334
+            }
+          },
+          {
+            "line": {
+              "x": 844,
+              "y": 418
+            }
+          },
+          {
+            "line": {
+              "x": 760,
+              "y": 418
+            }
+          }
+        ],
+        "close": true,
+        "fill": "rgba(35,38,44,0.20)",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m62",
+        "from": {
+          "x": 844,
+          "y": 334
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 928,
+              "y": 334
+            }
+          },
+          {
+            "line": {
+              "x": 928,
+              "y": 418
+            }
+          },
+          {
+            "line": {
+              "x": 844,
+              "y": 418
+            }
+          }
+        ],
+        "close": true,
+        "fill": "rgba(35,38,44,0.86)",
+        "stroke": "#181B21",
+        "strokeWidth": 1.4
+      },
+      {
+        "id": "m68",
+        "from": {
+          "x": 46,
+          "y": 687.8
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1134,
+              "y": 687.8
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#C7CDD5",
+        "strokeWidth": 1
+      }
+    ]
+  }
+}
