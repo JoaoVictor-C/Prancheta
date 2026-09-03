@@ -1,0 +1,3538 @@
+{
+  "version": 1,
+  "title": "Diagram of the causes of mortality in the army in the East (Nightingale, 1858) - redrawn",
+  "canvas": {
+    "padding": 0,
+    "background": "#F3ECDC",
+    "theme": "print"
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 1500,
+    "height": 880,
+    "children": [
+      {
+        "type": "block",
+        "id": "t1",
+        "label": "DIAGRAM OF THE CAUSES OF MORTALITY",
+        "x": 470,
+        "y": 16,
+        "width": 560,
+        "height": 32,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 24,
+        "fontWeight": 600,
+        "letterSpacing": 0.6
+      },
+      {
+        "type": "block",
+        "id": "t2",
+        "label": "IN THE ARMY IN THE EAST.",
+        "x": 550,
+        "y": 56,
+        "width": 400,
+        "height": 24,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 18,
+        "fontWeight": 500,
+        "letterSpacing": 1.4
+      },
+      {
+        "type": "block",
+        "id": "t3",
+        "label": "2.",
+        "x": 280,
+        "y": 20,
+        "width": 40,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 15,
+        "fontWeight": 600,
+        "letterSpacing": 0.4
+      },
+      {
+        "type": "block",
+        "id": "t4",
+        "label": "APRIL 1855 to MARCH 1856.",
+        "x": 175,
+        "y": 46,
+        "width": 250,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 13,
+        "fontWeight": 500,
+        "letterSpacing": 0.7
+      },
+      {
+        "type": "block",
+        "id": "t5",
+        "label": "1.",
+        "x": 1185,
+        "y": 20,
+        "width": 40,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 15,
+        "fontWeight": 600,
+        "letterSpacing": 0.4
+      },
+      {
+        "type": "block",
+        "id": "t6",
+        "label": "APRIL 1854 to MARCH 1855.",
+        "x": 1080,
+        "y": 46,
+        "width": 250,
+        "height": 20,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 13,
+        "fontWeight": 500,
+        "letterSpacing": 0.7
+      },
+      {
+        "type": "block",
+        "id": "t7",
+        "label": "APRIL 1854",
+        "x": 798.1209677266613,
+        "y": 400.23422596443305,
+        "width": 89,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t8",
+        "label": "MAY",
+        "x": 949.1055556972717,
+        "y": 353.60555569727165,
+        "width": 34,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t9",
+        "label": "JUNE",
+        "x": 1014.1418670542118,
+        "y": 313.74742275148344,
+        "width": 42,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t10",
+        "label": "JULY",
+        "x": 1104.7331843204236,
+        "y": 273.1611784864223,
+        "width": 42,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t11",
+        "label": "AUGUST",
+        "x": 1197.833559254512,
+        "y": 311.1664407454881,
+        "width": 57,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t12",
+        "label": "SEPTEMBER",
+        "x": 1232.5321539501792,
+        "y": 409.4374442736537,
+        "width": 81,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t13",
+        "label": "OCTOBER",
+        "x": 1234.8337423462099,
+        "y": 514.0356709389225,
+        "width": 65,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t14",
+        "label": "NOVEMBER",
+        "x": 1242.6612062293461,
+        "y": 666.6612062293461,
+        "width": 73,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t15",
+        "label": "DECEMBER",
+        "x": 1125.2043801093444,
+        "y": 786.0851518068379,
+        "width": 73,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t16",
+        "label": "JANUARY 1855",
+        "x": 936.2956198906555,
+        "y": 786.0851518068379,
+        "width": 104,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t17",
+        "label": "FEBRUARY",
+        "x": 788.8913062411488,
+        "y": 712.1086937588514,
+        "width": 73,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t18",
+        "label": "MARCH 1855",
+        "x": 736.788798138348,
+        "y": 541.1996793468041,
+        "width": 89,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t19",
+        "label": "APRIL 1855",
+        "x": 139.84768102981477,
+        "y": 252.1328327940629,
+        "width": 89,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t20",
+        "label": "MAY",
+        "x": 191.69960099982458,
+        "y": 166.19960099982455,
+        "width": 34,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t21",
+        "label": "JUNE",
+        "x": 270.10021686374773,
+        "y": 128.66377889425127,
+        "width": 42,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t22",
+        "label": "JULY",
+        "x": 357.8997831362522,
+        "y": 128.66377889425127,
+        "width": 42,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t23",
+        "label": "AUGUST",
+        "x": 410.3868523912994,
+        "y": 188.61314760870061,
+        "width": 57,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t24",
+        "label": "SEPTEMBER",
+        "x": 453.79874435892236,
+        "y": 249.81603009373487,
+        "width": 81,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t25",
+        "label": "OCTOBER",
+        "x": 458.9799838588291,
+        "y": 334.4286853066084,
+        "width": 65,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t26",
+        "label": "NOVEMBER",
+        "x": 387.595454429505,
+        "y": 381.59545442950497,
+        "width": 73,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t27",
+        "label": "DECEMBER",
+        "x": 338.0993139006857,
+        "y": 440.28665142222746,
+        "width": 73,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": -15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t28",
+        "label": "JANUARY 1856",
+        "x": 229.42445766377818,
+        "y": 492.44664604183714,
+        "width": 104,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 15,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t29",
+        "label": "FEBRUARY",
+        "x": 209.40454557049503,
+        "y": 381.595454429505,
+        "width": 73,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 45,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t30",
+        "label": "MARCH 1856",
+        "x": 87.68768641020509,
+        "y": 346.8433956414732,
+        "width": 89,
+        "height": 15,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 10.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.9,
+        "rotation": 75,
+        "rotateBox": true
+      },
+      {
+        "type": "block",
+        "id": "t31",
+        "label": "BULGARIA",
+        "x": 1030,
+        "y": 251,
+        "width": 90,
+        "height": 14,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 9.5,
+        "fontWeight": 400,
+        "letterSpacing": 1.2
+      },
+      {
+        "type": "block",
+        "id": "t32",
+        "label": "CRIMEA",
+        "x": 1312,
+        "y": 398,
+        "width": 80,
+        "height": 14,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 9.5,
+        "fontWeight": 400,
+        "letterSpacing": 1.2
+      },
+      {
+        "type": "block",
+        "id": "t33",
+        "label": "The Areas of the blue, red, & black wedges are each measured from\n    the centre as the common vertex.\nThe blue wedges measured from the centre of the circle represent area\n    for area the deaths from Preventible or Mitigable Zymotic diseases; the\n    red wedges measured from the centre the deaths from wounds, & the\n    black wedges measured from the centre the deaths from all other causes.\nThe black line across the red triangle in Nov.ʳ 1854 marks the boundary\n    of the deaths from all other causes during the month.\nIn October 1854, & April 1855, the black area coincides with the red;\n    in January & February 1855, the blue coincides with the black.\nThe entire areas may be compared by following the blue, the red & the\n    black lines enclosing them.",
+        "x": 112,
+        "y": 580,
+        "width": 520,
+        "height": 240,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "normal",
+        "textAlign": "start",
+        "textColor": "#2B2721",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 12.5,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      }
+    ],
+    "marks": [
+      {
+        "id": "p1",
+        "from": {
+          "x": 640,
+          "y": 88
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 860,
+              "y": 88
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#2B2721",
+        "strokeWidth": 1.2
+      },
+      {
+        "id": "w2",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1053.506184173952,
+              "y": 457.59053964691896
+            }
+          },
+          {
+            "arc": {
+              "x": 1050.181079293838,
+              "y": 470
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w3",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1065.3876733434192,
+              "y": 464.45032061728443
+            }
+          },
+          {
+            "arc": {
+              "x": 1063.9006412345689,
+              "y": 470
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p4",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1053.506184173952,
+              "y": 457.59053964691896
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w5",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1063.3483085970092,
+              "y": 449.81867849590657
+            }
+          },
+          {
+            "arc": {
+              "x": 1054.8186784959066,
+              "y": 458.3483085970093
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w6",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1064.9093392479533,
+              "y": 452.5224628955139
+            }
+          },
+          {
+            "arc": {
+              "x": 1057.5224628955139,
+              "y": 459.9093392479533
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p7",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1063.3483085970092,
+              "y": 449.81867849590657
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w8",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1075,
+              "y": 449.752859400818
+            }
+          },
+          {
+            "arc": {
+              "x": 1064.876429700409,
+              "y": 452.4654618871131
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w9",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1075,
+              "y": 455.0464956534711
+            }
+          },
+          {
+            "arc": {
+              "x": 1067.5232478267355,
+              "y": 457.0498853603049
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p10",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1075,
+              "y": 449.752859400818
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w11",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1132.3912705878756,
+              "y": 370.59540343086616
+            }
+          },
+          {
+            "arc": {
+              "x": 1075,
+              "y": 355.2174588242488
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w12",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1089.5265516781192,
+              "y": 444.8392744347226
+            }
+          },
+          {
+            "arc": {
+              "x": 1075,
+              "y": 440.9468966437616
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p13",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1132.3912705878756,
+              "y": 370.59540343086616
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w14",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1222.2398827998834,
+              "y": 384.9910140300384
+            }
+          },
+          {
+            "arc": {
+              "x": 1160.0089859699615,
+              "y": 322.7601172001167
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w15",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1103.0266327058846,
+              "y": 453.8188160627788
+            }
+          },
+          {
+            "arc": {
+              "x": 1091.1811839372212,
+              "y": 441.97336729411546
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w16",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1080.116939647975,
+              "y": 467.04573351681455
+            }
+          },
+          {
+            "arc": {
+              "x": 1077.9542664831854,
+              "y": 464.883060352025
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p17",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1222.2398827998834,
+              "y": 384.9910140300384
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w18",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1240.7399139339523,
+              "y": 470
+            }
+          },
+          {
+            "arc": {
+              "x": 1218.5349758878492,
+              "y": 387.13004303302387
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w19",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1128.1381596986987,
+              "y": 470
+            }
+          },
+          {
+            "arc": {
+              "x": 1121.0189962094275,
+              "y": 443.43092015065065
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w20",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1124.3984156705392,
+              "y": 470
+            }
+          },
+          {
+            "arc": {
+              "x": 1117.7802828773902,
+              "y": 445.30079216473047
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p21",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1240.7399139339523,
+              "y": 470
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w22",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1189.0151651180656,
+              "y": 535.8266862726148
+            }
+          },
+          {
+            "arc": {
+              "x": 1206.6533725452298,
+              "y": 470
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w23",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1133.4070933039154,
+              "y": 503.72135104159906
+            }
+          },
+          {
+            "arc": {
+              "x": 1142.4427020831981,
+              "y": 470
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w24",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1132.5153295883836,
+              "y": 503.2064910203832
+            }
+          },
+          {
+            "arc": {
+              "x": 1141.4129820407666,
+              "y": 470
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p25",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1189.0151651180656,
+              "y": 535.8266862726148
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w26",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1161.5592710700805,
+              "y": 619.9250553595064
+            }
+          },
+          {
+            "arc": {
+              "x": 1224.9250553595064,
+              "y": 556.5592710700805
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w27",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1125.47581216702,
+              "y": 557.4266712265819
+            }
+          },
+          {
+            "arc": {
+              "x": 1162.426671226582,
+              "y": 520.47581216702
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w28",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1105.675757777858,
+              "y": 523.1319710319262
+            }
+          },
+          {
+            "arc": {
+              "x": 1128.1319710319262,
+              "y": 500.67575777785805
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p29",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1161.5592710700805,
+              "y": 619.9250553595064
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w30",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1075,
+              "y": 705.7275467599917
+            }
+          },
+          {
+            "arc": {
+              "x": 1192.8637733799958,
+              "y": 674.1460438659369
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w31",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1075,
+              "y": 534.9608104624533
+            }
+          },
+          {
+            "arc": {
+              "x": 1107.4804052312268,
+              "y": 526.2577121109106
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w32",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1075,
+              "y": 530.5993844057755
+            }
+          },
+          {
+            "arc": {
+              "x": 1105.2996922028879,
+              "y": 522.4806063491002
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p33",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1075,
+              "y": 705.7275467599917
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w34",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 925,
+              "y": 729.8076211353316
+            }
+          },
+          {
+            "arc": {
+              "x": 1075,
+              "y": 770
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w35",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1023.6156862446461,
+              "y": 559.0002421363333
+            }
+          },
+          {
+            "arc": {
+              "x": 1075,
+              "y": 572.7686275107079
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w36",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1048.9925901401077,
+              "y": 515.0461552506014
+            }
+          },
+          {
+            "arc": {
+              "x": 1075,
+              "y": 522.0148197197848
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p37",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 925,
+              "y": 729.8076211353316
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w38",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 841.9766296422982,
+              "y": 604.536105603493
+            }
+          },
+          {
+            "arc": {
+              "x": 940.4638943965072,
+              "y": 703.0233703577018
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w39",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 978.84206020144,
+              "y": 525.5168124274185
+            }
+          },
+          {
+            "arc": {
+              "x": 1019.4831875725815,
+              "y": 566.15793979856
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w40",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1042.20133295118,
+              "y": 488.93631924969714
+            }
+          },
+          {
+            "arc": {
+              "x": 1056.0636807503029,
+              "y": 502.79866704882005
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p41",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 841.9766296422982,
+              "y": 604.536105603493
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w42",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 869.4235230606665,
+              "y": 470
+            }
+          },
+          {
+            "arc": {
+              "x": 896.9655485500314,
+              "y": 572.7882384696668
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w43",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 997.3316428371368,
+              "y": 470
+            }
+          },
+          {
+            "arc": {
+              "x": 1007.7372296267574,
+              "y": 508.8341785814316
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w44",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1041.4992226278932,
+              "y": 470
+            }
+          },
+          {
+            "arc": {
+              "x": 1045.9874757492287,
+              "y": 486.7503886860534
+            },
+            "centre": {
+              "x": 1075,
+              "y": 470
+            }
+          },
+          {
+            "line": {
+              "x": 1075,
+              "y": 470
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p45",
+        "from": {
+          "x": 1075,
+          "y": 470
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 869.4235230606665,
+              "y": 470
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w46",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 226.77561350341153,
+              "y": 237.51662132331256
+            }
+          },
+          {
+            "arc": {
+              "x": 210.03324264662513,
+              "y": 300
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w47",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 297.5886507971954,
+              "y": 278.40054746701367
+            }
+          },
+          {
+            "arc": {
+              "x": 291.80109493402733,
+              "y": 300
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w48",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 300.6689914702029,
+              "y": 280.1789829837703
+            }
+          },
+          {
+            "arc": {
+              "x": 295.3579659675406,
+              "y": 300
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p49",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 226.77561350341153,
+              "y": 237.51662132331256
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w50",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 273.515373675811,
+              "y": 193.50550332211776
+            }
+          },
+          {
+            "arc": {
+              "x": 228.50550332211776,
+              "y": 238.51537367581102
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w51",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 315.90442581077474,
+              "y": 266.92549530456097
+            }
+          },
+          {
+            "arc": {
+              "x": 301.92549530456097,
+              "y": 280.90442581077474
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w52",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 318.4065938324644,
+              "y": 271.2593774472016
+            }
+          },
+          {
+            "arc": {
+              "x": 306.2593774472016,
+              "y": 283.4065938324644
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p53",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 273.515373675811,
+              "y": 193.50550332211776
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w54",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 152.38426280081862
+            }
+          },
+          {
+            "arc": {
+              "x": 261.1921314004093,
+              "y": 172.16102158714136
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w55",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 224.64386444803728
+            }
+          },
+          {
+            "arc": {
+              "x": 297.32193222401867,
+              "y": 234.7396722809766
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w56",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 270.9780678442474
+            }
+          },
+          {
+            "arc": {
+              "x": 320.4890339221237,
+              "y": 274.8662694862098
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p57",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 152.38426280081862
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w58",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 383.626283706687,
+              "y": 215.77680603675952
+            }
+          },
+          {
+            "arc": {
+              "x": 335,
+              "y": 202.7474325866261
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w59",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 363.79995421546454,
+              "y": 250.11701604315797
+            }
+          },
+          {
+            "arc": {
+              "x": 335,
+              "y": 242.40009156907092
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w60",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 349.29211059187304,
+              "y": 275.2453383074826
+            }
+          },
+          {
+            "arc": {
+              "x": 335,
+              "y": 271.4157788162539
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p61",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 383.626283706687,
+              "y": 215.77680603675952
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w62",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 427.59387351988147,
+              "y": 246.5409021979863
+            }
+          },
+          {
+            "arc": {
+              "x": 388.45909780201373,
+              "y": 207.40612648011856
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w63",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 388.9548651148867,
+              "y": 268.84914410183023
+            }
+          },
+          {
+            "arc": {
+              "x": 366.15085589816977,
+              "y": 246.04513488511333
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w64",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 356.06583564296045,
+              "y": 287.8376341208324
+            }
+          },
+          {
+            "arc": {
+              "x": 347.1623658791676,
+              "y": 278.93416435703955
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p65",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 427.59387351988147,
+              "y": 246.5409021979863
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w66",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 413.12264565828707,
+              "y": 300
+            }
+          },
+          {
+            "arc": {
+              "x": 402.65619575092666,
+              "y": 260.93867717085647
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w67",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 399.6477335065372,
+              "y": 300
+            }
+          },
+          {
+            "arc": {
+              "x": 390.98657951374764,
+              "y": 267.6761332467314
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w68",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 356.02990928166236,
+              "y": 300
+            }
+          },
+          {
+            "arc": {
+              "x": 353.2124356772017,
+              "y": 289.48504535916885
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p69",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 413.12264565828707,
+              "y": 300
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w70",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 381.51416039496473,
+              "y": 326.8549630251623
+            }
+          },
+          {
+            "arc": {
+              "x": 388.70992605032467,
+              "y": 300
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w71",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 364.93078698406896,
+              "y": 317.28054792230955
+            }
+          },
+          {
+            "arc": {
+              "x": 369.5610958446191,
+              "y": 300
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w72",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 352.4428101481118,
+              "y": 310.07061113443586
+            }
+          },
+          {
+            "arc": {
+              "x": 355.14122226887173,
+              "y": 300
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p73",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 381.51416039496473,
+              "y": 326.8549630251623
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w74",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 370.23250238666037,
+              "y": 361.0244842114875
+            }
+          },
+          {
+            "arc": {
+              "x": 396.0244842114875,
+              "y": 335.23250238666037
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w75",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 350.1701703911644,
+              "y": 326.27550587697374
+            }
+          },
+          {
+            "arc": {
+              "x": 361.27550587697374,
+              "y": 315.1701703911644
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w76",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 349.9385511348716,
+              "y": 325.87432955706333
+            }
+          },
+          {
+            "arc": {
+              "x": 360.87432955706333,
+              "y": 314.9385511348716
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p77",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 370.23250238666037,
+              "y": 361.0244842114875
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w78",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 347.1527498552944
+            }
+          },
+          {
+            "arc": {
+              "x": 358.5763749276472,
+              "y": 340.83547923297795
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w79",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 326.15563959729093
+            }
+          },
+          {
+            "arc": {
+              "x": 348.07781979864546,
+              "y": 322.65144834348416
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w80",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 320.97116616535726
+            }
+          },
+          {
+            "arc": {
+              "x": 345.48558308267866,
+              "y": 318.1615626461841
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p81",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 335,
+              "y": 347.1527498552944
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w82",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 318.07088795940325,
+              "y": 329.3220821813397
+            }
+          },
+          {
+            "arc": {
+              "x": 335,
+              "y": 333.85822408119355
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w83",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 319.16426572044435,
+              "y": 327.4282963473505
+            }
+          },
+          {
+            "arc": {
+              "x": 335,
+              "y": 331.6714685591113
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w84",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 331.5443594751776,
+              "y": 305.9853449616864
+            }
+          },
+          {
+            "arc": {
+              "x": 335,
+              "y": 306.91128104964486
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#E7C6C3",
+        "stroke": "#B0817C",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p85",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 318.07088795940325,
+              "y": 329.3220821813397
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w86",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 314.0935568289825,
+              "y": 312.07034059258456
+            }
+          },
+          {
+            "arc": {
+              "x": 322.92965940741544,
+              "y": 320.9064431710175
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w87",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 316.3983558576167,
+              "y": 310.7396642529746
+            }
+          },
+          {
+            "arc": {
+              "x": 324.2603357470254,
+              "y": 318.6016441423833
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p88",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 314.0935568289825,
+              "y": 312.07034059258456
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "w89",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 306.69853845260855,
+              "y": 300
+            }
+          },
+          {
+            "arc": {
+              "x": 310.49021533573057,
+              "y": 314.1507307736957
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#5F5C55",
+        "stroke": "#312F2A",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "w90",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 316.4723443115995,
+              "y": 300
+            }
+          },
+          {
+            "arc": {
+              "x": 318.95457950127394,
+              "y": 309.26382784420025
+            },
+            "centre": {
+              "x": 335,
+              "y": 300
+            }
+          },
+          {
+            "line": {
+              "x": 335,
+              "y": 300
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#A9C9DB",
+        "stroke": "#5F8399",
+        "strokeWidth": 1.1
+      },
+      {
+        "id": "p91",
+        "from": {
+          "x": 335,
+          "y": 300
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 306.69853845260855,
+              "y": 300
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#8E877A",
+        "strokeWidth": 0.7
+      },
+      {
+        "id": "p92",
+        "from": {
+          "x": 580,
+          "y": 376
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 700,
+              "y": 405
+            }
+          },
+          {
+            "line": {
+              "x": 812,
+              "y": 386
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#4A453C",
+        "strokeWidth": 1,
+        "lineStyle": "dashed"
+      }
+    ]
+  }
+}

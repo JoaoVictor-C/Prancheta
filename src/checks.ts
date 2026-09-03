@@ -41,6 +41,16 @@ export type CheckId =
   | "text-fits-box"
   | "label-within-shape"
   | "text-clear-of-other-boxes"
+  // text-fits-box, text-clear-of-other-boxes and boxes-do-not-overlap all
+  // reason about BOXES. A Mark's outline and a Connector's route are neither
+  // -- polylines drawn wherever a spec puts them, un-boxed by construction --
+  // so a label set straight across a curve, an angle arc or an arrow shaft
+  // passed every one of those checks while sitting on the very ink it named
+  // or crossing ink it had no business touching. The module protocol already
+  // learned this lesson for foreign SVG (module-labels-clear-of-strokes);
+  // this is its core-side counterpart, over geometry this project laid out
+  // itself and can therefore test exactly rather than by DOM hit-testing.
+  | "text-clear-of-ink"
   | "content-within-canvas"
   | "connector-clear-of-boxes"
   | "boxes-do-not-overlap"
@@ -134,6 +144,13 @@ export function runChecks(figure: LaidOutFigure): Check[] {
   for (const element of figure.elements) {
     if (element.kind === "box") boxes.set(element.id, element);
   }
+  // Marks and connectors together: both are polylines a label can sit on,
+  // and text-clear-of-ink tests every label against the same combined list
+  // regardless of which vocabulary drew the ink.
+  const ink: (PlacedMark | PlacedConnector)[] = [];
+  for (const element of figure.elements) {
+    if (element.kind === "mark" || element.kind === "connector") ink.push(element);
+  }
 
   // Decision 0010. A relaxed constraint reports "not-applicable" with the
   // toggle named, never "pass": a figure that was excused and a figure that
@@ -146,6 +163,7 @@ export function runChecks(figure: LaidOutFigure): Check[] {
       checks.push(textFitsBox(element, boxes));
       checks.push(labelWithinShape(element, boxes));
       checks.push(textClearOfOtherBoxes(element, boxes));
+      checks.push(textClearOfInk(element, boxes, ink));
     } else if (element.kind === "connector") {
       checks.push(
         toggles.allowConnectorCrossing
@@ -477,6 +495,63 @@ function textClearOfOtherBoxes(text: PlacedText, boxes: Map<string, PlacedBox>):
         status: "fail",
         ownerId: text.ownerId ?? undefined,
         detail: `label overlaps ${collided.join(", ")}`,
+      };
+}
+
+/**
+ * Does every label sit clear of every Mark outline and Connector route it
+ * does not name?
+ *
+ * `textClearOfOtherBoxes` catches a label landing on another BOX; nothing
+ * caught it landing on a hand-drawn LINE. A Mark's outline and a Connector's
+ * route are polylines with no bounding box a check ever compares against, so
+ * an angle label set on its own arc, or a caption crossing a plotted curve,
+ * passed text-fits-box, text-clear-of-other-boxes and boxes-do-not-overlap
+ * without a single one of them examining the ink itself.
+ *
+ * Skipped, both mirroring precedent already established for boxes:
+ *   - a mark or connector this label's OWNER names via `annotates` -- the
+ *     same relief `annotates` buys against a box or a connector, extended to
+ *     the mark id ir/types.ts's own validation already allows it to name
+ *   - grid furniture (`Mark.gridOf`) -- a label crossing a ruled line is not
+ *     a collision, exactly as it is not one against a tick's own gridline
+ *   - a mark with no visible stroke -- a filled region with no border is a
+ *     surface a label may sit ON (contrast-sufficient scores that), not a
+ *     line it can touch
+ */
+function textClearOfInk(
+  text: PlacedText,
+  boxes: Map<string, PlacedBox>,
+  ink: (PlacedMark | PlacedConnector)[],
+): Check {
+  const bounds = unionOf(text.lines.map((line) => line.box));
+  const owner = text.ownerId === null ? undefined : boxes.get(text.ownerId);
+  // A label may cross the one thing it `annotates` ONLY if its own box
+  // actually paints over it. A transparent label sitting astride its own
+  // annotated arc still shows that arc sliced across the glyph -- exempting
+  // it unconditionally hid exactly that defect behind a legitimate-looking
+  // pass. `annotation-nearest-its-owner` is what earns the proximity; this is
+  // what earns the overlap, and only an opaque owner earns it.
+  const hidesWhatItAnnotates = owner !== undefined && !isTransparent(owner.fill);
+
+  const touching: string[] = [];
+  for (const element of ink) {
+    if (hidesWhatItAnnotates && owner?.annotates === element.id) continue;
+    if (element.kind === "mark") {
+      if (element.gridOf !== undefined) continue;
+      if (element.stroke === "none" || element.strokeWidth <= 0) continue;
+    }
+    if (polylineIntersectsBox(element.points, bounds)) touching.push(element.id);
+  }
+
+  return touching.length === 0
+    ? { id: "text-clear-of-ink", target: text.id, status: "pass" }
+    : {
+        id: "text-clear-of-ink",
+        target: text.id,
+        status: "fail",
+        ownerId: text.ownerId ?? undefined,
+        detail: `label sits on ${touching.join(", ")}`,
       };
 }
 
