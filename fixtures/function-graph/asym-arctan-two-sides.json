@@ -1,0 +1,14 @@
+{
+  "preset": "function-graph",
+  "title": "Assíntotas horizontais diferentes em +∞ e −∞: arctan x",
+  "x": { "range": [-6, 6], "unit": 42 },
+  "y": { "range": [-2.5, 2.5], "unit": 60, "step": 0.5, "labelEvery": 2 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "atan(x)",
+      "asymptotes": { "horizontal": true },
+      "label": { "text": "y = {expr}", "at": 1.6, "towards": ["SE", "D", "R"] }
+    }
+  ]
+}

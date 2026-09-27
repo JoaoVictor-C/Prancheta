@@ -1,0 +1,9 @@
+{
+  "preset": "value-table",
+  "title": "estimando lim (1 + 1/x)^x quando x → +∞",
+  "limit": {
+    "expr": "(1 + 1/x)^x",
+    "at": "inf",
+    "count": 4
+  }
+}

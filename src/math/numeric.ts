@@ -215,6 +215,8 @@ const LIMIT_START = 0.1;
 const LIMIT_RATIO = 0.3;
 const LIMIT_CONVERGE_TOL = 2e-5;
 const LIMIT_BLOWUP = 1e4;
+/** How close a decimal-schedule sample's tail must land to the dense verdict to be trusted. */
+const DECIMAL_AGREE_TOL = 1e-2;
 
 function sampleTowards(f: (x: number) => number, a: number, direction: 1 | -1): LimitSample[] {
   const samples: LimitSample[] = [];
@@ -227,6 +229,62 @@ function sampleTowards(f: (x: number) => number, a: number, direction: 1 | -1): 
     samples.push({ x, y });
   }
   return samples;
+}
+
+/**
+ * The unit a decimal step is scaled by, so "a ± 10^-k" stays a step of `a`'s
+ * own size rather than a step that is comically small next to a large `a` --
+ * a table for a = 100 should print 90, 99, 99.9, 99.99, not 99.9999999999.
+ * For |a| < 1 (including a = 0) the unit is 1: the textbook schedule
+ * (0,9; 0,99; 0,999; 0,9999) is exactly this with unit 1.
+ */
+export function decimalUnit(a: number): number {
+  if (!Number.isFinite(a) || a === 0) return 1;
+  const mag = Math.abs(a);
+  return mag >= 1 ? Math.pow(10, Math.floor(Math.log10(mag))) : 1;
+}
+
+/**
+ * The schedule a Brazilian textbook prints: a ± 10^-k for k = 1..count
+ * (scaled by `decimalUnit`), or 10^k toward an infinite `a` -- the same
+ * "walk out along growing x" convention `sampleTowards` uses, so `side`
+ * alone still picks the direction when `a` is ±Infinity.
+ */
+function sampleDecimalTowards(f: (x: number) => number, a: number, direction: 1 | -1, count: number): LimitSample[] {
+  const samples: LimitSample[] = [];
+  const finiteA = Number.isFinite(a);
+  const unit = finiteA ? decimalUnit(a) : 1;
+  for (let k = 1; k <= count; k++) {
+    const step = unit * Math.pow(10, -k);
+    const x = finiteA ? a + direction * step : direction * (1 / step);
+    const y = f(x);
+    samples.push({ x, y });
+  }
+  return samples;
+}
+
+/** Do the (few, coarse) decimal samples settle to `value` the way the dense verdict says they should? */
+function decimalAgreesFinite(samples: LimitSample[], value: number): boolean {
+  const ys = samples.map((s) => s.y);
+  if (ys.some((y) => !Number.isFinite(y))) return false;
+  const tol = DECIMAL_AGREE_TOL * (1 + Math.abs(value));
+  const last = ys[ys.length - 1]!;
+  if (Math.abs(last - value) > tol) return false;
+  const first = ys[0]!;
+  // The tail must be at least as close as the head -- genuinely approaching,
+  // not just coincidentally within tolerance at both ends of an oscillation.
+  return Math.abs(last - value) <= Math.abs(first - value) + 1e-9;
+}
+
+/** Do the decimal samples blow up with the same sign the dense verdict found? */
+function decimalAgreesInfinite(samples: LimitSample[], sign: 1 | -1): boolean {
+  const ys = samples.map((s) => s.y);
+  if (ys.some((y) => Number.isNaN(y))) return false;
+  const signOf = (y: number): number => (y === 0 ? 0 : Math.sign(y));
+  const last = ys[ys.length - 1]!;
+  if (signOf(last) !== sign) return false;
+  const first = ys[0]!;
+  return !Number.isFinite(last) || Math.abs(last) >= Math.abs(first);
 }
 
 function oneSided(f: (x: number) => number, a: number, direction: 1 | -1): LimitResult {
@@ -248,6 +306,22 @@ function oneSided(f: (x: number) => number, a: number, direction: 1 | -1): Limit
   }
   if (allSameSign && growing && Math.abs(tail4[tail4.length - 1]!) > LIMIT_BLOWUP) {
     return { kind: "infinite", sign: (tail4[tail4.length - 1]! > 0 ? 1 : -1) as 1 | -1, samples };
+  }
+  // Slow divergence: ln x at 0⁺ is only about −17 at the closest sample and
+  // never reaches LIMIT_BLOWUP, yet it is unbounded. What separates it from a
+  // convergent tail is not its size but its increments: on a geometric step
+  // schedule a convergent sequence's increments shrink geometrically, while
+  // ln's stay constant (each step adds ln(1/0.3) ≈ 1,2). So a tail that keeps
+  // growing in magnitude with one sign, and whose last increment is still at
+  // least half its first, is diverging.
+  const tail5 = ys.slice(-5);
+  if (tail5.every((y) => Number.isFinite(y) && y !== 0 && Math.sign(y) === Math.sign(tail5[0]!))) {
+    const increments = tail5.slice(1).map((y, i) => Math.abs(y) - Math.abs(tail5[i]!));
+    const first = increments[0]!;
+    const lastIncrement = increments[increments.length - 1]!;
+    if (increments.every((d) => d > 0) && first > LIMIT_CONVERGE_TOL * (1 + Math.abs(tail5[0]!)) && lastIncrement >= 0.5 * first) {
+      return { kind: "infinite", sign: (tail5[tail5.length - 1]! > 0 ? 1 : -1) as 1 | -1, samples };
+    }
   }
 
   const last = ys.slice(-3);
@@ -294,12 +368,58 @@ function oneSided(f: (x: number) => number, a: number, direction: 1 | -1): Limit
  * a caller does not trust a "finite" verdict near a suspected fast
  * oscillation without also looking at the sample table.
  */
-export function limit(f: (x: number) => number, a: number, side: LimitSide): LimitResult {
-  if (side === "left" || side === "right") {
-    return oneSided(f, a, side === "left" ? -1 : 1);
+/**
+ * `oneSided`, but reporting the DECIMAL schedule's own samples rather than
+ * the dense geometric ones -- and only ever reporting a "finite" or
+ * "infinite" verdict when those printed samples actually back it up.
+ *
+ * The dense schedule (twelve steps, ratio 0.3) is the trustworthy read: it
+ * is the same computation `oneSided` always did, so its verdict is exactly
+ * as reliable as before this option existed. But printing twelve geometric
+ * steps is not what a Cálculo 1 table looks like, and four decimal steps are
+ * not always enough resolution to reach the same verdict on their own. So
+ * both are computed; the dense one decides, the decimal one is what gets
+ * printed, and if the decimal samples do not actually settle the way the
+ * dense verdict says they should, the verdict is downgraded to "none" --
+ * evidence and conclusion are never allowed to disagree, even at the cost of
+ * a true limit sometimes being reported as unresolved by too coarse a
+ * schedule. `sin(1/x)` near 0 already fails at the dense stage (it does not
+ * settle even on twelve geometric steps), so it never reaches this check at
+ * all; this guards the rarer case of a limit that IS genuinely settled but
+ * settles too slowly for four decimal steps to show it.
+ */
+function decimalOneSided(f: (x: number) => number, a: number, direction: 1 | -1, count: number): LimitResult {
+  const dense = oneSided(f, a, direction);
+  const samples = sampleDecimalTowards(f, a, direction, count);
+  if (dense.kind === "finite") {
+    if (!decimalAgreesFinite(samples, dense.value)) {
+      return {
+        kind: "none",
+        reason:
+          `dense sampling finds a finite limit (${dense.value}), but the printed decimal steps ` +
+          `(10^-1..10^-${count}) do not settle to it closely enough to trust -- refusing rather than ` +
+          `printing a verdict the visible evidence disputes.`,
+        samples,
+      };
+    }
+    return { kind: "finite", value: dense.value, samples };
   }
-  const left = oneSided(f, a, -1);
-  const right = oneSided(f, a, 1);
+  if (dense.kind === "infinite") {
+    if (!decimalAgreesInfinite(samples, dense.sign)) {
+      return {
+        kind: "none",
+        reason:
+          `dense sampling finds divergence to ${dense.sign > 0 ? "+" : "-"}infinity, but the printed decimal ` +
+          `steps do not show it -- refusing rather than printing a verdict the visible evidence disputes.`,
+        samples,
+      };
+    }
+    return { kind: "infinite", sign: dense.sign, samples };
+  }
+  return { kind: "none", reason: dense.reason, samples };
+}
+
+function combineSides(left: LimitResult, right: LimitResult): LimitResult {
   const samples = [...left.samples, ...right.samples];
   if (left.kind === "finite" && right.kind === "finite") {
     if (Math.abs(left.value - right.value) <= LIMIT_CONVERGE_TOL * (1 + Math.abs(left.value))) {
@@ -318,6 +438,31 @@ export function limit(f: (x: number) => number, a: number, side: LimitSide): Lim
     };
   }
   return { kind: "none", reason: "neither side settled.", samples };
+}
+
+export interface LimitOptions {
+  /**
+   * "geometric" (default): the original twelve-step ratio-0.3 schedule,
+   * unchanged -- existing callers (`function-graph`'s asymptote detection
+   * among them) see no difference. "decimal": sample and print a ± 10^-k
+   * for k = 1..`count` (the Cálculo 1 "tabela de valores" schedule), with
+   * the verdict cross-checked against the dense schedule -- see
+   * `decimalOneSided`.
+   */
+  schedule?: "geometric" | "decimal";
+  /** Steps per side for `schedule: "decimal"`. Default 4. Ignored otherwise. */
+  count?: number;
+}
+
+export function limit(f: (x: number) => number, a: number, side: LimitSide, options: LimitOptions = {}): LimitResult {
+  const sideResult: (direction: 1 | -1) => LimitResult =
+    options.schedule === "decimal"
+      ? (direction) => decimalOneSided(f, a, direction, options.count ?? 4)
+      : (direction) => oneSided(f, a, direction);
+  if (side === "left" || side === "right") {
+    return sideResult(side === "left" ? -1 : 1);
+  }
+  return combineSides(sideResult(-1), sideResult(1));
 }
 
 function describeKind(r: LimitResult): string {

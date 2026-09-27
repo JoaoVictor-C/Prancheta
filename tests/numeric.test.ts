@@ -138,3 +138,110 @@ test("partialSums: harmonic series 1/n keeps growing -- not mistaken for converg
 test("partialSums: rejects N < n0", () => {
   assert.throws(() => partialSums((k) => k, 5, 1), NumericError);
 });
+
+// --- limit: decimal schedule (ADR 0039) -------------------------------------
+
+test("limit: decimal schedule samples exactly a ± 10^-1..10^-4 for a = 1", () => {
+  const result = limit((x) => (x * x - 1) / (x - 1), 1, "both", { schedule: "decimal", count: 4 });
+  assert.equal(result.kind, "finite");
+  if (result.kind === "finite") assert.ok(Math.abs(result.value - 2) < 1e-3, `got ${result.value}`);
+  assert.equal(result.samples.length, 8);
+  const xs = result.samples.map((s) => s.x);
+  const close = (a: number, b: number): boolean => Math.abs(a - b) < 1e-9;
+  assert.ok(close(xs[0]!, 0.9) && close(xs[1]!, 0.99) && close(xs[2]!, 0.999) && close(xs[3]!, 0.9999));
+  assert.ok(close(xs[4]!, 1.1) && close(xs[5]!, 1.01) && close(xs[6]!, 1.001) && close(xs[7]!, 1.0001));
+});
+
+test("limit: decimal schedule defaults to the geometric schedule when no options are given", () => {
+  const decimal = limit((x) => Math.sin(x) / x, 0, "both");
+  const geometric = limit((x) => Math.sin(x) / x, 0, "both", { schedule: "geometric" });
+  assert.deepEqual(decimal, geometric);
+});
+
+test("limit: decimal schedule, sin(x)/x at 0 is 1", () => {
+  const result = limit((x) => Math.sin(x) / x, 0, "both", { schedule: "decimal" });
+  assert.equal(result.kind, "finite");
+  if (result.kind === "finite") assert.ok(Math.abs(result.value - 1) < 1e-3, `got ${result.value}`);
+});
+
+test("limit: decimal schedule, 1/x at 0 is one-sided ±infinity and has no two-sided limit", () => {
+  const right = limit((x) => 1 / x, 0, "right", { schedule: "decimal" });
+  const left = limit((x) => 1 / x, 0, "left", { schedule: "decimal" });
+  assert.equal(right.kind, "infinite");
+  assert.equal(left.kind, "infinite");
+  if (right.kind === "infinite") assert.equal(right.sign, 1);
+  if (left.kind === "infinite") assert.equal(left.sign, -1);
+  const both = limit((x) => 1 / x, 0, "both", { schedule: "decimal" });
+  assert.equal(both.kind, "none");
+});
+
+test("limit: decimal schedule, |x|/x at 0 is one-sided -1 and 1 and has no two-sided limit", () => {
+  const right = limit((x) => Math.abs(x) / x, 0, "right", { schedule: "decimal" });
+  const left = limit((x) => Math.abs(x) / x, 0, "left", { schedule: "decimal" });
+  assert.equal(right.kind, "finite");
+  assert.equal(left.kind, "finite");
+  if (right.kind === "finite") assert.equal(right.value, 1);
+  if (left.kind === "finite") assert.equal(left.value, -1);
+  const both = limit((x) => Math.abs(x) / x, 0, "both", { schedule: "decimal" });
+  assert.equal(both.kind, "none");
+});
+
+test("limit: decimal schedule, (1 + 1/x)^x at +infinity is approximately e", () => {
+  const result = limit((x) => Math.pow(1 + 1 / x, x), Infinity, "right", { schedule: "decimal" });
+  assert.equal(result.kind, "finite");
+  if (result.kind === "finite") assert.ok(Math.abs(result.value - Math.E) < 1e-2, `got ${result.value}`);
+  const xs = result.samples.map((s) => s.x);
+  assert.deepEqual(xs, [10, 100, 1000, 10000]);
+});
+
+test("limit: decimal schedule, sin(1/x) at 0 is refused honestly, not a false finite value", () => {
+  const result = limit((x) => Math.sin(1 / x), 0, "both", { schedule: "decimal" });
+  assert.notEqual(result.kind, "finite");
+});
+
+test("limit: decimal schedule scales its step for a large `a` instead of shrinking to nothing", () => {
+  const result = limit((x) => x, 100, "right", { schedule: "decimal", count: 3 });
+  const xs = result.samples.map((s) => s.x);
+  assert.deepEqual(xs, [110, 101, 100.1]);
+});
+
+test("limit: decimal schedule respects a custom count", () => {
+  const result = limit((x) => x * x, 2, "right", { schedule: "decimal", count: 2 });
+  assert.equal(result.samples.length, 2);
+});
+
+test("limit: decimal schedule refuses to report a finite verdict the printed samples do not back up", () => {
+  // A function whose dense (fine) schedule settles, but which wobbles just
+  // enough between 10^-1 and 10^-4 that the four decimal samples printed do
+  // not themselves look settled -- the verdict must not out-run its own
+  // printed evidence.
+  const f = (x: number): number => 5 + Math.sin(1 / Math.abs(x)) * Math.abs(x) ** 0.1;
+  const dense = limit(f, 0, "right");
+  const decimal = limit(f, 0, "right", { schedule: "decimal", count: 4 });
+  // Whatever the dense schedule concludes, the decimal-schedule verdict must
+  // never be "finite" unless its own four printed samples actually settled --
+  // it must be internally consistent, not merely borrow the dense answer.
+  if (decimal.kind === "finite") {
+    const ys = decimal.samples.map((s) => s.y);
+    const last = ys[ys.length - 1]!;
+    const first = ys[0]!;
+    assert.ok(Math.abs(last - decimal.value) < 1e-2 * (1 + Math.abs(decimal.value)));
+    assert.ok(Math.abs(last - decimal.value) <= Math.abs(first - decimal.value) + 1e-9);
+  }
+  void dense;
+});
+
+test("limit: a slow divergence is still infinite -- ln x at 0⁺ is −∞, though only about −17 at the closest sample", () => {
+  const ln = limit(Math.log, 0, "right");
+  assert.equal(ln.kind, "infinite");
+  assert.equal(ln.kind === "infinite" ? ln.sign : 0, -1);
+  // The increments test must not swallow slowly CONVERGENT tails.
+  assert.equal(limit((x) => Math.pow(1 + 1 / x, x), Infinity, "right").kind, "finite");
+  // x·ln x and 1/ln x at 0⁺ converge to 0 too slowly for the tolerance to
+  // call them finite (they come back "none" -- a known limit, not new); what
+  // matters here is that the increments test never calls them infinite.
+  assert.notEqual(limit((x) => x * Math.log(x), 0, "right").kind, "infinite");
+  assert.notEqual(limit((x) => 1 / Math.log(x), 0, "right").kind, "infinite");
+  assert.equal(limit(Math.atan, Infinity, "right").kind, "finite");
+  assert.equal(limit((x) => Math.sin(1 / x), 0, "right").kind === "finite", false);
+});

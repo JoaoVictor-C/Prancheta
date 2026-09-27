@@ -1,0 +1,10 @@
+{
+  "preset": "value-table",
+  "title": "estimando lim (x²−1)/(x−1) quando x → 1",
+  "limit": {
+    "expr": "(x^2 - 1) / (x - 1)",
+    "at": 1,
+    "side": "both",
+    "count": 4
+  }
+}

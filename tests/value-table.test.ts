@@ -20,10 +20,13 @@ import type { Block, Scene } from "../src/ir/types.ts";
 const dir = fileURLToPath(new URL("../fixtures/value-table/", import.meta.url));
 const fixtures = readdirSync(dir).filter((n) => n.endsWith(".json"));
 
-const texts = (input: ValueTableInput): Map<string, string> =>
+/** The "values" mode shape these helpers exercise: `xs` and `functions` always present. */
+type ValuesInput = ValueTableInput & { xs: number[]; functions: { name: string; expr: string }[] };
+
+const texts = (input: ValuesInput): Map<string, string> =>
   new Map(((expandValueTable(input).root as Scene).children as Block[]).map((b) => [String(b.id), b.label ?? ""]));
 
-const cells = (input: ValueTableInput): string[][] => {
+const cells = (input: ValuesInput): string[][] => {
   const t = texts(input);
   const xs = input.xs.length;
   const funcs = input.functions.length;
@@ -38,7 +41,7 @@ const cells = (input: ValueTableInput): string[][] => {
   return result;
 };
 
-const getRowLabels = (input: ValueTableInput): string[] => {
+const getRowLabels = (input: ValuesInput): string[] => {
   const spec = expandValueTable(input);
   const blocks = (spec.root as Scene).children as Block[];
   const variable = input.variable ?? "x";
@@ -62,7 +65,7 @@ const getRowLabels = (input: ValueTableInput): string[] => {
   return result;
 };
 
-const getColumnGap = (input: ValueTableInput): number => {
+const getColumnGap = (input: ValuesInput): number => {
   const spec = expandValueTable(input);
   const blocks = (spec.root as Scene).children as Block[];
   const variable = input.variable ?? "x";
@@ -95,7 +98,7 @@ const getColumnGap = (input: ValueTableInput): number => {
 // --- arithmetic ----------------------------------------------------------------
 
 test("basic table: f(x) = x^2 - 1 at x = -1, 0, 1", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [-1, 0, 1],
     functions: [{ name: "f", expr: "x^2 - 1" }],
   };
@@ -103,7 +106,7 @@ test("basic table: f(x) = x^2 - 1 at x = -1, 0, 1", () => {
 });
 
 test("multiple functions with different expressions", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [-2, -1, 0, 1, 2],
     functions: [
       { name: "f", expr: "x^2 - 1" },
@@ -116,7 +119,7 @@ test("multiple functions with different expressions", () => {
 });
 
 test("undefined values (poles) are marked with ∄", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [-1, 0, 1],
     functions: [{ name: "f", expr: "1/x" }],
   };
@@ -127,7 +130,7 @@ test("undefined values (poles) are marked with ∄", () => {
 });
 
 test("pt-BR decimal formatting: comma as decimal mark", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [0.5, 1.5],
     functions: [{ name: "f", expr: "x + 0.25" }],
     locale: "pt-BR",
@@ -138,7 +141,7 @@ test("pt-BR decimal formatting: comma as decimal mark", () => {
 });
 
 test("fractions and decimals: 1/x at selected points", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [1, 2, 3],
     functions: [{ name: "f", expr: "1/x" }],
     locale: "pt-BR",
@@ -150,7 +153,7 @@ test("fractions and decimals: 1/x at selected points", () => {
 });
 
 test("variable name can be customized", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     variable: "t",
     xs: [0, 1, 2],
     functions: [{ name: "v", expr: "2t + 3" }],
@@ -191,7 +194,7 @@ test("validation refuses bad orientation", () => {
 // --- row labels ---------------------------------------------------------------
 
 test("function row labels include the variable name", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [-1, 0, 1],
     functions: [{ name: "f", expr: "x^2 - 1" }],
   };
@@ -201,7 +204,7 @@ test("function row labels include the variable name", () => {
 });
 
 test("multiple function row labels include the variable name", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [-2, -1, 0, 1, 2],
     functions: [
       { name: "f", expr: "x^2 - 1" },
@@ -215,7 +218,7 @@ test("multiple function row labels include the variable name", () => {
 });
 
 test("function row labels use custom variable name", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     variable: "t",
     xs: [0, 1, 2],
     functions: [
@@ -230,7 +233,7 @@ test("function row labels use custom variable name", () => {
 });
 
 test("gap between name column and first value column is small", () => {
-  const input: ValueTableInput = {
+  const input: ValuesInput = {
     xs: [-1, 0, 1],
     functions: [{ name: "f", expr: "x^2 - 1" }],
   };

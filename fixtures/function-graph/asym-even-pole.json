@@ -1,0 +1,39 @@
+{
+  "preset": "function-graph",
+  "title": "Assíntotas de f(x) = 1/(x − 1)² + 1",
+  "x": {
+    "range": [
+      -3,
+      5
+    ],
+    "unit": 50
+  },
+  "y": {
+    "range": [
+      -2,
+      7
+    ],
+    "unit": 38
+  },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "1/(x - 1)^2 + 1",
+      "asymptotes": {
+        "vertical": [
+          1
+        ],
+        "horizontal": true
+      },
+      "label": {
+        "text": "y = {expr}",
+        "at": 2.1,
+        "towards": [
+          "NE",
+          "R",
+          "U"
+        ]
+      }
+    }
+  ]
+}
