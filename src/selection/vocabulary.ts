@@ -15,7 +15,28 @@
  */
 
 /** What the content IS. */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set"] as const;
+/**
+ * "function" is a relation y = f(x) over a continuum -- a curve, its
+ * tangents and secants, the points read off it. Not a "series": a series is
+ * a finite list of values with a scale, and drawing a function as one plots
+ * the samples someone happened to pick instead of the function.
+ *
+ * "interval" is a subset of the real line -- a domain, the solution set of an
+ * inequality, a union or intersection of intervals. Not a "set": a set's
+ * members are unordered items, and an interval's members are a continuum
+ * whose only facts are its endpoints and whether each belongs.
+ *
+ * "vector" is a quantity with magnitude and direction in the plane -- a
+ * displacement, a force, a velocity -- and what is done with it: sums,
+ * multiples, components, projections, the angle between two. Not a "scene":
+ * a scene is drawn as it looks, a vector as the arithmetic it obeys.
+ *
+ * "angle" is a rotation measured from a reference direction -- the arcs of
+ * the ciclo trigonométrico and what they fix: cos and sin as projections,
+ * tangent, the symmetric angles in the other quadrants. Not a "function":
+ * the question is where an angle lands, not the curve sin traces over time.
+ */
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -43,7 +64,18 @@ export type Structure = (typeof STRUCTURE)[number];
 export type Idiom = (typeof IDIOM)[number];
 export type Domain = (typeof DOMAIN)[number];
 
-export type PresetId = "labelled-blocks" | "graph" | "mindmap" | "annotated-figure" | "chart";
+export type PresetId =
+  | "labelled-blocks"
+  | "graph"
+  | "mindmap"
+  | "annotated-figure"
+  | "chart"
+  | "function-graph"
+  | "sign-chart"
+  | "value-table"
+  | "number-line"
+  | "vectors"
+  | "unit-circle";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -71,6 +103,36 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     summary: "A shape or scene with callouts on leader lines.",
   },
   { id: "chart", implemented: true, summary: "Bar charts: values with a scale, not a graph." },
+  {
+    id: "function-graph",
+    implemented: true,
+    summary: "Curves y = f(x) on a numbered plane, with tangents, secants and computed points.",
+  },
+  {
+    id: "sign-chart",
+    implemented: true,
+    summary: "The sign table of a function: where f, f′, f″ or a product's factors are +, − or 0, and where f rises and falls.",
+  },
+  {
+    id: "value-table",
+    implemented: true,
+    summary: "A table of values of one or more functions at chosen points, every cell computed from the expression.",
+  },
+  {
+    id: "number-line",
+    implemented: true,
+    summary: "The real line with intervals and solution sets of inequalities; unions and intersections computed.",
+  },
+  {
+    id: "vectors",
+    implemented: true,
+    summary: "Vectors in the plane with sums, multiples, components, projections and angles derived from them.",
+  },
+  {
+    id: "unit-circle",
+    implemented: true,
+    summary: "The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles.",
+  },
 ];
 
 /**

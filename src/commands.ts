@@ -28,6 +28,7 @@ import { TYPE_IDS, TYPE_LEVELS, TYPE_PACKS, hostDependentLevels, isSelfContained
 import { MODULES, exampleArgs } from "./modules/repertoire.ts";
 import { bleedOf, isEmpty as bleedIsEmpty } from "./effects/bleed.ts";
 import { THEMES } from "./theme.ts";
+import { KATEX, buildSheet, defaultSheetDir, sheetFailures } from "./sheet/sheet.ts";
 import { WCAG_AA_NORMAL, contrastRatio } from "./colour/contrast.ts";
 
 const NEWLINE = String.fromCharCode(10);
@@ -1009,6 +1010,63 @@ const typeCommand: Command = {
   },
 };
 
+/**
+ * `sheet` -- an exercise sheet from one structured file (ADR 0026).
+ *
+ * Writes files itself rather than handing buffers to the CLI, because its
+ * output is a folder -- figures, HTML, PDF, page PNGs, the source -- and the
+ * MCP binding needs that folder as much as the CLI does.
+ */
+const sheetCommand: Command = {
+  name: "sheet",
+  summary:
+    "Build an exercise sheet from one structured file: every figure rendered and checked, " +
+    "HTML with KaTeX, an A4 PDF, a PNG per page, and an answer key generated from the answers.",
+  params: [
+    {
+      name: "sheet",
+      type: "string",
+      description:
+        "Path to the sheet JSON: name, title, sections, and per exercise level, statement, " +
+        "figure (a function-graph input), answer and solution.",
+      required: true,
+      positional: true,
+    },
+    {
+      name: "out",
+      type: "string",
+      description: `Output folder. Default ${defaultSheetDir("<name>")} (or $PRANCHETA_SHEETS_DIR/<name>).`,
+      short: "o",
+    },
+    { name: "pdf", type: "boolean", description: "Print the A4 PDF.", default: true },
+    { name: "pages", type: "boolean", description: "Rasterise each PDF page to PNG with PyMuPDF.", default: true },
+    { name: "dpi", type: "number", description: "Page PNG resolution.", default: 110 },
+    { name: "katex", type: "string", description: "Base URL of the KaTeX dist folder.", default: KATEX },
+  ],
+  async run(args) {
+    const path = String(args.sheet);
+    const source = await readFile(path, "utf8");
+    const result = await buildSheet(JSON.parse(source), {
+      ...(args.out === undefined ? {} : { out: String(args.out) }),
+      pdf: args.pdf !== false,
+      pages: args.pages !== false,
+      dpi: Number(args.dpi ?? 110),
+      katex: String(args.katex ?? KATEX),
+      source,
+    });
+    const failures = sheetFailures(result);
+    const lines = [
+      `${result.outDir}`,
+      `  html   ${result.html}`,
+      ...(result.pdf === undefined ? [] : [`  pdf    ${result.pdf}`]),
+      `  figures ${result.figures.length}, pages ${result.pages.length}`,
+      ...failures.map((f) => `  FAIL ${f}`),
+      failures.length === 0 ? "  ok   no KaTeX error, no broken image, every figure passed its checks" : "",
+    ].filter((line) => line !== "");
+    return { text: lines.join(NEWLINE), data: result, exitCode: failures.length === 0 ? 0 : 2 };
+  },
+};
+
 export const COMMANDS: Command[] = [
   renderCommand,
   validateCommand,
@@ -1023,6 +1081,7 @@ export const COMMANDS: Command[] = [
   moduleCommand,
   diffCommand,
   animateCommand,
+  sheetCommand,
 ];
 
 export function commandByName(name: string): Command | undefined {

@@ -168,3 +168,102 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 85
 - **Statement:** A series needs a scale; labelled blocks would show values as unordered text.
+
+## S-function-favours-function-graph
+
+- **Axis:** structure
+- **When:** `function`
+- **Preset:** `function-graph`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A function over a continuum is drawn by function-graph: evaluated from its expression, on a numbered plane.
+
+## S-function-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `function`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A function is not a graph of nodes and edges; the word "graph" is the only thing they share.
+
+## S-function-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `function`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 85
+- **Statement:** A function is not a list of values: a chart joins the samples it was given, and a curve's tangent, root or hole is not among them.
+
+## S-function-disqualifies-blocks
+
+- **Axis:** structure
+- **When:** `function`
+- **Preset:** `labelled-blocks`
+- **Effect:** disqualifies
+- **Priority:** 85
+- **Statement:** A function needs a plane; labelled blocks have none.
+
+## S-function-favours-sign-chart-weakly
+
+- **Axis:** structure
+- **When:** `function`
+- **Preset:** `sign-chart`
+- **Effect:** favours (weight `2`)
+- **Priority:** 40
+- **Statement:** A function's sign table is offered beside its graph: the same expression, read as intervals instead of a curve.
+
+## S-function-favours-value-table-weakly
+
+- **Axis:** structure
+- **When:** `function`
+- **Preset:** `value-table`
+- **Effect:** favours (weight `2`)
+- **Priority:** 40
+- **Statement:** A function's table of values is offered beside its graph: every cell computed from the same expression.
+
+## S-interval-favours-number-line
+
+- **Axis:** structure
+- **When:** `interval`
+- **Preset:** `number-line`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** An interval or the solution set of an inequality is drawn on the number line: endpoints open or closed, unions and intersections computed.
+
+## S-interval-disqualifies-blocks
+
+- **Axis:** structure
+- **When:** `interval`
+- **Preset:** `labelled-blocks`
+- **Effect:** disqualifies
+- **Priority:** 85
+- **Statement:** An interval is a stretch of a continuum; labelled blocks have no line to stretch along.
+
+## S-vector-favours-vectors
+
+- **Axis:** structure
+- **When:** `vector`
+- **Preset:** `vectors`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Vectors are drawn by the vectors preset: on a numbered plane, with sums, components and projections derived from the vectors themselves.
+
+## S-vector-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `vector`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A vector is not an edge: an edge joins two things, a vector has a length and a direction that must be drawn to scale.
+
+## S-angle-favours-unit-circle
+
+- **Axis:** structure
+- **When:** `angle`
+- **Preset:** `unit-circle`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** An angle on the trigonometric circle is drawn by unit-circle: its point, cos and sin computed from the angle, never placed by hand.

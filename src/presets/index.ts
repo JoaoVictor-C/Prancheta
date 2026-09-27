@@ -28,6 +28,18 @@ import { expandLabelledBlocks, validateLabelledBlocksInput } from "./labelled-bl
 import type { LabelledBlocksInput } from "./labelled-blocks/preset.ts";
 import { expandChart, validateChartInput } from "./chart/preset.ts";
 import type { ChartInput } from "./chart/preset.ts";
+import { expandFunctionGraph, validateFunctionGraphInput } from "./function-graph/preset.ts";
+import type { FunctionGraphInput } from "./function-graph/preset.ts";
+import { expandSignChart, validateSignChartInput } from "./sign-chart/preset.ts";
+import type { SignChartInput } from "./sign-chart/preset.ts";
+import { expandValueTable, validateValueTableInput } from "./value-table/preset.ts";
+import type { ValueTableInput } from "./value-table/preset.ts";
+import { expandNumberLine, validateNumberLineInput } from "./number-line/preset.ts";
+import type { NumberLineInput } from "./number-line/preset.ts";
+import { expandVectors, validateVectorsInput } from "./vectors/preset.ts";
+import type { VectorsInput } from "./vectors/preset.ts";
+import { expandUnitCircle, validateUnitCircleInput } from "./unit-circle/preset.ts";
+import type { UnitCircleInput } from "./unit-circle/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -50,6 +62,12 @@ export type PresetInput = (
   | ({ preset: "annotated-figure" } & AnnotatedFigureInput)
   | ({ preset: "labelled-blocks" } & LabelledBlocksInput)
   | ({ preset: "chart" } & ChartInput)
+  | ({ preset: "function-graph" } & FunctionGraphInput)
+  | ({ preset: "sign-chart" } & SignChartInput)
+  | ({ preset: "value-table" } & ValueTableInput)
+  | ({ preset: "number-line" } & NumberLineInput)
+  | ({ preset: "vectors" } & VectorsInput)
+  | ({ preset: "unit-circle" } & UnitCircleInput)
 ) &
   CommonPresetOptions;
 
@@ -81,6 +99,18 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandLabelledBlocks(input);
     case "chart":
       return expandChart(input);
+    case "function-graph":
+      return expandFunctionGraph(input);
+    case "sign-chart":
+      return expandSignChart(input);
+    case "value-table":
+      return expandValueTable(input);
+    case "number-line":
+      return expandNumberLine(input);
+    case "vectors":
+      return expandVectors(input);
+    case "unit-circle":
+      return expandUnitCircle(input);
   }
 }
 
@@ -111,6 +141,18 @@ export function validatePresetInput(input: PresetInput): void {
       return validateLabelledBlocksInput(raw);
     case "chart":
       return validateChartInput(raw);
+    case "function-graph":
+      return validateFunctionGraphInput(raw);
+    case "sign-chart":
+      return validateSignChartInput(raw);
+    case "value-table":
+      return validateValueTableInput(raw);
+    case "number-line":
+      return validateNumberLineInput(raw);
+    case "vectors":
+      return validateVectorsInput(raw);
+    case "unit-circle":
+      return validateUnitCircleInput(raw);
   }
 }
 
@@ -122,11 +164,29 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "mindmap" ||
     preset === "annotated-figure" ||
     preset === "labelled-blocks" ||
-    preset === "chart"
+    preset === "chart" ||
+    preset === "function-graph" ||
+    preset === "sign-chart" ||
+    preset === "value-table" ||
+    preset === "number-line" ||
+    preset === "vectors" ||
+    preset === "unit-circle"
   );
 }
 
-export type { GraphInput, MindmapInput, AnnotatedFigureInput, LabelledBlocksInput, ChartInput };
+export type {
+  GraphInput,
+  MindmapInput,
+  AnnotatedFigureInput,
+  LabelledBlocksInput,
+  ChartInput,
+  FunctionGraphInput,
+  SignChartInput,
+  ValueTableInput,
+  NumberLineInput,
+  VectorsInput,
+  UnitCircleInput,
+};
 export type { PresetId };
 
 /**
