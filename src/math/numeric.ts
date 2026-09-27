@@ -62,7 +62,8 @@ function simpson(f: (x: number) => number, a: number, b: number, fa: number, fm:
 }
 
 /**
- * Definite integral of `f` on `[a, b]` by adaptive Simpson's rule.
+ * Definite integral of `f` on `[a, b]` by adaptive Simpson's rule, gated by
+ * a GLOBAL error budget rather than a per-subinterval one.
  *
  * Simpson's rule is exact for cubics, so on any interval short and smooth
  * enough to look cubic, one estimate already agrees with a second one taken
@@ -71,16 +72,65 @@ function simpson(f: (x: number) => number, a: number, b: number, fa: number, fm:
  * matches how the rest of the project spends precision: it puts panels
  * where the function is busy (near a bend, a hump) and few where it is
  * nearly straight, instead of a fixed grid that either wastes work on a
- * calm stretch or misses a chart's fine one.
+ * calm stretch or misses a chart's fine one. The tolerance handed to each
+ * child is still halved on the way down -- that remains the heuristic for
+ * WHERE to keep refining, spending it in proportion to each half's share of
+ * the interval.
+ *
+ * What changed from a naive reading of the textbook algorithm: whether a
+ * sub-interval that is still bisecting at `maxDepth` is a PROBLEM is no
+ * longer decided by comparing its own error to its own (by then minuscule)
+ * shrunk-in-half tolerance share. That per-subinterval gate is the defect --
+ * near an endpoint where f is finite and continuous but f' is unbounded
+ * (√x at 0, √(1−x²) at ±1, x^(1/3) at 0), the true error there shrinks only
+ * polynomially in the panel width while the tolerance share shrinks
+ * geometrically with depth, so the two curves cross a boundary a generous
+ * `maxDepth` still cannot clear -- even though that panel's absolute
+ * contribution to the WHOLE integral's error is by then negligible, because
+ * the panel itself is astronomically narrow. Refusing on that basis would
+ * refuse a finite, continuous, textbook-exact integral (16/3 for √x on
+ * [0, 4]) for a reason that has nothing to do with whether the returned
+ * number can be trusted.
+ *
+ * So a sub-interval that hits `maxDepth` is no longer refused on the spot:
+ * it hands back its best estimate and its own honest error, unresolved
+ * error is summed exactly as resolved error already was, and only the
+ * TOTAL error across the whole interval is compared against the tolerance
+ * that was actually asked for, once, at the end. This is standard adaptive
+ * quadrature practice (the same principle QUADPACK's global accumulation
+ * uses): the tolerance is a promise about the returned value, not a demand
+ * that every panel, however narrow, individually justify its own share of
+ * it. `errorEstimate` is always this same total, summed the same way whether
+ * or not every leaf converged on its own. It is an ESTIMATE, not a bound: on
+ * ∛x over [0, 8] the true error is 2,9e-9 against an estimate of 6,8e-10,
+ * because Richardson's estimate assumes a smoothness the endpoint lacks.
+ * Every consumer prints to three or four places, far above either figure.
  *
  * Refuses (does not return a number) rather than integrate through:
  * - a non-finite sample anywhere probed in `[a, b]` -- a pole or a genuinely
  *   undefined point inside the interval. Integrating "around" it silently
  *   would report a value for an integral that, strictly, diverges or does
  *   not exist as written; the caller must exclude the point or split the
- *   interval at it on purpose.
- * - recursion past `maxDepth` on some sub-interval -- the tolerance asked
- *   for more resolution there than this method will spend.
+ *   interval at it on purpose. This is what still refuses 1/x and 1/x² on
+ *   [-1, 1] (the midpoint sample lands exactly on the pole) and 1/x on
+ *   [0, 1] (the left endpoint IS the pole) -- unaffected by the change
+ *   above, since it never depended on `maxDepth` at all.
+ * - the total error across the whole interval, once every sub-interval has
+ *   either converged or exhausted `maxDepth`, still exceeding the requested
+ *   tolerance -- a genuine failure to resolve `f`, not merely one narrow
+ *   panel's own bookkeeping.
+ *
+ * A DELIBERATE non-goal: an integrand that is itself infinite at an
+ * endpoint (1/√x or ln x on [0, 1] -- an improper integral, convergent only
+ * as a limit) is still refused, by the same non-finite-sample rule as a
+ * pole, the moment the endpoint itself is sampled. That is unchanged by this
+ * fix on purpose: `f` returning +/-Infinity at a point the caller asked to
+ * integrate through is exactly the "cannot be trusted, refused rather than
+ * printed" case this module exists to catch, and rescuing it would mean
+ * redefining the integral as a limit -- a different, harder-to-verify
+ * computation this module does not attempt. Only the DERIVATIVE may blow up
+ * at a sampled point; the function value itself must stay finite everywhere
+ * probed.
  *
  * What it cannot detect: a function that is finite and smooth everywhere
  * sampled but has a thin spike or a removable near-singularity narrower
@@ -114,13 +164,10 @@ export function integrate(f: (x: number) => number, a: number, b: number, opts: 
     const right = simpson(f, x1, x2, f1, fRightMid, f2);
     const refined = left + right;
     const error = (refined - whole) / 15; // Richardson extrapolation term for Simpson's rule.
+    // Stopping here at maxDepth is accepting this leaf's best estimate, not
+    // certifying it -- the only certificate that matters is the TOTAL error
+    // checked once, globally, after the whole recursion finishes.
     if (Math.abs(error) <= tol || depth >= maxDepth) {
-      if (depth >= maxDepth && Math.abs(error) > tol) {
-        throw new NumericError(
-          `integrate: did not converge on [${x0}, ${x2}] within ${maxDepth} bisections ` +
-            `(remaining error ~${Math.abs(error).toExponential(2)} > tolerance ${tol.toExponential(2)}).`,
-        );
-      }
       return { value: refined + error, error: Math.abs(error) };
     }
     const l = recurse(x0, x1, f0, fLeftMid, f1, left, tol / 2, depth + 1);
@@ -134,6 +181,12 @@ export function integrate(f: (x: number) => number, a: number, b: number, opts: 
   const fm = sample(m);
   const whole = simpson(f, a, b, fa, fm, fb);
   const { value, error } = recurse(a, b, fa, fm, fb, whole, tolerance, 0);
+  if (error > tolerance) {
+    throw new NumericError(
+      `integrate: did not converge on [${a}, ${b}] within ${maxDepth} bisections ` +
+        `(total estimated error ~${error.toExponential(2)} > tolerance ${tolerance.toExponential(2)}).`,
+    );
+  }
   return { value, errorEstimate: error };
 }
 

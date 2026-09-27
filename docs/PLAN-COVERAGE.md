@@ -57,10 +57,11 @@ reactions, crystals.
 
 ## Phase 2 — sheets as a study instrument
 
-- Computed text in statements and solutions (`{{calc:…}}`), so a typed
-  "= 8/3" can never disagree with the figure beside it.
+- Computed text in statements and solutions (`params` and `{{= …}}`,
+  ADR 0040), so a typed "= 8/3" can never disagree with the figure beside it.
 - Seeded variants with a separate gabarito; a variant is admitted only if all
-  its figures pass their checks and its numbers are "nice".
+  its figures pass their checks and its numbers are "nice" (ADR 0041, 0042:
+  `sheet --variants N`).
 
 *Swap with phase 3 if Geometria Analítica runs alongside Cálculo 1.*
 
@@ -117,7 +118,10 @@ about rectangles, not projected faces).
 | `area-matches-its-label` | [0037](decisions/0037-area-matches-its-label.md) | done 2026-09-27 |
 | asymptotes and holes in function-graph | [0038](decisions/0038-asymptotes-and-holes.md) | done 2026-09-27 |
 | limit tables in value-table | [0039](decisions/0039-limit-tables.md) | done 2026-09-27 |
+| computed sheet text: `params`, `{{= …}}`, params in figures; one snapping helper | [0040](decisions/0040-computed-sheet-text.md) | done 2026-09-27 |
 | slow divergence in `numeric.limit` (ln x at 0⁺ is −∞) | — | done 2026-09-27; slow CONVERGENCE (x·ln x → 0) still reads "none" |
+| seeded variants: domains, declarative predicates, bounded admission loop | [0041](decisions/0041-seeded-variants.md) | done 2026-09-27; its `derive` removed by 0042 (predicates now see `calc.evaluateParams`) |
+| variant sheets and a separate gabarito: `sheet --variants N [--seed S]`, `--answers separate`, manifest, shortfall fails the build | [0042](decisions/0042-variant-sheets-and-gabarito.md) | done 2026-09-27; Phase 2 complete |
 | corpus coverage audit | — | not started |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each

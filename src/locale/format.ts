@@ -181,3 +181,84 @@ export function parseNumber(text: string, locale: Locale = "pt-BR"): number | nu
   if (!/^-?\d+(\.\d+)?$/.test(t)) return null;
   return Number(t);
 }
+
+// ---- exact values (ADR 0040) ----------------------------------------------------
+
+/**
+ * A number and how it is written: snapped to the exact value it agrees with,
+ * or left as it was and flagged inexact.
+ *
+ * This lived in three places -- function-graph's asymptotes (fractions, √n,
+ * kπ/q), sign-chart's `exactLabel` (fractions, √n) and value-table's limit
+ * verdicts (fractions, √n, at a looser tolerance) -- each a private copy with
+ * its own candidate list. It is one helper now, beside the formatter that
+ * writes its result, and each caller passes only the one thing that really
+ * differs between them: how far its number can be trusted (`tolerance`).
+ */
+export type Exact =
+  | { value: number; exact: true; form: "rational" }
+  | { value: number; exact: true; form: "sqrt"; n: number }
+  | { value: number; exact: true; form: "pi"; k: number; q: number }
+  | { value: number; exact: false };
+
+/** Largest denominator a snapped fraction or multiple of π may have. */
+const SNAP_MAX_Q = 12;
+/** Largest n a snapped √n may have. */
+const SNAP_MAX_SQUARE = 400;
+
+function gcd(a: number, b: number): number {
+  return b === 0 ? Math.abs(a) : gcd(b, a % b);
+}
+
+/**
+ * The exact value `r` is, if it is one of the numbers a Cálculo 1 text meets:
+ * p/q with q ≤ 12, ±√n with n ≤ 400, or kπ/q with q ≤ 12. The nearest
+ * candidate within `tolerance · max(1, |r|)` wins, rationals first on a tie.
+ * `tolerance` is the caller's statement of how precise its number is: a
+ * bisected root is good to ~1e-9, a central-difference slope to ~1e-6, a
+ * numeric limit to ~1e-5.
+ */
+export function snapExact(r: number, tolerance: number): Exact {
+  const slack = tolerance * Math.max(1, Math.abs(r));
+  let best = { value: r, exact: false } as Exact;
+  let gap = Infinity;
+  const offer = (candidate: Exact): void => {
+    const d = Math.abs(candidate.value - r);
+    if (d <= slack && d < gap - 1e-15) {
+      best = candidate;
+      gap = d;
+    }
+  };
+  for (let q = 1; q <= SNAP_MAX_Q; q += 1) offer({ value: Math.round(r * q) / q, exact: true, form: "rational" });
+  const n = Math.round(r * r);
+  if (n >= 2 && n <= SNAP_MAX_SQUARE && !Number.isInteger(Math.sqrt(n))) {
+    offer({ value: Math.sign(r) * Math.sqrt(n), exact: true, form: "sqrt", n });
+  }
+  for (let q = 1; q <= SNAP_MAX_Q; q += 1) {
+    const k = Math.round((r * q) / Math.PI);
+    if (k === 0) continue;
+    const g = gcd(k, q);
+    offer({ value: (k * Math.PI) / q, exact: true, form: "pi", k: k / g, q: q / g });
+  }
+  if (best.exact && Math.abs(best.value) < 1e-12) return { value: 0, exact: true, form: "rational" };
+  return best;
+}
+
+/** An exact value as a reader writes it: 2, 1/2, 0,5, √3, π/2, −3π/2; rounded when inexact. */
+export function writeExact(e: Exact, locale: Locale = "pt-BR"): string {
+  if (!e.exact || e.form === "rational") return formatNumber(e.value, locale);
+  const sign = e.value < 0 ? MINUS : "";
+  if (e.form === "sqrt") return `${sign}√${e.n}`;
+  const k = Math.abs(e.k);
+  return `${sign}${k === 1 ? "" : k}π${e.q === 1 ? "" : `/${e.q}`}`;
+}
+
+/** The same, as TeX source for KaTeX: `\frac{8}{3}`, `\sqrt{2}`, `\frac{3\pi}{2}`, `2{,}5`. */
+export function writeExactTex(e: Exact, locale: Locale = "pt-BR"): string {
+  if (!e.exact || e.form === "rational") return formatNumberTex(e.value, locale);
+  const sign = e.value < 0 ? "-" : "";
+  if (e.form === "sqrt") return `${sign}\\sqrt{${e.n}}`;
+  const k = Math.abs(e.k);
+  const top = `${k === 1 ? "" : k}\\pi`;
+  return sign + (e.q === 1 ? top : `\\frac{${top}}{${e.q}}`);
+}

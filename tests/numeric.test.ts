@@ -41,6 +41,53 @@ test("integrate: a pole exactly at an endpoint is also refused", () => {
   assert.throws(() => integrate((x) => 1 / x, 0, 1), NumericError);
 });
 
+test("integrate: 1/x^2 on [-1, 1] is refused (pole hit at the midpoint sample)", () => {
+  assert.throws(() => integrate((x) => 1 / (x * x), -1, 1), NumericError);
+});
+
+// --- integrate: finite integrands with an unbounded derivative (ADR 0040's ---
+// --- former limit) must now converge, not be refused. ----------------------
+
+test("integrate: sqrt(x) on [0, 4] is 16/3, though its derivative is unbounded at 0", () => {
+  const { value, errorEstimate } = integrate(Math.sqrt, 0, 4);
+  assert.ok(Math.abs(value - 16 / 3) < 1e-6, `got ${value}`);
+  assert.ok(errorEstimate < 1e-6);
+});
+
+test("integrate: sqrt(1 - x^2) on [-1, 1] is pi/2 (unbounded derivative at both endpoints)", () => {
+  const { value } = integrate((x) => Math.sqrt(1 - x * x), -1, 1);
+  assert.ok(Math.abs(value - Math.PI / 2) < 1e-5, `got ${value}`);
+});
+
+test("integrate: sqrt(1 - x^2) on [0, 1] is pi/4 (the quarter-circle area)", () => {
+  const { value } = integrate((x) => Math.sqrt(1 - x * x), 0, 1);
+  assert.ok(Math.abs(value - Math.PI / 4) < 1e-5, `got ${value}`);
+});
+
+test("integrate: x^(1/3) on [0, 8] is 12 (unbounded derivative at 0)", () => {
+  const { value } = integrate((x) => Math.cbrt(x), 0, 8);
+  assert.ok(Math.abs(value - 12) < 1e-6, `got ${value}`);
+});
+
+test("integrate: sqrt(|x|) on [-1, 1] is 4/3 (unbounded derivative at an interior point)", () => {
+  const { value } = integrate((x) => Math.sqrt(Math.abs(x)), -1, 1);
+  assert.ok(Math.abs(value - 4 / 3) < 1e-5, `got ${value}`);
+});
+
+// An integrand that is itself infinite AT the endpoint (not merely steep
+// near it) stays refused: the sample at that endpoint is non-finite, and
+// this module's standing rule is that a non-finite sample is refused, never
+// integrated around. Rescuing these would mean redefining the integral as a
+// limit, which this module does not attempt.
+
+test("integrate: 1/sqrt(x) on [0, 1] is refused -- f itself is infinite at the endpoint", () => {
+  assert.throws(() => integrate((x) => 1 / Math.sqrt(x), 0, 1), NumericError);
+});
+
+test("integrate: ln(x) on [0, 1] is refused -- f itself is infinite at the endpoint", () => {
+  assert.throws(() => integrate(Math.log, 0, 1), NumericError);
+});
+
 // --- riemann -------------------------------------------------------------
 
 test("riemann: left/right/mid/trapezoid all converge to the true area as n grows", () => {
