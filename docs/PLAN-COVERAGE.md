@@ -106,14 +106,18 @@ about rectangles, not projected faces).
 | --- | --- | --- |
 | length and place labels | [0028](decisions/0028-length-labels-and-place-labels.md) | done 2026-09-25 |
 | curves beyond graphs of functions (named variables, contour) | [0029](decisions/0029-curves-beyond-graphs-of-functions.md) | done 2026-09-25 |
-| numeric kit (`src/math/numeric.ts`) | — | done 2026-09-25; not yet consumed by any preset |
+| numeric kit (`src/math/numeric.ts`) | — | done 2026-09-25; first consumed by function-graph areas and sums (0036) |
 | number-line | [0030](decisions/0030-number-line.md) | done 2026-09-25 |
 | unit-circle | [0031](decisions/0031-unit-circle.md) | done 2026-09-25 |
 | vectors | [0032](decisions/0032-vectors.md) | done 2026-09-25 |
 | value-table | [0033](decisions/0033-value-table.md) | done 2026-09-25 |
 | pt-BR angle labels read by `sweep-matches-its-label` | — | done 2026-09-25 (found by unit-circle) |
 | what a label hides and claims (backings, unclaimed labels, axes, line contrast) | [0035](decisions/0035-what-a-label-hides-and-claims.md) | done 2026-09-26 (found by visual review) |
-| area, Riemann rectangles, asymptotes, limit tables in function-graph | — | next: needs the numeric kit and ADR 0029 |
+| areas and Riemann sums in function-graph | [0036](decisions/0036-areas-and-riemann-sums.md) | done 2026-09-27 |
+| `area-matches-its-label` | [0037](decisions/0037-area-matches-its-label.md) | done 2026-09-27 |
+| asymptotes and holes in function-graph | [0038](decisions/0038-asymptotes-and-holes.md) | done 2026-09-27 |
+| limit tables in value-table | [0039](decisions/0039-limit-tables.md) | done 2026-09-27 |
+| slow divergence in `numeric.limit` (ln x at 0⁺ is −∞) | — | done 2026-09-27; slow CONVERGENCE (x·ln x → 0) still reads "none" |
 | corpus coverage audit | — | not started |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each

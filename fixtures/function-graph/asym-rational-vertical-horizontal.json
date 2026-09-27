@@ -1,0 +1,14 @@
+{
+  "preset": "function-graph",
+  "title": "Assíntotas de f(x) = (2x + 1)/(x − 1)",
+  "x": { "range": [-4, 6], "unit": 48 },
+  "y": { "range": [-5, 9], "unit": 30 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "(2x + 1)/(x - 1)",
+      "asymptotes": true,
+      "label": { "text": "y = {expr}", "at": 3.2, "towards": ["NE", "U", "R"] }
+    }
+  ]
+}

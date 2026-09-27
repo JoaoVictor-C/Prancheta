@@ -1,0 +1,10 @@
+{
+  "preset": "value-table",
+  "title": "estimando lim |x|/x quando x → 0",
+  "limit": {
+    "expr": "abs(x) / x",
+    "at": 0,
+    "side": "both",
+    "count": 4
+  }
+}

@@ -1,0 +1,2 @@
+{ "preset": "function-graph", "x": { "range": [-1, 6], "unit": 70 }, "y": { "range": [-4, 3], "unit": 70 },
+  "functions": [ { "id": "f", "expr": "ln(x)", "asymptotes": { "vertical": true }, "label": { "text": "y = ln x", "at": 4, "towards": ["U", "NW"] } } ] }

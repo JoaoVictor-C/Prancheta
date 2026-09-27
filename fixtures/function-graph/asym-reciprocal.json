@@ -1,0 +1,14 @@
+{
+  "preset": "function-graph",
+  "title": "Assíntotas de f(x) = 1/(x − 1)",
+  "x": { "range": [-3, 5], "unit": 55 },
+  "y": { "range": [-5, 5], "unit": 34 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "1/(x - 1)",
+      "asymptotes": true,
+      "label": { "text": "y = {expr}", "at": 2.4, "towards": ["NE", "U", "R"] }
+    }
+  ]
+}

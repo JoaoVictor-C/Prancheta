@@ -1,0 +1,36 @@
+{
+  "preset": "function-graph",
+  "title": "Assíntotas verticais de tan x",
+  "x": {
+    "range": [
+      -4,
+      4
+    ],
+    "unit": 55
+  },
+  "y": {
+    "range": [
+      -5,
+      5
+    ],
+    "unit": 32
+  },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "tan(x)",
+      "asymptotes": {
+        "vertical": true
+      },
+      "label": {
+        "text": "y = {expr}",
+        "at": -2.6,
+        "towards": [
+          "NW",
+          "L",
+          "U"
+        ]
+      }
+    }
+  ]
+}

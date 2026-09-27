@@ -88,6 +88,11 @@ export type CheckId =
   // long beside a label reading "50 m", or a velocity arrow scaled at 2px
   // per m/s whose length disagrees with its printed "vA = 50 m/s".
   | "length-matches-its-label"
+  // The same defect one degree of freedom further out (ADR 0037): a shaded
+  // region -- "area under the curve", a Riemann rectangle -- is one closed
+  // mark, and its printed area ("A = 4/3", "8/3 u.a.") is typed
+  // independently of the polygon that draws it.
+  | "area-matches-its-label"
   // The obligation a PLACE label pays (ADR 0028). `annotation-nearest-its-owner`
   // cannot measure a label naming a point where two lines meet -- the lines
   // are always nearer -- so a place is measured by its own rule, under its
@@ -222,6 +227,7 @@ export function runChecks(figure: LaidOutFigure): Check[] {
   checks.push(annotationNearestItsOwner(figure, boxes));
   checks.push(sweepMatchesItsLabel(figure, boxes));
   checks.push(...lengthMatchesItsLabel(figure, boxes));
+  checks.push(...areaMatchesItsLabel(figure, boxes));
   checks.push(labelNearestItsPlace(figure, boxes));
   checks.push(labelDeclaresWhatItNames(figure, boxes));
   checks.push(backingHidesNoInk(figure, boxes));
@@ -1848,7 +1854,10 @@ function lengthMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedB
   const runs = new Map<string, PlacedConnector | PlacedMark>();
   for (const element of figure.elements) {
     if (element.kind === "connector" && element.curve?.kind !== "sweep") runs.set(element.id, element);
-    if (element.kind === "mark" && element.gridOf === undefined && element.place !== true) {
+    // A closed mark is a region, not a run: its label states an area and
+    // belongs to area-matches-its-label (ADR 0037). Measured here, "A = 8/3"
+    // read as a length of 8 in the unit "/3".
+    if (element.kind === "mark" && element.gridOf === undefined && element.place !== true && element.closed !== true) {
       runs.set(element.id, element);
     }
   }
@@ -1932,6 +1941,258 @@ function lengthMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedB
         status: "not-applicable",
         examined: 0,
         detail: "not applicable: no line or arrow is annotated with a stated length",
+      },
+    ];
+  }
+  return results;
+}
+
+/**
+ * An area a label claims: its magnitude, how finely it was written, and
+ * whether it was written as an exact fraction rather than a decimal.
+ *
+ * `resolution` is the length check's own rule (half the last printed digit)
+ * carried over unchanged; it is zero for a fraction, which claims to be exact
+ * rather than rounded, so nothing beyond the polygon's own sampling error is
+ * forgiven there.
+ */
+type StatedArea = { value: number; resolution: number; exact: boolean };
+
+/**
+ * The area a label states, or null when it states none.
+ *
+ * Same reading as `statedLength` (ADR 0028), plus the one shape an area is
+ * routinely written in that a length never is: an exact fraction, "4/3" or
+ * "8/3", read as the rational number it spells rather than rounded to a
+ * decimal first. A leading name and an operator are stripped the same way --
+ * "A = 4/3" and "d = 2,5 m" are one grammar -- and so is a bare leading
+ * "≈", which a length label never needs because a length is never written
+ * "≈ 50" in this project's fixtures but an area routinely is ("≈ 1,33" for
+ * 4/3). A trailing "u.a." ("unidades de área") is accepted and ignored, the
+ * same relief a length gives a trailing unit, but nothing is compared
+ * against it: unlike a frame's `unit`, "u.a." names no physical quantity to
+ * be wrong about. A degree sign or a percentage is `sweep-matches-its-label`'s
+ * to read, exactly as in the length check, so it is refused here too.
+ */
+function statedArea(text: string): StatedArea | null {
+  let t = text.trim().replaceAll("−", "-");
+  const equals = t.lastIndexOf("=");
+  if (equals >= 0) {
+    t = t.slice(equals + 1).trim();
+  } else {
+    // No "=" -- strip a leading name and/or approx marker: "A ≈ 2,67" and
+    // "≈ 1,33" both read as their number. A token that is purely a fraction
+    // or a decimal never matches this prefix, so "8/3 u.a." is untouched.
+    t = t.replace(/^[A-Za-zΑ-Ωα-ω]*[₀-₉]*\s*[≈~]?\s*/, "").trim();
+  }
+
+  const isRefusedUnit = (unit: string | null): boolean => unit !== null && /^(?:°|º|%)$/.test(unit);
+
+  const fraction = /^(\d+)\s*\/\s*(\d+)\s*([^\s\d][^\s]*)?$/.exec(t);
+  if (fraction !== null) {
+    const den = Number(fraction[2]);
+    if (den === 0 || isRefusedUnit(fraction[3] ?? null)) return null;
+    return { value: Number(fraction[1]) / den, resolution: 0, exact: true };
+  }
+
+  const match = /^(\d[\d.]*(?:,\d+)?)\s*([^\s\d.,][^\s]*)?$/.exec(t);
+  if (match === null) return null;
+  const token = match[1]!;
+  if (isRefusedUnit(match[2] ?? null)) return null;
+
+  let value: number;
+  let decimals: number;
+  if (token.includes(",")) {
+    const parsed = parseNumber(token, "pt-BR");
+    if (parsed === null) return null;
+    value = parsed;
+    decimals = token.length - token.indexOf(",") - 1;
+  } else if (/^\d{1,3}(?:\.\d{3})+$/.test(token)) {
+    value = Number(token.replaceAll(".", ""));
+    decimals = 0;
+  } else if (/^\d+(?:\.\d+)?$/.test(token)) {
+    value = Number(token);
+    decimals = token.includes(".") ? token.length - token.indexOf(".") - 1 : 0;
+  } else {
+    return null;
+  }
+  if (!Number.isFinite(value)) return null;
+  return { value: Math.abs(value), resolution: 0.5 * 10 ** -decimals, exact: false };
+}
+
+/** The shoelace sum, halved and made positive: this polygon's area in whatever space `points` is given in. */
+function shoelaceArea(points: Point[]): number {
+  let sum = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const a = points[i]!;
+    const b = points[(i + 1) % points.length]!;
+    sum += a.x * b.y - b.x * a.y;
+  }
+  return Math.abs(sum) / 2;
+}
+
+/** This polygon's perimeter, in whatever space `points` is given in. */
+function perimeterOf(points: Point[]): number {
+  let sum = 0;
+  for (let i = 0; i < points.length; i += 1) {
+    const a = points[i]!;
+    const b = points[(i + 1) % points.length]!;
+    sum += Math.hypot(b.x - a.x, b.y - a.y);
+  }
+  return sum;
+}
+
+/**
+ * This closed mark's area in the units its outline was stated in (ADR 0037).
+ *
+ * `resolveInFrame` maps frame units to canvas pixels by an anisotropic scale
+ * (`xUnit`, `yUnit`) composed with a rotation. A rotation preserves area, and
+ * the anisotropic scale multiplies it by `xUnit * yUnit` regardless of which
+ * way the frame is turned -- unlike `lengthInUnits`, which has to decompose a
+ * vector into along/across components because the two axes are scaled
+ * differently, an AREA is one number and the rotation drops out of it
+ * entirely. So converting back is one division, not a rotation.
+ */
+function areaInUnits(points: Point[], scale: MeasuredIn): number {
+  return shoelaceArea(points) / (scale.xUnit * scale.yUnit);
+}
+
+/**
+ * How far a printed area may sit from the polygon's own computed one and
+ * still be the same claim, beyond what the label's own decimal resolution
+ * already forgives.
+ *
+ * The polygon is not authored by hand the way a dimension line's two ends
+ * are: `x²`'s area under a curve is drawn by sampling the curve, and every
+ * sample is placed to within `FLAT_PX` of the true mathematical curve (the
+ * same bound `function-graph`'s own curve sampler holds itself to, for the
+ * same reason -- a quarter of an output pixel is where a reader's eye stops
+ * noticing the difference). Perturbing every point of a closed polygon's
+ * boundary by at most `ε` moves its enclosed area by at most `ε` times the
+ * polygon's own perimeter: the symmetric difference between the true and the
+ * perturbed region is contained in a strip of width `ε` running along the
+ * boundary, and a strip of width `ε` and length `L` has area `ε·L`. That is
+ * the whole derivation -- no curvature term is needed because the bound does
+ * not assume the boundary is straight between samples, only that no sample is
+ * farther than `ε` from where it should be. `EPSILON` (0.5px) is folded in
+ * beside it: the half pixel every other check forgives is exactly the same
+ * kind of positional slack, so a polygon whose vertices are honest to the
+ * nearest half-pixel of rounding is not additionally penalised for it.
+ *
+ * The result is in PIXELS²; the caller divides by `xUnit * yUnit` to reach
+ * the label's own units, exactly as `areaInUnits` does for the measurement
+ * itself. For a region of bounded aspect ratio this bound is small relative
+ * to the area it guards -- perimeter grows like the square root of area for
+ * shapes that are not needle-thin, so the relative error `ε·P/A` shrinks as
+ * the figure gets bigger, which is the "small relative error" this function
+ * exists to make precise rather than assert.
+ */
+const AREA_SAMPLE_FLAT_PX = 0.125;
+
+function areaSampleTolerance(points: Point[], scale: MeasuredIn): number {
+  return ((AREA_SAMPLE_FLAT_PX + EPSILON) * perimeterOf(points)) / (scale.xUnit * scale.yUnit);
+}
+
+function fmtArea(value: number): string {
+  return String(Math.round(value * 1000) / 1000);
+}
+
+/**
+ * Is every closed mark's area as its label prints? (ADR 0037)
+ *
+ * The area check's own version of the defect ADR 0028 closes for a straight
+ * run: a shaded region -- "área sob a curva", a Riemann rectangle, a triangle
+ * -- is one closed mark whose vertices are all stated in one frame, and its
+ * printed area is a number typed independently of that polygon. Nothing
+ * connects them unless something compares them.
+ *
+ * Shaped like `lengthMatchesItsLabel`: the label is found through
+ * `annotates`, never by proximity, and this reports per mark rather than once
+ * per figure, because one figure can hold a measured region and an
+ * unmeasurable one. It departs from that check in one place: HERE, a label
+ * that states no number is also `not-applicable` rather than silently
+ * skipped, because an area label with no scale to check it against and an
+ * area label with no number in it are the same kind of gap from a reader's
+ * seat -- a claim this check cannot examine -- and the project's
+ * not-applicable-never-pass rule (ADR 0019) says that gap is reported, never
+ * passed over.
+ */
+function areaMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check[] {
+  const id = "area-matches-its-label" as const;
+  const texts = figure.elements.filter((element): element is PlacedText => element.kind === "text");
+  const regions = new Map<string, PlacedMark>();
+  for (const element of figure.elements) {
+    if (element.kind === "mark" && element.closed && element.gridOf === undefined && element.place !== true) {
+      regions.set(element.id, element);
+    }
+  }
+
+  const results: Check[] = [];
+  for (const [labelId, box] of boxes) {
+    if (box.annotates === undefined) continue;
+    const region = regions.get(box.annotates);
+    if (region === undefined) continue;
+    const text = texts.find((candidate) => candidate.ownerId === labelId);
+    if (text === undefined) continue;
+    const printed = text.lines.map((line) => line.text).join(" ");
+
+    const notApplicable = (why: string): void => {
+      results.push({
+        id,
+        target: region.id,
+        status: "not-applicable",
+        examined: 0,
+        detail: `not applicable: ${labelId} (${truncate(printed)}) ${why}`,
+      });
+    };
+
+    const stated = statedArea(printed);
+    if (stated === null) {
+      notApplicable(`states no area this check can read`);
+      continue;
+    }
+    if (region.measuredIn === undefined) {
+      notApplicable(
+        `annotates ${region.id}, which was not stated in one frame (or its vertices sit in frames of ` +
+          `different scale), so its area has no unit to be measured in`,
+      );
+      continue;
+    }
+
+    const scale = region.measuredIn;
+    const drawn = areaInUnits(region.points, scale);
+    const tolerance = (stated.exact ? 0 : stated.resolution) + areaSampleTolerance(region.points, scale);
+    const unit = scale.unit ?? "units";
+    if (Math.abs(drawn - stated.value) > tolerance) {
+      results.push({
+        id,
+        target: region.id,
+        status: "fail",
+        examined: 1,
+        ownerId: labelId,
+        detail:
+          `${labelId} says ${fmtArea(stated.value)} but ${region.id} encloses ${fmtArea(drawn)} ${unit}² ` +
+          `in frame "${scale.frame}" (${fmt(scale.xUnit)}px per unit)`,
+      });
+    } else {
+      results.push({
+        id,
+        target: region.id,
+        status: "pass",
+        examined: 1,
+        detail: `${region.id} encloses ${fmtArea(drawn)} ${unit}², as ${labelId} states`,
+      });
+    }
+  }
+
+  if (results.length === 0) {
+    return [
+      {
+        id,
+        target: "figure",
+        status: "not-applicable",
+        examined: 0,
+        detail: "not applicable: no closed region is annotated with a stated area",
       },
     ];
   }

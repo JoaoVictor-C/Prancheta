@@ -36,13 +36,29 @@ import { SpecError, parseSpec } from "../../ir/types.ts";
 import { ExprError, compile, compileTree, constantValue, derivative, parse, parseEquation, parseIn, pretty } from "../../math/expr.ts";
 import type { Node } from "../../math/expr.ts";
 import { contour } from "../../math/contour.ts";
-import { LOCALES, MINUS, formatNumber, formatPoint } from "../../locale/format.ts";
+import { LOCALES, MINUS, formatNumber, formatPoint, parseNumber } from "../../locale/format.ts";
+import { NumericError, riemann } from "../../math/numeric.ts";
+import type { RiemannRule } from "../../math/numeric.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "./board.ts";
 import type { Box } from "./board.ts";
 import { clipRuns, sampleParametric } from "./curves.ts";
 import type { Rect } from "./curves.ts";
+import {
+  boxInside,
+  boxMeetsPolygon,
+  distanceToPolyline,
+  integral,
+  intersections,
+  pointInPolygon,
+  sampleEdge,
+  signParts,
+  subscript,
+} from "./areas.ts";
+import type { XYPoint } from "./areas.ts";
+import { atInfinity, classify, coincides, describeLimit, sameLine, snapExact, verticalsAndHoles, writeExact } from "./asymptotes.ts";
+import type { Exact, Hole, SideResult, Slant } from "./asymptotes.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -117,6 +133,35 @@ export type FunctionInput = StrokeInput & {
   legend?: string;
   /** Mark computed roots and local extrema, each declared to lie on this curve (ADR 0025). */
   features?: ("roots" | "extrema")[];
+  /**
+   * Asymptotes, FOUND from the expression (ADR 0038): `true` draws every one
+   * the numerics confirm and refuses a function that has none; an object
+   * picks kinds. A kind set to `true` must exist or the figure is refused; a
+   * kind left out is drawn if found; `false` draws none. `vertical` may list
+   * the x of each asymptote the figure claims, each confirmed by its limits.
+   */
+  asymptotes?: boolean | AsymptoteInput;
+  /**
+   * Removable discontinuities, drawn as ○ at (a, lim f): `true` finds them
+   * (and refuses a function with none), a list names the x of each (a hole
+   * the expression never visibly skips must be declared), an object adds a
+   * label template. y is always the limit, never typed.
+   */
+  holes?: boolean | Bound[] | HoleInput;
+};
+
+export type AsymptoteInput = {
+  vertical?: boolean | Bound[];
+  horizontal?: boolean;
+  oblique?: boolean;
+};
+
+export type HoleInput = {
+  /** The x of each hole; unset: found. */
+  at?: Bound[];
+  /** A template for each hole's label: "{coords}" prints the computed (a; L). */
+  label?: string;
+  towards?: Dir[];
 };
 
 export type LineInput = StrokeInput & {
@@ -180,6 +225,66 @@ export type LegendInput = {
   at?: XY;
 };
 
+/**
+ * A shaded region (ADR 0036): under one curve, `{of, from, to}` -- between it
+ * and the x axis -- or between two, `{between: [f, g]}` with `from`/`to`, or
+ * with neither, when the bounds are the curves' first and last intersections.
+ * Where the integrand changes sign the region is cut into parts, each its own
+ * closed mark and its own label, shaded by sign.
+ */
+export type AreaInput = {
+  id?: string;
+  of?: string;
+  between?: [string, string];
+  from?: Bound;
+  to?: Bound;
+  /**
+   * What the printed number is: "area" (default) the geometric area, every
+   * part counted positive -- what "calcule a área" asks; "integral" the
+   * signed integral, a part below the axis (or where g is above f) negative.
+   */
+  value?: "area" | "integral";
+  /** The tint where f > 0 (or f > g). Default: the first curve's colour. */
+  colour?: string;
+  /** The tint where f < 0 (or f < g). Default rust. */
+  negativeColour?: string;
+  /**
+   * The label printed in each part, a template: {value} (per `value`), {area},
+   * {integral}, {i} (the part's index as a subscript). Default "A = {value}",
+   * "A{i} = {value}" when there are several parts, and "∫" for "A" when
+   * `value` is "integral". `false` prints none.
+   */
+  label?: string | false | { text?: string; towards?: Dir[] };
+  /**
+   * With several parts, the whole region's value as a caption: `true` (the
+   * default when there are several parts) or a template ({value}, {area},
+   * {integral}); `false` prints none.
+   */
+  total?: boolean | string;
+  legend?: string;
+};
+
+/** A Riemann sum (ADR 0036): exactly the rectangles numeric.riemann summed. */
+export type RiemannInput = {
+  id?: string;
+  of: string;
+  from: Bound;
+  to: Bound;
+  n: number;
+  rule: RiemannRule;
+  /** The rectangles' colour where f > 0. Default warm. */
+  colour?: string;
+  /** Where f < 0. Default rust. */
+  negativeColour?: string;
+  /** Mark the sample points on the curve (left/right/mid). Default true. */
+  points?: boolean;
+  /** Print the sum: `true` ("S{n} = {sum}") or a template ({sum}, {n} as a subscript, {integral}). */
+  label?: boolean | string;
+  /** Print the exact integral beside the sum: `true` ("∫ = {integral}") or a template. */
+  integral?: boolean | string;
+  legend?: string;
+};
+
 export type FunctionGraphInput = {
   title?: string;
   /** Number formatting for ticks and computed labels. Default pt-BR. */
@@ -191,6 +296,8 @@ export type FunctionGraphInput = {
   points?: PointInput[];
   guides?: GuideInput[];
   labels?: LabelInput[];
+  areas?: AreaInput[];
+  riemann?: RiemannInput[];
   legend?: LegendInput;
 };
 
@@ -288,6 +395,60 @@ type Curve = {
 
 type Resolved = { x: number; y: number };
 
+type LegendRow = { text: string; colour: string; width: number; lineStyle: LineStyle | undefined; fill?: string };
+
+/**
+ * A label that names a region or a sum (ADR 0036). It `annotates` the closed
+ * mark `owner`, and is placed so that mark is the nearest thing drawn to it
+ * -- inside the region when it fits, else outside against it -- because
+ * `annotation-nearest-its-owner` holds it to exactly that, and
+ * `area-matches-its-label` (ADR 0037) measures the owner's area against it.
+ */
+type RegionLabel = {
+  id: string;
+  owner: string;
+  polygon: Point[];
+  /** "" when no label is printed (only a caption). */
+  text: string;
+  colour: string;
+  inside: boolean;
+  towards?: Dir[];
+  /** A free-standing caption set beside the label: a total, or the integral a sum is compared with. */
+  caption?: { id: string; text: string; colour: string };
+  /** Every part the caption speaks for; default the owner alone. */
+  group?: Point[][];
+  /**
+   * A sum whose rectangles all stand on one side of the x axis is labelled on
+   * the OTHER side, centred under (or over) them, past the tick numbers: 1
+   * below the axis, -1 above it.
+   */
+  across?: 1 | -1;
+};
+
+/**
+ * An asymptote as drawn (ADR 0038): a dashed line in canvas px, clipped to the
+ * plot, its own series so its label can name it, and the ends its label
+ * prefers to sit beside (the end toward the side it describes first).
+ */
+type AsymptoteLine = {
+  id: string;
+  colour: string;
+  pts: Point[];
+  text: string;
+  /** Preferred label anchors, best first, each with a score penalty. */
+  prefer: { at: Point; bias: number }[];
+};
+
+/**
+ * How opaque a region's tint is (11%): light enough that a tick number set
+ * inside a region keeps 4.5:1 -- FAINT on every palette colour's tint measures
+ * 4.65 to 4.74:1, where 17% had the rust tint of a region below the axis at
+ * 4.3:1 under "3" and "4" -- and a label in the region's own colour keeps
+ * 4.7:1 or better; dark enough to read as a region.
+ */
+const TINT_ALPHA = "1C";
+const tint = (colour: string): string => `${colour}${TINT_ALPHA}`;
+
 const LEFT = 46;
 const RIGHT = 40;
 const TOP = 30;
@@ -311,6 +472,20 @@ class Build {
   readonly guideMarks: Mark[] = [];
   readonly tickBoxes: Box[] = [];
   readonly required = { x: new Set<number>(), y: new Set<number>() };
+  /** Every shaded region and Riemann outline, in canvas px: what the legend keeps off. */
+  readonly regionsPx: Point[][] = [];
+  /** Labels of regions and sums, placed once every other mark exists. */
+  readonly regionLabels: RegionLabel[] = [];
+  /** Sample points of Riemann sums, drawn with the other dots (above the curves). */
+  readonly sampleDots: { at: Point; colour: string; id: string; series: string }[] = [];
+  /** Legend rows for areas and sums, after the curves'. */
+  readonly regionLegend: LegendRow[] = [];
+  /** Asymptotes drawn (ADR 0038), labelled once every other mark exists. */
+  readonly asymptoteLines: AsymptoteLine[] = [];
+  /** Holes: open rings at (a, lim f), drawn with the other dots, over the curve. */
+  readonly holeDots: { at: Resolved; colour: string; id: string; series: string; label?: string; towards?: Dir[]; path: string }[] = [];
+  /** Where a graph with asymptotes or holes is broken while sampling: never joined across a pole. */
+  readonly graphBreaks = new Map<string, number[]>();
 
   constructor(input: FunctionGraphInput) {
     this.input = input;
@@ -581,13 +756,24 @@ class Build {
     let run: Point[] = [];
     const runs: Point[][] = [];
     const inside = (y: number): boolean => y >= this.yr[0] && y <= this.yr[1];
+    let last: { x: number; y: number } | null = null;
     for (let i = 0; i <= n; i += 1) {
       const x = a + ((b - a) * i) / n;
       const y = fn(x);
-      if (Number.isFinite(y) && inside(y)) run.push(this.at(x, y));
-      else {
+      if (Number.isFinite(y) && inside(y)) {
+        // Two samples both in range can straddle a pole (1/(x − 1) on a
+        // tall y range: +60 at one sample, −60 at the next) or a jump. They
+        // are joined only if the curve between them is continuous.
+        if (last !== null && run.length > 0 && Math.abs(y - last.y) * this.uy > 8 && this.jumps(fn, last.x, x)) {
+          if (run.length > 1) runs.push(run);
+          run = [];
+        }
+        run.push(this.at(x, y));
+        last = { x, y };
+      } else {
         if (run.length > 1) runs.push(run);
         run = [];
+        last = null;
       }
     }
     if (run.length > 1) runs.push(run);
@@ -598,6 +784,71 @@ class Build {
         width: style.width,
         ...(style.lineStyle === undefined ? {} : { lineStyle: style.lineStyle }),
         series: style.series,
+      }),
+    );
+  }
+
+  /**
+   * Does fn jump between x0 and x1 -- a pole or a discontinuity -- rather than
+   * climb steeply? Bisect toward the half that changes more: a continuous
+   * curve's change shrinks with the interval, a jump's does not.
+   */
+  jumps(fn: (x: number) => number, x0: number, x1: number): boolean {
+    let a = x0;
+    let b = x1;
+    let ya = fn(a);
+    let yb = fn(b);
+    for (let k = 0; k < 60; k += 1) {
+      if (Math.abs(yb - ya) * this.uy < 0.5) return false;
+      const m = (a + b) / 2;
+      if (m === a || m === b) break;
+      const ym = fn(m);
+      if (!Number.isFinite(ym)) return true;
+      if (Math.abs(ym - ya) >= Math.abs(yb - ym)) {
+        b = m;
+        yb = ym;
+      } else {
+        a = m;
+        ya = ym;
+      }
+    }
+    return Math.abs(yb - ya) * this.uy > 2;
+  }
+
+  /**
+   * A graph with asymptotes or holes (ADR 0038): sampled adaptively, like a
+   * parametric curve in x, on each stretch between its breaks, and clipped
+   * exactly to the plot -- so it runs up to the border beside a vertical
+   * asymptote instead of stopping one even sample short, and no run is ever
+   * joined across a pole. A hole's stretches end at the hole itself, under
+   * its ring.
+   */
+  graphRuns(curve: Curve, a: number, b: number, breaks: number[], idBase: string): void {
+    const view = this.view;
+    const cuts = [a, ...breaks.filter((x) => x > a && x < b).sort((p, q) => p - q), b];
+    const runs: Point[][] = [];
+    for (let i = 0; i + 1 < cuts.length; i += 1) {
+      const lo = i === 0 ? cuts[i]! : cuts[i]! + 1e-9 * Math.max(1, Math.abs(cuts[i]!));
+      const hi = i + 2 === cuts.length ? cuts[i + 1]! : cuts[i + 1]! - 1e-9 * Math.max(1, Math.abs(cuts[i + 1]!));
+      if (!(lo < hi)) continue;
+      const sampled = sampleParametric(
+        (s) => {
+          const y = curve.at(s);
+          return Number.isFinite(y) ? this.at(s, y) : null;
+        },
+        lo,
+        hi,
+        view,
+      );
+      runs.push(...clipRuns(sampled, view));
+    }
+    runs.forEach((r, i) =>
+      this.board.poly(r, {
+        id: `${idBase}${runs.length === 1 ? "" : `-${i + 1}`}`,
+        stroke: curve.colour,
+        width: curve.width,
+        ...(curve.lineStyle === undefined ? {} : { lineStyle: curve.lineStyle }),
+        series: curve.series,
       }),
     );
   }
@@ -858,6 +1109,12 @@ class Build {
         this.otherStroke(curve, `functions[${i}]`);
         continue;
       }
+      const breaks = this.graphBreaks.get(fn.id);
+      if (breaks !== undefined) {
+        const p = curve.pieces[0]!;
+        this.graphRuns(curve, Math.max(p.domain[0], this.xr[0]), Math.min(p.domain[1], this.xr[1]), breaks, fn.id);
+        continue;
+      }
       curve.pieces.forEach((p, j) =>
         this.curve(p.f, p.domain[0], p.domain[1], curve, curve.pieces.length === 1 ? fn.id : `${fn.id}-p${j + 1}`),
       );
@@ -954,6 +1211,23 @@ class Build {
         this.board.reserve(c.x, c.y, 12, 12);
       }
     }
+    // A Riemann sum's sample points: where f was read for each height. Each
+    // is declared to lie on its curve, so `feature-on-its-curve` holds the
+    // dot to the curve it claims -- a rectangle's top corner that missed the
+    // curve would show as a dot beside it.
+    for (const dot of this.sampleDots) {
+      this.board.circle(dot.at, 3.6, { fill: dot.colour, id: dot.id, on: [dot.series] });
+      this.board.reserve(dot.at.x, dot.at.y, 9, 9);
+    }
+    // A hole (ADR 0038): an open ring at (a, lim f), painted over the curve
+    // with paper inside, so the stroke that runs up to the hole from either
+    // side never shows through it. It is declared to lie on its curve, and
+    // `feature-on-its-curve` holds the computed limit to the drawn curve.
+    for (const hole of this.holeDots) {
+      const c = this.at(hole.at.x, hole.at.y);
+      this.board.circle(c, 5.5, { stroke: hole.colour, width: 2.2, fill: PAPER, id: hole.id, on: [hole.series] });
+      this.board.reserve(c.x, c.y, 14, 14);
+    }
   }
 
   /**
@@ -994,6 +1268,12 @@ class Build {
       // sitting on the curve it had just slid away from.
       const w = b.measure(text, size) - 8;
       const h = Math.ceil(size * 1.45);
+      // A spot with a 3px margin is preferred to one with 1px: the width is an
+      // estimate, and the same digits set in another machine's fallback font
+      // came out wide enough on CI (Linux) to touch a curve that hugs the
+      // axis -- "0" and "−3" beside the x = 0 asymptote of (x² + 1)/x. The
+      // 1px spot stays the fallback, so no number loses a spot it had.
+      const roomy = ([x, y]: [number, number]): boolean => b.clear(b.box(x, y, w, h), 3);
       const fits = ([x, y]: [number, number]): boolean => b.clear(b.box(x, y, w, h));
       // A backing over nothing but guides is the fallback as designed: the
       // guide is cut around the number (`breakGuides`) and no curve loses
@@ -1005,7 +1285,10 @@ class Build {
         const guides = this.guideMarks.reduce((n, m) => n + all - b.inkThrough(box, 1, m.id), 0);
         return all - guides > 0;
       };
-      const hit = cands.find(fits) ?? (cutsCurve(cands[0]!) ? spread().find(fits) : undefined);
+      const hit =
+        cands.find(roomy) ??
+        cands.find(fits) ??
+        (cutsCurve(cands[0]!) ? (spread().find(roomy) ?? spread().find(fits)) : undefined);
       const [x, y] = hit ?? cands[0]!;
       const block = b.label(text, x, y, { size, colour: FAINT, width: w, id, gridOf: "plane", ...(hit ? {} : { fill: PAPER }) });
       this.tickBoxes.push(b.box(x, y, block.width!, block.height!));
@@ -1167,6 +1450,24 @@ class Build {
     }
   }
 
+  /** Where the axis names usually go, as boxes: what a label placed before them keeps off. */
+  axisNameSpots(): Box[] {
+    const out: Box[] = [];
+    const xn = this.input.x.name ?? "x";
+    const yn = this.input.y.name ?? "y";
+    if (xn !== "") {
+      const ex = this.at(this.xr[1], this.baseY);
+      const { w, h } = this.board.extent(xn, { size: 15 });
+      out.push(this.board.box(ex.x + 14, ex.y - 12, w, h));
+    }
+    if (yn !== "") {
+      const ey = this.at(this.baseX, this.yr[1]);
+      const { w, h } = this.board.extent(yn, { size: 15 });
+      out.push(this.board.box(ey.x + 16, ey.y + 4, w, h));
+    }
+    return out;
+  }
+
   axisNames(): void {
     const xn = this.input.x.name ?? "x";
     const yn = this.input.y.name ?? "y";
@@ -1185,8 +1486,8 @@ class Build {
   }
 
   /** Legend rows in declaration order: functions first, then lines, one per series. */
-  legendRows(): { text: string; colour: string; width: number; lineStyle: LineStyle | undefined }[] {
-    const rows: { text: string; colour: string; width: number; lineStyle: LineStyle | undefined }[] = [];
+  legendRows(): LegendRow[] {
+    const rows: LegendRow[] = [];
     const all: [FunctionInput | LineInput, string][] = [
       ...(this.input.functions ?? []).map((f, i) => [f, `functions[${i}]`] as [FunctionInput, string]),
       ...(this.input.lines ?? []).map((l, i) => [l, `lines[${i}]`] as [LineInput, string]),
@@ -1201,7 +1502,8 @@ class Build {
         lineStyle: curve.lineStyle,
       });
     }
-    return rows;
+    // Then areas and sums (ADR 0036), each with a filled swatch.
+    return [...rows, ...this.regionLegend];
   }
 
   /**
@@ -1237,7 +1539,8 @@ class Build {
         const box = b.box(x + W / 2, y - rowH / 2 + H / 2 + 1, W + 8, H + 8);
         const ink = b.inkThrough(box, 0);
         const labels = b.taken.filter((t) => b.hits(box, t, 0)).length;
-        return ink + labels * 3;
+        // A legend over a shaded region reads as part of it.
+        return ink + labels * 3 + (this.overRegion(box) ? 2 : 0);
       };
       const candidates: { x: number; y: number; rank: number }[] = [];
       const corners: Point[] = [
@@ -1262,7 +1565,7 @@ class Build {
         let room = 0;
         for (const pad of [4, 8, 12, 16, 20, 24]) {
           const box = b.box(x + W / 2, y - rowH / 2 + H / 2 + 1, W + 8 + 2 * pad, H + 8 + 2 * pad);
-          if (b.inkThrough(box, 0) > 0 || b.taken.some((t) => b.hits(box, t, 0))) break;
+          if (b.inkThrough(box, 0) > 0 || b.taken.some((t) => b.hits(box, t, 0)) || this.overRegion(box)) break;
           room = pad;
         }
         return room;
@@ -1278,13 +1581,31 @@ class Build {
     }
     rows.forEach((row, i) => {
       const yy = origin.y + i * rowH;
-      b.poly(
-        [
-          { x: origin.x, y: yy },
-          { x: origin.x + 26, y: yy },
-        ],
-        { stroke: row.colour, width: 2.4, ...(row.lineStyle === undefined ? {} : { lineStyle: row.lineStyle }), id: `legend-swatch-${i + 1}` },
-      );
+      // A region's swatch is a small filled box, not a line; its row names a
+      // point just inside the box's right edge, and a closed marker that
+      // small containing the place IS the place (ADR 0035). The box is 10px
+      // tall so the next row's box stays farther from this row's text than
+      // its own place is.
+      const place = row.fill === undefined ? { x: origin.x + 26, y: yy } : { x: origin.x + 21, y: yy };
+      if (row.fill === undefined) {
+        b.poly(
+          [
+            { x: origin.x, y: yy },
+            { x: origin.x + 26, y: yy },
+          ],
+          { stroke: row.colour, width: 2.4, ...(row.lineStyle === undefined ? {} : { lineStyle: row.lineStyle }), id: `legend-swatch-${i + 1}` },
+        );
+      } else {
+        b.poly(
+          [
+            { x: origin.x + 2, y: yy - 5 },
+            { x: origin.x + 22, y: yy - 5 },
+            { x: origin.x + 22, y: yy + 5 },
+            { x: origin.x + 2, y: yy + 5 },
+          ],
+          { stroke: row.colour, width: row.width, fill: row.fill, close: true, id: `legend-swatch-${i + 1}` },
+        );
+      }
       b.label(row.text, origin.x + 34 + widths[i]! / 2, yy, {
         size,
         weight: 600,
@@ -1293,9 +1614,929 @@ class Build {
         align: "start",
         id: `legend-${i + 1}`,
         // A legend row names the end of its own swatch (ADR 0028).
-        annotatesPlace: { x: origin.x + 26, y: yy },
+        annotatesPlace: place,
       });
     });
+  }
+
+  // ---- areas and Riemann sums (ADR 0036) ----------------------------------
+
+  /** A graph or a line: what an area or a sum is taken under. Anything else is refused by name. */
+  graphOf(id: string, path: string, what: string): Curve {
+    const curve = this.curveById(id, path);
+    if (curve.kind !== "graph" && curve.kind !== "line") {
+      throw new SpecError(
+        `${path}: ${id} is ${this.kindName(curve)}; ${what} is taken under the graph of a function y = f(x) or a line`,
+      );
+    }
+    return curve;
+  }
+
+  /** The x interval a graph or line is drawn over, within the plotted range. */
+  extentOf(curve: Curve): [number, number] {
+    const lo = Math.min(...curve.pieces.map((p) => p.domain[0]));
+    const hi = Math.max(...curve.pieces.map((p) => p.domain[1]));
+    return [Math.max(lo, this.xr[0]), Math.min(hi, this.xr[1])];
+  }
+
+  /** Where a piecewise curve joins: an integral is split there so Simpson never straddles a jump. */
+  breaksOf(...curves: Curve[]): number[] {
+    return curves.flatMap((c) => (c.pieces.length > 1 ? c.pieces.flatMap((p) => p.domain) : []));
+  }
+
+  /**
+   * A closed region, stated in the plane's own frame: every vertex is
+   * `{frame: "plane", x, y}` in axis units, so frame resolution -- not this
+   * preset -- turns it into pixels and records the scale
+   * `area-matches-its-label` measures it in (ADR 0037). Returns the outline in
+   * canvas px for the label search.
+   */
+  region(id: string, vertices: XYPoint[], fill: string, stroke?: { colour: string; width: number }): Point[] {
+    const framed = vertices.map((p) => ({ frame: "plane", x: p.x, y: p.y }));
+    const px = vertices.map((p) => this.at(p.x, p.y));
+    this.board.marks.push({
+      id,
+      from: framed[0]!,
+      segments: framed.slice(1).map((p) => ({ line: p })),
+      close: true,
+      fill,
+      stroke: stroke?.colour ?? "none",
+      strokeWidth: stroke?.width ?? 0,
+    });
+    if (stroke !== undefined) this.board.trace([...px, px[0]!], stroke.colour, stroke.width, id);
+    return px;
+  }
+
+  /** The bounds of an area or a sum: two Bounds, inside the plotted x range, a < b. */
+  bounds(item: { from?: Bound; to?: Bound }, path: string): [number, number] {
+    if (item.from === undefined || item.to === undefined) {
+      throw new SpecError(`${path} needs both "from" and "to"`);
+    }
+    const a = bound(item.from, `${path}.from`);
+    const b = bound(item.to, `${path}.to`);
+    if (!(a < b)) throw new SpecError(`${path}: "from" must be less than "to", got [${a}, ${b}]`);
+    if (a < this.xr[0] - 1e-9 || b > this.xr[1] + 1e-9) {
+      throw new SpecError(`${path}: [${a}, ${b}] reaches outside the plotted x range [${this.xr.join(", ")}]`);
+    }
+    return [a, b];
+  }
+
+  /** Refuse a region the plotted y range would cut: its drawn area would not be the one printed. */
+  insideY(vertices: XYPoint[], path: string): void {
+    const ys = vertices.map((p) => p.y);
+    const lo = Math.min(...ys);
+    const hi = Math.max(...ys);
+    const slack = 1e-9 * Math.max(1, this.yr[1] - this.yr[0]);
+    if (lo < this.yr[0] - slack || hi > this.yr[1] + slack) {
+      throw new SpecError(
+        `${path}: the region reaches y = ${Number((lo < this.yr[0] - slack ? lo : hi).toPrecision(4))}, outside the ` +
+          `plotted y range [${this.yr.join(", ")}]; widen y.range so the whole region is drawn -- a clipped region ` +
+          `would not have the area printed in it`,
+      );
+    }
+  }
+
+  /**
+   * A value for a label: an exact decimal of up to six places when that is
+   * what the value is (2, 0,25, a Riemann sum 2,65625); else the formatter's
+   * exact fraction (4/3, 8/3); else the formatter's three decimals, flagged
+   * inexact so the "=" before it becomes "≈".
+   */
+  valueText(value: number, decimals?: number): { text: string; exact: boolean } {
+    // The formatter's own tolerance (a fraction is what a float within 1e-7
+    // of it IS), and a much tighter one for a long decimal: 1,718282 is e's
+    // integral to within 2e-7, and printing it without "≈" would claim it
+    // exact.
+    const close = (t: string, tolerance = 1e-7): boolean => {
+      const back = parseNumber(t, this.locale);
+      return back !== null && Math.abs(back - value) <= tolerance * Math.max(1, Math.abs(value));
+    };
+    if (decimals !== undefined) {
+      const text = this.fmt(value, decimals);
+      return { text, exact: close(text, 1e-9) };
+    }
+    // An exact decimal first: a Riemann sum of 35/16 is compared with the
+    // integral beside it, and 2,1875 is how a student compares it.
+    for (let d = 0; d <= 6; d += 1) {
+      const fixed = this.fmt(value, d);
+      if (close(fixed, 1e-9)) return { text: fixed, exact: true };
+    }
+    const text = this.fmt(value);
+    return { text, exact: close(text) };
+  }
+
+  /**
+   * Fill a region's or a sum's template: its own values first -- a number
+   * that had to be rounded turns the "=" just before it into "≈" -- then every
+   * placeholder any label may use, through `fill`.
+   */
+  fillValues(template: string, values: Record<string, number | string>, path: string): string {
+    let out = "";
+    let last = 0;
+    for (const match of template.matchAll(/\{([^{}]*)\}/g)) {
+      const [head, decimalsText] = match[1]!.split(":");
+      const key = head!.trim();
+      if (!Object.hasOwn(values, key)) continue;
+      out += template.slice(last, match.index);
+      last = match.index! + match[0].length;
+      const value = values[key]!;
+      if (typeof value === "string") {
+        out += value;
+        continue;
+      }
+      const decimals = decimalsText === undefined ? undefined : Number(decimalsText);
+      if (decimals !== undefined && (!Number.isInteger(decimals) || decimals < 0 || decimals > 6)) {
+        throw new SpecError(`${path}: "${match[0]}" -- decimals after ":" must be an integer 0..6`);
+      }
+      const { text, exact } = this.valueText(value, decimals);
+      if (!exact) out = out.replace(/=(\s*)$/, "≈$1");
+      out += text;
+    }
+    out += template.slice(last);
+    return this.fill(out, {}, path);
+  }
+
+  /**
+   * Every `areas` entry: split where the integrand changes sign, each part
+   * one closed mark sampled from the curves and labelled with its own area
+   * from numeric.integrate. Drawn before the curves, so they paint over it.
+   */
+  areas(): void {
+    for (const [i, area] of (this.input.areas ?? []).entries()) {
+      const path = `areas[${i}]`;
+      const id = area.id ?? `area-${i + 1}`;
+      const f =
+        area.between === undefined
+          ? this.graphOf(area.of!, `${path}.of`, "an area")
+          : this.graphOf(area.between[0], `${path}.between[0]`, "an area");
+      const g = area.between === undefined ? undefined : this.graphOf(area.between[1], `${path}.between[1]`, "an area");
+      const h = g === undefined ? (x: number) => f.at(x) : (x: number) => f.at(x) - g.at(x);
+      let a: number;
+      let b: number;
+      if (area.from !== undefined || area.to !== undefined || g === undefined) {
+        [a, b] = this.bounds(area, path);
+      } else {
+        // Bounded by the curves themselves: their first and last intersection.
+        const [f0, f1] = this.extentOf(f);
+        const [g0, g1] = this.extentOf(g);
+        const lo = Math.max(f0, g0);
+        const hi = Math.min(f1, g1);
+        const roots = lo < hi ? intersections(h, lo, hi) : [];
+        if (roots.length < 2) {
+          throw new SpecError(
+            `${path}: ${f.id} and ${g.id} meet ${roots.length === 0 ? "nowhere" : "once"} in x ∈ [${lo}, ${hi}], ` +
+              `and an area between them with no "from"/"to" is bounded by two intersections; give "from" and "to"`,
+          );
+        }
+        a = roots[0]!;
+        b = roots[roots.length - 1]!;
+      }
+      const breaks = this.breaksOf(f, ...(g === undefined ? [] : [g]));
+      let parts: { from: number; to: number; sign: 1 | -1; value: number }[];
+      try {
+        parts = signParts(h, a, b).map((p) => ({ ...p, value: integral(h, p.from, p.to, breaks) }));
+      } catch (error) {
+        if (!(error instanceof NumericError)) throw error;
+        throw new SpecError(`${path}: the area on [${a}, ${b}] is refused, not printed: ${error.message}`);
+      }
+      if (parts.length === 0) {
+        throw new SpecError(
+          `${path}: ${g === undefined ? `${f.id} is zero` : `${f.id} and ${g.id} coincide`} on [${a}, ${b}], so there is no region to shade`,
+        );
+      }
+      const positive = colourOf(area.colour, f.colour, `${path}.colour`);
+      const negative = colourOf(area.negativeColour, COLOURS.rust!, `${path}.negativeColour`);
+      const several = parts.length > 1;
+      const labelObject = typeof area.label === "object" ? area.label : undefined;
+      const template =
+        area.label === false
+          ? null
+          : (typeof area.label === "string" ? area.label : labelObject?.text) ?? (several ? "A{i} = {area}" : "A = {area}");
+      const totalArea = parts.reduce((sum, p) => sum + Math.abs(p.value), 0);
+      const totalIntegral = parts.reduce((sum, p) => sum + p.value, 0);
+      const totals = { area: totalArea, integral: totalIntegral };
+      const captionTemplate =
+        area.total === false
+          ? null
+          : typeof area.total === "string"
+            ? area.total
+            : area.value === "integral"
+              ? "∫ = {integral}"
+              : several || area.total === true
+                ? "A = {area}"
+                : null;
+      const caption =
+        captionTemplate === null
+          ? undefined
+          : { id: `${id}-total`, text: this.fillValues(captionTemplate, totals, `${path}.total`), colour: INK };
+      parts.forEach((part, k) => {
+        const partId = several ? `${id}-${k + 1}` : id;
+        const top = sampleEdge(f.at, part.from, part.to, this.ux, this.uy);
+        const bottom =
+          g === undefined
+            ? [
+                { x: part.to, y: 0 },
+                { x: part.from, y: 0 },
+              ]
+            : sampleEdge(g.at, part.from, part.to, this.ux, this.uy).reverse();
+        const vertices = [...top, ...bottom];
+        this.insideY(vertices, path);
+        const colour = part.sign > 0 ? positive : negative;
+        const px = this.region(partId, vertices, tint(colour));
+        this.regionsPx.push(px);
+        const text =
+          template === null
+            ? ""
+            : this.fillValues(
+                template,
+                { area: Math.abs(part.value), integral: part.value, i: subscript(k + 1) },
+                `${path}.label`,
+              );
+        this.regionLabels.push({
+          id: `${partId}-label`,
+          owner: partId,
+          polygon: px,
+          text,
+          colour,
+          inside: true,
+          ...(labelObject?.towards === undefined ? {} : { towards: labelObject.towards }),
+        });
+      });
+      // The total rides with the first part's label, placed clear of every part.
+      if (caption !== undefined) {
+        const first = this.regionLabels[this.regionLabels.length - parts.length]!;
+        first.caption = caption;
+        first.group = this.regionsPx.slice(-parts.length);
+      }
+      if (area.legend !== undefined) {
+        this.regionLegend.push({
+          text: this.fillValues(area.legend, totals, `${path}.legend`),
+          colour: positive,
+          width: 1,
+          lineStyle: undefined,
+          fill: tint(positive),
+        });
+      }
+    }
+  }
+
+  /**
+   * Every `riemann` entry: exactly the rectangles (or trapezoids)
+   * numeric.riemann summed, each a closed mark in the plane's frame, and
+   * their union's outline -- the mark the sum's label names, since the sum
+   * is the area of that outline and of no single rectangle.
+   */
+  riemannSums(): void {
+    for (const [i, sum] of (this.input.riemann ?? []).entries()) {
+      const path = `riemann[${i}]`;
+      const id = sum.id ?? `riemann-${i + 1}`;
+      const curve = this.graphOf(sum.of, `${path}.of`, "a Riemann sum");
+      const [a, b] = this.bounds(sum, path);
+      let result: ReturnType<typeof riemann>;
+      let exact: number | undefined;
+      try {
+        result = riemann(curve.at, a, b, sum.n, sum.rule);
+        if (sum.integral !== undefined && sum.integral !== false) exact = integral(curve.at, a, b, this.breaksOf(curve));
+      } catch (error) {
+        if (!(error instanceof NumericError)) throw error;
+        throw new SpecError(`${path}: the sum on [${a}, ${b}] is refused, not printed: ${error.message}`);
+      }
+      const positive = colourOf(sum.colour, COLOURS.warm!, `${path}.colour`);
+      const negative = colourOf(sum.negativeColour, COLOURS.rust!, `${path}.negativeColour`);
+      const heights = result.rectangles.map((r) => r.heights ?? ([r.height!, r.height!] as [number, number]));
+      const outline: XYPoint[] = [{ x: a, y: 0 }];
+      result.rectangles.forEach((rect, k) => {
+        const [h0, h1] = heights[k]!;
+        const vertices = [
+          { x: rect.x0, y: 0 },
+          { x: rect.x1, y: 0 },
+          { x: rect.x1, y: h1 },
+          { x: rect.x0, y: h0 },
+        ];
+        this.insideY(vertices, path);
+        const colour = h0 + h1 >= 0 ? positive : negative;
+        this.region(`${id}-rect-${k + 1}`, vertices, tint(colour), { colour, width: 1.1 });
+        outline.push({ x: rect.x0, y: h0 }, { x: rect.x1, y: h1 });
+        if (sum.rule !== "trapezoid" && sum.points !== false) {
+          const x = sum.rule === "left" ? rect.x0 : sum.rule === "right" ? rect.x1 : (rect.x0 + rect.x1) / 2;
+          this.sampleDots.push({ at: this.at(x, h0), colour, id: `${id}-sample-${k + 1}`, series: curve.series });
+        }
+      });
+      outline.push({ x: b, y: 0 });
+      const deduped = outline.filter((p, k) => k === 0 || p.x !== outline[k - 1]!.x || p.y !== outline[k - 1]!.y);
+      const signs = new Set(heights.flat().filter((y) => y !== 0).map(Math.sign));
+      const mixed = signs.size > 1;
+      const edge = mixed ? INK : signs.has(-1) ? negative : positive;
+      // Rectangles on both sides of the axis already draw every edge of the
+      // union in their own two colours; a stroke of a third colour on top
+      // read as a separate element. The outline still exists, unstroked, as
+      // the one shape the sum's label names (ADR 0037 measures it).
+      const px = mixed ? this.region(id, deduped, "none") : this.region(id, deduped, "none", { colour: edge, width: 1.8 });
+      this.regionsPx.push(px);
+      const values = { sum: result.sum, n: subscript(sum.n), ...(exact === undefined ? {} : { integral: exact }) };
+      const caption =
+        exact === undefined
+          ? undefined
+          : {
+              id: `${id}-integral`,
+              text: this.fillValues(typeof sum.integral === "string" ? sum.integral : "∫ = {integral}", values, `${path}.integral`),
+              colour: INK,
+            };
+      const labelled = sum.label !== undefined && sum.label !== false;
+      this.regionLabels.push({
+        id: `${id}-sum`,
+        owner: id,
+        polygon: px,
+        text: labelled ? this.fillValues(typeof sum.label === "string" ? sum.label : "S{n} = {sum}", values, `${path}.label`) : "",
+        colour: edge,
+        inside: false,
+        ...(signs.size === 1 ? { across: signs.has(-1) ? (-1 as const) : (1 as const) } : {}),
+        ...(caption === undefined ? {} : { caption }),
+      });
+      if (sum.legend !== undefined) {
+        this.regionLegend.push({
+          text: this.fillValues(sum.legend, values, `${path}.legend`),
+          colour: edge,
+          width: 1.1,
+          lineStyle: undefined,
+          fill: tint(positive),
+        });
+      }
+    }
+  }
+
+  /** Every mark drawn so far as a polyline in canvas px, as the checks will walk it. */
+  polylines(): { id: string; pts: Point[]; closed: boolean }[] {
+    const px = (p: Point | { frame: string; x: number; y: number }): Point =>
+      "frame" in p ? this.at(p.x, p.y) : { x: p.x, y: p.y };
+    return this.board.marks.map((m) => {
+      const pts: Point[] = [px(m.from as Point)];
+      for (const s of m.segments) {
+        if ("line" in s) {
+          pts.push(px(s.line as Point));
+          continue;
+        }
+        // An arc (a dot's quarter): sampled, so a dot is measured by its rim.
+        const c = px(s.centre as Point);
+        const from = pts[pts.length - 1]!;
+        const to = px(s.arc as Point);
+        const r = Math.hypot(from.x - c.x, from.y - c.y);
+        const a0 = Math.atan2(from.y - c.y, from.x - c.x);
+        let a1 = Math.atan2(to.y - c.y, to.x - c.x);
+        while (a1 - a0 > Math.PI) a1 -= 2 * Math.PI;
+        while (a0 - a1 > Math.PI) a1 += 2 * Math.PI;
+        for (let k = 1; k <= 8; k += 1) {
+          const t = a0 + ((a1 - a0) * k) / 8;
+          pts.push({ x: c.x + r * Math.cos(t), y: c.y + r * Math.sin(t) });
+        }
+      }
+      return { id: m.id, pts, closed: m.close ?? m.fill !== undefined };
+    });
+  }
+
+  /**
+   * Labels of regions and sums, placed after the other data labels so every
+   * mark they must stay nearest their own against already exists.
+   *
+   * The spot is searched, not guessed: a region's label is set INSIDE it
+   * where it fits whole -- the deepest clear spot -- and otherwise, like a
+   * sum's, outside against its owner. Either way a spot is taken only if the
+   * owner is the nearest mark to the label's centre, measured the way
+   * `annotation-nearest-its-owner` measures it: a spot where the curve the
+   * region lies under is nearer would have the label read as the curve's.
+   */
+  regionLabelsPlace(): void {
+    const b = this.board;
+    const size = 14;
+    for (const label of this.regionLabels) {
+      let at: Point | null = null;
+      let h = 0;
+      if (label.text !== "") {
+        const ext = b.extent(label.text, { size });
+        h = ext.h;
+        const spot = this.searchNear(label, ext.w, ext.h);
+        at = spot;
+        b.label(label.text, at.x, at.y, {
+          size,
+          weight: 600,
+          colour: label.colour,
+          width: ext.w,
+          id: label.id,
+          annotates: label.owner,
+          // A halo that hides only the faint lattice under the text (ADR
+          // 0035 allows a backing exactly that): the region's own tint when
+          // the label sits wholly inside it, so the halo is invisible against
+          // it; paper outside. The search has already kept the box clear of
+          // every curve and axis, which a backing may never cover.
+          fill: spot.inside ? this.tintOnPaper(label.colour) : PAPER,
+        });
+      }
+      if (label.caption !== undefined) {
+        // A caption names no single mark -- a total spans every part, and the
+        // exact integral is the area of nothing a Riemann figure draws -- so
+        // it is declared free-standing (ADR 0035). It is kept OFF every
+        // region: "A = 4" set inside the first lobe of sin x reads as that
+        // lobe's area. A sum's integral goes on the sum's own line, after it;
+        // a total above the parts it adds up.
+        const group = label.group ?? [label.polygon];
+        const xs = group.flat().map((p) => p.x);
+        const ys = group.flat().map((p) => p.y);
+        const ext = b.extent(label.caption.text, { size });
+        const start =
+          label.group === undefined && at !== null
+            ? { x: at.x + b.extent(label.text, { size }).w / 2 + ext.w / 2 + 16, y: at.y }
+            : { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: Math.min(...ys) - 18 };
+        const spot = this.searchFree(start, ext.w, ext.h);
+        b.label(label.caption.text, spot.x, spot.y, {
+          size,
+          weight: 600,
+          colour: label.caption.colour,
+          width: ext.w,
+          id: label.caption.id,
+          freeStanding: true,
+          fill: PAPER,
+        });
+      }
+    }
+  }
+
+  /**
+   * How many lattice lines a label box would sit on, horizontal ones counted
+   * double. The lattice is exempt from the checks -- every tick number sits
+   * on its own gridline -- but a data label struck through by a gridline is
+   * text on a line to a reader, so the searches below prefer spots between
+   * the lines.
+   */
+  latticeUnder(x: number, y: number, w: number, h: number): number {
+    let n = 0;
+    for (let k = Math.ceil(this.xr[0] / this.sx - 1e-9); k * this.sx <= this.xr[1] + 1e-9; k += 1) {
+      if (Math.abs(this.at(k * this.sx, 0).x - x) < w / 2 + 1) n += 1;
+    }
+    for (let k = Math.ceil(this.yr[0] / this.sy - 1e-9); k * this.sy <= this.yr[1] + 1e-9; k += 1) {
+      if (Math.abs(this.at(0, k * this.sy).y - y) < h / 2 + 1) n += 2;
+    }
+    return n;
+  }
+
+  /** The nearest clear spot to `start` that sits on no region and on as few gridlines as it can. */
+  searchFree(start: Point, w: number, h: number): Point {
+    const b = this.board;
+    let best: { x: number; y: number; score: number } | null = null;
+    for (let y = start.y - 200; y <= start.y + 200; y += 3) {
+      for (let x = start.x - 240; x <= start.x + 240; x += 3) {
+        if (x - w / 2 < 16 || x + w / 2 > b.W - 16 || y - h / 2 < 10 || y + h / 2 > b.H - 10) continue;
+        if (!b.clear(b.box(x, y, w, h), 5) || this.overRegion(b.box(x, y, w + 6, h + 6))) continue;
+        const score = Math.hypot(x - start.x, y - start.y) + 10 * this.latticeUnder(x, y, w, h);
+        if (best === null || score < best.score) best = { x, y, score };
+      }
+    }
+    return best ?? start;
+  }
+
+  /** The spot for a region's or a sum's label; see `regionLabelsPlace`. */
+  searchNear(label: RegionLabel, w: number, h: number): Point & { inside: boolean } {
+    const b = this.board;
+    const poly = label.polygon;
+    const rivals = this.polylines().filter((r) => r.id !== label.owner);
+    const own = (c: Point): number => distanceToPolyline(c, poly, true);
+    // The check fails a label that a rival is nearer by more than half a
+    // pixel; a spot is taken only with a margin inside that.
+    const nearestIsOwner = (c: Point, d: number): boolean =>
+      rivals.every((r) => distanceToPolyline(c, r.pts, r.closed) >= d - 0.2);
+    const inCanvas = (x: number, y: number): boolean =>
+      x - w / 2 >= 16 && x + w / 2 <= b.W - 16 && y - h / 2 >= 10 && y + h / 2 <= b.H - 10;
+    const xs = poly.map((p) => p.x);
+    const ys = poly.map((p) => p.y);
+    const box = { x0: Math.min(...xs), x1: Math.max(...xs), y0: Math.min(...ys), y1: Math.max(...ys) };
+    const centre = { x: (box.x0 + box.x1) / 2, y: (box.y0 + box.y1) / 2 };
+    if (label.inside) {
+      let best: { x: number; y: number; score: number } | null = null;
+      for (let y = box.y0 + h / 2; y <= box.y1 - h / 2; y += 3) {
+        for (let x = box.x0 + w / 2; x <= box.x1 - w / 2; x += 3) {
+          const bx = b.box(x, y, w, h);
+          if (!inCanvas(x, y) || !boxInside(bx, poly, 3) || !b.clear(bx, 2)) continue;
+          const d = own({ x, y });
+          if (!nearestIsOwner({ x, y }, d)) continue;
+          // Deepest first, off the gridlines; among near-equals, nearest the
+          // middle of the region.
+          const score = d - 0.05 * Math.hypot(x - centre.x, y - centre.y) - 8 * this.latticeUnder(x, y, w, h);
+          if (best === null || score > best.score) best = { x, y, score };
+        }
+      }
+      if (best !== null) return { x: best.x, y: best.y, inside: true };
+    }
+    // A sum on one side of the axis: its label across the axis from it,
+    // under the middle of the rectangles, clear of the tick numbers -- where
+    // a caption of the rectangles sits in a textbook, and where the curve,
+    // which runs over their tops, is farthest.
+    if (label.across !== undefined) {
+      const axis = this.at(0, this.baseY).y;
+      let best: { x: number; y: number; score: number } | null = null;
+      for (let off = h / 2 + 4; off <= h / 2 + 90; off += 2) {
+        const y = axis + label.across * off;
+        for (let x = box.x0; x <= box.x1; x += 3) {
+          const bx = b.box(x, y, w, h);
+          if (!inCanvas(x, y) || !b.clear(bx, 5) || this.overRegion(bx)) continue;
+          if (!nearestIsOwner({ x, y }, own({ x, y }))) continue;
+          const score = Math.abs(x - centre.x) + 0.5 * off + 12 * this.latticeUnder(x, y, w, h);
+          if (best === null || score < best.score) best = { x, y, score };
+        }
+      }
+      if (best !== null) return { x: best.x, y: best.y, inside: false };
+    }
+    // Outside: against the owner, beside its middle rather than at a tip (a
+    // label at the pointed end of a lens reads as the crossing's), and off
+    // the gridlines.
+    const reach = Math.max(w, h) + 60;
+    let best: { x: number; y: number; d: number } | null = null;
+    let fallback: { x: number; y: number; d: number } | null = null;
+    for (let y = box.y0 - reach; y <= box.y1 + reach; y += 3) {
+      for (let x = box.x0 - reach; x <= box.x1 + reach; x += 3) {
+        const bx = b.box(x, y, w, h);
+        if (!inCanvas(x, y) || boxMeetsPolygon(bx, poly) || !b.clear(bx, 5)) continue;
+        if (this.regionsPx.some((r) => r !== poly && boxMeetsPolygon(bx, r))) continue;
+        const near = own({ x, y });
+        const d = near + 0.35 * Math.abs(x - centre.x) + 0.1 * Math.abs(y - centre.y) + 6 * this.latticeUnder(x, y, w, h);
+        if (fallback === null || d < fallback.d) fallback = { x, y, d };
+        if (!nearestIsOwner({ x, y }, near)) continue;
+        if (best === null || d < best.d) best = { x, y, d };
+      }
+    }
+    const spot = best ?? fallback ?? centre;
+    return { x: spot.x, y: spot.y, inside: false };
+  }
+
+  /** A region's tint as the opaque colour it shows on paper: an inside label's invisible halo. */
+  tintOnPaper(colour: string): string {
+    const parse = (hex: string, at: number): number => parseInt(hex.slice(at, at + 2), 16);
+    const alpha = parseInt(TINT_ALPHA, 16) / 255;
+    const channel = (at: number): string =>
+      Math.round(parse(colour, at) * alpha + parse(PAPER, at) * (1 - alpha))
+        .toString(16)
+        .padStart(2, "0");
+    return `#${channel(1)}${channel(3)}${channel(5)}`;
+  }
+
+  /** A box that would lie over a shaded region: the legend keeps off them. */
+  overRegion(box: { x: number; y: number; hw: number; hh: number }): boolean {
+    return this.regionsPx.some((r) => boxMeetsPolygon(box, r) || pointInPolygon({ x: box.x, y: box.y }, r));
+  }
+
+  // ---- asymptotes and holes (ADR 0038) -------------------------------------
+
+  /** The name an equation label uses for an axis: its own when it is a plain name, else x or y. */
+  axisVariable(axis: "x" | "y"): string {
+    const name = this.input[axis].name ?? axis;
+    return /^[A-Za-zθ][A-Za-z0-9]*$/.test(name) ? name : axis;
+  }
+
+  /** "=" or "≈": an equation's sign follows whether every number in it is exact. */
+  eq(exact: boolean): string {
+    return exact ? "=" : "≈";
+  }
+
+  /** The right-hand side of y = mx + q, written as a reader writes it: "x", "2x − 1", "(1/2)x + 3", "π/2". */
+  slantText(line: Slant): string {
+    const x = this.axisVariable("x");
+    const neg = (e: Exact): Exact => (e.exact && e.form === "pi" ? { ...e, value: -e.value, k: -e.k } : { ...e, value: -e.value });
+    const abs = (e: Exact): Exact => (e.value < 0 ? neg(e) : e);
+    const q = line.q;
+    if (line.m.value === 0) return writeExact(q, this.locale);
+    const m = abs(line.m);
+    const sign = line.m.value < 0 ? MINUS : "";
+    let coefficient = Math.abs(m.value - 1) < 1e-15 ? "" : writeExact(m, this.locale);
+    if (coefficient.includes("/")) coefficient = `(${coefficient})`;
+    const head = `${sign}${coefficient}${x}`;
+    if (q.value === 0) return head;
+    return `${head} ${q.value < 0 ? MINUS : "+"} ${writeExact(abs(q), this.locale)}`;
+  }
+
+  /**
+   * Every function's asymptotes and holes, found from its expression and
+   * confirmed by its limits (ADR 0038). The dashed lines are drawn here,
+   * before the curves, so a curve paints over the line it approaches; their
+   * labels and the holes' rings come later.
+   */
+  asymptotes(): void {
+    for (const [i, fn] of (this.input.functions ?? []).entries()) {
+      const wantsAsymptotes = fn.asymptotes !== undefined && fn.asymptotes !== false;
+      const wantsHoles = fn.holes !== undefined && fn.holes !== false;
+      if (!wantsAsymptotes && !wantsHoles) continue;
+      const path = `functions[${i}]`;
+      const curve = this.curveById(fn.id, path);
+      if (curve.kind !== "graph" || fn.pieces !== undefined) {
+        throw new SpecError(
+          `${path}.${wantsAsymptotes ? "asymptotes" : "holes"}: ${fn.id} is ` +
+            `${fn.pieces !== undefined ? "a piecewise function" : this.kindName(curve)}; asymptotes and holes are found from ` +
+            `a function given by one expression, "expr". Mark a piecewise function's open and closed ends with "points".`,
+        );
+      }
+      const variable = this.input.x.name || "x";
+      const tree = parse(fn.expr!, variable);
+      const f = compile(fn.expr!, variable);
+      const domain = fn.domain ?? this.xr;
+      const lo = Math.max(domain[0], this.xr[0]);
+      const hi = Math.min(domain[1], this.xr[1]);
+      const found = verticalsAndHoles(f, tree, variable, lo, hi);
+      // The curve is broken at every pole found, drawn or not: it is never
+      // joined across one.
+      const breaks = found.verticals.map((v) => v.x.value);
+      const x = this.axisVariable("x");
+      const y = this.axisVariable("y");
+      const colour = curve.colour;
+      let drawn = 0;
+      const line = (pts: Point[], text: string, prefer: { at: Point; bias: number }[]): void => {
+        const id = `${fn.id}-asymptote-${drawn + 1}`;
+        const mark = this.board.poly(pts, { id, stroke: colour, width: 1.4, lineStyle: "dashed", series: id });
+        // A vertical or horizontal asymptote runs along a gridline, through
+        // the very spot of that line's axis number ("1" under x = 1). It
+        // yields to the number as a guide does: the number keeps its spot
+        // and the dashed line is cut around it (`breakGuides`). An oblique
+        // one crosses numbers only in passing, and they step off it as they
+        // step off a curve.
+        const straight = Math.abs(pts[0]!.x - pts[pts.length - 1]!.x) < 1e-6 || Math.abs(pts[0]!.y - pts[pts.length - 1]!.y) < 1e-6;
+        if (mark !== null && straight) this.guideMarks.push(mark);
+        this.asymptoteLines.push({ id, colour, pts, text, prefer });
+        drawn += 1;
+      };
+
+      if (wantsAsymptotes) {
+        const options: AsymptoteInput = fn.asymptotes === true ? {} : (fn.asymptotes as AsymptoteInput);
+        const opath = `${path}.asymptotes`;
+        // Vertical: every pole found, or exactly the ones claimed, each confirmed.
+        let verticals = options.vertical === false ? [] : found.verticals;
+        if (Array.isArray(options.vertical)) {
+          verticals = options.vertical.map((raw, k) => {
+            const a = bound(raw, `${opath}.vertical[${k}]`);
+            const hit = found.verticals.find((v) => Math.abs(v.x.value - a) <= 1e-7 * Math.max(1, Math.abs(a)));
+            if (hit !== undefined) return hit;
+            if (a <= lo || a >= hi) {
+              throw new SpecError(`${opath}.vertical[${k}]: ${x} = ${a} is outside where ${fn.id} is drawn, ${x} ∈ [${lo}, ${hi}]`);
+            }
+            const verdict = classify(f, a);
+            if ("vertical" in verdict) return verdict.vertical;
+            const sides = "hole" in verdict ? verdict.hole : verdict.neither;
+            throw new SpecError(
+              `${opath}.vertical[${k}]: ${fn.id} has no vertical asymptote at ${x} = ${a}: as ${x} → ${a}⁻, f(${x}) ` +
+                `${describeLimit(sides.left)}; as ${x} → ${a}⁺, f(${x}) ${describeLimit(sides.right)}` +
+                ("hole" in verdict ? ` -- that is a hole, which "holes" draws` : ""),
+            );
+          });
+        } else if (options.vertical === true && verticals.length === 0) {
+          throw new SpecError(
+            `${opath}.vertical: ${fn.id} has no vertical asymptote in ${x} ∈ [${lo}, ${hi}]: no point there where a one-sided limit is ±∞`,
+          );
+        }
+        for (const v of verticals) {
+          const top = this.at(v.x.value, this.yr[1]);
+          const bottom = this.at(v.x.value, this.yr[0]);
+          line([top, bottom], `${x} ${this.eq(v.x.exact)} ${writeExact(v.x, this.locale)}`, [
+            { at: top, bias: 0 },
+            { at: bottom, bias: 40 },
+          ]);
+        }
+
+        // At ±∞: only on a side the function is drawn out to the plot's edge.
+        const side = (dir: 1 | -1): SideResult => {
+          const reaches = dir > 0 ? domain[1] >= this.xr[1] : domain[0] <= this.xr[0];
+          if (!reaches) {
+            return {
+              kind: "none",
+              evidence: { kind: "none", reason: "outside the function's domain", samples: [] },
+              why: `${fn.id} is defined only up to ${x} = ${dir > 0 ? domain[1] : domain[0]}`,
+            };
+          }
+          const r = atInfinity(f, dir);
+          if (r.kind !== "none" && coincides(f, r.line, lo, hi)) {
+            return { kind: "none", evidence: r.evidence, why: `${fn.id} is itself the line ${y} = ${this.slantText(r.line)}` };
+          }
+          return r;
+        };
+        const pos = side(1);
+        const neg = side(-1);
+        const why = (r: SideResult): string =>
+          r.kind === "none"
+            ? r.why
+            : `it has the ${r.kind} asymptote ${y} = ${this.slantText(r.line)}`;
+        for (const kind of ["horizontal", "oblique"] as const) {
+          if (options[kind] === true && pos.kind !== kind && neg.kind !== kind) {
+            throw new SpecError(
+              `${opath}.${kind}: ${fn.id} has no ${kind} asymptote: as ${x} → +∞, ${why(pos)}; as ${x} → −∞, ${why(neg)}`,
+            );
+          }
+        }
+        const keep = (r: SideResult): Slant | null => (r.kind === "none" || options[r.kind] === false ? null : r.line);
+        const right = keep(pos);
+        const left = keep(neg);
+        const exactOf = (l: Slant): boolean => l.m.exact && l.q.exact;
+        const across = (l: Slant, x0: number, x1: number, towards: 1 | -1 | 0): void => {
+          const a = this.at(x0, l.m.value * x0 + l.q.value);
+          const b = this.at(x1, l.m.value * x1 + l.q.value);
+          const clipped = clipRuns([[a, b]], this.view);
+          if (clipped.length === 0) {
+            const kind = l.m.value === 0 ? "horizontal" : "oblique";
+            if (options[kind] === true) {
+              throw new SpecError(`${opath}.${kind}: ${y} = ${this.slantText(l)} lies outside the plotted range; widen it to show the asymptote`);
+            }
+            return;
+          }
+          const pts = clipped[0]!;
+          const first = pts[0]!;
+          const last = pts[pts.length - 1]!;
+          // The label goes first toward the end it describes: x → +∞ is the right.
+          const [near, far] = towards < 0 ? [last, first] : [first, last];
+          line(pts, `${y} ${this.eq(exactOf(l))} ${this.slantText(l)}`, [
+            { at: far, bias: 0 },
+            { at: near, bias: towards === 0 ? 40 : 80 },
+          ]);
+        };
+        // One line across when both ends agree; else each only toward its
+        // own side, meeting in the middle of the plot (arctan: y = π/2 on
+        // the right, y = −π/2 on the left).
+        const mid = (this.xr[0] + this.xr[1]) / 2;
+        if (right !== null && left !== null && sameLine(right, left)) across(right, this.xr[0], this.xr[1], 0);
+        else {
+          if (right !== null) across(right, mid, this.xr[1], 1);
+          if (left !== null) across(left, this.xr[0], mid, -1);
+        }
+        if (fn.asymptotes === true && drawn === 0) {
+          throw new SpecError(
+            `${opath}: ${fn.id} has no asymptote the numerics can confirm: no vertical one in ${x} ∈ [${lo}, ${hi}]; ` +
+              `as ${x} → +∞, ${why(pos)}; as ${x} → −∞, ${why(neg)}`,
+          );
+        }
+      }
+
+      if (wantsHoles) {
+        const hpath = `${path}.holes`;
+        const options: HoleInput = fn.holes === true ? {} : Array.isArray(fn.holes) ? { at: fn.holes } : (fn.holes as HoleInput);
+        let holes: Hole[];
+        if (options.at !== undefined) {
+          holes = options.at.map((raw, k) => {
+            const a = bound(raw, `${hpath}.at[${k}]`);
+            if (a <= lo || a >= hi) throw new SpecError(`${hpath}: ${x} = ${a} is outside where ${fn.id} is drawn, ${x} ∈ [${lo}, ${hi}]`);
+            const hit = found.holes.find((h) => Math.abs(h.x.value - a) <= 1e-7 * Math.max(1, Math.abs(a)));
+            if (hit !== undefined) return hit;
+            const verdict = classify(f, a);
+            if ("hole" in verdict) return verdict.hole;
+            const sides = "vertical" in verdict ? verdict.vertical : verdict.neither;
+            // Declared where the expression never skips (ADR 0027: "x + 4,
+            // x ≠ 4"): the hole is still drawn at the limit, if there is one.
+            if (
+              sides.left.kind === "finite" &&
+              sides.right.kind === "finite" &&
+              Math.abs(sides.left.value - sides.right.value) <= 2e-5 * (1 + Math.abs(sides.left.value))
+            ) {
+              return {
+                x: snapExact(a, 1e-7),
+                y: snapExact((sides.left.value + sides.right.value) / 2, 1e-5),
+                left: sides.left,
+                right: sides.right,
+              };
+            }
+            throw new SpecError(
+              `${hpath}: ${fn.id} has no hole at ${x} = ${a}, since a hole needs one finite limit from both sides: ` +
+                `as ${x} → ${a}⁻, f(${x}) ${describeLimit(sides.left)}; as ${x} → ${a}⁺, f(${x}) ${describeLimit(sides.right)}`,
+            );
+          });
+        } else {
+          holes = found.holes;
+          if (holes.length === 0) {
+            throw new SpecError(
+              `${hpath}: ${fn.id} has no hole in ${x} ∈ [${lo}, ${hi}]: nowhere is it undefined with one finite limit from both sides`,
+            );
+          }
+        }
+        holes.forEach((h, k) => {
+          if (h.y.value < this.yr[0] || h.y.value > this.yr[1]) {
+            throw new SpecError(`${hpath}: the hole at ${x} = ${h.x.value} is at ${y} = ${h.y.value}, outside the plotted y range`);
+          }
+          breaks.push(h.x.value);
+          this.holeDots.push({
+            at: { x: h.x.value, y: h.y.value },
+            colour,
+            id: `${fn.id}-hole-${k + 1}`,
+            series: curve.series,
+            ...(options.label === undefined ? {} : { label: options.label }),
+            ...(options.towards === undefined ? {} : { towards: options.towards }),
+            path: `${hpath}.label`,
+          });
+        });
+      }
+      this.graphBreaks.set(fn.id, breaks);
+    }
+  }
+
+  /** Each hole's label, if asked for: it names the hole's place, like a point's label (ADR 0035). */
+  holeLabels(): void {
+    for (const hole of this.holeDots) {
+      if (hole.label === undefined) continue;
+      const c = this.at(hole.at.x, hole.at.y);
+      this.board.place(this.fill(hole.label, { point: hole.at }, hole.path), c.x, c.y, dirsOf(hole.towards, ["NW", "SE", "NE", "SW"]), {
+        size: 14,
+        weight: 600,
+        colour: hole.colour,
+        annotatesPlace: c,
+      });
+    }
+  }
+
+  /**
+   * Each asymptote's equation, set BESIDE its line, never on it (ADR 0038).
+   * It names the line twice over -- `annotates` its mark and `names` its
+   * series -- so `annotation-nearest-its-owner` and
+   * `curve-label-nearest-its-curve` both hold it there: a spot is taken only
+   * if this line is nearer the label than any other mark (centre to
+   * polyline) and than any other series (box to polyline). Its paper halo
+   * hides only the lattice under it; the search keeps the box clear of every
+   * stroke, which no backing may cover (ADR 0035).
+   */
+  asymptoteLabels(): void {
+    const b = this.board;
+    const size = 13;
+    for (const line of this.asymptoteLines) {
+      const { w, h } = b.extent(line.text, { size });
+      const pts = line.pts;
+      const p0 = pts[0]!;
+      const p1 = pts[pts.length - 1]!;
+      const len = Math.hypot(p1.x - p0.x, p1.y - p0.y) || 1;
+      const u = { x: (p1.x - p0.x) / len, y: (p1.y - p0.y) / len };
+      const n = { x: -u.y, y: u.x };
+      const across = Math.abs(n.x) * (w / 2) + Math.abs(n.y) * (h / 2);
+      const inCanvas = (x: number, y: number): boolean =>
+        x - w / 2 >= 16 && x + w / 2 <= b.W - 16 && y - h / 2 >= 10 && y + h / 2 <= b.H - 10;
+      // The axis names are placed last, at the ends of the axes; an
+      // asymptote's label keeps off their usual spots rather than push them
+      // up into the curves.
+      const names = this.axisNameSpots();
+      const candidates: { x: number; y: number; score: number }[] = [];
+      for (let t = 0; t <= len; t += 3) {
+        for (const side of [1, -1]) {
+          for (const gap of [5, 8, 12, 16, 22, 30]) {
+            const x = p0.x + u.x * t + n.x * side * (across + gap);
+            const y = p0.y + u.y * t + n.y * side * (across + gap);
+            if (!inCanvas(x, y) || !b.clear(b.box(x, y, w, h), 3)) continue;
+            if (names.some((spot) => b.hits(b.box(x, y, w, h), spot, 2))) continue;
+            const anchor = Math.min(...line.prefer.map((p) => Math.hypot(x - p.at.x, y - p.at.y) + p.bias));
+            candidates.push({ x, y, score: anchor + 0.5 * gap + 10 * this.latticeUnder(x, y, w, h) });
+          }
+        }
+      }
+      candidates.sort((p, q) => p.score - q.score);
+      const all = this.polylines();
+      // The line as drawn: in pieces, if an axis number cut it.
+      const pieces = all.filter((r) => b.marks.some((m) => m.id === r.id && m.series === line.id));
+      const rivals = all.filter((r) => !pieces.includes(r));
+      const series = new Map<string, Point[][]>();
+      for (const m of b.marks) {
+        if (m.series === undefined || m.series === line.id) continue;
+        const poly = all.find((r) => r.id === m.id);
+        if (poly === undefined) continue;
+        if (!series.has(m.series)) series.set(m.series, []);
+        series.get(m.series)!.push(poly.pts);
+      }
+      const rectTo = (x: number, y: number, poly: Point[]): number => {
+        let best = Infinity;
+        const visit = (p: Point): void => {
+          const dx = Math.max(x - w / 2 - p.x, 0, p.x - (x + w / 2));
+          const dy = Math.max(y - h / 2 - p.y, 0, p.y - (y + h / 2));
+          best = Math.min(best, Math.hypot(dx, dy));
+        };
+        if (poly.length === 1) visit(poly[0]!);
+        for (let i = 1; i < poly.length; i += 1) {
+          const a = poly[i - 1]!;
+          const c = poly[i]!;
+          const steps = Math.max(1, Math.ceil(Math.hypot(c.x - a.x, c.y - a.y) / 2));
+          for (let k = 0; k <= steps; k += 1) visit({ x: a.x + ((c.x - a.x) * k) / steps, y: a.y + ((c.y - a.y) * k) / steps });
+        }
+        return best;
+      };
+      const nearestPiece = (c: { x: number; y: number }): { id: string; d: number } =>
+        pieces
+          .map((r) => ({ id: r.id, d: distanceToPolyline(c, r.pts, false) }))
+          .reduce((p, q) => (q.d < p.d ? q : p), { id: line.id, d: Infinity });
+      const honest = (c: { x: number; y: number }): boolean => {
+        const own = nearestPiece(c).d;
+        if (!rivals.every((r) => distanceToPolyline(c, r.pts, r.closed) >= own + 1)) return false;
+        const ownBox = Math.min(...pieces.map((r) => rectTo(c.x, c.y, r.pts)));
+        return [...series.values()].every((polys) => polys.every((poly) => rectTo(c.x, c.y, poly) >= ownBox + 1));
+      };
+      const spot =
+        candidates.find(honest) ??
+        candidates[0] ?? { x: (p0.x + p1.x) / 2 + n.x * (across + 8), y: (p0.y + p1.y) / 2 + n.y * (across + 8) };
+      b.label(line.text, spot.x, spot.y, {
+        size,
+        weight: 600,
+        colour: line.colour,
+        width: w,
+        id: `${line.id}-label`,
+        // The piece of the line beside it: a line cut around an axis number
+        // is several marks of one series.
+        annotates: nearestPiece(spot).id,
+        names: line.id,
+        fill: PAPER,
+      });
+    }
   }
 
   /** Roots and local extrema, found numerically and declared to lie on their curve (ADR 0025). */
@@ -1423,24 +2664,45 @@ export function functionGraphPoints(input: FunctionGraphInput): Map<string, { x:
 }
 
 export function expandFunctionGraph(input: FunctionGraphInput): FigureSpec {
+  // Through the IR parser on the way out: it validates what this preset
+  // produced and resolves the plane's frame into canvas coordinates, which
+  // is the one step a preset's output otherwise never gets (every other
+  // preset states canvas coordinates directly).
+  return parseSpec(functionGraphIR(input));
+}
+
+/**
+ * The figure as this preset states it, BEFORE frame resolution: every region,
+ * rectangle and outline still in the plane's own frame (`{frame: "plane", x,
+ * y}` in axis units). What the area tests read, so "the rectangle is the one
+ * numeric.riemann returned" is compared number for number, not through a
+ * round trip into pixels.
+ */
+export function functionGraphIR(input: FunctionGraphInput): FigureSpec {
   const g = new Build(input);
   g.frame();
+  // Regions and sums first: they paint beneath the curves they lie under.
+  g.areas();
+  g.riemannSums();
+  // Asymptotes under the curves that approach them (ADR 0038).
+  g.asymptotes();
   g.strokes();
   g.guides();
   g.features();
   g.dots();
   g.ticks();
   g.breakGuides();
+  // A hole's label before the curve labels: it names a place, and a curve
+  // label can sit anywhere along its curve.
+  g.holeLabels();
   g.curveLabels();
   g.pointLabels();
+  g.asymptoteLabels();
+  g.regionLabelsPlace();
   g.freeLabels();
   g.axisNames();
   g.legend();
-  // Through the IR parser on the way out: it validates what this preset
-  // produced and resolves the plane's frame into canvas coordinates, which
-  // is the one step a preset's output otherwise never gets (every other
-  // preset states canvas coordinates directly).
-  return parseSpec(g.board.spec(input.title ?? "function graph"));
+  return g.board.spec(input.title ?? "function graph");
 }
 
 // ---- validation ------------------------------------------------------------
@@ -1608,6 +2870,44 @@ export function validateFunctionGraphInput(raw: Record<string, unknown>): void {
         if (k !== "roots" && k !== "extrema") throw new SpecError(`${at}.features[${j}] must be "roots" or "extrema"`);
       });
     }
+    // Asymptotes and holes (ADR 0038): the shape here, the mathematics in
+    // the dry run -- a claimed asymptote or hole the limits do not confirm is
+    // refused there, by name.
+    const boundList = (value: unknown, where: string): void => {
+      if (!Array.isArray(value) || value.length === 0) throw new SpecError(`${where} must be a non-empty list of x values`);
+      value.forEach((b, j) => {
+        if (typeof b !== "number" && typeof b !== "string") throw new SpecError(`${where}[${j}] must be a number or an expression like "pi/2"`);
+        bound(b as Bound, `${where}[${j}]`);
+      });
+    };
+    if (o.asymptotes !== undefined && typeof o.asymptotes !== "boolean") {
+      const a = v.object(o.asymptotes, `${at}.asymptotes`);
+      for (const key of Object.keys(a)) {
+        if (!["vertical", "horizontal", "oblique"].includes(key)) {
+          throw new SpecError(`${at}.asymptotes.${key} is not a kind of asymptote; the kinds are vertical, horizontal and oblique`);
+        }
+      }
+      if (a.vertical !== undefined && typeof a.vertical !== "boolean") boundList(a.vertical, `${at}.asymptotes.vertical`);
+      v.optionalBoolean(a, "horizontal", `${at}.asymptotes`);
+      v.optionalBoolean(a, "oblique", `${at}.asymptotes`);
+    }
+    if (o.holes !== undefined && typeof o.holes !== "boolean") {
+      if (Array.isArray(o.holes)) boundList(o.holes, `${at}.holes`);
+      else {
+        const h = v.object(o.holes, `${at}.holes`);
+        if (h.at !== undefined) boundList(h.at, `${at}.holes.at`);
+        v.optionalString(h, "label", `${at}.holes`);
+        dirs(h, `${at}.holes`);
+      }
+    }
+    if ((o.asymptotes !== undefined && o.asymptotes !== false) || (o.holes !== undefined && o.holes !== false)) {
+      if (o.expr === undefined) {
+        throw new SpecError(
+          `${at}: asymptotes and holes are found from a function given by one expression, "expr"; ` +
+            `mark a piecewise function's open and closed ends with "points"`,
+        );
+      }
+    }
   }
   for (const [i, l] of (optionalList(raw, "lines", path)).entries()) {
     const at = `${path}.lines[${i}]`;
@@ -1676,6 +2976,76 @@ export function validateFunctionGraphInput(raw: Record<string, unknown>): void {
     v.optionalNumber(o, "weight", at);
     v.optionalString(o, "names", at);
   }
+  // Areas and Riemann sums (ADR 0036): their marks and labels take ids, so
+  // those are unique among themselves and against every curve's.
+  const regionIds: { id: string; at: string }[] = [...ids];
+  const boundOf = (o: Record<string, unknown>, key: string, at: string): void => {
+    if (o[key] === undefined) return;
+    if (typeof o[key] !== "number" && typeof o[key] !== "string") {
+      throw new SpecError(`${at}.${key} must be a number or an expression like "pi/2"`);
+    }
+    bound(o[key] as Bound, `${at}.${key}`);
+  };
+  const template = (o: Record<string, unknown>, key: string, at: string, allowBoolean: boolean): void => {
+    const value = o[key];
+    if (value === undefined || typeof value === "string" || (allowBoolean && typeof value === "boolean")) return;
+    throw new SpecError(`${at}.${key} must be ${allowBoolean ? "true, false or " : ""}a template string`);
+  };
+  for (const [i, a] of (optionalList(raw, "areas", path)).entries()) {
+    const at = `${path}.areas[${i}]`;
+    const o = v.object(a, at);
+    const id = v.optionalString(o, "id", at);
+    regionIds.push({ id: id ?? `area-${i + 1}`, at });
+    if ((o.of === undefined) === (o.between === undefined)) {
+      throw new SpecError(`${at} needs exactly one of "of" (the area under a curve) or "between": [f, g]`);
+    }
+    if (o.of !== undefined) {
+      v.requiredString(o, "of", at);
+      if (o.from === undefined || o.to === undefined) {
+        throw new SpecError(`${at}: the area under ${String(o.of)} needs "from" and "to"`);
+      }
+    } else {
+      if (!Array.isArray(o.between) || o.between.length !== 2 || o.between.some((c) => typeof c !== "string")) {
+        throw new SpecError(`${at}.between must be two curve ids, ["f", "g"]`);
+      }
+      if ((o.from === undefined) !== (o.to === undefined)) {
+        throw new SpecError(`${at}: give both "from" and "to", or neither to bound the area by the curves' intersections`);
+      }
+    }
+    boundOf(o, "from", at);
+    boundOf(o, "to", at);
+    v.optionalEnum(o, "value", at, ["area", "integral"]);
+    v.optionalString(o, "colour", at);
+    v.optionalString(o, "negativeColour", at);
+    if (o.label !== undefined && o.label !== false && typeof o.label !== "string") {
+      const l = v.object(o.label, `${at}.label`);
+      v.optionalString(l, "text", `${at}.label`);
+      dirs(l, `${at}.label`);
+    }
+    template(o, "total", at, true);
+    v.optionalString(o, "legend", at);
+  }
+  for (const [i, r] of (optionalList(raw, "riemann", path)).entries()) {
+    const at = `${path}.riemann[${i}]`;
+    const o = v.object(r, at);
+    const id = v.optionalString(o, "id", at);
+    regionIds.push({ id: id ?? `riemann-${i + 1}`, at });
+    v.requiredString(o, "of", at);
+    if (o.from === undefined || o.to === undefined) throw new SpecError(`${at} needs "from" and "to"`);
+    boundOf(o, "from", at);
+    boundOf(o, "to", at);
+    const n = v.requiredNumber(o, "n", at);
+    if (!Number.isInteger(n) || n < 1 || n > 200) throw new SpecError(`${at}.n must be an integer from 1 to 200, got ${n}`);
+    if (o.rule === undefined) throw new SpecError(`${at}.rule is required: "left", "right", "mid" or "trapezoid"`);
+    v.optionalEnum(o, "rule", at, ["left", "right", "mid", "trapezoid"]);
+    v.optionalString(o, "colour", at);
+    v.optionalString(o, "negativeColour", at);
+    v.optionalBoolean(o, "points", at);
+    template(o, "label", at, true);
+    template(o, "integral", at, true);
+    v.optionalString(o, "legend", at);
+  }
+  v.unique(regionIds, "function, line, area or Riemann sum");
   if (raw.legend !== undefined) {
     const o = v.object(raw.legend, `${path}.legend`);
     if (o.at !== undefined) {

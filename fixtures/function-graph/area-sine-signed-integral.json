@@ -1,0 +1,12 @@
+{
+  "preset": "function-graph",
+  "title": "A integral de sen x em [0, 2π] é zero; a área é 4",
+  "x": { "range": [-0.5, 7], "unit": 70 },
+  "y": { "range": [-1.5, 1.5], "unit": 90, "step": 0.5, "labelEvery": 2 },
+  "functions": [
+    { "id": "f", "expr": "sin(x)", "label": { "text": "y = sen x", "at": 6.6, "towards": ["U", "R"] } }
+  ],
+  "areas": [
+    { "id": "A", "of": "f", "from": 0, "to": "2pi", "value": "integral" }
+  ]
+}

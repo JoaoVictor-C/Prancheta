@@ -1,0 +1,41 @@
+{
+  "preset": "function-graph",
+  "title": "Descontinuidade removível de f(x) = (x² − 1)/(x − 1)",
+  "x": {
+    "range": [
+      -3,
+      4
+    ],
+    "unit": 56
+  },
+  "y": {
+    "range": [
+      -2,
+      7
+    ],
+    "unit": 36
+  },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "(x^2 - 1)/(x - 1)",
+      "holes": {
+        "label": "{coords}",
+        "towards": [
+          "SE",
+          "R",
+          "D"
+        ]
+      },
+      "label": {
+        "text": "y = {expr}",
+        "at": 2,
+        "towards": [
+          "NW",
+          "U",
+          "L"
+        ]
+      }
+    }
+  ]
+}

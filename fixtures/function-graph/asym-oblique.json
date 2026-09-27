@@ -1,0 +1,39 @@
+{
+  "preset": "function-graph",
+  "title": "Assíntota oblíqua de f(x) = (x² + 1)/x",
+  "x": {
+    "range": [
+      -5,
+      5
+    ],
+    "unit": 44
+  },
+  "y": {
+    "range": [
+      -7,
+      7
+    ],
+    "unit": 30
+  },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "(x^2 + 1)/x",
+      "asymptotes": {
+        "vertical": [
+          0
+        ],
+        "oblique": true
+      },
+      "label": {
+        "text": "y = {expr}",
+        "at": 3.2,
+        "towards": [
+          "U",
+          "NW",
+          "L"
+        ]
+      }
+    }
+  ]
+}

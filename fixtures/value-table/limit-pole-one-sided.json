@@ -1,0 +1,10 @@
+{
+  "preset": "value-table",
+  "title": "estimando lim 1/x quando x → 0",
+  "limit": {
+    "expr": "1/x",
+    "at": 0,
+    "side": "both",
+    "count": 4
+  }
+}

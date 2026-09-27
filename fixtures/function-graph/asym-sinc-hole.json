@@ -1,0 +1,15 @@
+{
+  "preset": "function-graph",
+  "title": "sen(x)/x: um buraco em x = 0 e a assíntota y = 0",
+  "x": { "range": [-10, 10], "unit": 30, "step": 1, "labelEvery": 2 },
+  "y": { "range": [-0.5, 1.5], "unit": 120, "step": 0.25, "labelEvery": 2 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "sin(x)/x",
+      "asymptotes": { "horizontal": true },
+      "holes": { "label": "{coords}", "towards": ["NE", "U", "R"] },
+      "label": { "text": "y = {expr}", "at": 4.5, "towards": ["D", "SE", "R"] }
+    }
+  ]
+}

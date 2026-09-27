@@ -27,8 +27,11 @@ const figures = [
 
 test("the sheet has fifteen figures", () => {
   // Beside them, fixtures/function-graph/ holds the curve fixtures of ADR
-  // 0029 (curve-*.json), rendered below with the same bar.
-  assert.equal(figures.filter((path) => !path.split(/[\\/]/).pop()!.startsWith("curve-")).length, 15);
+  // 0029 (curve-*.json), the area and Riemann fixtures of ADR 0036
+  // (area-*.json, riemann-*.json) and the asymptote and hole fixtures of ADR
+  // 0038 (asym-*.json), rendered below with the same bar.
+  const others = /^(curve|area|riemann|asym)-/;
+  assert.equal(figures.filter((path) => !others.test(path.split(/[\\/]/).pop()!)).length, 15);
 });
 
 for (const path of figures) {

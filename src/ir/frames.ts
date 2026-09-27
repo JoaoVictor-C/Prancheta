@@ -681,6 +681,40 @@ function scaleOf(
 }
 
 /**
+ * The scale a CLOSED mark's whole outline was stated at, or undefined when it
+ * has none (ADR 0037, extending ADR 0028's rule from a run's two ends to a
+ * polygon's every vertex).
+ *
+ * A shaded region -- "area under the curve", a Riemann rectangle, a triangle
+ * -- is one closed mark, and its printed area label is exactly the same kind
+ * of separately-typed number a dimension line's "50 m" is. Recorded only when
+ * every vertex is a `FramedPoint` and every one of them agrees with the
+ * first on scale (and, for a non-square frame, on rotation too) -- the same
+ * agreement `scaleOf` already tests pairwise for a run's two ends, checked
+ * here against every vertex rather than just two. An arc segment has no
+ * vertex a shoelace sum can use, so a mark with one records nothing; neither
+ * does a mark with fewer than two vertices, or one open (`close` false and no
+ * `fill`), since ADR 0028 already covers an open single-segment run and an
+ * open, multi-segment path has no enclosed area to check a label against.
+ */
+function scaleOfClosedOutline(
+  from: Point | FramedPoint,
+  segments: MarkSegment[],
+  frames: Map<string, Frame & { origin: Point }>,
+): MeasuredIn | undefined {
+  if (segments.some((s) => "arc" in s)) return undefined; // no vertex a shoelace sum can use
+  const vertices: (Point | FramedPoint)[] = [from, ...segments.map((s) => (s as { line: Point | FramedPoint }).line)];
+  if (vertices.length < 3) return undefined; // not a polygon
+  let scale: MeasuredIn | undefined;
+  for (let i = 1; i < vertices.length; i += 1) {
+    const pair = scaleOf(vertices[0]!, vertices[i]!, frames);
+    if (pair === undefined) return undefined;
+    scale = pair;
+  }
+  return scale;
+}
+
+/**
  * Every frame reference in the spec replaced by the canvas coordinate it
  * denotes, and every `frame` field removed.
  *
@@ -773,10 +807,18 @@ function resolveNode(
       // Only a single straight run has one length to state; a path of
       // several segments, or an arc, is not what "50 m" measures.
       const only = mark.segments.length === 1 ? mark.segments[0]! : undefined;
+      // A closed mark's whole outline is what an area label measures (ADR
+      // 0037), unchanged from ADR 0028 when it happens to be a single
+      // segment: that case already goes through `scaleOf` above.
+      const closed = mark.close ?? mark.fill !== undefined;
       const measuredIn =
-        mark.gridOf === undefined && only !== undefined && "line" in only
-          ? scaleOf(mark.from, only.line, frames)
-          : undefined;
+        mark.gridOf !== undefined
+          ? undefined
+          : only !== undefined && "line" in only
+            ? scaleOf(mark.from, only.line, frames)
+            : closed
+              ? scaleOfClosedOutline(mark.from, mark.segments, frames)
+              : undefined;
       return {
         ...mark,
         ...(measuredIn === undefined ? {} : { measuredIn }),
