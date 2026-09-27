@@ -54,12 +54,14 @@ All three of these were caught by a check, not by looking:
   `typography.ts` is written in exactly that shape. These generators write
   their stacks unquoted as a workaround.
 
-- **A wide label is reported as colliding with every steeply rotated box on the
-  canvas.** `overlapsBox` back-rotates the label's rect into the box's frame
-  and re-bounds it; for a page-wide title against a 62° count label that
+- **A wide label was reported as colliding with every steeply rotated box on
+  the canvas.** `overlapsBox` back-rotated the label's rect into the box's
+  frame and re-bounded it; for a page-wide title against a 62° count label that
   approximation is generous by a factor of thirty, and no amount of moving
-  things can make the figure pass. `minard.mjs` works around it by rotating the
-  glyphs without rotating the box, and sizing the box to the turned text.
+  things could make the figure pass — the false positive was a function of the
+  title's WIDTH, not of any distance. `overlapsBox` now separates the two
+  rectangles AS ORIENTED, which is exact in both directions, and `minard.mjs`
+  no longer has to rotate its glyphs without rotating their box.
 
 - **Nothing checked a label against a Mark's outline or a Connector's route.**
   `text-fits-box`, `text-clear-of-other-boxes` and `boxes-do-not-overlap` all

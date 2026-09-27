@@ -1,0 +1,22 @@
+{
+  "preset": "function-graph",
+  "title": "Figura 3.2: a reta tangente à parábola em P",
+  "x": { "range": [-1, 5], "unit": 90 },
+  "y": { "range": [-2, 16], "unit": 22, "labelEvery": 2 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x^2",
+      "label": { "text": "y = {expr}", "at": [-0.6, 1.8], "towards": ["U", "R"] }
+    }
+  ],
+  "lines": [
+    { "id": "t", "tangent": { "of": "f", "at": 3 }, "domain": [1.4, 4.4], "colour": "warm" }
+  ],
+  "points": [
+    { "id": "P", "at": { "of": "f", "x": 3 }, "label": "P{coords}", "towards": ["L", "NW", "U"] }
+  ],
+  "labels": [
+    { "text": "inclinação = ?", "at": [2.65, 0.9], "towards": ["R", "D", "SE"], "names": "t" }
+  ]
+}

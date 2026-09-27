@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="250" viewBox="0 0 900 250">
+<title>: </title>
+<rect x="0" y="0" width="900" height="250" fill="#FCFBF7"/>
+<g id="pr-marks">
+<g id="m1">
+<desc>An outline</desc>
+<path data-pr-id="m1" d="M 116 70 L 205 70" fill="none" stroke="#4E5763" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m2">
+<desc>A filled region</desc>
+<path data-pr-id="m2" d="M 214 70 L 205 73.78 L 205 66.22 L 214 70 Z" fill="#4E5763" stroke="#4E5763" stroke-width="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m4">
+<desc>An outline</desc>
+<path data-pr-id="m4" d="M 376 70 L 465 70" fill="none" stroke="#4E5763" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m5">
+<desc>A filled region</desc>
+<path data-pr-id="m5" d="M 474 70 L 465 73.78 L 465 66.22 L 474 70 Z" fill="#4E5763" stroke="#4E5763" stroke-width="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m7">
+<desc>An outline</desc>
+<path data-pr-id="m7" d="M 636 70 L 725 70" fill="none" stroke="#4E5763" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m8">
+<desc>A filled region</desc>
+<path data-pr-id="m8" d="M 734 70 L 725 73.78 L 725 66.22 L 734 70 Z" fill="#4E5763" stroke="#4E5763" stroke-width="0.6" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+</g>
+<g id="pr-boxes">
+<g id="b0">
+<title>x</title>
+<rect data-pr-id="b0" x="30.5" y="42.5" width="79" height="55" rx="9.5" fill="rgb(238, 242, 247)" stroke="rgb(24, 27, 33)" stroke-width="1"/>
+</g>
+<g id="b1">
+<title>u = x² + 1</title>
+<rect data-pr-id="b1" x="220.5" y="42.5" width="149" height="55" rx="9.5" fill="rgb(227, 236, 248)" stroke="rgb(24, 27, 33)" stroke-width="1"/>
+</g>
+<g id="b2">
+<title>v = u³ + 2</title>
+<rect data-pr-id="b2" x="480.5" y="42.5" width="149" height="55" rx="9.5" fill="rgb(230, 243, 239)" stroke="rgb(24, 27, 33)" stroke-width="1"/>
+</g>
+<g id="b3">
+<title>f = v⁴</title>
+<rect data-pr-id="b3" x="740.5" y="42.5" width="119" height="55" rx="9.5" fill="rgb(246, 236, 228)" stroke="rgb(24, 27, 33)" stroke-width="1"/>
+</g>
+<g id="t10">
+<title>f′(x) = 4v³ · 3u² · 2x = 24x (x² + 1)² [(x² + 1)³ + 2]³</title>
+<rect data-pr-id="t10" x="100" y="160" width="700" height="30" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t11">
+<title>multiplica-se a derivada de cada elo, de fora para dentro</title>
+<rect data-pr-id="t11" x="140" y="200" width="620" height="24" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t3">
+<title>du/dx = 2x</title>
+<rect data-pr-id="t3" x="120" y="88" width="90" height="24" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t6">
+<title>dv/du = 3u²</title>
+<rect data-pr-id="t6" x="376" y="88" width="98" height="24" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t9">
+<title>df/dv = 4v³</title>
+<rect data-pr-id="t9" x="636" y="88" width="98" height="24" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+</g>
+<g id="pr-text">
+<g id="b0--label">
+<desc>Labels b0</desc>
+<text data-pr-id="b0--label" x="69.99" y="75.95" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="18" font-weight="600" fill="rgb(24, 27, 33)" text-anchor="middle" xml:space="preserve">x</text>
+</g>
+<g id="b1--label">
+<desc>Labels b1</desc>
+<text data-pr-id="b1--label" x="294.99" y="75.95" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="18" font-weight="600" fill="rgb(24, 27, 33)" text-anchor="middle" xml:space="preserve">u = x² + 1</text>
+</g>
+<g id="b2--label">
+<desc>Labels b2</desc>
+<text data-pr-id="b2--label" x="555" y="75.95" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="18" font-weight="600" fill="rgb(24, 27, 33)" text-anchor="middle" xml:space="preserve">v = u³ + 2</text>
+</g>
+<g id="b3--label">
+<desc>Labels b3</desc>
+<text data-pr-id="b3--label" x="800" y="75.95" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="18" font-weight="600" fill="rgb(24, 27, 33)" text-anchor="middle" xml:space="preserve">f = v⁴</text>
+</g>
+<g id="t10--label">
+<desc>Labels t10</desc>
+<text data-pr-id="t10--label" x="449.99" y="181.95" font-family="&quot;Segoe UI Semibold&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="18" font-weight="600" letter-spacing="0.1" fill="rgb(29, 78, 137)" text-anchor="middle" xml:space="preserve">f′(x) = 4v³ · 3u² · 2x = 24x (x² + 1)² [(x² + 1)³ + 2]³</text>
+</g>
+<g id="t11--label">
+<desc>Labels t11</desc>
+<text data-pr-id="t11--label" x="450" y="216.84" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="14" letter-spacing="0.1" fill="rgb(78, 87, 99)" text-anchor="middle" xml:space="preserve">multiplica-se a derivada de cada elo, de fora para dentro</text>
+</g>
+<g id="t3--label">
+<desc>Labels t3</desc>
+<text data-pr-id="t3--label" x="165" y="104.84" font-family="&quot;Segoe UI Semibold&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="0.1" fill="rgb(15, 115, 96)" text-anchor="middle" xml:space="preserve">du/dx = 2x</text>
+</g>
+<g id="t6--label">
+<desc>Labels t6</desc>
+<text data-pr-id="t6--label" x="424.99" y="104.84" font-family="&quot;Segoe UI Semibold&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="0.1" fill="rgb(15, 115, 96)" text-anchor="middle" xml:space="preserve">dv/du = 3u²</text>
+</g>
+<g id="t9--label">
+<desc>Labels t9</desc>
+<text data-pr-id="t9--label" x="685" y="104.84" font-family="&quot;Segoe UI Semibold&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="0.1" fill="rgb(15, 115, 96)" text-anchor="middle" xml:space="preserve">df/dv = 4v³</text>
+</g>
+</g>
+</svg>

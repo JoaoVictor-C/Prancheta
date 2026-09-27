@@ -223,7 +223,13 @@ at(LBL_R * Math.cos((THETA / 2) * DEG), CLIFF + LBL_R * Math.sin((THETA / 2) * D
 // it. `annotates` would buy an overlap neither of them needs, and it would
 // cost the nearest-owner obligation in a corner of the figure where the arc,
 // the arrow and the path are all within a few pixels of each other.
-at(3.5, 52.5, 106, `v₀ = ${V0} m/s`, 13, VEC);
+// Clear of the y axis, not merely near it. Centred at x = 3.5 the box reached
+// back past x = 0 and the axis line ran through the glyphs -- and nothing said
+// so, because the axis is `gridOf` furniture and `text-clear-of-ink` excuses a
+// label for crossing that. The excuse is right for a faint 1px gridline and
+// wrong for this one: it is the axis, drawn heavier and darker than the grid
+// it belongs to. Placement has to earn the clearance the check will not.
+at(6.0, 52.5, 106, `v₀ = ${V0} m/s`, 13, VEC);
 at(100.5, 5.5, 92, "v  =  ?", 13, VEC);
 at(80, 7.4, 190, `each marker  ·  ${(0.5).toFixed(1)} s apart`, 12, PATH);
 

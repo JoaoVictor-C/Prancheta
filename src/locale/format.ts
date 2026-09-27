@@ -1,0 +1,183 @@
+/**
+ * Numbers as a reader sees them, shared by a figure and the text around it.
+ *
+ * The Cálculo 1 sheet shipped "(2, 5)" beside decimals written "0,5": in a
+ * language whose decimal mark IS the comma, that pair reads as the single
+ * number two-and-a-half. Brazilian school mathematics settles it with a
+ * semicolon between coordinates -- "(2; 5)", "(2,5; 7,25)" -- and a figure
+ * that typed its own coordinates by hand had no way to follow that rule
+ * except by the author remembering to, label by label.
+ *
+ * So there is ONE formatter, and both the figure (function-graph tick numbers
+ * and computed point labels) and the sheet text (placeholders resolved when a
+ * statement is rendered) go through it. A label and the sentence that cites
+ * it cannot disagree about how a number is written, because neither of them
+ * writes it.
+ *
+ * Three decisions live here and nowhere else:
+ *
+ *  - the decimal mark and the separator between coordinates;
+ *  - the typographic minus "−" (U+2212), never the hyphen, which sets short
+ *    and high next to a digit and is what a keyboard produces;
+ *  - how a value that is not a short decimal is written. 17/3 is printed as
+ *    "17/3", not "5,667": the rounded decimal is a different number, and a
+ *    figure labelled with it contradicts the exact answer the exercise asks
+ *    the student to find.
+ */
+
+export type Locale = "pt-BR" | "en";
+
+export const LOCALES: readonly Locale[] = ["pt-BR", "en"];
+
+/** The typographic minus sign. */
+export const MINUS = "−";
+
+export type NumberOptions = {
+  /** Exactly this many decimals, as for money ("2073,60"). Unset: the shortest honest form. */
+  decimals?: number;
+  /** Allow "a/b" for a value that is a small-denominator fraction but not a short decimal. Default true. */
+  fractions?: boolean;
+  /** Group thousands ("1.000" in pt-BR, "1,000" in en). Default false -- an axis number is not an amount. */
+  grouping?: boolean;
+};
+
+type Marks = { decimal: string; group: string; pair: string };
+
+const MARKS: Record<Locale, Marks> = {
+  "pt-BR": { decimal: ",", group: ".", pair: "; " },
+  en: { decimal: ".", group: ",", pair: ", " },
+};
+
+/** Largest denominator tried when a value is not a short decimal. */
+const MAX_DENOMINATOR = 24;
+/** Decimals a value may have and still be written as a decimal. */
+const MAX_SHORT_DECIMALS = 3;
+/**
+ * How close a float must be to a candidate to BE that candidate. Loose enough
+ * to absorb evaluation noise (a central-difference slope, 5/3 * 3), tight
+ * enough that 0.3334 is not mistaken for 1/3.
+ */
+const TOLERANCE = 1e-7;
+
+function close(a: number, b: number): boolean {
+  return Math.abs(a - b) <= TOLERANCE * Math.max(1, Math.abs(a), Math.abs(b));
+}
+
+function group(digits: string, mark: string): string {
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, mark);
+}
+
+/** The simplest p/q equal to `value`, or null. */
+export function asFraction(value: number): { p: number; q: number } | null {
+  for (let q = 1; q <= MAX_DENOMINATOR; q += 1) {
+    const p = Math.round(value * q);
+    if (close(p / q, value)) return { p, q };
+  }
+  return null;
+}
+
+/** Does `q` divide a power of ten small enough to be a short decimal? */
+function terminatesShortly(q: number): boolean {
+  return 10 ** MAX_SHORT_DECIMALS % q === 0;
+}
+
+function plain(abs: number, decimals: number, marks: Marks, grouping: boolean): string {
+  const [whole, frac] = abs.toFixed(decimals).split(".");
+  const head = grouping ? group(whole!, marks.group) : whole!;
+  return frac === undefined ? head : `${head}${marks.decimal}${frac}`;
+}
+
+/**
+ * A number, written for `locale`.
+ *
+ * Without `decimals`, the shortest form that IS the value: an integer, a
+ * decimal of at most three places, a small fraction, and only as a last
+ * resort a decimal rounded to three places.
+ */
+export function formatNumber(value: number, locale: Locale = "pt-BR", options: NumberOptions = {}): string {
+  if (!Number.isFinite(value)) throw new Error(`cannot format ${value} as a number`);
+  const marks = MARKS[locale];
+  const grouping = options.grouping ?? false;
+  if (options.decimals !== undefined) {
+    const rounded = Number(value.toFixed(options.decimals));
+    const sign = rounded < 0 ? MINUS : "";
+    return sign + plain(Math.abs(rounded), options.decimals, marks, grouping);
+  }
+  if (close(value, 0)) return "0";
+  const sign = value < 0 ? MINUS : "";
+  const abs = Math.abs(value);
+  const fraction = asFraction(abs);
+  if (fraction !== null && fraction.q === 1) return sign + plain(fraction.p, 0, marks, grouping);
+  if (fraction !== null && terminatesShortly(fraction.q)) {
+    const exact = fraction.p / fraction.q;
+    for (let d = 1; d <= MAX_SHORT_DECIMALS; d += 1) {
+      if (close(Number(exact.toFixed(d)), exact)) return sign + plain(exact, d, marks, grouping);
+    }
+  }
+  if (fraction !== null && options.fractions !== false) return `${sign}${fraction.p}/${fraction.q}`;
+  const rounded = Number(abs.toFixed(MAX_SHORT_DECIMALS));
+  let decimals = MAX_SHORT_DECIMALS;
+  while (decimals > 0 && close(Number(rounded.toFixed(decimals - 1)), rounded)) decimals -= 1;
+  return sign + plain(rounded, decimals, marks, grouping);
+}
+
+/** An ordered pair: "(2; 5)" in pt-BR, "(2, 5)" in en. */
+export function formatPoint(
+  x: number,
+  y: number,
+  locale: Locale = "pt-BR",
+  options: NumberOptions = {},
+): string {
+  return `(${formatNumber(x, locale, options)}${MARKS[locale].pair}${formatNumber(y, locale, options)})`;
+}
+
+/**
+ * The same number as TeX source, for text KaTeX will set.
+ *
+ * A comma inside TeX math is punctuation and gets a thin space after it, so
+ * "2,5" would set as "2, 5" -- the exact ambiguity this module exists to
+ * remove. `{,}` makes it an ordinary symbol. A fraction becomes `\frac`.
+ */
+export function formatNumberTex(value: number, locale: Locale = "pt-BR", options: NumberOptions = {}): string {
+  const text = formatNumber(value, locale, options);
+  const negative = text.startsWith(MINUS);
+  const body = negative ? text.slice(MINUS.length) : text;
+  const slash = body.indexOf("/");
+  const tex =
+    slash >= 0
+      ? `\\frac{${body.slice(0, slash)}}{${body.slice(slash + 1)}}`
+      : body.replaceAll(",", "{,}");
+  return (negative ? "-" : "") + tex;
+}
+
+/** An ordered pair as TeX source: `(2;\,5)` in pt-BR. */
+export function formatPointTex(
+  x: number,
+  y: number,
+  locale: Locale = "pt-BR",
+  options: NumberOptions = {},
+): string {
+  const sep = locale === "pt-BR" ? ";\\," : ",\\,";
+  return `\\left(${formatNumberTex(x, locale, options)}${sep}${formatNumberTex(y, locale, options)}\\right)`;
+}
+
+/**
+ * Read a number back the way `formatNumber` writes it -- "−1", "0,5",
+ * "17/3" -- or null. Used by the check that a required axis number was
+ * actually printed: it has to recognise the figure's own spelling.
+ */
+export function parseNumber(text: string, locale: Locale = "pt-BR"): number | null {
+  const marks = MARKS[locale];
+  let t = text.trim().replaceAll(MINUS, "-").replaceAll("–", "-");
+  if (t === "") return null;
+  const slash = t.indexOf("/");
+  if (slash >= 0) {
+    const p = parseNumber(t.slice(0, slash), locale);
+    const q = parseNumber(t.slice(slash + 1), locale);
+    return p === null || q === null || q === 0 ? null : p / q;
+  }
+  if (marks.decimal === ",") t = t.replaceAll(".", "").replace(",", ".");
+  else t = t.replaceAll(",", "");
+  if (!/^-?\d+(\.\d+)?$/.test(t)) return null;
+  return Number(t);
+}

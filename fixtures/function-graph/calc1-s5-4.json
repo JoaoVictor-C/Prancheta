@@ -1,0 +1,43 @@
+{
+  "preset": "function-graph",
+  "title": "Resolução 5.4: posição, velocidade e aceleração",
+  "x": { "range": [-1, 5], "unit": 110, "name": "t" },
+  "y": { "range": [-14, 14], "unit": 16, "step": 2, "labelEvery": 2, "name": "" },
+  "functions": [
+    {
+      "id": "s",
+      "expr": "t^3 - 6t^2 + 9t",
+      "domain": [0, 4.3],
+      "colour": "key",
+      "label": { "text": "s", "at": 4.3, "towards": ["R", "D"], "size": 15 },
+      "legend": "s = {expr}   (posição, em m)"
+    },
+    {
+      "id": "v",
+      "expr": "3t^2 - 12t + 9",
+      "domain": [0, 4.3],
+      "colour": "ask",
+      "label": { "text": "v", "at": 4.3, "towards": ["R", "D"], "size": 15 },
+      "legend": "v = s′ = {expr}   (velocidade, em m/s)"
+    },
+    {
+      "id": "a",
+      "expr": "6t - 12",
+      "domain": [0, 4.3],
+      "colour": "warm",
+      "label": { "text": "a", "at": 4.3, "towards": ["R", "U"], "size": 15 },
+      "legend": "a = s″ = {expr}   (aceleração, em m/s²)"
+    }
+  ],
+  "guides": [
+    { "x": 1, "from": -7, "to": 14 },
+    { "x": 2, "from": -4, "to": 14 },
+    { "x": 3, "from": -4, "to": 14 }
+  ],
+  "points": [
+    { "at": { "of": "v", "x": 1 }, "colour": "ask" },
+    { "at": { "of": "v", "x": 3 }, "colour": "ask" },
+    { "at": { "of": "a", "x": 2 }, "colour": "warm" },
+    { "at": { "of": "s", "x": 1 }, "colour": "key" }
+  ]
+}

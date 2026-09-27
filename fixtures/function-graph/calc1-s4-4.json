@@ -1,0 +1,25 @@
+{
+  "preset": "function-graph",
+  "title": "Resolução 4.4: a tangente a x³ − 3x em x = 2",
+  "x": { "range": [-3, 3.5], "unit": 90 },
+  "y": { "range": [-6, 10], "unit": 24, "labelEvery": 2 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x^3 - 3x",
+      "domain": [-3, 3],
+      "label": { "text": "y = {expr}", "at": [-1.9, 4], "towards": ["L", "U"] }
+    }
+  ],
+  "lines": [
+    {
+      "id": "t",
+      "tangent": { "of": "f", "at": 2 },
+      "domain": [1, 3],
+      "label": { "text": "y = {eq}", "at": [3.05, 5], "towards": ["SE", "R", "D"] }
+    }
+  ],
+  "points": [
+    { "id": "P", "at": { "of": "f", "x": 2 }, "label": "{coords}", "towards": ["R", "SE", "D"] }
+  ]
+}

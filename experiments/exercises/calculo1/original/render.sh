@@ -1,0 +1,2 @@
+cd "/c/Joao/Programação/ProjectHub/Prancheta"
+for f in "C:/Users/JOO~1/AppData/Local/Temp/claude/C--Joao-Programa--o-ProjectHub/a1581b8a-28b3-469c-a7dd-cff3cbe3fbc0/scratchpad/calc"/specs/${1:-*}.json; do n=$(basename $f .json); echo "=== $n"; node src/cli.ts render "$f" -o "C:/Users/JOO~1/AppData/Local/Temp/claude/C--Joao-Programa--o-ProjectHub/a1581b8a-28b3-469c-a7dd-cff3cbe3fbc0/scratchpad/calc/render" --scale 2 2>&1 | grep -E "FAIL|unrepaired|repaired|elements" ; done

@@ -1,0 +1,11 @@
+{
+  "preset": "sign-chart",
+  "title": "Inequação (x − 1)(x + 2)/(x − 3) ≥ 0",
+  "expr": "(x - 1)(x + 2)/(x - 3)",
+  "factors": [
+    { "label": "x − 1", "expr": "x - 1" },
+    { "label": "x + 2", "expr": "x + 2" },
+    { "label": "x − 3", "expr": "x - 3" }
+  ],
+  "rows": [{ "row": "f", "label": "(x − 1)(x + 2)/(x − 3)" }]
+}

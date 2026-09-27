@@ -90,7 +90,7 @@ why several modules use `;` and `:` as their own delimiters instead of commas.
 | [genomic](genomic/MODULE.md) | Gene arrows on a real base-pair axis; arrow direction is strand | `dna_features_viewer` |
 | [map](map/MODULE.md) | Region and country maps, lon/lat projected to Web Mercator | `pyproj`, `shapely` |
 | [molecule](molecule/MODULE.md) | A 2D skeletal structure from SMILES — and, through its second entry point, a whole reaction scheme | `rdkit` |
-| [plot](plot/MODULE.md) | Function curves with roots and extrema, or a scatter with a least-squares fit | `numpy` |
+| [plot](plot/MODULE.md) | A scatter with a least-squares fit and its residuals (function curves moved to the `function-graph` preset) | `numpy` |
 | [skewt](skewt/MODULE.md) | A Skew-T log-P atmospheric sounding with a lifted-parcel profile and LCL | `numpy`, `metpy` |
 
 ## Inputs, per module
@@ -127,13 +127,12 @@ selecting flag is given.
 - `--smiles=CCO` — any SMILES string. Takes priority over `--name=`.
 
 ### plot
-- `function.py --name=` `quadratic` · `sine_cosine` · `damped_oscillation` ·
-  `linear_fit_demo` · `quadratic_fit_demo`
-- `function.py --functions=sin(x);x**2 --range=-6,6` — `;` between expressions,
-  `,` inside the range. Names allowed in an expression: `sin cos tan asin acos
-  atan exp log log10 sqrt abs pow pi e`.
-- `function.py --points=1,2;3,4 --fit=linear|quadratic` — `;` between points,
-  `,` inside one. Points mode takes priority over `--functions=`.
+- `fit.py --name=` `linear_fit_demo` · `quadratic_fit_demo`
+- `fit.py --points=1,2;3,4 --fit=linear|quadratic` — `;` between points, `,`
+  inside one.
+- Function curves (`--functions=`, and the old `quadratic`, `sine_cosine`,
+  `damped_oscillation` shortcuts) are refused with a pointer to the
+  `function-graph` preset, which now owns them (ADR 0025).
 
 ### molecule, second entry point: `reaction/render.py`
 - `--name=` `glucose_combustion` · `photosynthesis` · `combustion_methane` ·
@@ -195,8 +194,11 @@ as a failure.
 x axis. Declare only the first and a module whose root-finder is wrong, but
 which then plots the marker by evaluating its own curve at that wrong x, sits
 exactly on the curve and passes. Declare only the second and a marker at
-(x_wrong, 0) passes the axis test. Both together have no hiding place, and
-`modules/plot` declares both.
+(x_wrong, 0) passes the axis test. Both together have no hiding place. Roots
+now live in the core's `function-graph` preset, which declares both and checks
+them with `feature-on-its-curve`; `modules/plot` makes the same kind of claim
+about a fit -- each fitted value lies on the fit curve *and* at the end of its
+own residual.
 
 What it still cannot reach: a relation nobody states is never checked, and a
 figure whose every stated relation holds can still misrepresent its data.
@@ -238,8 +240,8 @@ everything as fine is indistinguishable from a checker that is not running, and
 `--misdeclare` is the difference: it must make `module-ids-resolve` and
 `module-geometry-agrees` fail. Each module's e2e test asserts exactly that.
 `modules/plot` plants a third defect that is a lie about *meaning* rather than
-form -- a root marker moved off the curve and axis it still claims to lie on,
-leaving a figure that is not malformed in any way -- and asserts that
+form -- a fitted value moved off the curve and the residual it still claims to
+lie on, leaving a figure that is not malformed in any way -- and asserts that
 `module-feature-on-its-stroke` names both broken halves.
 
 **The protocol's own self-test needs none of this.** Running it used to require

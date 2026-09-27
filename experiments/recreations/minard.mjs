@@ -164,14 +164,12 @@ function placeLabel(text, x, y, dirs, o = {}) {
 function resolvePlacement({ text, x, y, dirs, o }) {
   const size = o.size ?? 11;
   const tracking = o.tracking ?? 0.2;
-  // A rotated label keeps an UPRIGHT box, so the box has to be the rotated
-  // text's own bounding rectangle: big enough that `text-fits-box` sees the
-  // turned line inside it, and honest enough that the collision test -- which
-  // is exact for an upright box and only approximate for a turned one -- is
-  // reasoning about the ink that is actually there.
-  const turned = aabb(0, 0, o.width ?? est(text, size, tracking), size * 1.45 + 4, o.rotation ?? 0);
-  const w = Math.ceil(turned.hw * 2);
-  const h = Math.ceil(turned.hh * 2);
+  // The box is the label's OWN upright rectangle, the size the glyphs need.
+  // `rotateBox` turns it, so sizing it to the turned extent -- which is what
+  // this did while the box had to stay upright -- would apply the rotation
+  // twice and hand every check a footprint half again too big.
+  const w = o.width ?? est(text, size, tracking);
+  const h = size * 1.45 + 4;
   const soft = [...taken, ...(o.dodgeBands === false ? [] : bands)];
   const hard = o.dodgeReserved === false ? [] : reserved;
   const routes = dirs;
@@ -180,7 +178,9 @@ function resolvePlacement({ text, x, y, dirs, o }) {
     for (let step = 0; step <= 34; step += 1) {
       const px = x + dir.x * 5 * step;
       const py = y + dir.y * 5 * step;
-      const box = aabb(px, py, w, h, 0);
+      // The search reasons about the TURNED footprint: that is the paper a
+      // count occupies, whatever upright rectangle it is declared as.
+      const box = aabb(px, py, w, h, o.rotation ?? 0);
       // The canvas edge and a reserved region are refusals, not penalties: a
       // count is never allowed into the heading block or the temperature
       // table, however crowded its own neighbourhood is.
@@ -228,23 +228,21 @@ function label(text, x, y, o = {}) {
     strokeWidth: 0,
     wrap: text.includes("\n") ? "normal" : "none",
     textAlign: align,
-    // Without `rotateBox` the glyphs turn about the TEXT's own centre, so the
-    // line has to sit in the middle of its box or the turned ink swings out
-    // through the top of it.
+    // The line sits in the middle of its box, so the centre `rotateBox` turns
+    // box and glyphs about is also the centre of the ink -- a count reads as
+    // turned in place rather than swung off its own anchor.
     verticalAlign: "center",
     textColor: colour,
     fontFamily: italic ? `${SERIF}; font-style: italic` : SERIF,
     fontSize: size,
     fontWeight: weight,
     letterSpacing: tracking,
-    // `rotation` turns the glyphs; `rotateBox` would turn the box with them,
-    // and is deliberately NOT set. A rotated box makes `overlapsBox` back-rotate
-    // every other label's rect into this box's frame and re-bound it, which for
-    // a page-wide title against a 62-degree count is generous by a factor of
-    // thirty and reports a collision three hundred pixels away. Placement here
-    // still reasons about the ROTATED extent, so the drawing is spaced as if the
-    // box had turned; only the check sees the upright one, exactly.
-    ...(rotation === undefined ? {} : { rotation }),
+    // `rotation` turns the glyphs and `rotateBox` turns the box with them, so
+    // every check reads a count's true slanted footprint instead of the upright
+    // box it was measured in -- the same rotated extent `taken` records below,
+    // which is what keeps the drawing's spacing and the checks' verdict on one
+    // account of where a count sits.
+    ...(rotation === undefined ? {} : { rotation, rotateBox: true }),
   });
   // Every label is an obstacle for every later label, headings included --
   // otherwise a count pushed clear of its neighbours lands on the title.

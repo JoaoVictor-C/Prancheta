@@ -1,0 +1,278 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="602" height="464" viewBox="0 0 602 464">
+<title>: </title>
+<rect x="0" y="0" width="602" height="464" fill="#FCFBF7"/>
+<g id="pr-marks">
+<g id="g-grid-v-0">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-v-0" d="M 46 430 L 46 30" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-v-1">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-v-1" d="M 132 430 L 132 30" fill="none" stroke="#9AA3AE" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="g-grid-v-2">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-v-2" d="M 218 430 L 218 30" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-v-3">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-v-3" d="M 304 430 L 304 30" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-v-4">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-v-4" d="M 390 430 L 390 30" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-v-5">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-v-5" d="M 476 430 L 476 30" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-v-6">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-v-6" d="M 562 430 L 562 30" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-0">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-0" d="M 46 430 L 562 430" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-1">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-1" d="M 46 390 L 562 390" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-2">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-2" d="M 46 350 L 562 350" fill="none" stroke="#9AA3AE" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="g-grid-h-3">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-3" d="M 46 310 L 562 310" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-4">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-4" d="M 46 270 L 562 270" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-5">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-5" d="M 46 230 L 562 230" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-6">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-6" d="M 46 190 L 562 190" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-7">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-7" d="M 46 150 L 562 150" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-8">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-8" d="M 46 110 L 562 110" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-9">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-9" d="M 46 70 L 562 70" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="g-grid-h-10">
+<desc>An outline</desc>
+<path data-pr-id="g-grid-h-10" d="M 46 30 L 562 30" fill="none" stroke="#E4E8ED" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="6 4"/>
+</g>
+<g id="m1">
+<desc>An outline</desc>
+<path data-pr-id="m1" d="M 108.35 427.98 L 110.5 415.63 L 112.65 403.61 L 114.8 391.92 L 116.95 380.56 L 119.1 369.54 L 121.25 358.83 L 123.4 348.44 L 125.55 338.37 L 127.7 328.61 L 129.85 319.15 L 132 310 L 134.15 301.15 L 136.3 292.59 L 138.45 284.33 L 140.6 276.36 L 142.75 268.67 L 144.9 261.27 L 147.05 254.14 L 149.2 247.28 L 151.35 240.69 L 153.5 234.38 L 155.65 228.32 L 157.8 222.52 L 159.95 216.98 L 162.1 211.68 L 164.25 206.64 L 166.4 201.84 L 168.55 197.28 L 170.7 192.96 L 172.85 188.86 L 175 185 L 177.15 181.36 L 179.3 177.95 L 181.45 174.75 L 183.6 171.76 L 185.75 168.98 L 187.9 166.42 L 190.05 164.05 L 192.2 161.88 L 194.35 159.91 L 196.5 158.13 L 198.65 156.53 L 200.8 155.12 L 202.95 153.89 L 205.1 152.84 L 207.25 151.95 L 209.4 151.24 L 211.55 150.69 L 213.7 150.31 L 215.85 150.08 L 218 150 L 220.15 150.07 L 222.3 150.29 L 224.45 150.66 L 226.6 151.16 L 228.75 151.8 L 230.9 152.56 L 233.05 153.46 L 235.2 154.48 L 237.35 155.62 L 239.5 156.88 L 241.65 158.24 L 243.8 159.72 L 245.95 161.3 L 248.1 162.99 L 250.25 164.77 L 252.4 166.64 L 254.55 168.6 L 256.7 170.66 L 258.85 172.79 L 261 175 L 263.15 177.29 L 265.3 179.65 L 267.45 182.07 L 269.6 184.56 L 271.75 187.11 L 273.9 189.71 L 276.05 192.37 L 278.2 195.08 L 280.35 197.83 L 282.5 200.63 L 284.65 203.46 L 286.8 206.32 L 288.95 209.21 L 291.1 212.14 L 293.25 215.08 L 295.4 218.04 L 297.55 221.02 L 299.7 224.01 L 301.85 227 L 304 230 L 306.15 233 L 308.3 235.99 L 310.45 238.98 L 312.6 241.96 L 314.75 244.92 L 316.9 247.87 L 319.05 250.79 L 321.2 253.68 L 323.35 256.54 L 325.5 259.38 L 327.65 262.17 L 329.8 264.92 L 331.95 267.63 L 334.1 270.29 L 336.25 272.89 L 338.4 275.44 L 340.55 277.93 L 342.7 280.36 L 344.85 282.71 L 347 285 L 349.15 287.21 L 351.3 289.34 L 353.45 291.4 L 355.6 293.36 L 357.75 295.23 L 359.9 297.02 L 362.05 298.7 L 364.2 300.28 L 366.35 301.76 L 368.5 303.13 L 370.65 304.38 L 372.8 305.52 L 374.95 306.54 L 377.1 307.44 L 379.25 308.2 L 381.4 308.84 L 383.55 309.34 L 385.7 309.71 L 387.85 309.93 L 390 310 L 392.15 309.92 L 394.3 309.69 L 396.45 309.31 L 398.6 308.76 L 400.75 308.05 L 402.9 307.16 L 405.05 306.11 L 407.2 304.88 L 409.35 303.47 L 411.5 301.88 L 413.65 300.09 L 415.8 298.12 L 417.95 295.95 L 420.1 293.58 L 422.25 291.02 L 424.4 288.24 L 426.55 285.25 L 428.7 282.06 L 430.85 278.64 L 433 275 L 435.15 271.14 L 437.3 267.04 L 439.45 262.72 L 441.6 258.16 L 443.75 253.36 L 445.9 248.32 L 448.05 243.02 L 450.2 237.48 L 452.35 231.68 L 454.5 225.63 L 456.65 219.31 L 458.8 212.72 L 460.95 205.86 L 463.1 198.74 L 465.25 191.33 L 467.4 183.64 L 469.55 175.67 L 471.7 167.4 L 473.85 158.85 L 476 150 L 478.15 140.85 L 480.3 131.39 L 482.45 121.63 L 484.6 111.56 L 486.75 101.17 L 488.9 90.47 L 491.05 79.44 L 493.2 68.08 L 495.35 56.39 L 497.5 44.38 L 499.65 32.02" fill="none" stroke="#1D4E89" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m2">
+<desc>An outline</desc>
+<path data-pr-id="m2" d="M 140.6 150 L 141.25 150 L 141.89 150 L 142.54 150 L 143.18 150 L 143.82 150 L 144.47 150 L 145.12 150 L 145.76 150 L 146.41 150 L 147.05 150 L 147.7 150 L 148.34 150 L 148.99 150 L 149.63 150 L 150.28 150 L 150.92 150 L 151.57 150 L 152.21 150 L 152.85 150 L 153.5 150 L 154.15 150 L 154.79 150 L 155.44 150 L 156.08 150 L 156.73 150 L 157.37 150 L 158.01 150 L 158.66 150 L 159.31 150 L 159.95 150 L 160.6 150 L 161.24 150 L 161.89 150 L 162.53 150 L 163.17 150 L 163.82 150 L 164.47 150 L 165.11 150 L 165.76 150 L 166.4 150 L 167.05 150 L 167.69 150 L 168.34 150 L 168.98 150 L 169.63 150 L 170.27 150 L 170.92 150 L 171.56 150 L 172.21 150 L 172.85 150 L 173.5 150 L 174.14 150 L 174.79 150 L 175.43 150 L 176.08 150 L 176.72 150 L 177.37 150 L 178.01 150 L 178.66 150 L 179.3 150 L 179.95 150 L 180.59 150 L 181.24 150 L 181.88 150 L 182.52 150 L 183.17 150 L 183.82 150 L 184.46 150 L 185.11 150 L 185.75 150 L 186.4 150 L 187.04 150 L 187.69 150 L 188.33 150 L 188.98 150 L 189.62 150 L 190.27 150 L 190.91 150 L 191.56 150 L 192.2 150 L 192.85 150 L 193.49 150 L 194.14 150 L 194.78 150 L 195.43 150 L 196.07 150 L 196.71 150 L 197.36 150 L 198.01 150 L 198.65 150 L 199.3 150 L 199.94 150 L 200.58 150 L 201.23 150 L 201.88 150 L 202.52 150 L 203.17 150 L 203.81 150 L 204.46 150 L 205.1 150 L 205.75 150 L 206.39 150 L 207.03 150 L 207.68 150 L 208.33 150 L 208.97 150 L 209.62 150 L 210.26 150 L 210.91 150 L 211.55 150 L 212.2 150 L 212.84 150 L 213.49 150 L 214.13 150 L 214.77 150 L 215.42 150 L 216.07 150 L 216.71 150 L 217.36 150 L 218 150 L 218.65 150 L 219.29 150 L 219.94 150 L 220.58 150 L 221.23 150 L 221.87 150 L 222.52 150 L 223.16 150 L 223.81 150 L 224.45 150 L 225.1 150 L 225.74 150 L 226.39 150 L 227.03 150 L 227.68 150 L 228.32 150 L 228.96 150 L 229.61 150 L 230.26 150 L 230.9 150 L 231.55 150 L 232.19 150 L 232.84 150 L 233.48 150 L 234.13 150 L 234.77 150 L 235.42 150 L 236.06 150 L 236.71 150 L 237.35 150 L 238 150 L 238.64 150 L 239.29 150 L 239.93 150 L 240.58 150 L 241.22 150 L 241.86 150 L 242.51 150 L 243.16 150 L 243.8 150 L 244.45 150 L 245.09 150 L 245.74 150 L 246.38 150 L 247.02 150 L 247.67 150 L 248.32 150 L 248.96 150 L 249.61 150 L 250.25 150 L 250.9 150 L 251.54 150 L 252.19 150 L 252.83 150 L 253.48 150 L 254.12 150 L 254.77 150 L 255.41 150 L 256.06 150 L 256.7 150 L 257.34 150 L 257.99 150 L 258.64 150 L 259.28 150 L 259.92 150 L 260.57 150 L 261.22 150 L 261.86 150 L 262.51 150 L 263.15 150 L 263.79 150 L 264.44 150 L 265.09 150 L 265.73 150 L 266.38 150 L 267.02 150 L 267.66 150 L 268.31 150 L 268.96 150 L 269.6 150 L 270.25 150 L 270.89 150 L 271.53 150 L 272.18 150 L 272.83 150 L 273.47 150 L 274.12 150 L 274.76 150 L 275.4 150 L 276.05 150 L 276.7 150 L 277.34 150 L 277.99 150 L 278.63 150 L 279.27 150 L 279.92 150 L 280.57 150 L 281.21 150 L 281.86 150 L 282.5 150 L 283.15 150 L 283.79 150 L 284.44 150 L 285.08 150 L 285.73 150 L 286.37 150 L 287.02 150 L 287.66 150 L 288.3 150 L 288.95 150 L 289.59 150 L 290.24 150 L 290.89 150 L 291.53 150 L 292.17 150 L 292.82 150 L 293.47 150 L 294.11 150 L 294.76 150 L 295.4 150" fill="none" stroke="#0F7360" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m3">
+<desc>An outline</desc>
+<path data-pr-id="m3" d="M 312.6 310 L 313.25 310 L 313.89 310 L 314.53 310 L 315.18 310 L 315.83 310 L 316.47 310 L 317.12 310 L 317.76 310 L 318.4 310 L 319.05 310 L 319.7 310 L 320.34 310 L 320.99 310 L 321.63 310 L 322.27 310 L 322.92 310 L 323.57 310 L 324.21 310 L 324.86 310 L 325.5 310 L 326.15 310 L 326.79 310 L 327.44 310 L 328.08 310 L 328.73 310 L 329.37 310 L 330.02 310 L 330.66 310 L 331.3 310 L 331.95 310 L 332.6 310 L 333.24 310 L 333.89 310 L 334.53 310 L 335.17 310 L 335.82 310 L 336.47 310 L 337.11 310 L 337.76 310 L 338.4 310 L 339.05 310 L 339.69 310 L 340.34 310 L 340.98 310 L 341.63 310 L 342.27 310 L 342.92 310 L 343.56 310 L 344.21 310 L 344.85 310 L 345.5 310 L 346.14 310 L 346.79 310 L 347.43 310 L 348.08 310 L 348.72 310 L 349.37 310 L 350.01 310 L 350.66 310 L 351.3 310 L 351.95 310 L 352.59 310 L 353.24 310 L 353.88 310 L 354.53 310 L 355.17 310 L 355.82 310 L 356.46 310 L 357.11 310 L 357.75 310 L 358.4 310 L 359.04 310 L 359.69 310 L 360.33 310 L 360.98 310 L 361.62 310 L 362.27 310 L 362.91 310 L 363.55 310 L 364.2 310 L 364.85 310 L 365.49 310 L 366.14 310 L 366.78 310 L 367.42 310 L 368.07 310 L 368.72 310 L 369.36 310 L 370.01 310 L 370.65 310 L 371.29 310 L 371.94 310 L 372.59 310 L 373.23 310 L 373.88 310 L 374.52 310 L 375.17 310 L 375.81 310 L 376.46 310 L 377.1 310 L 377.75 310 L 378.39 310 L 379.04 310 L 379.68 310 L 380.33 310 L 380.97 310 L 381.62 310 L 382.26 310 L 382.91 310 L 383.55 310 L 384.2 310 L 384.84 310 L 385.49 310 L 386.13 310 L 386.78 310 L 387.42 310 L 388.07 310 L 388.71 310 L 389.36 310 L 390 310 L 390.65 310 L 391.29 310 L 391.94 310 L 392.58 310 L 393.23 310 L 393.87 310 L 394.52 310 L 395.16 310 L 395.81 310 L 396.45 310 L 397.1 310 L 397.74 310 L 398.39 310 L 399.03 310 L 399.68 310 L 400.32 310 L 400.97 310 L 401.61 310 L 402.26 310 L 402.9 310 L 403.54 310 L 404.19 310 L 404.84 310 L 405.48 310 L 406.13 310 L 406.77 310 L 407.42 310 L 408.06 310 L 408.71 310 L 409.35 310 L 410 310 L 410.64 310 L 411.29 310 L 411.93 310 L 412.58 310 L 413.22 310 L 413.87 310 L 414.51 310 L 415.16 310 L 415.8 310 L 416.45 310 L 417.09 310 L 417.73 310 L 418.38 310 L 419.03 310 L 419.67 310 L 420.32 310 L 420.96 310 L 421.6 310 L 422.25 310 L 422.9 310 L 423.54 310 L 424.19 310 L 424.83 310 L 425.48 310 L 426.12 310 L 426.77 310 L 427.41 310 L 428.06 310 L 428.7 310 L 429.35 310 L 429.99 310 L 430.64 310 L 431.28 310 L 431.93 310 L 432.57 310 L 433.22 310 L 433.86 310 L 434.51 310 L 435.15 310 L 435.79 310 L 436.44 310 L 437.09 310 L 437.73 310 L 438.38 310 L 439.02 310 L 439.67 310 L 440.31 310 L 440.96 310 L 441.6 310 L 442.25 310 L 442.89 310 L 443.54 310 L 444.18 310 L 444.83 310 L 445.47 310 L 446.12 310 L 446.76 310 L 447.41 310 L 448.05 310 L 448.7 310 L 449.34 310 L 449.98 310 L 450.63 310 L 451.28 310 L 451.92 310 L 452.57 310 L 453.21 310 L 453.85 310 L 454.5 310 L 455.15 310 L 455.79 310 L 456.44 310 L 457.08 310 L 457.73 310 L 458.37 310 L 459.02 310 L 459.66 310 L 460.31 310 L 460.95 310 L 461.6 310 L 462.24 310 L 462.89 310 L 463.53 310 L 464.18 310 L 464.82 310 L 465.47 310 L 466.11 310 L 466.76 310 L 467.4 310" fill="none" stroke="#0F7360" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+</g>
+<g id="m4">
+<desc>A filled region</desc>
+<path data-pr-id="m4" d="M 223 150 L 222.83 148.71 L 222.33 147.5 L 221.54 146.46 L 220.5 145.67 L 219.29 145.17 L 218 145 L 216.71 145.17 L 215.5 145.67 L 214.46 146.46 L 213.67 147.5 L 213.17 148.71 L 213 150 L 213.17 151.29 L 213.67 152.5 L 214.46 153.54 L 215.5 154.33 L 216.71 154.83 L 218 155 L 219.29 154.83 L 220.5 154.33 L 221.54 153.54 L 222.33 152.5 L 222.83 151.29 L 223 150 Z" fill="#181B21" stroke="none"/>
+</g>
+<g id="m5">
+<desc>A filled region</desc>
+<path data-pr-id="m5" d="M 395 310 L 394.83 308.71 L 394.33 307.5 L 393.54 306.46 L 392.5 305.67 L 391.29 305.17 L 390 305 L 388.71 305.17 L 387.5 305.67 L 386.46 306.46 L 385.67 307.5 L 385.17 308.71 L 385 310 L 385.17 311.29 L 385.67 312.5 L 386.46 313.54 L 387.5 314.33 L 388.71 314.83 L 390 315 L 391.29 314.83 L 392.5 314.33 L 393.54 313.54 L 394.33 312.5 L 394.83 311.29 L 395 310 Z" fill="#181B21" stroke="none"/>
+</g>
+</g>
+<g id="pr-boxes">
+<g id="t9">
+<title>0</title>
+<rect data-pr-id="t9" x="104.89" y="366.09" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t10">
+<title>−1</title>
+<rect data-pr-id="t10" x="38.5" y="354.5" width="15" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t11">
+<title>1</title>
+<rect data-pr-id="t11" x="213.5" y="354.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t12">
+<title>2</title>
+<rect data-pr-id="t12" x="299.5" y="354.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t13">
+<title>3</title>
+<rect data-pr-id="t13" x="385.5" y="354.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t14">
+<title>4</title>
+<rect data-pr-id="t14" x="471.5" y="354.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t15">
+<title>5</title>
+<rect data-pr-id="t15" x="557.5" y="354.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t16">
+<title>−2</title>
+<rect data-pr-id="t16" x="91" y="420.5" width="15" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t17">
+<title>−1</title>
+<rect data-pr-id="t17" x="88" y="380.5" width="15" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t18">
+<title>1</title>
+<rect data-pr-id="t18" x="115" y="300.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t19">
+<title>2</title>
+<rect data-pr-id="t19" x="115" y="260.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t20">
+<title>3</title>
+<rect data-pr-id="t20" x="115" y="220.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t21">
+<title>4</title>
+<rect data-pr-id="t21" x="115" y="180.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t22">
+<title>5</title>
+<rect data-pr-id="t22" x="115" y="140.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t23">
+<title>6</title>
+<rect data-pr-id="t23" x="115" y="100.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t24">
+<title>7</title>
+<rect data-pr-id="t24" x="115" y="60.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t25">
+<title>8</title>
+<rect data-pr-id="t25" x="115" y="20.5" width="9" height="19" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t6">
+<title>(1; 5)</title>
+<rect data-pr-id="t6" x="189" y="114" width="58" height="24" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t7">
+<title>(3; 1)</title>
+<rect data-pr-id="t7" x="361" y="322" width="58" height="24" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t8">
+<title>f′ = 0</title>
+<rect data-pr-id="t8" x="266.39" y="122" width="58" height="24" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t26">
+<title>x</title>
+<rect data-pr-id="t26" x="566.5" y="325.5" width="19" height="25" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="t27">
+<title>y</title>
+<rect data-pr-id="t27" x="138.5" y="21.5" width="19" height="25" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+</g>
+<g id="pr-text">
+<g id="t9--label">
+<desc>Labels t9</desc>
+<text data-pr-id="t9--label" x="109.39" y="379.63" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">0</text>
+</g>
+<g id="t10--label">
+<desc>Labels t10</desc>
+<text data-pr-id="t10--label" x="46" y="368.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">−1</text>
+</g>
+<g id="t11--label">
+<desc>Labels t11</desc>
+<text data-pr-id="t11--label" x="218" y="368.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">1</text>
+</g>
+<g id="t12--label">
+<desc>Labels t12</desc>
+<text data-pr-id="t12--label" x="304" y="368.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">2</text>
+</g>
+<g id="t13--label">
+<desc>Labels t13</desc>
+<text data-pr-id="t13--label" x="390" y="368.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">3</text>
+</g>
+<g id="t14--label">
+<desc>Labels t14</desc>
+<text data-pr-id="t14--label" x="476" y="368.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">4</text>
+</g>
+<g id="t15--label">
+<desc>Labels t15</desc>
+<text data-pr-id="t15--label" x="562" y="368.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">5</text>
+</g>
+<g id="t16--label">
+<desc>Labels t16</desc>
+<text data-pr-id="t16--label" x="98.5" y="434.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">−2</text>
+</g>
+<g id="t17--label">
+<desc>Labels t17</desc>
+<text data-pr-id="t17--label" x="95.5" y="394.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">−1</text>
+</g>
+<g id="t18--label">
+<desc>Labels t18</desc>
+<text data-pr-id="t18--label" x="119.5" y="314.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">1</text>
+</g>
+<g id="t19--label">
+<desc>Labels t19</desc>
+<text data-pr-id="t19--label" x="119.5" y="274.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">2</text>
+</g>
+<g id="t20--label">
+<desc>Labels t20</desc>
+<text data-pr-id="t20--label" x="119.5" y="234.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">3</text>
+</g>
+<g id="t21--label">
+<desc>Labels t21</desc>
+<text data-pr-id="t21--label" x="119.5" y="194.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">4</text>
+</g>
+<g id="t22--label">
+<desc>Labels t22</desc>
+<text data-pr-id="t22--label" x="119.5" y="154.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">5</text>
+</g>
+<g id="t23--label">
+<desc>Labels t23</desc>
+<text data-pr-id="t23--label" x="119.5" y="114.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">6</text>
+</g>
+<g id="t24--label">
+<desc>Labels t24</desc>
+<text data-pr-id="t24--label" x="119.5" y="74.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">7</text>
+</g>
+<g id="t25--label">
+<desc>Labels t25</desc>
+<text data-pr-id="t25--label" x="119.5" y="34.03" font-family="&quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="11" letter-spacing="0.1" fill="rgb(94, 103, 115)" text-anchor="middle" xml:space="preserve">8</text>
+</g>
+<g id="t6--label">
+<desc>Labels t6</desc>
+<text data-pr-id="t6--label" x="218" y="130.84" font-family="&quot;Segoe UI Semibold&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="0.1" fill="rgb(24, 27, 33)" text-anchor="middle" xml:space="preserve">(1; 5)</text>
+</g>
+<g id="t7--label">
+<desc>Labels t7</desc>
+<text data-pr-id="t7--label" x="390" y="338.84" font-family="&quot;Segoe UI Semibold&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="0.1" fill="rgb(24, 27, 33)" text-anchor="middle" xml:space="preserve">(3; 1)</text>
+</g>
+<g id="t8--label">
+<desc>Labels t8</desc>
+<text data-pr-id="t8--label" x="295.38" y="138.84" font-family="&quot;Segoe UI Semibold&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="14" font-weight="600" letter-spacing="0.1" fill="rgb(15, 115, 96)" text-anchor="middle" xml:space="preserve">f′ = 0</text>
+</g>
+<g id="t26--label">
+<desc>Labels t26</desc>
+<text data-pr-id="t26--label" x="575.99" y="343.13" font-family="&quot;Palatino Linotype&quot;, &quot;Book Antiqua&quot;, Georgia, &quot;Times New Roman&quot;, serif" font-size="15" font-weight="600" letter-spacing="0.1" fill="rgb(78, 87, 99)" text-anchor="middle" xml:space="preserve">x</text>
+</g>
+<g id="t27--label">
+<desc>Labels t27</desc>
+<text data-pr-id="t27--label" x="147.99" y="39.13" font-family="&quot;Palatino Linotype&quot;, &quot;Book Antiqua&quot;, Georgia, &quot;Times New Roman&quot;, serif" font-size="15" font-weight="600" letter-spacing="0.1" fill="rgb(78, 87, 99)" text-anchor="middle" xml:space="preserve">y</text>
+</g>
+</g>
+</svg>

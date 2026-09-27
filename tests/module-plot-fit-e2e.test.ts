@@ -1,7 +1,7 @@
 /**
  * SLOW end-to-end module test.
  *
- * Spawns the real Python function-plot module (modules/plot/function.py) and
+ * Spawns the real Python least-squares module (modules/plot/fit.py) and
  * verifies its output with a real Chromium instance via runAndVerifyModule.
  * Mirrors the shape of the other module e2e tests in this directory.
  *
@@ -19,50 +19,27 @@ function assertNumpyAvailable(): void {
   const probe = spawnSync("python", ["-c", "import numpy"], { encoding: "utf8" });
   if (probe.error) {
     assert.fail(
-      `python is not available on PATH (required for modules/plot/function.py): ${probe.error.message}`,
+      `python is not available on PATH (required for modules/plot/fit.py): ${probe.error.message}`,
     );
   }
   if (probe.status !== 0) {
     assert.fail(
-      `python is on PATH but cannot import numpy, needed by modules/plot/function.py: ` +
+      `python is on PATH but cannot import numpy, needed by modules/plot/fit.py: ` +
         `${probe.stderr || probe.stdout}`,
     );
   }
 }
 
 test(
-  "honest run (sine_cosine): two overlaid curves, every check passes or is not-applicable",
+  "function curves are refused with a pointer to function-graph (ADR 0025)",
   { timeout: TIMEOUT_MS },
-  async () => {
+  () => {
     assertNumpyAvailable();
-
-    const { output, verification } = await runAndVerifyModule({
-      command: "python",
-      args: ["modules/plot/function.py", "--name=sine_cosine"],
-      input: { width: 760, height: 470 },
-      timeoutMs: TIMEOUT_MS,
-    });
-
-    for (const check of verification.checks) {
-      assert.ok(
-        check.status === "pass" || check.status === "not-applicable",
-        `expected pass/not-applicable, got ${check.status} for ${check.id}: ${check.detail}`,
-      );
+    for (const args of [["--name=sine_cosine"], ["--functions=sin(x)"]]) {
+      const run = spawnSync("python", ["modules/plot/fit.py", ...args], { input: "{}", encoding: "utf8" });
+      assert.notEqual(run.status, 0);
+      assert.match(run.stderr, /function-graph preset/);
     }
-
-    const measuredById = new Map(verification.measured.map((m) => [m.id, m]));
-    for (const element of output.elements) {
-      const measured = measuredById.get(element.id);
-      assert.ok(measured, `declared element ${element.id} should appear in verification.measured`);
-      assert.equal(measured!.found, true, `declared element ${element.id} should resolve (found: true)`);
-    }
-
-    // sin and cos both have roots and extrema in range -- a real,
-    // numerically-found annotation, not just the two curves themselves.
-    const roots = output.elements.filter((e) => e.id.startsWith("root-"));
-    const extrema = output.elements.filter((e) => e.id.startsWith("extremum-"));
-    assert.ok(roots.length > 0, "sine_cosine should find at least one root");
-    assert.ok(extrema.length > 0, "sine_cosine should find at least one extremum");
   },
 );
 
@@ -74,7 +51,7 @@ test(
 
     const { output, verification } = await runAndVerifyModule({
       command: "python",
-      args: ["modules/plot/function.py", "--name=linear_fit_demo"],
+      args: ["modules/plot/fit.py", "--name=linear_fit_demo"],
       input: { width: 760, height: 470 },
       timeoutMs: TIMEOUT_MS,
     });
@@ -86,6 +63,13 @@ test(
 
     const fitCurve = output.elements.find((e) => e.id === "fit-curve");
     assert.ok(fitCurve, "fit-curve must be declared");
+    // Every fitted value claims the curve; the ones with a visible residual
+    // claim that too -- the conjunction the meaning check measures.
+    const fitted = output.elements.filter((e) => e.id.startsWith("fitted-"));
+    assert.equal(fitted.length, 6);
+    assert.ok(fitted.some((e) => e.on?.length === 2), "at least one fitted value claims curve AND residual");
+    const onStroke = verification.checks.find((c) => c.id === "module-feature-on-its-stroke")!;
+    assert.equal(onStroke.status, "pass", onStroke.detail);
     assert.match(fitCurve!.claim ?? "", /R\^2=0\.9/, "near-linear demo data should fit with R^2 close to 1");
   },
 );
@@ -98,7 +82,7 @@ test(
 
     const { verification } = await runAndVerifyModule({
       command: "python",
-      args: ["modules/plot/function.py", "--misdeclare"],
+      args: ["modules/plot/fit.py", "--misdeclare"],
       input: { width: 760, height: 470 },
       timeoutMs: TIMEOUT_MS,
     });
@@ -118,19 +102,19 @@ test(
     assert.ok(geometryAgrees, "module-geometry-agrees check must be present");
     assert.equal(geometryAgrees!.status, "fail");
 
-    // The planted defect that is a lie about MEANING rather than form: the
-    // root marker is moved off the curve and the axis it still claims to lie
-    // on. Nothing is malformed afterwards, so this is the one defect in the
+    // The planted defect that is a lie about MEANING rather than form: a
+    // fitted value is moved off the curve and the residual it still claims to
+    // lie on. Nothing is malformed afterwards, so this is the one defect in the
     // figure that no other check in the set can see.
     const onStroke = verification.checks.find((c) => c.id === "module-feature-on-its-stroke");
     assert.ok(onStroke, "module-feature-on-its-stroke check must be present");
     assert.equal(onStroke!.status, "fail");
     assert.ok(
-      onStroke!.detail?.includes("does not lie on curve-0"),
+      onStroke!.detail?.includes("does not lie on fit-curve"),
       `expected the broken curve relation to be named: ${onStroke!.detail}`,
     );
     assert.ok(
-      onStroke!.detail?.includes("does not lie on axis-x"),
+      /does not lie on residual-\d/.test(onStroke!.detail ?? ""),
       `both halves of the conjunction must be reported, not just the first: ${onStroke!.detail}`,
     );
   },

@@ -1,0 +1,25 @@
+{
+  "preset": "function-graph",
+  "title": "Resolução 4.6: x² + x e a reta y = 3x − 1",
+  "x": { "range": [-3, 3.5], "unit": 86 },
+  "y": { "range": [-2, 9], "unit": 34 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x^2 + x",
+      "domain": [-3, 3],
+      "label": { "text": "y = {expr}", "at": [-2.2, 3.5], "towards": ["L", "R", "U"] }
+    }
+  ],
+  "lines": [
+    {
+      "id": "t",
+      "tangent": { "of": "f", "at": 1 },
+      "domain": [-0.3, 3],
+      "label": { "text": "y = {eq}", "at": [2.85, 5.6], "towards": ["SE", "R", "D"] }
+    }
+  ],
+  "points": [
+    { "id": "P", "at": { "of": "f", "x": 1 }, "label": "{coords}", "towards": ["SE", "R", "D"] }
+  ]
+}

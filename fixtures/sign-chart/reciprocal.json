@@ -1,0 +1,6 @@
+{
+  "preset": "sign-chart",
+  "title": "Quadro de sinais de f(x) = 1/x",
+  "expr": "1/x",
+  "rows": ["f", { "row": "f'", "label": "f′(x) = −1/x²" }, "variation"]
+}

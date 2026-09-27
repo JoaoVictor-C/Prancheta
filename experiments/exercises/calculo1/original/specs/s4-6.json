@@ -1,0 +1,3379 @@
+{
+  "version": 1,
+  "title": ": ",
+  "canvas": {
+    "padding": 0,
+    "background": "#FCFBF7",
+    "theme": "print"
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 645,
+    "height": 438,
+    "frames": [
+      {
+        "id": "g",
+        "origin": {
+          "x": 304,
+          "y": 336
+        },
+        "xUnit": 86,
+        "yUnit": 34,
+        "grid": {
+          "stroke": "#E4E8ED",
+          "axisStroke": "#9AA3AE",
+          "labelColor": "#5E6773",
+          "lineStyle": "dashed",
+          "x": {
+            "from": -3,
+            "to": 3.5,
+            "step": 1,
+            "labelEvery": 1
+          },
+          "y": {
+            "from": -2,
+            "to": 9,
+            "step": 1,
+            "labelEvery": 1
+          },
+          "axes": true,
+          "labels": false
+        }
+      }
+    ],
+    "children": [
+      {
+        "type": "block",
+        "id": "t7",
+        "label": "0",
+        "x": 289.5,
+        "y": 339.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t8",
+        "label": "−3",
+        "x": 38.5,
+        "y": 340.5,
+        "width": 15,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t9",
+        "label": "−2",
+        "x": 124.5,
+        "y": 340.5,
+        "width": 15,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t10",
+        "label": "−1",
+        "x": 210.5,
+        "y": 340.5,
+        "width": 15,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t11",
+        "label": "1",
+        "x": 385.5,
+        "y": 340.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t12",
+        "label": "2",
+        "x": 471.5,
+        "y": 340.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t13",
+        "label": "3",
+        "x": 557.5,
+        "y": 340.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t14",
+        "label": "−2",
+        "x": 260,
+        "y": 394.5,
+        "width": 15,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t15",
+        "label": "−1",
+        "x": 281,
+        "y": 360.5,
+        "width": 15,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t16",
+        "label": "1",
+        "x": 287,
+        "y": 292.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t17",
+        "label": "2",
+        "x": 287,
+        "y": 258.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t18",
+        "label": "3",
+        "x": 287,
+        "y": 224.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t19",
+        "label": "4",
+        "x": 287,
+        "y": 190.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t20",
+        "label": "5",
+        "x": 287,
+        "y": 156.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t21",
+        "label": "6",
+        "x": 287,
+        "y": 122.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t22",
+        "label": "7",
+        "x": 287,
+        "y": 88.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t23",
+        "label": "8",
+        "x": 287,
+        "y": 54.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t24",
+        "label": "9",
+        "x": 287,
+        "y": 20.5,
+        "width": 9,
+        "height": 19,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#5E6773",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 11,
+        "fontWeight": 400,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t4",
+        "label": "(1; 2)",
+        "x": 386.2,
+        "y": 281.2,
+        "width": 58,
+        "height": 24,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#181B21",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 14,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t5",
+        "label": "y = 3x − 1",
+        "x": 508.30000000000007,
+        "y": 137.8,
+        "width": 90,
+        "height": 24,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#0F7360",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 14,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t6",
+        "label": "y = x² + x",
+        "x": 111.79999999999998,
+        "y": 205,
+        "width": 90,
+        "height": 24,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#1D4E89",
+        "fontFamily": "Segoe UI, Noto Sans, system-ui, sans-serif",
+        "fontSize": 14,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t25",
+        "label": "x",
+        "x": 609.5,
+        "y": 311.5,
+        "width": 19,
+        "height": 25,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 15,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      },
+      {
+        "type": "block",
+        "id": "t26",
+        "label": "y",
+        "x": 310.5,
+        "y": 21.5,
+        "width": 19,
+        "height": 25,
+        "padding": 0,
+        "fill": "transparent",
+        "stroke": "transparent",
+        "strokeWidth": 0,
+        "wrap": "none",
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "textColor": "#4E5763",
+        "fontFamily": "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif",
+        "fontSize": 15,
+        "fontWeight": 600,
+        "letterSpacing": 0.1
+      }
+    ],
+    "connectors": [],
+    "marks": [
+      {
+        "id": "m1",
+        "from": {
+          "x": 46,
+          "y": 132
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 48.150000000000006,
+              "y": 136.22874999999996
+            }
+          },
+          {
+            "line": {
+              "x": 50.29999999999998,
+              "y": 140.415
+            }
+          },
+          {
+            "line": {
+              "x": 52.45000000000002,
+              "y": 144.55875000000003
+            }
+          },
+          {
+            "line": {
+              "x": 54.599999999999994,
+              "y": 148.66
+            }
+          },
+          {
+            "line": {
+              "x": 56.75,
+              "y": 152.71875
+            }
+          },
+          {
+            "line": {
+              "x": 58.900000000000006,
+              "y": 156.73499999999996
+            }
+          },
+          {
+            "line": {
+              "x": 61.04999999999998,
+              "y": 160.70874999999998
+            }
+          },
+          {
+            "line": {
+              "x": 63.20000000000002,
+              "y": 164.64000000000004
+            }
+          },
+          {
+            "line": {
+              "x": 65.35,
+              "y": 168.52875
+            }
+          },
+          {
+            "line": {
+              "x": 67.5,
+              "y": 172.375
+            }
+          },
+          {
+            "line": {
+              "x": 69.65,
+              "y": 176.17874999999998
+            }
+          },
+          {
+            "line": {
+              "x": 71.79999999999998,
+              "y": 179.93999999999997
+            }
+          },
+          {
+            "line": {
+              "x": 73.95000000000002,
+              "y": 183.65875000000003
+            }
+          },
+          {
+            "line": {
+              "x": 76.1,
+              "y": 187.33499999999998
+            }
+          },
+          {
+            "line": {
+              "x": 78.25,
+              "y": 190.96875
+            }
+          },
+          {
+            "line": {
+              "x": 80.4,
+              "y": 194.56
+            }
+          },
+          {
+            "line": {
+              "x": 82.54999999999998,
+              "y": 198.10874999999996
+            }
+          },
+          {
+            "line": {
+              "x": 84.70000000000002,
+              "y": 201.615
+            }
+          },
+          {
+            "line": {
+              "x": 86.85,
+              "y": 205.07875
+            }
+          },
+          {
+            "line": {
+              "x": 89,
+              "y": 208.5
+            }
+          },
+          {
+            "line": {
+              "x": 91.15,
+              "y": 211.87875
+            }
+          },
+          {
+            "line": {
+              "x": 93.29999999999998,
+              "y": 215.21499999999997
+            }
+          },
+          {
+            "line": {
+              "x": 95.45000000000002,
+              "y": 218.50875000000002
+            }
+          },
+          {
+            "line": {
+              "x": 97.6,
+              "y": 221.76
+            }
+          },
+          {
+            "line": {
+              "x": 99.75,
+              "y": 224.96875
+            }
+          },
+          {
+            "line": {
+              "x": 101.9,
+              "y": 228.135
+            }
+          },
+          {
+            "line": {
+              "x": 104.04999999999998,
+              "y": 231.25875
+            }
+          },
+          {
+            "line": {
+              "x": 106.20000000000002,
+              "y": 234.34000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 108.35,
+              "y": 237.37875000000003
+            }
+          },
+          {
+            "line": {
+              "x": 110.5,
+              "y": 240.375
+            }
+          },
+          {
+            "line": {
+              "x": 112.65,
+              "y": 243.32874999999999
+            }
+          },
+          {
+            "line": {
+              "x": 114.79999999999998,
+              "y": 246.23999999999998
+            }
+          },
+          {
+            "line": {
+              "x": 116.95000000000002,
+              "y": 249.10875000000004
+            }
+          },
+          {
+            "line": {
+              "x": 119.1,
+              "y": 251.935
+            }
+          },
+          {
+            "line": {
+              "x": 121.25,
+              "y": 254.71875
+            }
+          },
+          {
+            "line": {
+              "x": 123.4,
+              "y": 257.46
+            }
+          },
+          {
+            "line": {
+              "x": 125.54999999999998,
+              "y": 260.15874999999994
+            }
+          },
+          {
+            "line": {
+              "x": 127.70000000000002,
+              "y": 262.815
+            }
+          },
+          {
+            "line": {
+              "x": 129.85,
+              "y": 265.42875
+            }
+          },
+          {
+            "line": {
+              "x": 132,
+              "y": 268
+            }
+          },
+          {
+            "line": {
+              "x": 134.15,
+              "y": 270.52875
+            }
+          },
+          {
+            "line": {
+              "x": 136.3,
+              "y": 273.015
+            }
+          },
+          {
+            "line": {
+              "x": 138.45,
+              "y": 275.45875
+            }
+          },
+          {
+            "line": {
+              "x": 140.6,
+              "y": 277.86
+            }
+          },
+          {
+            "line": {
+              "x": 142.75,
+              "y": 280.21875
+            }
+          },
+          {
+            "line": {
+              "x": 144.9,
+              "y": 282.53499999999997
+            }
+          },
+          {
+            "line": {
+              "x": 147.05,
+              "y": 284.80875000000003
+            }
+          },
+          {
+            "line": {
+              "x": 149.2,
+              "y": 287.03999999999996
+            }
+          },
+          {
+            "line": {
+              "x": 151.35,
+              "y": 289.22875
+            }
+          },
+          {
+            "line": {
+              "x": 153.5,
+              "y": 291.375
+            }
+          },
+          {
+            "line": {
+              "x": 155.65,
+              "y": 293.47875
+            }
+          },
+          {
+            "line": {
+              "x": 157.8,
+              "y": 295.54
+            }
+          },
+          {
+            "line": {
+              "x": 159.95,
+              "y": 297.55875000000003
+            }
+          },
+          {
+            "line": {
+              "x": 162.1,
+              "y": 299.535
+            }
+          },
+          {
+            "line": {
+              "x": 164.25,
+              "y": 301.46875
+            }
+          },
+          {
+            "line": {
+              "x": 166.4,
+              "y": 303.36
+            }
+          },
+          {
+            "line": {
+              "x": 168.55,
+              "y": 305.20875
+            }
+          },
+          {
+            "line": {
+              "x": 170.7,
+              "y": 307.015
+            }
+          },
+          {
+            "line": {
+              "x": 172.85,
+              "y": 308.77875
+            }
+          },
+          {
+            "line": {
+              "x": 175,
+              "y": 310.5
+            }
+          },
+          {
+            "line": {
+              "x": 177.14999999999998,
+              "y": 312.17875
+            }
+          },
+          {
+            "line": {
+              "x": 179.3,
+              "y": 313.815
+            }
+          },
+          {
+            "line": {
+              "x": 181.45,
+              "y": 315.40875
+            }
+          },
+          {
+            "line": {
+              "x": 183.60000000000002,
+              "y": 316.96
+            }
+          },
+          {
+            "line": {
+              "x": 185.75,
+              "y": 318.46875
+            }
+          },
+          {
+            "line": {
+              "x": 187.89999999999998,
+              "y": 319.935
+            }
+          },
+          {
+            "line": {
+              "x": 190.05,
+              "y": 321.35875
+            }
+          },
+          {
+            "line": {
+              "x": 192.2,
+              "y": 322.74
+            }
+          },
+          {
+            "line": {
+              "x": 194.35000000000002,
+              "y": 324.07875
+            }
+          },
+          {
+            "line": {
+              "x": 196.5,
+              "y": 325.375
+            }
+          },
+          {
+            "line": {
+              "x": 198.64999999999998,
+              "y": 326.62874999999997
+            }
+          },
+          {
+            "line": {
+              "x": 200.8,
+              "y": 327.84
+            }
+          },
+          {
+            "line": {
+              "x": 202.95,
+              "y": 329.00875
+            }
+          },
+          {
+            "line": {
+              "x": 205.10000000000002,
+              "y": 330.135
+            }
+          },
+          {
+            "line": {
+              "x": 207.25,
+              "y": 331.21875
+            }
+          },
+          {
+            "line": {
+              "x": 209.39999999999998,
+              "y": 332.26
+            }
+          },
+          {
+            "line": {
+              "x": 211.55,
+              "y": 333.25875
+            }
+          },
+          {
+            "line": {
+              "x": 213.7,
+              "y": 334.215
+            }
+          },
+          {
+            "line": {
+              "x": 215.85000000000002,
+              "y": 335.12875
+            }
+          },
+          {
+            "line": {
+              "x": 218,
+              "y": 336
+            }
+          },
+          {
+            "line": {
+              "x": 220.14999999999998,
+              "y": 336.82875
+            }
+          },
+          {
+            "line": {
+              "x": 222.29999999999998,
+              "y": 337.615
+            }
+          },
+          {
+            "line": {
+              "x": 224.45000000000002,
+              "y": 338.35875
+            }
+          },
+          {
+            "line": {
+              "x": 226.60000000000002,
+              "y": 339.06
+            }
+          },
+          {
+            "line": {
+              "x": 228.75,
+              "y": 339.71875
+            }
+          },
+          {
+            "line": {
+              "x": 230.89999999999998,
+              "y": 340.335
+            }
+          },
+          {
+            "line": {
+              "x": 233.04999999999998,
+              "y": 340.90875
+            }
+          },
+          {
+            "line": {
+              "x": 235.20000000000002,
+              "y": 341.44
+            }
+          },
+          {
+            "line": {
+              "x": 237.35000000000002,
+              "y": 341.92875
+            }
+          },
+          {
+            "line": {
+              "x": 239.5,
+              "y": 342.375
+            }
+          },
+          {
+            "line": {
+              "x": 241.64999999999998,
+              "y": 342.77875
+            }
+          },
+          {
+            "line": {
+              "x": 243.79999999999998,
+              "y": 343.14
+            }
+          },
+          {
+            "line": {
+              "x": 245.95000000000002,
+              "y": 343.45875
+            }
+          },
+          {
+            "line": {
+              "x": 248.10000000000002,
+              "y": 343.735
+            }
+          },
+          {
+            "line": {
+              "x": 250.25,
+              "y": 343.96875
+            }
+          },
+          {
+            "line": {
+              "x": 252.39999999999998,
+              "y": 344.16
+            }
+          },
+          {
+            "line": {
+              "x": 254.54999999999998,
+              "y": 344.30875
+            }
+          },
+          {
+            "line": {
+              "x": 256.70000000000005,
+              "y": 344.415
+            }
+          },
+          {
+            "line": {
+              "x": 258.85,
+              "y": 344.47875
+            }
+          },
+          {
+            "line": {
+              "x": 261,
+              "y": 344.5
+            }
+          },
+          {
+            "line": {
+              "x": 263.15,
+              "y": 344.47875
+            }
+          },
+          {
+            "line": {
+              "x": 265.29999999999995,
+              "y": 344.415
+            }
+          },
+          {
+            "line": {
+              "x": 267.45000000000005,
+              "y": 344.30875
+            }
+          },
+          {
+            "line": {
+              "x": 269.6,
+              "y": 344.16
+            }
+          },
+          {
+            "line": {
+              "x": 271.75,
+              "y": 343.96875
+            }
+          },
+          {
+            "line": {
+              "x": 273.9,
+              "y": 343.735
+            }
+          },
+          {
+            "line": {
+              "x": 276.04999999999995,
+              "y": 343.45875
+            }
+          },
+          {
+            "line": {
+              "x": 278.20000000000005,
+              "y": 343.14
+            }
+          },
+          {
+            "line": {
+              "x": 280.35,
+              "y": 342.77875
+            }
+          },
+          {
+            "line": {
+              "x": 282.5,
+              "y": 342.375
+            }
+          },
+          {
+            "line": {
+              "x": 284.65,
+              "y": 341.92875
+            }
+          },
+          {
+            "line": {
+              "x": 286.79999999999995,
+              "y": 341.44
+            }
+          },
+          {
+            "line": {
+              "x": 288.95,
+              "y": 340.90875
+            }
+          },
+          {
+            "line": {
+              "x": 291.1,
+              "y": 340.335
+            }
+          },
+          {
+            "line": {
+              "x": 293.25,
+              "y": 339.71875
+            }
+          },
+          {
+            "line": {
+              "x": 295.4,
+              "y": 339.06
+            }
+          },
+          {
+            "line": {
+              "x": 297.55,
+              "y": 338.35875
+            }
+          },
+          {
+            "line": {
+              "x": 299.7,
+              "y": 337.615
+            }
+          },
+          {
+            "line": {
+              "x": 301.85,
+              "y": 336.82875
+            }
+          },
+          {
+            "line": {
+              "x": 304,
+              "y": 336
+            }
+          },
+          {
+            "line": {
+              "x": 306.15,
+              "y": 335.12875
+            }
+          },
+          {
+            "line": {
+              "x": 308.3,
+              "y": 334.21500000000003
+            }
+          },
+          {
+            "line": {
+              "x": 310.45,
+              "y": 333.25875
+            }
+          },
+          {
+            "line": {
+              "x": 312.6,
+              "y": 332.26
+            }
+          },
+          {
+            "line": {
+              "x": 314.75,
+              "y": 331.21875
+            }
+          },
+          {
+            "line": {
+              "x": 316.9,
+              "y": 330.135
+            }
+          },
+          {
+            "line": {
+              "x": 319.05,
+              "y": 329.00875
+            }
+          },
+          {
+            "line": {
+              "x": 321.20000000000005,
+              "y": 327.84
+            }
+          },
+          {
+            "line": {
+              "x": 323.35,
+              "y": 326.62874999999997
+            }
+          },
+          {
+            "line": {
+              "x": 325.5,
+              "y": 325.375
+            }
+          },
+          {
+            "line": {
+              "x": 327.65,
+              "y": 324.07875
+            }
+          },
+          {
+            "line": {
+              "x": 329.79999999999995,
+              "y": 322.74
+            }
+          },
+          {
+            "line": {
+              "x": 331.95000000000005,
+              "y": 321.35875
+            }
+          },
+          {
+            "line": {
+              "x": 334.1,
+              "y": 319.935
+            }
+          },
+          {
+            "line": {
+              "x": 336.25,
+              "y": 318.46875
+            }
+          },
+          {
+            "line": {
+              "x": 338.4,
+              "y": 316.96
+            }
+          },
+          {
+            "line": {
+              "x": 340.54999999999995,
+              "y": 315.40875
+            }
+          },
+          {
+            "line": {
+              "x": 342.70000000000005,
+              "y": 313.815
+            }
+          },
+          {
+            "line": {
+              "x": 344.85,
+              "y": 312.17875
+            }
+          },
+          {
+            "line": {
+              "x": 347,
+              "y": 310.5
+            }
+          },
+          {
+            "line": {
+              "x": 349.15,
+              "y": 308.77875
+            }
+          },
+          {
+            "line": {
+              "x": 351.29999999999995,
+              "y": 307.015
+            }
+          },
+          {
+            "line": {
+              "x": 353.45000000000005,
+              "y": 305.20875
+            }
+          },
+          {
+            "line": {
+              "x": 355.6,
+              "y": 303.36
+            }
+          },
+          {
+            "line": {
+              "x": 357.75,
+              "y": 301.46875
+            }
+          },
+          {
+            "line": {
+              "x": 359.9,
+              "y": 299.535
+            }
+          },
+          {
+            "line": {
+              "x": 362.04999999999995,
+              "y": 297.55875000000003
+            }
+          },
+          {
+            "line": {
+              "x": 364.20000000000005,
+              "y": 295.53999999999996
+            }
+          },
+          {
+            "line": {
+              "x": 366.35,
+              "y": 293.47875
+            }
+          },
+          {
+            "line": {
+              "x": 368.5,
+              "y": 291.375
+            }
+          },
+          {
+            "line": {
+              "x": 370.65,
+              "y": 289.22875
+            }
+          },
+          {
+            "line": {
+              "x": 372.79999999999995,
+              "y": 287.04
+            }
+          },
+          {
+            "line": {
+              "x": 374.95000000000005,
+              "y": 284.80875
+            }
+          },
+          {
+            "line": {
+              "x": 377.1,
+              "y": 282.53499999999997
+            }
+          },
+          {
+            "line": {
+              "x": 379.25,
+              "y": 280.21875
+            }
+          },
+          {
+            "line": {
+              "x": 381.4,
+              "y": 277.86
+            }
+          },
+          {
+            "line": {
+              "x": 383.54999999999995,
+              "y": 275.45875
+            }
+          },
+          {
+            "line": {
+              "x": 385.70000000000005,
+              "y": 273.015
+            }
+          },
+          {
+            "line": {
+              "x": 387.85,
+              "y": 270.52875
+            }
+          },
+          {
+            "line": {
+              "x": 390,
+              "y": 268
+            }
+          },
+          {
+            "line": {
+              "x": 392.15000000000003,
+              "y": 265.4287499999999
+            }
+          },
+          {
+            "line": {
+              "x": 394.29999999999995,
+              "y": 262.81500000000005
+            }
+          },
+          {
+            "line": {
+              "x": 396.45000000000005,
+              "y": 260.15874999999994
+            }
+          },
+          {
+            "line": {
+              "x": 398.59999999999997,
+              "y": 257.46000000000004
+            }
+          },
+          {
+            "line": {
+              "x": 400.75,
+              "y": 254.71875
+            }
+          },
+          {
+            "line": {
+              "x": 402.90000000000003,
+              "y": 251.93499999999995
+            }
+          },
+          {
+            "line": {
+              "x": 405.04999999999995,
+              "y": 249.10875000000004
+            }
+          },
+          {
+            "line": {
+              "x": 407.20000000000005,
+              "y": 246.23999999999998
+            }
+          },
+          {
+            "line": {
+              "x": 409.34999999999997,
+              "y": 243.32875
+            }
+          },
+          {
+            "line": {
+              "x": 411.5,
+              "y": 240.375
+            }
+          },
+          {
+            "line": {
+              "x": 413.65000000000003,
+              "y": 237.37874999999994
+            }
+          },
+          {
+            "line": {
+              "x": 415.79999999999995,
+              "y": 234.34000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 417.95000000000005,
+              "y": 231.25875
+            }
+          },
+          {
+            "line": {
+              "x": 420.09999999999997,
+              "y": 228.13500000000005
+            }
+          },
+          {
+            "line": {
+              "x": 422.25,
+              "y": 224.96875
+            }
+          },
+          {
+            "line": {
+              "x": 424.40000000000003,
+              "y": 221.75999999999996
+            }
+          },
+          {
+            "line": {
+              "x": 426.54999999999995,
+              "y": 218.50875000000002
+            }
+          },
+          {
+            "line": {
+              "x": 428.70000000000005,
+              "y": 215.21499999999997
+            }
+          },
+          {
+            "line": {
+              "x": 430.84999999999997,
+              "y": 211.87875000000005
+            }
+          },
+          {
+            "line": {
+              "x": 433,
+              "y": 208.5
+            }
+          },
+          {
+            "line": {
+              "x": 435.15000000000003,
+              "y": 205.07874999999996
+            }
+          },
+          {
+            "line": {
+              "x": 437.29999999999995,
+              "y": 201.61500000000004
+            }
+          },
+          {
+            "line": {
+              "x": 439.45000000000005,
+              "y": 198.10874999999996
+            }
+          },
+          {
+            "line": {
+              "x": 441.59999999999997,
+              "y": 194.56000000000006
+            }
+          },
+          {
+            "line": {
+              "x": 443.75,
+              "y": 190.96875
+            }
+          },
+          {
+            "line": {
+              "x": 445.90000000000003,
+              "y": 187.33499999999995
+            }
+          },
+          {
+            "line": {
+              "x": 448.04999999999995,
+              "y": 183.65875
+            }
+          },
+          {
+            "line": {
+              "x": 450.20000000000005,
+              "y": 179.93999999999997
+            }
+          },
+          {
+            "line": {
+              "x": 452.34999999999997,
+              "y": 176.17875000000004
+            }
+          },
+          {
+            "line": {
+              "x": 454.5,
+              "y": 172.375
+            }
+          },
+          {
+            "line": {
+              "x": 456.65000000000003,
+              "y": 168.52874999999995
+            }
+          },
+          {
+            "line": {
+              "x": 458.79999999999995,
+              "y": 164.64000000000004
+            }
+          },
+          {
+            "line": {
+              "x": 460.95000000000005,
+              "y": 160.70874999999998
+            }
+          },
+          {
+            "line": {
+              "x": 463.09999999999997,
+              "y": 156.73500000000007
+            }
+          },
+          {
+            "line": {
+              "x": 465.25,
+              "y": 152.71875
+            }
+          },
+          {
+            "line": {
+              "x": 467.40000000000003,
+              "y": 148.65999999999994
+            }
+          },
+          {
+            "line": {
+              "x": 469.54999999999995,
+              "y": 144.55875000000003
+            }
+          },
+          {
+            "line": {
+              "x": 471.70000000000005,
+              "y": 140.41499999999996
+            }
+          },
+          {
+            "line": {
+              "x": 473.84999999999997,
+              "y": 136.22875000000008
+            }
+          },
+          {
+            "line": {
+              "x": 476,
+              "y": 132
+            }
+          },
+          {
+            "line": {
+              "x": 478.15000000000003,
+              "y": 127.72874999999993
+            }
+          },
+          {
+            "line": {
+              "x": 480.29999999999995,
+              "y": 123.41500000000002
+            }
+          },
+          {
+            "line": {
+              "x": 482.45000000000005,
+              "y": 119.05874999999997
+            }
+          },
+          {
+            "line": {
+              "x": 484.59999999999997,
+              "y": 114.66000000000008
+            }
+          },
+          {
+            "line": {
+              "x": 486.75,
+              "y": 110.21875
+            }
+          },
+          {
+            "line": {
+              "x": 488.90000000000003,
+              "y": 105.73499999999993
+            }
+          },
+          {
+            "line": {
+              "x": 491.04999999999995,
+              "y": 101.20875000000004
+            }
+          },
+          {
+            "line": {
+              "x": 493.20000000000005,
+              "y": 96.63999999999996
+            }
+          },
+          {
+            "line": {
+              "x": 495.34999999999997,
+              "y": 92.02875000000006
+            }
+          },
+          {
+            "line": {
+              "x": 497.5,
+              "y": 87.375
+            }
+          },
+          {
+            "line": {
+              "x": 499.65000000000003,
+              "y": 82.67874999999992
+            }
+          },
+          {
+            "line": {
+              "x": 501.79999999999995,
+              "y": 77.94000000000005
+            }
+          },
+          {
+            "line": {
+              "x": 503.95000000000005,
+              "y": 73.15875
+            }
+          },
+          {
+            "line": {
+              "x": 506.09999999999997,
+              "y": 68.3350000000001
+            }
+          },
+          {
+            "line": {
+              "x": 508.25,
+              "y": 63.46875
+            }
+          },
+          {
+            "line": {
+              "x": 510.40000000000003,
+              "y": 58.559999999999945
+            }
+          },
+          {
+            "line": {
+              "x": 512.55,
+              "y": 53.60875000000004
+            }
+          },
+          {
+            "line": {
+              "x": 514.7,
+              "y": 48.61500000000001
+            }
+          },
+          {
+            "line": {
+              "x": 516.8499999999999,
+              "y": 43.57875000000007
+            }
+          },
+          {
+            "line": {
+              "x": 519,
+              "y": 38.5
+            }
+          },
+          {
+            "line": {
+              "x": 521.1500000000001,
+              "y": 33.37874999999997
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#1D4E89",
+        "strokeWidth": 2.6
+      },
+      {
+        "id": "m2",
+        "from": {
+          "x": 278.2,
+          "y": 400.6
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 279.3825,
+              "y": 399.1975
+            }
+          },
+          {
+            "line": {
+              "x": 280.565,
+              "y": 397.795
+            }
+          },
+          {
+            "line": {
+              "x": 281.7475,
+              "y": 396.3925
+            }
+          },
+          {
+            "line": {
+              "x": 282.93,
+              "y": 394.99
+            }
+          },
+          {
+            "line": {
+              "x": 284.1125,
+              "y": 393.5875
+            }
+          },
+          {
+            "line": {
+              "x": 285.295,
+              "y": 392.185
+            }
+          },
+          {
+            "line": {
+              "x": 286.4775,
+              "y": 390.78249999999997
+            }
+          },
+          {
+            "line": {
+              "x": 287.66,
+              "y": 389.38
+            }
+          },
+          {
+            "line": {
+              "x": 288.8425,
+              "y": 387.9775
+            }
+          },
+          {
+            "line": {
+              "x": 290.025,
+              "y": 386.575
+            }
+          },
+          {
+            "line": {
+              "x": 291.2075,
+              "y": 385.1725
+            }
+          },
+          {
+            "line": {
+              "x": 292.39,
+              "y": 383.77
+            }
+          },
+          {
+            "line": {
+              "x": 293.5725,
+              "y": 382.3675
+            }
+          },
+          {
+            "line": {
+              "x": 294.755,
+              "y": 380.965
+            }
+          },
+          {
+            "line": {
+              "x": 295.9375,
+              "y": 379.5625
+            }
+          },
+          {
+            "line": {
+              "x": 297.12,
+              "y": 378.16
+            }
+          },
+          {
+            "line": {
+              "x": 298.3025,
+              "y": 376.7575
+            }
+          },
+          {
+            "line": {
+              "x": 299.485,
+              "y": 375.355
+            }
+          },
+          {
+            "line": {
+              "x": 300.6675,
+              "y": 373.9525
+            }
+          },
+          {
+            "line": {
+              "x": 301.85,
+              "y": 372.55
+            }
+          },
+          {
+            "line": {
+              "x": 303.0325,
+              "y": 371.1475
+            }
+          },
+          {
+            "line": {
+              "x": 304.215,
+              "y": 369.745
+            }
+          },
+          {
+            "line": {
+              "x": 305.3975,
+              "y": 368.3425
+            }
+          },
+          {
+            "line": {
+              "x": 306.58,
+              "y": 366.94
+            }
+          },
+          {
+            "line": {
+              "x": 307.7625,
+              "y": 365.5375
+            }
+          },
+          {
+            "line": {
+              "x": 308.945,
+              "y": 364.135
+            }
+          },
+          {
+            "line": {
+              "x": 310.1275,
+              "y": 362.7325
+            }
+          },
+          {
+            "line": {
+              "x": 311.31,
+              "y": 361.33
+            }
+          },
+          {
+            "line": {
+              "x": 312.4925,
+              "y": 359.9275
+            }
+          },
+          {
+            "line": {
+              "x": 313.675,
+              "y": 358.525
+            }
+          },
+          {
+            "line": {
+              "x": 314.8575,
+              "y": 357.1225
+            }
+          },
+          {
+            "line": {
+              "x": 316.04,
+              "y": 355.72
+            }
+          },
+          {
+            "line": {
+              "x": 317.2225,
+              "y": 354.3175
+            }
+          },
+          {
+            "line": {
+              "x": 318.405,
+              "y": 352.915
+            }
+          },
+          {
+            "line": {
+              "x": 319.5875,
+              "y": 351.5125
+            }
+          },
+          {
+            "line": {
+              "x": 320.77,
+              "y": 350.11
+            }
+          },
+          {
+            "line": {
+              "x": 321.9525,
+              "y": 348.7075
+            }
+          },
+          {
+            "line": {
+              "x": 323.135,
+              "y": 347.305
+            }
+          },
+          {
+            "line": {
+              "x": 324.3175,
+              "y": 345.9025
+            }
+          },
+          {
+            "line": {
+              "x": 325.5,
+              "y": 344.5
+            }
+          },
+          {
+            "line": {
+              "x": 326.6825,
+              "y": 343.0975
+            }
+          },
+          {
+            "line": {
+              "x": 327.865,
+              "y": 341.695
+            }
+          },
+          {
+            "line": {
+              "x": 329.0475,
+              "y": 340.2925
+            }
+          },
+          {
+            "line": {
+              "x": 330.23,
+              "y": 338.89
+            }
+          },
+          {
+            "line": {
+              "x": 331.4125,
+              "y": 337.4875
+            }
+          },
+          {
+            "line": {
+              "x": 332.59499999999997,
+              "y": 336.085
+            }
+          },
+          {
+            "line": {
+              "x": 333.7775,
+              "y": 334.6825
+            }
+          },
+          {
+            "line": {
+              "x": 334.96,
+              "y": 333.28000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 336.1425,
+              "y": 331.8775
+            }
+          },
+          {
+            "line": {
+              "x": 337.325,
+              "y": 330.475
+            }
+          },
+          {
+            "line": {
+              "x": 338.5075,
+              "y": 329.0725
+            }
+          },
+          {
+            "line": {
+              "x": 339.69,
+              "y": 327.67
+            }
+          },
+          {
+            "line": {
+              "x": 340.8725,
+              "y": 326.2675
+            }
+          },
+          {
+            "line": {
+              "x": 342.055,
+              "y": 324.865
+            }
+          },
+          {
+            "line": {
+              "x": 343.2375,
+              "y": 323.4625
+            }
+          },
+          {
+            "line": {
+              "x": 344.42,
+              "y": 322.06
+            }
+          },
+          {
+            "line": {
+              "x": 345.6025,
+              "y": 320.6575
+            }
+          },
+          {
+            "line": {
+              "x": 346.78499999999997,
+              "y": 319.255
+            }
+          },
+          {
+            "line": {
+              "x": 347.9675,
+              "y": 317.8525
+            }
+          },
+          {
+            "line": {
+              "x": 349.15,
+              "y": 316.45
+            }
+          },
+          {
+            "line": {
+              "x": 350.3325,
+              "y": 315.0475
+            }
+          },
+          {
+            "line": {
+              "x": 351.515,
+              "y": 313.645
+            }
+          },
+          {
+            "line": {
+              "x": 352.6975,
+              "y": 312.2425
+            }
+          },
+          {
+            "line": {
+              "x": 353.88,
+              "y": 310.84
+            }
+          },
+          {
+            "line": {
+              "x": 355.0625,
+              "y": 309.4375
+            }
+          },
+          {
+            "line": {
+              "x": 356.245,
+              "y": 308.035
+            }
+          },
+          {
+            "line": {
+              "x": 357.4275,
+              "y": 306.6325
+            }
+          },
+          {
+            "line": {
+              "x": 358.61,
+              "y": 305.23
+            }
+          },
+          {
+            "line": {
+              "x": 359.7925,
+              "y": 303.8275
+            }
+          },
+          {
+            "line": {
+              "x": 360.975,
+              "y": 302.425
+            }
+          },
+          {
+            "line": {
+              "x": 362.1575,
+              "y": 301.0225
+            }
+          },
+          {
+            "line": {
+              "x": 363.34,
+              "y": 299.62
+            }
+          },
+          {
+            "line": {
+              "x": 364.5225,
+              "y": 298.21750000000003
+            }
+          },
+          {
+            "line": {
+              "x": 365.705,
+              "y": 296.815
+            }
+          },
+          {
+            "line": {
+              "x": 366.8875,
+              "y": 295.4125
+            }
+          },
+          {
+            "line": {
+              "x": 368.07,
+              "y": 294.01
+            }
+          },
+          {
+            "line": {
+              "x": 369.2525,
+              "y": 292.6075
+            }
+          },
+          {
+            "line": {
+              "x": 370.435,
+              "y": 291.205
+            }
+          },
+          {
+            "line": {
+              "x": 371.6175,
+              "y": 289.8025
+            }
+          },
+          {
+            "line": {
+              "x": 372.8,
+              "y": 288.4
+            }
+          },
+          {
+            "line": {
+              "x": 373.9825,
+              "y": 286.9975
+            }
+          },
+          {
+            "line": {
+              "x": 375.16499999999996,
+              "y": 285.595
+            }
+          },
+          {
+            "line": {
+              "x": 376.34749999999997,
+              "y": 284.1925
+            }
+          },
+          {
+            "line": {
+              "x": 377.53,
+              "y": 282.79
+            }
+          },
+          {
+            "line": {
+              "x": 378.7125,
+              "y": 281.3875
+            }
+          },
+          {
+            "line": {
+              "x": 379.895,
+              "y": 279.985
+            }
+          },
+          {
+            "line": {
+              "x": 381.0775,
+              "y": 278.58250000000004
+            }
+          },
+          {
+            "line": {
+              "x": 382.26,
+              "y": 277.18
+            }
+          },
+          {
+            "line": {
+              "x": 383.4425,
+              "y": 275.77750000000003
+            }
+          },
+          {
+            "line": {
+              "x": 384.625,
+              "y": 274.375
+            }
+          },
+          {
+            "line": {
+              "x": 385.8075,
+              "y": 272.9725
+            }
+          },
+          {
+            "line": {
+              "x": 386.99,
+              "y": 271.57000000000005
+            }
+          },
+          {
+            "line": {
+              "x": 388.1725,
+              "y": 270.1675
+            }
+          },
+          {
+            "line": {
+              "x": 389.355,
+              "y": 268.765
+            }
+          },
+          {
+            "line": {
+              "x": 390.5375,
+              "y": 267.3625
+            }
+          },
+          {
+            "line": {
+              "x": 391.71999999999997,
+              "y": 265.96000000000004
+            }
+          },
+          {
+            "line": {
+              "x": 392.9025,
+              "y": 264.5575
+            }
+          },
+          {
+            "line": {
+              "x": 394.085,
+              "y": 263.15500000000003
+            }
+          },
+          {
+            "line": {
+              "x": 395.2675,
+              "y": 261.75250000000005
+            }
+          },
+          {
+            "line": {
+              "x": 396.45,
+              "y": 260.35
+            }
+          },
+          {
+            "line": {
+              "x": 397.63249999999994,
+              "y": 258.94750000000005
+            }
+          },
+          {
+            "line": {
+              "x": 398.815,
+              "y": 257.545
+            }
+          },
+          {
+            "line": {
+              "x": 399.9975,
+              "y": 256.1425
+            }
+          },
+          {
+            "line": {
+              "x": 401.18,
+              "y": 254.74
+            }
+          },
+          {
+            "line": {
+              "x": 402.3625,
+              "y": 253.33749999999998
+            }
+          },
+          {
+            "line": {
+              "x": 403.54499999999996,
+              "y": 251.93500000000003
+            }
+          },
+          {
+            "line": {
+              "x": 404.72749999999996,
+              "y": 250.5325
+            }
+          },
+          {
+            "line": {
+              "x": 405.90999999999997,
+              "y": 249.13
+            }
+          },
+          {
+            "line": {
+              "x": 407.0925,
+              "y": 247.72750000000002
+            }
+          },
+          {
+            "line": {
+              "x": 408.275,
+              "y": 246.325
+            }
+          },
+          {
+            "line": {
+              "x": 409.4575,
+              "y": 244.9225
+            }
+          },
+          {
+            "line": {
+              "x": 410.64,
+              "y": 243.52000000000004
+            }
+          },
+          {
+            "line": {
+              "x": 411.8225,
+              "y": 242.1175
+            }
+          },
+          {
+            "line": {
+              "x": 413.005,
+              "y": 240.71500000000003
+            }
+          },
+          {
+            "line": {
+              "x": 414.1875,
+              "y": 239.3125
+            }
+          },
+          {
+            "line": {
+              "x": 415.37,
+              "y": 237.91000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 416.5525,
+              "y": 236.50750000000002
+            }
+          },
+          {
+            "line": {
+              "x": 417.735,
+              "y": 235.10500000000002
+            }
+          },
+          {
+            "line": {
+              "x": 418.9175,
+              "y": 233.7025
+            }
+          },
+          {
+            "line": {
+              "x": 420.1,
+              "y": 232.3
+            }
+          },
+          {
+            "line": {
+              "x": 421.28249999999997,
+              "y": 230.8975
+            }
+          },
+          {
+            "line": {
+              "x": 422.465,
+              "y": 229.495
+            }
+          },
+          {
+            "line": {
+              "x": 423.6475,
+              "y": 228.09250000000003
+            }
+          },
+          {
+            "line": {
+              "x": 424.83,
+              "y": 226.69000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 426.0125,
+              "y": 225.28750000000002
+            }
+          },
+          {
+            "line": {
+              "x": 427.19499999999994,
+              "y": 223.88500000000005
+            }
+          },
+          {
+            "line": {
+              "x": 428.3775,
+              "y": 222.48250000000002
+            }
+          },
+          {
+            "line": {
+              "x": 429.56,
+              "y": 221.07999999999998
+            }
+          },
+          {
+            "line": {
+              "x": 430.7425,
+              "y": 219.6775
+            }
+          },
+          {
+            "line": {
+              "x": 431.925,
+              "y": 218.27499999999998
+            }
+          },
+          {
+            "line": {
+              "x": 433.10749999999996,
+              "y": 216.87250000000003
+            }
+          },
+          {
+            "line": {
+              "x": 434.28999999999996,
+              "y": 215.47
+            }
+          },
+          {
+            "line": {
+              "x": 435.47249999999997,
+              "y": 214.0675
+            }
+          },
+          {
+            "line": {
+              "x": 436.655,
+              "y": 212.66500000000002
+            }
+          },
+          {
+            "line": {
+              "x": 437.8375,
+              "y": 211.2625
+            }
+          },
+          {
+            "line": {
+              "x": 439.02,
+              "y": 209.86
+            }
+          },
+          {
+            "line": {
+              "x": 440.2025,
+              "y": 208.45750000000004
+            }
+          },
+          {
+            "line": {
+              "x": 441.385,
+              "y": 207.055
+            }
+          },
+          {
+            "line": {
+              "x": 442.5675,
+              "y": 205.65250000000003
+            }
+          },
+          {
+            "line": {
+              "x": 443.75,
+              "y": 204.25
+            }
+          },
+          {
+            "line": {
+              "x": 444.9325,
+              "y": 202.84750000000003
+            }
+          },
+          {
+            "line": {
+              "x": 446.115,
+              "y": 201.44500000000002
+            }
+          },
+          {
+            "line": {
+              "x": 447.2975,
+              "y": 200.04250000000002
+            }
+          },
+          {
+            "line": {
+              "x": 448.48,
+              "y": 198.64
+            }
+          },
+          {
+            "line": {
+              "x": 449.6625,
+              "y": 197.2375
+            }
+          },
+          {
+            "line": {
+              "x": 450.84499999999997,
+              "y": 195.835
+            }
+          },
+          {
+            "line": {
+              "x": 452.0275,
+              "y": 194.43250000000003
+            }
+          },
+          {
+            "line": {
+              "x": 453.21,
+              "y": 193.03000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 454.39250000000004,
+              "y": 191.6275
+            }
+          },
+          {
+            "line": {
+              "x": 455.575,
+              "y": 190.22500000000002
+            }
+          },
+          {
+            "line": {
+              "x": 456.7575,
+              "y": 188.82250000000002
+            }
+          },
+          {
+            "line": {
+              "x": 457.94,
+              "y": 187.42000000000002
+            }
+          },
+          {
+            "line": {
+              "x": 459.12249999999995,
+              "y": 186.01750000000004
+            }
+          },
+          {
+            "line": {
+              "x": 460.305,
+              "y": 184.61499999999998
+            }
+          },
+          {
+            "line": {
+              "x": 461.4875,
+              "y": 183.21249999999998
+            }
+          },
+          {
+            "line": {
+              "x": 462.66999999999996,
+              "y": 181.81
+            }
+          },
+          {
+            "line": {
+              "x": 463.85249999999996,
+              "y": 180.4075
+            }
+          },
+          {
+            "line": {
+              "x": 465.03499999999997,
+              "y": 179.005
+            }
+          },
+          {
+            "line": {
+              "x": 466.2175,
+              "y": 177.60250000000002
+            }
+          },
+          {
+            "line": {
+              "x": 467.4,
+              "y": 176.2
+            }
+          },
+          {
+            "line": {
+              "x": 468.5825,
+              "y": 174.79750000000004
+            }
+          },
+          {
+            "line": {
+              "x": 469.765,
+              "y": 173.395
+            }
+          },
+          {
+            "line": {
+              "x": 470.9475,
+              "y": 171.9925
+            }
+          },
+          {
+            "line": {
+              "x": 472.13,
+              "y": 170.59000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 473.3125,
+              "y": 169.18750000000003
+            }
+          },
+          {
+            "line": {
+              "x": 474.495,
+              "y": 167.78500000000003
+            }
+          },
+          {
+            "line": {
+              "x": 475.6775,
+              "y": 166.3825
+            }
+          },
+          {
+            "line": {
+              "x": 476.86,
+              "y": 164.97999999999996
+            }
+          },
+          {
+            "line": {
+              "x": 478.04249999999996,
+              "y": 163.57750000000004
+            }
+          },
+          {
+            "line": {
+              "x": 479.225,
+              "y": 162.17499999999998
+            }
+          },
+          {
+            "line": {
+              "x": 480.4075,
+              "y": 160.77249999999998
+            }
+          },
+          {
+            "line": {
+              "x": 481.59000000000003,
+              "y": 159.36999999999995
+            }
+          },
+          {
+            "line": {
+              "x": 482.7725,
+              "y": 157.9675
+            }
+          },
+          {
+            "line": {
+              "x": 483.955,
+              "y": 156.565
+            }
+          },
+          {
+            "line": {
+              "x": 485.13750000000005,
+              "y": 155.1625
+            }
+          },
+          {
+            "line": {
+              "x": 486.32000000000005,
+              "y": 153.76
+            }
+          },
+          {
+            "line": {
+              "x": 487.50250000000005,
+              "y": 152.35749999999996
+            }
+          },
+          {
+            "line": {
+              "x": 488.685,
+              "y": 150.955
+            }
+          },
+          {
+            "line": {
+              "x": 489.86749999999995,
+              "y": 149.5525
+            }
+          },
+          {
+            "line": {
+              "x": 491.05,
+              "y": 148.14999999999998
+            }
+          },
+          {
+            "line": {
+              "x": 492.2325,
+              "y": 146.7475
+            }
+          },
+          {
+            "line": {
+              "x": 493.415,
+              "y": 145.345
+            }
+          },
+          {
+            "line": {
+              "x": 494.59749999999997,
+              "y": 143.9425
+            }
+          },
+          {
+            "line": {
+              "x": 495.78,
+              "y": 142.54000000000002
+            }
+          },
+          {
+            "line": {
+              "x": 496.96250000000003,
+              "y": 141.13749999999996
+            }
+          },
+          {
+            "line": {
+              "x": 498.145,
+              "y": 139.73500000000004
+            }
+          },
+          {
+            "line": {
+              "x": 499.3275,
+              "y": 138.33249999999998
+            }
+          },
+          {
+            "line": {
+              "x": 500.51,
+              "y": 136.92999999999998
+            }
+          },
+          {
+            "line": {
+              "x": 501.6925,
+              "y": 135.5275
+            }
+          },
+          {
+            "line": {
+              "x": 502.875,
+              "y": 134.125
+            }
+          },
+          {
+            "line": {
+              "x": 504.0575,
+              "y": 132.7225
+            }
+          },
+          {
+            "line": {
+              "x": 505.24,
+              "y": 131.32000000000002
+            }
+          },
+          {
+            "line": {
+              "x": 506.4225,
+              "y": 129.91749999999996
+            }
+          },
+          {
+            "line": {
+              "x": 507.60499999999996,
+              "y": 128.51500000000004
+            }
+          },
+          {
+            "line": {
+              "x": 508.7875,
+              "y": 127.11249999999998
+            }
+          },
+          {
+            "line": {
+              "x": 509.97,
+              "y": 125.70999999999998
+            }
+          },
+          {
+            "line": {
+              "x": 511.15250000000003,
+              "y": 124.3075
+            }
+          },
+          {
+            "line": {
+              "x": 512.335,
+              "y": 122.905
+            }
+          },
+          {
+            "line": {
+              "x": 513.5174999999999,
+              "y": 121.5025
+            }
+          },
+          {
+            "line": {
+              "x": 514.7,
+              "y": 120.1
+            }
+          },
+          {
+            "line": {
+              "x": 515.8825,
+              "y": 118.69749999999999
+            }
+          },
+          {
+            "line": {
+              "x": 517.0649999999999,
+              "y": 117.29500000000002
+            }
+          },
+          {
+            "line": {
+              "x": 518.2475,
+              "y": 115.89250000000001
+            }
+          },
+          {
+            "line": {
+              "x": 519.43,
+              "y": 114.49000000000001
+            }
+          },
+          {
+            "line": {
+              "x": 520.6125,
+              "y": 113.08749999999998
+            }
+          },
+          {
+            "line": {
+              "x": 521.7950000000001,
+              "y": 111.685
+            }
+          },
+          {
+            "line": {
+              "x": 522.9775,
+              "y": 110.28250000000003
+            }
+          },
+          {
+            "line": {
+              "x": 524.16,
+              "y": 108.88
+            }
+          },
+          {
+            "line": {
+              "x": 525.3425,
+              "y": 107.47750000000002
+            }
+          },
+          {
+            "line": {
+              "x": 526.5250000000001,
+              "y": 106.07499999999996
+            }
+          },
+          {
+            "line": {
+              "x": 527.7075,
+              "y": 104.67250000000004
+            }
+          },
+          {
+            "line": {
+              "x": 528.89,
+              "y": 103.27000000000004
+            }
+          },
+          {
+            "line": {
+              "x": 530.0725,
+              "y": 101.86749999999998
+            }
+          },
+          {
+            "line": {
+              "x": 531.255,
+              "y": 100.465
+            }
+          },
+          {
+            "line": {
+              "x": 532.4375,
+              "y": 99.0625
+            }
+          },
+          {
+            "line": {
+              "x": 533.62,
+              "y": 97.66
+            }
+          },
+          {
+            "line": {
+              "x": 534.8025,
+              "y": 96.25750000000002
+            }
+          },
+          {
+            "line": {
+              "x": 535.985,
+              "y": 94.85499999999996
+            }
+          },
+          {
+            "line": {
+              "x": 537.1675,
+              "y": 93.45250000000004
+            }
+          },
+          {
+            "line": {
+              "x": 538.35,
+              "y": 92.04999999999998
+            }
+          },
+          {
+            "line": {
+              "x": 539.5325,
+              "y": 90.64749999999998
+            }
+          },
+          {
+            "line": {
+              "x": 540.715,
+              "y": 89.245
+            }
+          },
+          {
+            "line": {
+              "x": 541.8975,
+              "y": 87.8425
+            }
+          },
+          {
+            "line": {
+              "x": 543.0799999999999,
+              "y": 86.44
+            }
+          },
+          {
+            "line": {
+              "x": 544.2625,
+              "y": 85.0375
+            }
+          },
+          {
+            "line": {
+              "x": 545.445,
+              "y": 83.63499999999999
+            }
+          },
+          {
+            "line": {
+              "x": 546.6274999999999,
+              "y": 82.23250000000002
+            }
+          },
+          {
+            "line": {
+              "x": 547.81,
+              "y": 80.83000000000001
+            }
+          },
+          {
+            "line": {
+              "x": 548.9925,
+              "y": 79.42750000000001
+            }
+          },
+          {
+            "line": {
+              "x": 550.175,
+              "y": 78.02499999999998
+            }
+          },
+          {
+            "line": {
+              "x": 551.3575000000001,
+              "y": 76.6225
+            }
+          },
+          {
+            "line": {
+              "x": 552.54,
+              "y": 75.22000000000003
+            }
+          },
+          {
+            "line": {
+              "x": 553.7225,
+              "y": 73.8175
+            }
+          },
+          {
+            "line": {
+              "x": 554.905,
+              "y": 72.41500000000002
+            }
+          },
+          {
+            "line": {
+              "x": 556.0875000000001,
+              "y": 71.01249999999999
+            }
+          },
+          {
+            "line": {
+              "x": 557.27,
+              "y": 69.61000000000001
+            }
+          },
+          {
+            "line": {
+              "x": 558.4525,
+              "y": 68.20750000000004
+            }
+          },
+          {
+            "line": {
+              "x": 559.635,
+              "y": 66.805
+            }
+          },
+          {
+            "line": {
+              "x": 560.8175,
+              "y": 65.40249999999997
+            }
+          },
+          {
+            "line": {
+              "x": 562,
+              "y": 64
+            }
+          }
+        ],
+        "close": false,
+        "fill": "none",
+        "stroke": "#0F7360",
+        "strokeWidth": 2
+      },
+      {
+        "id": "m3",
+        "from": {
+          "x": 395,
+          "y": 268
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 390,
+              "y": 263
+            },
+            "centre": {
+              "x": 390,
+              "y": 268
+            }
+          },
+          {
+            "arc": {
+              "x": 385,
+              "y": 268
+            },
+            "centre": {
+              "x": 390,
+              "y": 268
+            }
+          },
+          {
+            "arc": {
+              "x": 390,
+              "y": 273
+            },
+            "centre": {
+              "x": 390,
+              "y": 268
+            }
+          },
+          {
+            "arc": {
+              "x": 395,
+              "y": 268
+            },
+            "centre": {
+              "x": 390,
+              "y": 268
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#181B21",
+        "stroke": "none",
+        "strokeWidth": 0
+      }
+    ]
+  }
+}

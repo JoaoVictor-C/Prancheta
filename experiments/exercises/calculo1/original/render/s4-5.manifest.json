@@ -1,0 +1,1461 @@
+{
+  "version": 1,
+  "title": ": ",
+  "figure": {
+    "width": 602,
+    "height": 464
+  },
+  "elements": [
+    {
+      "id": "g-grid-v-0",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 30,
+        "width": 0,
+        "height": 400
+      }
+    },
+    {
+      "id": "g-grid-v-1",
+      "kind": "decoration",
+      "box": {
+        "x": 132,
+        "y": 30,
+        "width": 0,
+        "height": 400
+      }
+    },
+    {
+      "id": "g-grid-v-2",
+      "kind": "decoration",
+      "box": {
+        "x": 218,
+        "y": 30,
+        "width": 0,
+        "height": 400
+      }
+    },
+    {
+      "id": "g-grid-v-3",
+      "kind": "decoration",
+      "box": {
+        "x": 304,
+        "y": 30,
+        "width": 0,
+        "height": 400
+      }
+    },
+    {
+      "id": "g-grid-v-4",
+      "kind": "decoration",
+      "box": {
+        "x": 390,
+        "y": 30,
+        "width": 0,
+        "height": 400
+      }
+    },
+    {
+      "id": "g-grid-v-5",
+      "kind": "decoration",
+      "box": {
+        "x": 476,
+        "y": 30,
+        "width": 0,
+        "height": 400
+      }
+    },
+    {
+      "id": "g-grid-v-6",
+      "kind": "decoration",
+      "box": {
+        "x": 562,
+        "y": 30,
+        "width": 0,
+        "height": 400
+      }
+    },
+    {
+      "id": "g-grid-h-0",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 430,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-1",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 390,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-2",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 350,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-3",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 310,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-4",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 270,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-5",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 230,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-6",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 190,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-7",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 150,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-8",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 110,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-9",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 70,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "g-grid-h-10",
+      "kind": "decoration",
+      "box": {
+        "x": 46,
+        "y": 30,
+        "width": 516,
+        "height": 0
+      }
+    },
+    {
+      "id": "m1",
+      "kind": "decoration",
+      "box": {
+        "x": 108.35,
+        "y": 32.018124999999884,
+        "width": 391.30000000000007,
+        "height": 395.9637500000001
+      }
+    },
+    {
+      "id": "m2",
+      "kind": "decoration",
+      "box": {
+        "x": 140.6,
+        "y": 150,
+        "width": 154.79999999999998,
+        "height": 0
+      }
+    },
+    {
+      "id": "m3",
+      "kind": "decoration",
+      "box": {
+        "x": 312.6,
+        "y": 310,
+        "width": 154.79999999999995,
+        "height": 0
+      }
+    },
+    {
+      "id": "m4",
+      "kind": "decoration",
+      "box": {
+        "x": 213,
+        "y": 145,
+        "width": 10,
+        "height": 10
+      }
+    },
+    {
+      "id": "m5",
+      "kind": "decoration",
+      "box": {
+        "x": 385,
+        "y": 305,
+        "width": 10,
+        "height": 10
+      }
+    },
+    {
+      "id": "t9",
+      "kind": "box",
+      "box": {
+        "x": 104.89,
+        "y": 366.09,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t10",
+      "kind": "box",
+      "box": {
+        "x": 38.5,
+        "y": 354.5,
+        "width": 15,
+        "height": 19
+      }
+    },
+    {
+      "id": "t11",
+      "kind": "box",
+      "box": {
+        "x": 213.5,
+        "y": 354.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t12",
+      "kind": "box",
+      "box": {
+        "x": 299.5,
+        "y": 354.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t13",
+      "kind": "box",
+      "box": {
+        "x": 385.5,
+        "y": 354.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t14",
+      "kind": "box",
+      "box": {
+        "x": 471.5,
+        "y": 354.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t15",
+      "kind": "box",
+      "box": {
+        "x": 557.5,
+        "y": 354.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t16",
+      "kind": "box",
+      "box": {
+        "x": 91,
+        "y": 420.5,
+        "width": 15,
+        "height": 19
+      }
+    },
+    {
+      "id": "t17",
+      "kind": "box",
+      "box": {
+        "x": 88,
+        "y": 380.5,
+        "width": 15,
+        "height": 19
+      }
+    },
+    {
+      "id": "t18",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 300.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t19",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 260.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t20",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 220.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t21",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 180.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t22",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 140.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t23",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 100.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t24",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 60.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t25",
+      "kind": "box",
+      "box": {
+        "x": 115,
+        "y": 20.5,
+        "width": 9,
+        "height": 19
+      }
+    },
+    {
+      "id": "t6",
+      "kind": "box",
+      "box": {
+        "x": 189,
+        "y": 114,
+        "width": 58,
+        "height": 24
+      }
+    },
+    {
+      "id": "t7",
+      "kind": "box",
+      "box": {
+        "x": 361,
+        "y": 322,
+        "width": 58,
+        "height": 24
+      }
+    },
+    {
+      "id": "t8",
+      "kind": "box",
+      "box": {
+        "x": 266.39,
+        "y": 122,
+        "width": 58,
+        "height": 24
+      }
+    },
+    {
+      "id": "t26",
+      "kind": "box",
+      "box": {
+        "x": 566.5,
+        "y": 325.5,
+        "width": 19,
+        "height": 25
+      }
+    },
+    {
+      "id": "t27",
+      "kind": "box",
+      "box": {
+        "x": 138.5,
+        "y": 21.5,
+        "width": 19,
+        "height": 25
+      }
+    },
+    {
+      "id": "t9--label",
+      "kind": "text",
+      "ownerId": "t9",
+      "box": {
+        "x": 106.38,
+        "y": 367.63,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "0"
+      ]
+    },
+    {
+      "id": "t10--label",
+      "kind": "text",
+      "ownerId": "t10",
+      "box": {
+        "x": 39.17,
+        "y": 356.03,
+        "width": 13.659999999999997,
+        "height": 15
+      },
+      "lines": [
+        "−1"
+      ]
+    },
+    {
+      "id": "t11--label",
+      "kind": "text",
+      "ownerId": "t11",
+      "box": {
+        "x": 214.98,
+        "y": 356.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "1"
+      ]
+    },
+    {
+      "id": "t12--label",
+      "kind": "text",
+      "ownerId": "t12",
+      "box": {
+        "x": 300.98,
+        "y": 356.03,
+        "width": 6.029999999999973,
+        "height": 15
+      },
+      "lines": [
+        "2"
+      ]
+    },
+    {
+      "id": "t13--label",
+      "kind": "text",
+      "ownerId": "t13",
+      "box": {
+        "x": 386.98,
+        "y": 356.03,
+        "width": 6.029999999999973,
+        "height": 15
+      },
+      "lines": [
+        "3"
+      ]
+    },
+    {
+      "id": "t14--label",
+      "kind": "text",
+      "ownerId": "t14",
+      "box": {
+        "x": 472.98,
+        "y": 356.03,
+        "width": 6.029999999999973,
+        "height": 15
+      },
+      "lines": [
+        "4"
+      ]
+    },
+    {
+      "id": "t15--label",
+      "kind": "text",
+      "ownerId": "t15",
+      "box": {
+        "x": 558.98,
+        "y": 356.03,
+        "width": 6.029999999999973,
+        "height": 15
+      },
+      "lines": [
+        "5"
+      ]
+    },
+    {
+      "id": "t16--label",
+      "kind": "text",
+      "ownerId": "t16",
+      "box": {
+        "x": 91.67,
+        "y": 422.03,
+        "width": 13.659999999999997,
+        "height": 15
+      },
+      "lines": [
+        "−2"
+      ]
+    },
+    {
+      "id": "t17--label",
+      "kind": "text",
+      "ownerId": "t17",
+      "box": {
+        "x": 88.67,
+        "y": 382.03,
+        "width": 13.659999999999997,
+        "height": 15
+      },
+      "lines": [
+        "−1"
+      ]
+    },
+    {
+      "id": "t18--label",
+      "kind": "text",
+      "ownerId": "t18",
+      "box": {
+        "x": 116.48,
+        "y": 302.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "1"
+      ]
+    },
+    {
+      "id": "t19--label",
+      "kind": "text",
+      "ownerId": "t19",
+      "box": {
+        "x": 116.48,
+        "y": 262.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "2"
+      ]
+    },
+    {
+      "id": "t20--label",
+      "kind": "text",
+      "ownerId": "t20",
+      "box": {
+        "x": 116.48,
+        "y": 222.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "3"
+      ]
+    },
+    {
+      "id": "t21--label",
+      "kind": "text",
+      "ownerId": "t21",
+      "box": {
+        "x": 116.48,
+        "y": 182.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "4"
+      ]
+    },
+    {
+      "id": "t22--label",
+      "kind": "text",
+      "ownerId": "t22",
+      "box": {
+        "x": 116.48,
+        "y": 142.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "5"
+      ]
+    },
+    {
+      "id": "t23--label",
+      "kind": "text",
+      "ownerId": "t23",
+      "box": {
+        "x": 116.48,
+        "y": 102.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "6"
+      ]
+    },
+    {
+      "id": "t24--label",
+      "kind": "text",
+      "ownerId": "t24",
+      "box": {
+        "x": 116.48,
+        "y": 62.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "7"
+      ]
+    },
+    {
+      "id": "t25--label",
+      "kind": "text",
+      "ownerId": "t25",
+      "box": {
+        "x": 116.48,
+        "y": 22.03,
+        "width": 6.030000000000001,
+        "height": 15
+      },
+      "lines": [
+        "8"
+      ]
+    },
+    {
+      "id": "t6--label",
+      "kind": "text",
+      "ownerId": "t6",
+      "box": {
+        "x": 202.73,
+        "y": 115.84,
+        "width": 30.53,
+        "height": 19
+      },
+      "lines": [
+        "(1; 5)"
+      ]
+    },
+    {
+      "id": "t7--label",
+      "kind": "text",
+      "ownerId": "t7",
+      "box": {
+        "x": 374.73,
+        "y": 323.84,
+        "width": 30.529999999999973,
+        "height": 19
+      },
+      "lines": [
+        "(3; 1)"
+      ]
+    },
+    {
+      "id": "t8--label",
+      "kind": "text",
+      "ownerId": "t8",
+      "box": {
+        "x": 278.27,
+        "y": 123.84,
+        "width": 34.23000000000002,
+        "height": 19
+      },
+      "lines": [
+        "f′ = 0"
+      ]
+    },
+    {
+      "id": "t26--label",
+      "kind": "text",
+      "ownerId": "t26",
+      "box": {
+        "x": 572.19,
+        "y": 327.13,
+        "width": 7.610000000000014,
+        "height": 20
+      },
+      "lines": [
+        "x"
+      ]
+    },
+    {
+      "id": "t27--label",
+      "kind": "text",
+      "ownerId": "t27",
+      "box": {
+        "x": 143.77,
+        "y": 23.13,
+        "width": 8.449999999999989,
+        "height": 19.999999999999996
+      },
+      "lines": [
+        "y"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "text-fits-box",
+      "target": "t9--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t9--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t9--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t9--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t10--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t10--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t10--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t10--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t11--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t11--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t11--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t11--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t12--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t12--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t12--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t12--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t13--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t13--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t13--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t13--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t14--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t14--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t14--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t14--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t15--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t15--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t15--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t15--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t16--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t16--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t16--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t16--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t17--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t17--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t17--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t17--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t18--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t18--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t18--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t18--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t19--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t19--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t19--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t19--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t20--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t20--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t20--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t20--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t21--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t21--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t21--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t21--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t22--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t22--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t22--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t22--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t23--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t23--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t23--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t23--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t24--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t24--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t24--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t24--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t25--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t25--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t25--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t25--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t6--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t6--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t6--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t6--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t7--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t7--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t7--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t7--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t8--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t8--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t8--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t8--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t26--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t26--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t26--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t26--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t27--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t27--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t27--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t27--label",
+      "status": "pass"
+    },
+    {
+      "id": "boxes-do-not-overlap",
+      "target": "figure",
+      "status": "pass",
+      "examined": 231,
+      "detail": "resolved 231 pair(s); 33 needed an overlap test"
+    },
+    {
+      "id": "content-within-canvas",
+      "target": "figure",
+      "status": "pass",
+      "examined": 67,
+      "detail": "examined 67 element(s)"
+    },
+    {
+      "id": "effect-within-canvas",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no element carries an effect that reaches past its own bounds"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t9--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t10--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t11--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t12--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t13--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t14--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t15--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t16--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t17--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t18--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t19--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t20--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t21--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t22--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t23--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t24--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t25--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.54:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t6--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "16.66:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t7--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "16.66:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t8--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.57:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t26--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "7.07:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t27--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "7.07:1 against #FCFBF7"
+    },
+    {
+      "id": "categorical-colours-distinguishable",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no categoryGroup has two or more members to compare"
+    },
+    {
+      "id": "tick-labels-do-not-collide",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no axis tick labels found"
+    },
+    {
+      "id": "constraints-satisfied",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no constraints declared"
+    },
+    {
+      "id": "declared-size-honoured",
+      "target": "figure",
+      "status": "pass",
+      "examined": 22,
+      "detail": "every declared size was honoured across 22 block(s)"
+    },
+    {
+      "id": "annotation-nearest-its-owner",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no block declares what it annotates"
+    },
+    {
+      "id": "sweep-matches-its-label",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: 0 sweep(s), none annotated with a stated angle"
+    },
+    {
+      "id": "arc-is-circular",
+      "target": "figure",
+      "status": "pass",
+      "examined": 8,
+      "detail": "both ends of every arc sit on one circle across 8 arc(s)"
+    }
+  ],
+  "repairs": [],
+  "passes": 1,
+  "unrepaired": [],
+  "warnings": [],
+  "ok": true
+}

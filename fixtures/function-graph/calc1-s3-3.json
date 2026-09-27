@@ -1,0 +1,24 @@
+{
+  "preset": "function-graph",
+  "title": "Resolução 3.3: a tangente a x² − 4x + 1 em x = 1",
+  "x": { "range": [-1, 5], "unit": 86 },
+  "y": { "range": [-4, 7], "unit": 36 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x^2 - 4x + 1",
+      "label": { "text": "y = {expr}", "at": [4.3, 3.5], "towards": ["R", "U"] }
+    }
+  ],
+  "lines": [
+    {
+      "id": "t",
+      "tangent": { "of": "f", "at": 1 },
+      "domain": [-1, 2],
+      "label": { "text": "y = {eq}", "at": [2.45, -3.7], "towards": ["R", "D"] }
+    }
+  ],
+  "points": [
+    { "id": "P", "at": { "of": "f", "x": 1 }, "label": "{coords}", "towards": ["SW", "D", "L"] }
+  ]
+}

@@ -1,0 +1,670 @@
+{
+  "name": "exemplo-tangentes",
+  "title": "Lista de exemplo — Gráficos e retas tangentes",
+  "subtitle": "Limites laterais · Raízes e vértice · Pontos de máximo e mínimo · Reta tangente",
+  "locale": "pt-BR",
+  "footer": "Exemplo · Gráficos e retas tangentes",
+  "contentsNote": "<p style=\"margin:4pt 0 0\">Níveis: <span class=\"tag easy\" style=\"margin-left:0\">fácil</span> <span class=\"tag mid\">médio</span> <span class=\"tag hard\">difícil</span>. Depois dos exercícios vêm o <b>gabarito rápido</b> e as <b>resoluções comentadas</b>.</p>",
+  "exercisesLead": "Nas figuras, os pontos fechados (●) pertencem ao gráfico e as bolinhas abertas (○) não pertencem. As coordenadas de um ponto são separadas por ponto e vírgula, porque a vírgula já é usada nos decimais: \\((2;\\,5)\\) é o ponto com \\(x=2\\) e \\(y=5\\).",
+  "answersLead": "Só as respostas finais, para conferir.",
+  "solutionsLead": "Cada resolução mostra o raciocínio completo.",
+  "sections": [
+    {
+      "title": "1. Limites laterais",
+      "exercises": [
+        {
+          "id": "1.1",
+          "level": "easy",
+          "statement": "<p>Observe o gráfico da função \\(f\\) e responda:</p>{{figure}}<ol class=\"items\" type=\"a\"><li>\\(\\displaystyle\\lim_{x\\to 1^-} f(x)\\)</li><li>\\(\\displaystyle\\lim_{x\\to 1^+} f(x)\\)</li><li>\\(\\displaystyle\\lim_{x\\to 1} f(x)\\) existe? Por quê?</li><li>Quanto vale \\(f(1)\\)?</li></ol>",
+          "figure": {
+            "graph": {
+              "x": {
+                "range": [
+                  -1,
+                  3
+                ],
+                "unit": 90
+              },
+              "y": {
+                "range": [
+                  -1,
+                  9
+                ],
+                "unit": 30
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "pieces": [
+                    {
+                      "expr": "x + 1",
+                      "domain": [
+                        -1,
+                        1
+                      ]
+                    },
+                    {
+                      "expr": "x^2 + 3",
+                      "domain": [
+                        1,
+                        2.3
+                      ]
+                    }
+                  ],
+                  "label": {
+                    "text": "y = f(x)",
+                    "at": [
+                      2.3,
+                      7.5
+                    ],
+                    "towards": [
+                      "L",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "E",
+                  "at": {
+                    "of": "f",
+                    "x": 1,
+                    "side": "left"
+                  },
+                  "style": "open",
+                  "guides": true
+                },
+                {
+                  "id": "D",
+                  "at": {
+                    "of": "f",
+                    "x": 1,
+                    "side": "right"
+                  },
+                  "style": "open",
+                  "guides": true
+                },
+                {
+                  "id": "V",
+                  "at": [
+                    1,
+                    3
+                  ],
+                  "colour": "key"
+                }
+              ]
+            },
+            "caption": "Figura 1.1: o gráfico de \\(f\\) perto de \\(x=1\\)."
+          },
+          "answer": "a) \\(2\\) &nbsp; b) \\(4\\) &nbsp; c) não existe: os limites laterais são diferentes &nbsp; d) \\(f(1)=3\\)",
+          "solution": "<p><b>a)</b> Vindo pela esquerda (\\(x<1\\)), andamos pela reta. Perto de \\(x=1\\) a altura chega perto de \\(2\\), a bolinha aberta em \\({{fig.E}}\\).</p><p><b>b)</b> Vindo pela direita (\\(x>1\\)), andamos pela curva, e a altura chega perto de \\(4\\), a bolinha aberta em \\({{fig.D}}\\).</p><p><b>c)</b> O limite só existe quando os dois limites laterais existem e são <b>iguais</b>. Aqui \\(2\\neq 4\\), então \\(\\lim_{x\\to1}f(x)\\) não existe. O gráfico dá um \"salto\" em \\(x=1\\).</p><p><b>d)</b> O valor da função é o ponto <b>fechado</b> em \\(x=1\\), que está em \\({{fig.V}}\\). Logo \\(f(1)=3\\). Repare que \\(f(1)\\) existe mesmo sem o limite existir: são perguntas diferentes.</p>"
+        }
+      ]
+    },
+    {
+      "title": "2. Raízes, vértice e extremos",
+      "exercises": [
+        {
+          "id": "2.1",
+          "level": "easy",
+          "statement": "<p>Seja \\(f(x)=x^2-4x+3\\), cujo gráfico aparece abaixo.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Encontre as raízes de \\(f\\) (os valores de \\(x\\) em que \\(f(x)=0\\)).</li><li>Encontre o vértice da parábola.</li></ol>",
+          "figure": {
+            "graph": {
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -2,
+                  8
+                ],
+                "unit": 30
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 4x + 3",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      3.9,
+                      6.5
+                    ],
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ]
+            },
+            "caption": "Figura 2.1: a parábola \\(y=x^2-4x+3\\)."
+          },
+          "answer": "a) \\(x={{sol.R1.x}}\\) e \\(x={{sol.R2.x}}\\) &nbsp; b) vértice \\({{sol.V}}\\)",
+          "solution": "<p><b>a)</b> Procuramos dois números com soma \\(4\\) e produto \\(3\\): são \\(1\\) e \\(3\\). Então</p>$$x^2-4x+3=(x-1)(x-3),$$<p>que vale zero quando \\(x=1\\) ou \\(x=3\\). No gráfico, são os pontos em que a parábola corta o eixo \\(x\\).</p><p><b>b)</b> O vértice fica no meio das raízes, em \\(x=\\dfrac{1+3}{2}=2\\) (ou, pela fórmula, \\(x=-\\dfrac{b}{2a}=\\dfrac{4}{2}=2\\)). A altura é \\(f(2)=4-8+3=-1\\).</p>{{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -2,
+                  8
+                ],
+                "unit": 30,
+                "require": [
+                  -1
+                ]
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 4x + 3",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      3.9,
+                      6.5
+                    ],
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "R1",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "NW",
+                    "L",
+                    "U"
+                  ]
+                },
+                {
+                  "id": "R2",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "NE",
+                    "R",
+                    "U"
+                  ]
+                },
+                {
+                  "id": "V",
+                  "at": {
+                    "of": "f",
+                    "x": 2
+                  },
+                  "label": "V{coords}",
+                  "towards": [
+                    "D",
+                    "SE"
+                  ],
+                  "guides": true
+                }
+              ]
+            },
+            "caption": "As raízes \\({{sol.R1}}\\) e \\({{sol.R2}}\\) e o vértice \\(V={{sol.V}}\\)."
+          }
+        },
+        {
+          "id": "2.2",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^3-3x\\). Encontre os pontos do gráfico em que a reta tangente é horizontal e diga qual deles é um ponto de máximo local e qual é um ponto de mínimo local.</p>",
+          "answer": "máximo local em \\({{sol.M}}\\); mínimo local em \\({{sol.m}}\\)",
+          "solution": "<p>A tangente é horizontal onde a inclinação é zero, ou seja, onde \\(f'(x)=0\\). Pela regra da potência:</p>$$f'(x)=3x^2-3=3(x-1)(x+1).$$<p>Logo \\(f'(x)=0\\) quando \\(x=-1\\) ou \\(x=1\\). As alturas são</p>$$f(-1)=-1+3=2,\\qquad f(1)=1-3=-2.$$<p><b>Qual é máximo e qual é mínimo?</b> Olhe o sinal de \\(f'\\): antes de \\(x=-1\\) ela é positiva (\\(f\\) sobe), entre \\(-1\\) e \\(1\\) é negativa (\\(f\\) desce) e depois de \\(1\\) volta a ser positiva. Subir e depois descer é um topo; descer e depois subir é um fundo.</p>{{figure2}}<p>No gráfico, as três setas viram a subida até o topo, a descida até o fundo e a nova subida:</p>{{figure}}<p class=\"tip\">Os pontos abertos sobre o eixo \\(x\\) são as raízes de \\(f\\): \\(x^3-3x=x(x^2-3)\\) zera em \\(x=0\\) e \\(x=\\pm\\sqrt3\\).</p>",
+          "solutionFigure": [
+            {
+              "graph": {
+                "x": {
+                  "range": [
+                    -2.5,
+                    2.5
+                  ],
+                  "unit": 100
+                },
+                "y": {
+                  "range": [
+                    -4,
+                    4
+                  ],
+                  "unit": 36
+                },
+                "functions": [
+                  {
+                    "id": "f",
+                    "expr": "x^3 - 3x",
+                    "features": [
+                      "roots"
+                    ],
+                    "label": {
+                      "text": "y = {expr}",
+                      "at": [
+                        2.1,
+                        3.5
+                      ],
+                      "towards": [
+                        "L",
+                        "D"
+                      ]
+                    }
+                  }
+                ],
+                "lines": [
+                  {
+                    "id": "t1",
+                    "tangent": {
+                      "of": "f",
+                      "at": -1
+                    },
+                    "domain": [
+                      -1.8,
+                      -0.2
+                    ],
+                    "series": "tangentes",
+                    "style": "dashed"
+                  },
+                  {
+                    "id": "t2",
+                    "tangent": {
+                      "of": "f",
+                      "at": 1
+                    },
+                    "domain": [
+                      0.2,
+                      1.8
+                    ],
+                    "series": "tangentes",
+                    "style": "dashed"
+                  }
+                ],
+                "points": [
+                  {
+                    "id": "M",
+                    "at": {
+                      "of": "f",
+                      "x": -1
+                    },
+                    "label": "máx. {coords}",
+                    "towards": [
+                      "U",
+                      "NW",
+                      "NE"
+                    ]
+                  },
+                  {
+                    "id": "m",
+                    "at": {
+                      "of": "f",
+                      "x": 1
+                    },
+                    "label": "mín. {coords}",
+                    "towards": [
+                      "D",
+                      "SE",
+                      "SW"
+                    ]
+                  }
+                ],
+                "labels": [
+                  {
+                    "text": "f′ = 0",
+                    "at": [
+                      1.8,
+                      -2
+                    ],
+                    "towards": [
+                      "R",
+                      "U"
+                    ],
+                    "names": "tangentes"
+                  }
+                ]
+              },
+              "caption": "As tangentes horizontais em \\({{sol.M}}\\) e \\({{sol.m}}\\)."
+            },
+            {
+              "spec": {
+                "preset": "sign-chart",
+                "title": "Quadro de sinais de f(x) = x³ − 3x",
+                "expr": "x^3 - 3x",
+                "rows": [
+                  {
+                    "row": "f'",
+                    "label": "f′(x) = 3x² − 3"
+                  },
+                  "variation"
+                ]
+              },
+              "caption": "O sinal de \\(f'\\) em cada intervalo decide se \\(f\\) sobe ou desce; os valores nos extremos são \\(f(-1)\\) e \\(f(1)\\)."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "3. Reta tangente",
+      "exercises": [
+        {
+          "id": "3.1",
+          "level": "mid",
+          "statement": "<p>Seja \\(f(x)=x^2-2x\\) e \\(P={{fig.P}}\\). Use a definição</p>$$f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}$$<p>para calcular a inclinação da reta tangente ao gráfico em \\(P\\). Depois escreva a equação dessa reta.</p>{{figure}}",
+          "figure": {
+            "graph": {
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -2,
+                  10
+                ],
+                "unit": 28,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 2x",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      -0.6,
+                      5
+                    ],
+                    "towards": [
+                      "U",
+                      "R"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "P{coords}",
+                  "towards": [
+                    "L",
+                    "NW",
+                    "U"
+                  ]
+                }
+              ]
+            },
+            "caption": "Figura 3.1: a parábola e o ponto \\(P\\)."
+          },
+          "answer": "\\(f'(3)=4\\); tangente \\(y=4x-9\\)",
+          "solution": "<p>Calculamos \\(f(3)=9-6=3\\) e \\(f(3+h)=(3+h)^2-2(3+h)=9+6h+h^2-6-2h=3+4h+h^2\\). Então:</p>$$\\frac{f(3+h)-f(3)}{h}=\\frac{4h+h^2}{h}=4+h\\;\\xrightarrow[h\\to0]{}\\;4.$$<p>A inclinação é \\(4\\). A reta passa por \\(P={{sol.P}}\\):</p>$$y-3=4(x-3)\\;\\Longrightarrow\\;y=4x-9.$${{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -2,
+                  10
+                ],
+                "unit": 28,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 2x",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      -0.6,
+                      5
+                    ],
+                    "towards": [
+                      "U",
+                      "R"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 3
+                  },
+                  "domain": [
+                    1.8,
+                    4.6
+                  ],
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": [
+                      4.1,
+                      5.5
+                    ],
+                    "towards": [
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "P{coords}",
+                  "towards": [
+                    "L",
+                    "NW",
+                    "U"
+                  ]
+                }
+              ]
+            },
+            "caption": "A tangente em \\(P\\) tem inclinação \\({{num:4}}\\)."
+          }
+        },
+        {
+          "id": "3.2",
+          "level": "hard",
+          "statement": "<p>Encontre o ponto do gráfico de \\(f(x)=x^2-4x+5\\) em que a reta tangente é <b>paralela</b> à reta \\(y=2x-1\\), e escreva a equação dessa tangente.</p>{{figure}}",
+          "figure": {
+            "graph": {
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -2,
+                  10
+                ],
+                "unit": 28,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 4x + 5",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      -0.3,
+                      9
+                    ],
+                    "towards": [
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "r",
+                  "point": [
+                    0,
+                    -1
+                  ],
+                  "slope": 2,
+                  "domain": [
+                    0.5,
+                    5
+                  ],
+                  "colour": "soft",
+                  "style": "dashed",
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": 4.7,
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ]
+            },
+            "caption": "Figura 3.2: a parábola e a reta \\(y=2x-1\\) (tracejada)."
+          },
+          "answer": "\\(P={{sol.P}}\\); tangente \\(y=2x-4\\)",
+          "solution": "<p>Retas paralelas têm a <b>mesma inclinação</b>. A reta dada tem inclinação \\(2\\), então procuramos onde \\(f'(x)=2\\):</p>$$f'(x)=2x-4=2\\;\\Longrightarrow\\;x=3,\\qquad f(3)=9-12+5=2.$$<p>A tangente passa por \\({{sol.P}}\\) com inclinação \\(2\\):</p>$$y-2=2(x-3)\\;\\Longrightarrow\\;y=2x-4.$${{figure}}<p class=\"tip\">Erro comum: igualar \\(f(x)\\) a \\(2x-1\\). Isso procura onde a parábola <i>cruza</i> a reta, não onde ela tem a mesma inclinação.</p>",
+          "solutionFigure": {
+            "graph": {
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -2,
+                  10
+                ],
+                "unit": 28,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 4x + 5",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      -0.3,
+                      9
+                    ],
+                    "towards": [
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "r",
+                  "point": [
+                    0,
+                    -1
+                  ],
+                  "slope": 2,
+                  "domain": [
+                    0.5,
+                    5
+                  ],
+                  "colour": "soft",
+                  "style": "dashed",
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": 4.7,
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                },
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 3
+                  },
+                  "domain": [
+                    1.2,
+                    5
+                  ],
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": 4.6,
+                    "towards": [
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "P{coords}",
+                  "towards": [
+                    "SE",
+                    "D",
+                    "SW"
+                  ]
+                }
+              ]
+            },
+            "caption": "A tangente em \\(P={{sol.P}}\\) e a reta dada: mesma inclinação, logo paralelas."
+          }
+        }
+      ]
+    }
+  ]
+}

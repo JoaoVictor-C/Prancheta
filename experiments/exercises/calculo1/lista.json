@@ -1,0 +1,1661 @@
+{
+  "name": "calculo1",
+  "title": "Lista de Exercícios — Cálculo 1",
+  "subtitle": "Limites · Taxa média de variação · Definição formal de derivada · Regra da potência · Derivadas sucessivas",
+  "locale": "pt-BR",
+  "footer": "Cálculo 1 · Lista de exercícios",
+  "contentsNote": "<p style=\"margin:4pt 0 0\">Cada tema tem dois exercícios de cada nível:\n      <span class=\"tag easy\" style=\"margin-left:0\">fácil</span>\n      <span class=\"tag mid\">médio</span>\n      <span class=\"tag hard\">difícil</span>.\n      Depois dos exercícios vêm um <b>gabarito rápido</b> e as <b>resoluções comentadas</b>, passo a passo.</p>",
+  "cover": [
+    "<h3>Fórmulas de apoio</h3>\n    <table class=\"ref\">\n      <tr><th>Ideia</th><th>Fórmula</th></tr>\n      <tr><td>Taxa média de variação de \\(f\\) em \\([a,b]\\)</td><td>\\(\\text{TMV} = \\dfrac{f(b)-f(a)}{b-a}\\)</td></tr>\n      <tr><td>Definição formal de derivada</td><td>\\(f'(x) = \\displaystyle\\lim_{h\\to 0}\\frac{f(x+h)-f(x)}{h}\\)</td></tr>\n      <tr><td>Reta tangente no ponto \\(x=a\\)</td><td>\\(y - f(a) = f'(a)\\,(x-a)\\)</td></tr>\n      <tr><td>Regra da potência (vale para qualquer expoente real \\(n\\))</td><td>\\((x^n)' = n\\,x^{n-1}\\)</td></tr>\n      <tr><td>Constante, múltiplo e soma</td><td>\\((c)'=0,\\quad (c\\,f)'=c\\,f',\\quad (f\\pm g)'=f'\\pm g'\\)</td></tr>\n      <tr><td>Derivadas sucessivas</td><td>\\(f''=(f')',\\quad f'''=(f'')',\\quad f^{(4)}=(f''')',\\ \\dots\\)</td></tr>\n      <tr><td>Produtos notáveis úteis</td><td>\\(a^2-b^2=(a-b)(a+b)\\)<br>\\(a^3-b^3=(a-b)(a^2+ab+b^2)\\)</td></tr>\n    </table>"
+  ],
+  "exercisesLead": "Tente resolver sozinho antes de olhar o gabarito. Nas figuras, os pontos fechados (●) pertencem ao gráfico e as bolinhas abertas (○) não pertencem. Como a vírgula já é usada nos números decimais (0,5), as coordenadas de um ponto são separadas por ponto e vírgula: \\((2;\\,5)\\) é o ponto com \\(x=2\\) e \\(y=5\\).",
+  "answersLead": "Só as respostas finais, para conferir. O raciocínio completo está nas resoluções comentadas.",
+  "solutionsLead": "Cada resolução mostra o raciocínio completo: o que fazer, por que fazer e onde é comum errar.",
+  "sections": [
+    {
+      "title": "1. Limites",
+      "exercises": [
+        {
+          "id": "1.1",
+          "level": "easy",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to 3}\\,(2x^2 - 5x + 1)\\).</p>",
+          "answer": "\\(4\\)",
+          "solution": "<p>Polinômios são funções \"bem comportadas\" (contínuas): o limite é simplesmente o valor da função no ponto. Basta substituir \\(x=3\\):</p>\n  $$\\lim_{x\\to3}(2x^2-5x+1) = 2\\cdot 3^2 - 5\\cdot 3 + 1 = 18 - 15 + 1 = 4.$$"
+        },
+        {
+          "id": "1.2",
+          "level": "easy",
+          "statement": "<p>Observe o gráfico da função \\(f\\) abaixo e responda:</p>\n  {{figure}}\n  <ol class=\"items\" type=\"a\">\n    <li>\\(\\displaystyle\\lim_{x\\to 2^-} f(x)\\)</li>\n    <li>\\(\\displaystyle\\lim_{x\\to 2^+} f(x)\\)</li>\n    <li>\\(\\displaystyle\\lim_{x\\to 2} f(x)\\) existe? Quanto vale?</li>\n    <li>Quanto vale \\(f(2)\\)? Por que ele é diferente do limite?</li>\n  </ol>",
+          "figure": {
+            "graph": {
+              "title": "Figura 1.2: gráfico de f perto de x = 2",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 80
+              },
+              "y": {
+                "range": [
+                  -1,
+                  6
+                ],
+                "unit": 48
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "pieces": [
+                    {
+                      "expr": "x + 1",
+                      "domain": [
+                        0,
+                        2
+                      ]
+                    },
+                    {
+                      "expr": "(x - 2)^2 + 3",
+                      "domain": [
+                        2,
+                        4.5
+                      ]
+                    }
+                  ],
+                  "label": {
+                    "text": "y = f(x)",
+                    "at": [
+                      3.9,
+                      5.4
+                    ],
+                    "towards": [
+                      "R",
+                      "D",
+                      "L"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "buraco",
+                  "at": {
+                    "of": "f",
+                    "x": 2,
+                    "side": "left"
+                  },
+                  "style": "open",
+                  "guides": true
+                },
+                {
+                  "id": "f2",
+                  "at": [
+                    2,
+                    1
+                  ],
+                  "colour": "key"
+                }
+              ]
+            },
+            "caption": "Figura 1.2: gráfico de \\(f\\) perto de \\(x = 2\\)."
+          },
+          "answer": "a) \\(3\\) &nbsp; b) \\(3\\) &nbsp; c) existe e vale \\(3\\) &nbsp; d) \\(f(2)=1\\)",
+          "solution": "<p><b>a)</b> Limite pela esquerda (\\(x\\to2^-\\)): andamos sobre o gráfico vindo de valores menores que 2, pela reta. Ao chegar perto de \\(x=2\\), a altura chega perto de \\(3\\) (a bolinha aberta). Logo \\(\\lim_{x\\to2^-}f(x)=3\\).</p>\n  <p><b>b)</b> Limite pela direita (\\(x\\to2^+\\)): vindo de valores maiores que 2, pela curva, a altura também se aproxima de \\(3\\). Logo \\(\\lim_{x\\to2^+}f(x)=3\\).</p>\n  <p><b>c)</b> O limite existe quando os dois limites laterais existem e são <b>iguais</b>. Aqui os dois valem 3, então \\(\\lim_{x\\to2}f(x)=3\\).</p>\n  <p><b>d)</b> O valor da função é dado pelo ponto <b>fechado</b> em \\(x=2\\), que está na altura 1: \\(f(2)=1\\). O limite descreve para onde o gráfico \"aponta\" perto de 2, e \\(f(2)\\) é o valor que a função realmente assume em 2. Eles não precisam coincidir. Quando não coincidem, como aqui, dizemos que \\(f\\) <b>não é contínua</b> em \\(x=2\\).</p>"
+        },
+        {
+          "id": "1.3",
+          "level": "mid",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to 4}\\frac{x^2-16}{x-4}\\).</p>",
+          "answer": "\\(8\\)",
+          "solution": "<p>Substituindo \\(x=4\\): \\(\\frac{16-16}{4-4}=\\frac{0}{0}\\). Isso é uma <b>indeterminação</b>: não diz que o limite não existe, só que a expressão precisa ser reescrita antes. Aqui numerador e denominador são polinômios que valem 0 em \\(x=4\\), e um polinômio que vale 0 em \\(x=4\\) tem o fator \\((x-4)\\). Então os dois têm esse fator escondido.</p>\n  <p>Fatoramos o numerador pela diferença de quadrados \\(a^2-b^2=(a-b)(a+b)\\):</p>\n  $$\\frac{x^2-16}{x-4} = \\frac{(x-4)(x+4)}{x-4} = x+4 \\qquad (x\\neq 4).$$\n  <p>Podemos cancelar porque, no limite, \\(x\\) chega perto de 4 mas nunca é igual a 4, então \\(x-4\\neq0\\). Agora substituímos:</p>\n  $$\\lim_{x\\to4}\\frac{x^2-16}{x-4}=\\lim_{x\\to4}(x+4)=8.$$\n  {{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 1.3: a reta y = x + 4 com um buraco",
+              "x": {
+                "range": [
+                  -1,
+                  7
+                ],
+                "unit": 66
+              },
+              "y": {
+                "range": [
+                  -1,
+                  12
+                ],
+                "unit": 28,
+                "labelEvery": 2,
+                "require": [
+                  4,
+                  8
+                ]
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x + 4",
+                  "label": {
+                    "text": "y = {expr}, x ≠ {buraco.x}",
+                    "at": [
+                      5.5,
+                      10.2
+                    ],
+                    "towards": [
+                      "R",
+                      "D",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "buraco",
+                  "at": {
+                    "of": "f",
+                    "x": 4
+                  },
+                  "style": "open",
+                  "guides": true,
+                  "label": "{coords} fica de fora",
+                  "colour": "ask",
+                  "towards": [
+                    "L",
+                    "NW",
+                    "U"
+                  ]
+                }
+              ]
+            },
+            "caption": "O gráfico de \\(\\frac{x^2-16}{x-4}\\) é a reta \\(y=x+4\\) com um \"buraco\" em \\({{sol.buraco}}\\): a função não existe em \\(x=4\\), mas o limite existe e vale 8."
+          }
+        },
+        {
+          "id": "1.4",
+          "level": "mid",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to 0}\\frac{\\sqrt{x+9}-3}{x}\\).</p>",
+          "answer": "\\(\\dfrac{1}{6}\\)",
+          "solution": "<p>Substituindo \\(x=0\\): \\(\\frac{\\sqrt9-3}{0}=\\frac00\\). Com raiz quadrada, o truque é multiplicar em cima e embaixo pelo <b>conjugado</b> \\(\\sqrt{x+9}+3\\), porque \\((\\sqrt{A}-B)(\\sqrt{A}+B)=A-B^2\\) faz a raiz sumir do numerador:</p>\n  $$\\frac{\\sqrt{x+9}-3}{x}\\cdot\\frac{\\sqrt{x+9}+3}{\\sqrt{x+9}+3} = \\frac{(x+9)-9}{x\\,(\\sqrt{x+9}+3)} = \\frac{x}{x\\,(\\sqrt{x+9}+3)} = \\frac{1}{\\sqrt{x+9}+3}.$$\n  <p>O \\(x\\) que causava o problema foi cancelado. Agora substituímos \\(x=0\\):</p>\n  $$\\lim_{x\\to0}\\frac{1}{\\sqrt{x+9}+3}=\\frac{1}{3+3}=\\frac16.$$\n  <p class=\"tip\">Erro comum: multiplicar só o numerador pelo conjugado. É preciso multiplicar em cima e embaixo, senão a fração muda de valor.</p>"
+        },
+        {
+          "id": "1.5",
+          "level": "hard",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to 2}\\frac{x^3-8}{x^2-5x+6}\\).</p>",
+          "answer": "\\(-12\\)",
+          "solution": "<p>Substituindo \\(x=2\\): numerador \\(8-8=0\\) e denominador \\(4-10+6=0\\), ou seja, \\(\\frac00\\). Se os dois zeram em \\(x=2\\), os dois têm o fator \\((x-2)\\). Fatoramos cada um:</p>\n  <p>Numerador, pela diferença de cubos \\(a^3-b^3=(a-b)(a^2+ab+b^2)\\) com \\(a=x\\), \\(b=2\\):</p>\n  $$x^3-8=(x-2)(x^2+2x+4).$$\n  <p>Denominador: procuramos dois números com soma \\(5\\) e produto \\(6\\), que são 2 e 3:</p>\n  $$x^2-5x+6=(x-2)(x-3).$$\n  <p>Cancelando \\((x-2)\\) e substituindo:</p>\n  $$\\lim_{x\\to2}\\frac{(x-2)(x^2+2x+4)}{(x-2)(x-3)}=\\lim_{x\\to2}\\frac{x^2+2x+4}{x-3}=\\frac{4+4+4}{2-3}=\\frac{12}{-1}=-12.$$\n  <p class=\"tip\">Se esquecer a fórmula da diferença de cubos, divida \\(x^3-8\\) por \\(x-2\\) (divisão de polinômios ou Briot-Ruffini). O resultado é o mesmo.</p>"
+        },
+        {
+          "id": "1.6",
+          "level": "hard",
+          "statement": "<p>Considere a função\n  $$f(x)=\\begin{cases} k\\,x^2-1, & x<2\\\\[4pt] \\dfrac{x^2-4}{x-2}+k, & x>2\\end{cases}$$\n  Determine o valor da constante \\(k\\) para que \\(\\displaystyle\\lim_{x\\to 2}f(x)\\) exista e calcule esse limite.</p>",
+          "answer": "\\(k=\\dfrac{5}{3}\\) e o limite vale \\(\\dfrac{17}{3}\\)",
+          "solution": "<p>O limite em \\(x=2\\) existe se, e somente se, os limites laterais forem iguais. Então calculamos cada lado em função de \\(k\\).</p>\n  <p><b>Pela esquerda</b> (\\(x<2\\), vale a primeira expressão, que é um polinômio, então é só substituir):</p>\n  $$\\lim_{x\\to2^-}(kx^2-1)=4k-1.$$\n  <p><b>Pela direita</b> (\\(x>2\\)): substituir dá \\(\\frac00\\), então fatoramos como no 1.3:</p>\n  $$\\lim_{x\\to2^+}\\left(\\frac{(x-2)(x+2)}{x-2}+k\\right)=\\lim_{x\\to2^+}(x+2+k)=4+k.$$\n  <p><b>Igualando</b> os dois lados:</p>\n  $$4k-1=4+k\\;\\Longrightarrow\\;3k=5\\;\\Longrightarrow\\;k=\\frac53.$$\n  <p>O limite vale então \\(4+k=4+\\frac53=\\frac{17}{3}\\). Conferindo pelo outro lado: \\(4\\cdot\\frac53-1=\\frac{20}{3}-\\frac33=\\frac{17}{3}\\). Os dois lados batem.</p>\n  {{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 1.6: com k = 5/3 os dois pedaços se encontram",
+              "x": {
+                "range": [
+                  -1,
+                  4
+                ],
+                "unit": 100
+              },
+              "y": {
+                "range": [
+                  -2,
+                  9
+                ],
+                "unit": 36,
+                "require": [
+                  -1
+                ]
+              },
+              "functions": [
+                {
+                  "id": "esquerda",
+                  "expr": "5/3 x^2 - 1",
+                  "domain": [
+                    -1,
+                    2
+                  ],
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      0.85,
+                      4.6
+                    ],
+                    "towards": [
+                      "L",
+                      "D"
+                    ]
+                  }
+                },
+                {
+                  "id": "direita",
+                  "expr": "x + 2 + 5/3",
+                  "domain": [
+                    2,
+                    4
+                  ],
+                  "colour": "warm",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      3.2,
+                      6.5
+                    ],
+                    "towards": [
+                      "SE",
+                      "D",
+                      "R"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "encontro",
+                  "at": {
+                    "of": "esquerda",
+                    "x": 2
+                  },
+                  "style": "open",
+                  "colour": "ink",
+                  "guides": true,
+                  "label": "{coords}",
+                  "towards": [
+                    "U",
+                    "NW",
+                    "L"
+                  ]
+                }
+              ]
+            },
+            "caption": "Com \\(k=\\frac53\\), os dois pedaços chegam ao mesmo ponto \\({{sol.encontro}}\\). A bolinha é aberta porque \\(f\\) não está definida em \\(x=2\\), mas o limite existe."
+          }
+        }
+      ],
+      "solutionsIntro": "<b>A ideia central.</b> \\(\\lim_{x\\to a} f(x) = L\\) quer dizer que, quando \\(x\\) chega <i>muito perto</i> de \\(a\\) (sem precisar ser igual a \\(a\\)), \\(f(x)\\) chega muito perto de \\(L\\). O que acontece exatamente em \\(x=a\\) não importa para o limite.\n<br><b>Roteiro prático.</b> (1) Substitua \\(x=a\\). (2) Se der um número, esse é o limite. (3) Se der \\(\\frac{0}{0}\\), a expressão está \"disfarçada\": fatore, simplifique ou use o conjugado e substitua de novo."
+    },
+    {
+      "title": "2. Taxa média de variação",
+      "exercises": [
+        {
+          "id": "2.1",
+          "level": "easy",
+          "statement": "<p>Calcule a taxa média de variação de \\(f(x)=x^2\\) no intervalo \\([1,\\,3]\\). O que esse número representa na figura?</p>\n  {{figure}}",
+          "figure": {
+            "graph": {
+              "title": "Figura 2.1: a parábola y = x² e a secante AB",
+              "x": {
+                "range": [
+                  -1,
+                  4
+                ],
+                "unit": 100
+              },
+              "y": {
+                "range": [
+                  -1,
+                  12
+                ],
+                "unit": 28,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2",
+                  "label": {
+                    "text": "f(x) = {expr}",
+                    "at": [
+                      -0.6,
+                      3.5
+                    ],
+                    "towards": [
+                      "U",
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "secante",
+                  "through": [
+                    "A",
+                    "B"
+                  ],
+                  "domain": [
+                    0.2,
+                    3.35
+                  ],
+                  "colour": "ask",
+                  "label": {
+                    "text": "secante AB",
+                    "at": [
+                      1.3,
+                      4.3
+                    ],
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "A",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "A{coords}",
+                  "towards": [
+                    "R",
+                    "D",
+                    "SE"
+                  ],
+                  "guides": true
+                },
+                {
+                  "id": "B",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "B{coords}",
+                  "towards": [
+                    "L",
+                    "NW",
+                    "U"
+                  ],
+                  "guides": true
+                }
+              ]
+            },
+            "caption": "Figura 2.1: a parábola \\(y=x^2\\) e a reta secante que passa por A e B."
+          },
+          "answer": "\\(4\\) (inclinação da secante AB)",
+          "solution": "<p>Calculamos \\(f\\) nas pontas do intervalo: \\(f(1)=1^2=1\\) e \\(f(3)=3^2=9\\). Então:</p>\n  $$\\text{TMV}=\\frac{f(3)-f(1)}{3-1}=\\frac{9-1}{2}=\\frac82=4.$$\n  <p>Na figura, esse 4 é a <b>inclinação da secante AB</b>: indo de A até B, a reta sobe 8 unidades enquanto anda 2 para a direita, ou seja, sobe 4 para cada 1 que anda.</p>"
+        },
+        {
+          "id": "2.2",
+          "level": "easy",
+          "statement": "<p>A posição de um carro, em metros, é \\(s(t)=5t^2\\), com \\(t\\) em segundos. Qual é a velocidade média do carro entre \\(t=2\\) s e \\(t=4\\) s?</p>",
+          "answer": "\\(30\\ \\text{m/s}\\)",
+          "solution": "<p>Velocidade média é a TMV da posição:</p>\n  $$s(2)=5\\cdot4=20\\ \\text{m},\\qquad s(4)=5\\cdot16=80\\ \\text{m},$$\n  $$v_m=\\frac{s(4)-s(2)}{4-2}=\\frac{80-20}{2}=30\\ \\text{m/s}.$$\n  <p>O carro percorreu 60 m em 2 s, ou seja, 30 metros por segundo em média.</p>"
+        },
+        {
+          "id": "2.3",
+          "level": "mid",
+          "note": "(juros simples × compostos)",
+          "statement": "<p>Um capital de R$ 1.000,00 é aplicado a uma taxa de 20% ao ano, de duas formas diferentes (\\(t\\) em anos):</p>\n  $$\\text{juros simples: } S(t)=1000\\,(1+0{,}2\\,t)\\qquad\\qquad \\text{juros compostos: } C(t)=1000\\cdot(1{,}2)^t$$\n  <ol class=\"items\" type=\"a\">\n    <li>Calcule \\(S\\) e \\(C\\) nos instantes \\(t=0\\), \\(t=2\\) e \\(t=4\\).</li>\n    <li>Calcule a TMV de cada função no intervalo \\([0,2]\\) e no intervalo \\([2,4]\\).</li>\n    <li>Comparando as TMVs dos dois intervalos, o que se pode concluir sobre o comportamento de cada função? Qual delas cresce sempre no mesmo ritmo e qual cresce cada vez mais rápido? Explique por que isso acontece.</li>\n  </ol>",
+          "answer": "a) \\(S\\): 1000; 1400; 1800 &nbsp;·&nbsp; \\(C\\): 1000; 1440; 2073,60 &nbsp; b) \\(S\\): 200 e 200; \\(C\\): 220 e 316,80 &nbsp; c) \\(S\\) cresce em ritmo constante (linear); \\(C\\) cresce cada vez mais rápido (juros sobre juros)",
+          "solution": "<p><b>a) Os valores.</b> Para juros simples basta substituir:</p>\n  $$S(0)=1000\\cdot1=1000,\\qquad S(2)=1000\\cdot(1+0{,}4)=1400,\\qquad S(4)=1000\\cdot(1+0{,}8)=1800.$$\n  <p>Para juros compostos, calcule as potências de 1,2 com calma. Um atalho: \\((1{,}2)^4=\\big((1{,}2)^2\\big)^2\\).</p>\n  $$(1{,}2)^2=1{,}44,\\qquad (1{,}2)^4=1{,}44^2=2{,}0736,$$\n  $$C(0)=1000,\\qquad C(2)=1000\\cdot1{,}44=1440,\\qquad C(4)=1000\\cdot2{,}0736=2073{,}60.$$\n\n  <p><b>b) As TMVs.</b> Em cada intervalo, aplicamos \\(\\dfrac{\\text{valor final}-\\text{valor inicial}}{\\text{tempo}}\\). As duas contas usam 2 anos no denominador.</p>\n  <p>Juros simples:</p>\n  $$\\text{TMV}_{[0,2]}=\\frac{1400-1000}{2}=200,\\qquad \\text{TMV}_{[2,4]}=\\frac{1800-1400}{2}=200.$$\n  <p>Juros compostos:</p>\n  $$\\text{TMV}_{[0,2]}=\\frac{1440-1000}{2}=220,\\qquad \\text{TMV}_{[2,4]}=\\frac{2073{,}60-1440}{2}=\\frac{633{,}60}{2}=316{,}80.$$\n  <p>As unidades são <b>reais por ano</b>: a TMV diz quanto dinheiro a aplicação ganhou, em média, a cada ano do intervalo.</p>\n\n  <p><b>c) O que as TMVs revelam.</b></p>\n  <p><b>Juros simples:</b> a TMV é a mesma nos dois intervalos (R$ 200 por ano). Isso combina com uma <b>reta</b>, mas dois intervalos sozinhos não provam: quem confirma é a fórmula. \\(S(t)=1000+200t\\) é uma função do 1º grau, com inclinação 200, então a TMV é 200 em <b>qualquer</b> intervalo, e \\(S\\) cresce sempre no mesmo ritmo.</p>\n  <p><b>Por quê:</b> no regime simples, os juros são calculados sempre sobre o capital inicial. Todo ano rende 20% de R$ 1.000, que são R$ 200, nem mais nem menos.</p>\n  <p><b>Juros compostos:</b> a TMV <b>aumentou</b> de 220 para 316,80. O dinheiro não só cresce, como cresce <b>cada vez mais rápido</b>. Por isso o gráfico de \\(C\\) não é uma reta: é uma curva que vai ficando mais inclinada.</p>\n  <p><b>Por quê:</b> no regime composto, os juros de cada ano são calculados sobre o <b>montante acumulado</b>, que já inclui os juros anteriores (\"juros sobre juros\"). No 1º ano rende 20% de 1000 = 200. No 2º ano rende 20% de 1200 = 240. No 3º rende 20% de 1440 = 288, e assim por diante. A cada ano a base é maior, então o ganho também é maior.</p>\n  {{figure}}\n  <p class=\"tip\">A ideia que vale para qualquer função: se a TMV <b>muda</b> de um intervalo para outro, a função <b>não é linear</b>. Se a TMV aumenta, ela está acelerando o crescimento. Se diminui, está desacelerando. Comparar TMVs em intervalos vizinhos é um jeito simples de \"enxergar\" o formato do gráfico sem desenhá-lo.</p>",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 2.3: juros simples x compostos",
+              "x": {
+                "range": [
+                  -1,
+                  6
+                ],
+                "unit": 90,
+                "name": "t"
+              },
+              "y": {
+                "range": [
+                  -200,
+                  2800
+                ],
+                "unit": 0.15,
+                "step": 200,
+                "labelEvery": 2,
+                "name": "R$"
+              },
+              "functions": [
+                {
+                  "id": "S",
+                  "expr": "1000(1 + 0.2t)",
+                  "domain": [
+                    0,
+                    5.6
+                  ],
+                  "colour": "key",
+                  "legend": "juros simples: S(t) = {expr}",
+                  "label": {
+                    "text": "S",
+                    "at": 5.6,
+                    "towards": [
+                      "R",
+                      "D"
+                    ],
+                    "size": 15
+                  }
+                },
+                {
+                  "id": "C",
+                  "expr": "1000*1.2^t",
+                  "domain": [
+                    0,
+                    5.6
+                  ],
+                  "colour": "ask",
+                  "legend": "juros compostos: C(t) = 1000·(1,2)ᵗ",
+                  "label": {
+                    "text": "C",
+                    "at": 5.6,
+                    "towards": [
+                      "R",
+                      "U"
+                    ],
+                    "size": 15
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "S0",
+                  "at": {
+                    "of": "S",
+                    "x": 0
+                  },
+                  "colour": "key",
+                  "label": "{y}",
+                  "towards": [
+                    "L",
+                    "NW"
+                  ],
+                  "size": 12.5
+                },
+                {
+                  "id": "S2",
+                  "at": {
+                    "of": "S",
+                    "x": 2
+                  },
+                  "colour": "key",
+                  "label": "{y}",
+                  "towards": [
+                    "SE",
+                    "D",
+                    "R"
+                  ],
+                  "size": 12.5
+                },
+                {
+                  "id": "S4",
+                  "at": {
+                    "of": "S",
+                    "x": 4
+                  },
+                  "colour": "key",
+                  "label": "{y}",
+                  "towards": [
+                    "SE",
+                    "D",
+                    "R"
+                  ],
+                  "size": 12.5
+                },
+                {
+                  "id": "C2",
+                  "at": {
+                    "of": "C",
+                    "x": 2
+                  },
+                  "colour": "ask",
+                  "label": "{y}",
+                  "towards": [
+                    "NW",
+                    "U",
+                    "L"
+                  ],
+                  "size": 12.5
+                },
+                {
+                  "id": "C4",
+                  "at": {
+                    "of": "C",
+                    "x": 4
+                  },
+                  "colour": "ask",
+                  "label": "{y:2}",
+                  "towards": [
+                    "NW",
+                    "U",
+                    "L"
+                  ],
+                  "size": 12.5
+                }
+              ]
+            },
+            "caption": "As duas aplicações começam iguais (e até coincidem em \\(t=1\\)), mas a composta vai se afastando: a distância entre as curvas é de R$ 40 em \\(t=2\\) e já chega a R$ 273,60 em \\(t=4\\)."
+          }
+        },
+        {
+          "id": "2.4",
+          "level": "mid",
+          "statement": "<p>O gráfico mostra \\(f(x)=-x^2+6x\\) e os pontos A, B e C, com abscissas \\(x=1\\), \\(x=4\\) e \\(x=6\\).</p>\n  {{figure}}\n  <ol class=\"items\" type=\"a\">\n    <li>Calcule a TMV de \\(f\\) em \\([1,4]\\) e em \\([4,6]\\).</li>\n    <li>O que o sinal de cada resultado diz sobre o comportamento de \\(f\\)?</li>\n    <li>Calcule a TMV em \\([0,6]\\). O resultado significa que \\(f\\) ficou constante nesse intervalo?</li>\n  </ol>",
+          "figure": {
+            "graph": {
+              "title": "Figura 2.4: as secantes AB e BC",
+              "x": {
+                "range": [
+                  -1,
+                  7
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -1,
+                  10
+                ],
+                "unit": 34
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "-x^2 + 6x",
+                  "domain": [
+                    -0.2,
+                    6.2
+                  ],
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      3,
+                      9
+                    ],
+                    "towards": [
+                      "U",
+                      "NE"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "AB",
+                  "through": [
+                    "A",
+                    "B"
+                  ],
+                  "domain": [
+                    1,
+                    4
+                  ],
+                  "colour": "ask",
+                  "label": {
+                    "text": "secante AB",
+                    "at": 2.5,
+                    "towards": [
+                      "D",
+                      "SE"
+                    ]
+                  }
+                },
+                {
+                  "id": "BC",
+                  "through": [
+                    "B",
+                    "C"
+                  ],
+                  "domain": [
+                    4,
+                    6
+                  ],
+                  "colour": "warm",
+                  "label": {
+                    "text": "secante BC",
+                    "at": 5,
+                    "towards": [
+                      "SW",
+                      "L",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "A",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "A",
+                  "towards": [
+                    "L",
+                    "NW",
+                    "U"
+                  ]
+                },
+                {
+                  "id": "B",
+                  "at": {
+                    "of": "f",
+                    "x": 4
+                  },
+                  "label": "B",
+                  "towards": [
+                    "U",
+                    "NE",
+                    "R"
+                  ]
+                },
+                {
+                  "id": "C",
+                  "at": {
+                    "of": "f",
+                    "x": 6
+                  },
+                  "label": "C",
+                  "towards": [
+                    "NE",
+                    "R",
+                    "U"
+                  ]
+                }
+              ]
+            },
+            "caption": "Figura 2.4: as secantes AB e BC."
+          },
+          "answer": "a) \\(1\\) e \\(-4\\) &nbsp; b) cresce em média em \\([1,4]\\) e decresce em média em \\([4,6]\\) &nbsp; c) \\(0\\); não, \\(f\\) sobe e depois desce",
+          "solution": "<p>Valores da função: \\(f(0)=0\\), \\(f(1)=-1+6=5\\), \\(f(4)=-16+24=8\\) e \\(f(6)=-36+36=0\\).</p>\n  <p><b>a)</b></p>\n  $$\\text{TMV}_{[1,4]}=\\frac{8-5}{4-1}=\\frac33=1,\\qquad \\text{TMV}_{[4,6]}=\\frac{0-8}{6-4}=\\frac{-8}{2}=-4.$$\n  <p><b>b)</b> TMV <b>positiva</b> quer dizer que, em média, \\(f\\) <b>aumentou</b> no intervalo: a secante AB sobe. TMV <b>negativa</b> quer dizer que \\(f\\) <b>diminuiu</b> em média: a secante BC desce, e bem mais inclinada, porque \\(|-4|>1\\).</p>\n  <p><b>c)</b> \\(\\text{TMV}_{[0,6]}=\\dfrac{f(6)-f(0)}{6-0}=\\dfrac{0-0}{6}=0\\). Isso <b>não</b> quer dizer que \\(f\\) ficou constante. A função subiu até 9 (em \\(x=3\\)) e depois desceu de volta a 0. A TMV só compara o <b>começo</b> com o <b>fim</b> e não enxerga o que aconteceu no meio. É por isso que precisamos de uma taxa \"instantânea\", a derivada.</p>"
+        },
+        {
+          "id": "2.5",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^2+1\\) e \\(P={{fig.P}}\\).</p>\n  <ol class=\"items\" type=\"a\">\n    <li>Mostre que a TMV de \\(f\\) no intervalo \\([2,\\;2+h]\\) é igual a \\(4+h\\) (para \\(h\\neq 0\\)).</li>\n    <li>Use o resultado para obter a TMV quando \\(h=2\\), \\(h=1\\) e \\(h=0{,}5\\).</li>\n    <li>Para qual valor a TMV se aproxima quando \\(h\\to 0\\)? O que esse valor representa na figura?</li>\n  </ol>\n  {{figure}}",
+          "figure": {
+            "graph": {
+              "title": "Figura 2.5: secantes por P que se aproximam da tangente",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 100
+              },
+              "y": {
+                "range": [
+                  -2,
+                  20
+                ],
+                "unit": 19,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 + 1",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      4.2,
+                      19
+                    ],
+                    "towards": [
+                      "L",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "s1",
+                  "through": [
+                    "P",
+                    "Q1"
+                  ],
+                  "domain": [
+                    1.1,
+                    4.35
+                  ],
+                  "colour": "rust",
+                  "width": 1.8,
+                  "legend": "secante h = {=2}, Q{Q1}",
+                  "label": {
+                    "text": "h = {=2}",
+                    "at": 4.35,
+                    "towards": [
+                      "R"
+                    ],
+                    "size": 13
+                  }
+                },
+                {
+                  "id": "s2",
+                  "through": [
+                    "P",
+                    "Q2"
+                  ],
+                  "domain": [
+                    1.1,
+                    4.35
+                  ],
+                  "colour": "ochre",
+                  "width": 1.8,
+                  "legend": "secante h = {=1}, Q{Q2}",
+                  "label": {
+                    "text": "h = {=1}",
+                    "at": 4.35,
+                    "towards": [
+                      "R"
+                    ],
+                    "size": 13
+                  }
+                },
+                {
+                  "id": "s3",
+                  "through": [
+                    "P",
+                    "Q3"
+                  ],
+                  "domain": [
+                    1.1,
+                    4.35
+                  ],
+                  "colour": "purple",
+                  "width": 1.8,
+                  "legend": "secante h = {=0.5}, Q{Q3}",
+                  "label": {
+                    "text": "h = {=0.5}",
+                    "at": 4.35,
+                    "towards": [
+                      "R"
+                    ],
+                    "size": 13
+                  }
+                },
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 2
+                  },
+                  "domain": [
+                    0.6,
+                    4.4
+                  ],
+                  "colour": "warm",
+                  "width": 2.2,
+                  "style": "dashed",
+                  "legend": "tangente em P"
+                }
+              ],
+              "points": [
+                {
+                  "id": "Q1",
+                  "at": {
+                    "of": "f",
+                    "x": 4
+                  },
+                  "colour": "rust"
+                },
+                {
+                  "id": "Q2",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "colour": "ochre"
+                },
+                {
+                  "id": "Q3",
+                  "at": {
+                    "of": "f",
+                    "x": 2.5
+                  },
+                  "colour": "purple"
+                },
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 2
+                  },
+                  "label": "P{coords}",
+                  "towards": [
+                    "NW",
+                    "L",
+                    "U"
+                  ]
+                }
+              ]
+            },
+            "caption": "Figura 2.5: secantes por P que ficam cada vez mais próximas da tangente."
+          },
+          "answer": "b) \\(6;\\ 5;\\ 4{,}5\\) &nbsp; c) \\(4\\), a inclinação da tangente em P",
+          "solution": "<p><b>a)</b> Aplicamos a fórmula com \\(a=2\\) e \\(b=2+h\\), de modo que \\(b-a=h\\):</p>\n  $$f(2+h)=(2+h)^2+1=4+4h+h^2+1=5+4h+h^2,\\qquad f(2)=5.$$\n  $$\\text{TMV}=\\frac{f(2+h)-f(2)}{h}=\\frac{(5+4h+h^2)-5}{h}=\\frac{4h+h^2}{h}=\\frac{h(4+h)}{h}=4+h.$$\n  <p><b>b)</b> Basta substituir \\(h\\) em \\(4+h\\): para \\(h=2\\) dá \\(6\\), para \\(h=1\\) dá \\(5\\) e para \\(h=0{,}5\\) dá \\(4{,}5\\). Conferindo o caso \\(h=2\\) direto: \\(\\frac{f(4)-f(2)}{2}=\\frac{17-5}{2}=6\\).</p>\n  <p><b>c)</b> Quando \\(h\\to0\\), \\(4+h\\to4\\). Na figura, à medida que \\(h\\) diminui, o segundo ponto Q escorrega pela curva em direção a P, e a secante gira até coincidir com a <b>reta tangente</b> em P. O número 4 é a <b>inclinação da tangente</b>, ou seja, a derivada \\(f'(2)\\). Essa é exatamente a ponte entre a taxa média e a definição de derivada do tema 3.</p>"
+        },
+        {
+          "id": "2.6",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=\\sqrt{x}\\). Encontre o valor de \\(a\\), com \\(0\\le a<9\\), para o qual a taxa média de variação de \\(f\\) no intervalo \\([a,\\,9]\\) é igual a \\(\\dfrac{1}{5}\\).</p>",
+          "answer": "\\(a=4\\)",
+          "solution": "<p>Montamos a TMV com \\(f(9)=\\sqrt9=3\\) e \\(f(a)=\\sqrt a\\):</p>\n  $$\\frac{3-\\sqrt a}{9-a}=\\frac15.$$\n  <p>O truque é perceber que \\(9-a\\) é uma diferença de quadrados: \\(9-a=3^2-(\\sqrt a)^2=(3-\\sqrt a)(3+\\sqrt a)\\). Então:</p>\n  $$\\frac{3-\\sqrt a}{(3-\\sqrt a)(3+\\sqrt a)}=\\frac{1}{3+\\sqrt a}=\\frac15.$$\n  <p>Podemos cancelar \\(3-\\sqrt a\\) porque ele não é zero: como \\(a<9\\), temos \\(\\sqrt a<3\\). Agora as duas frações têm numerador 1, então os denominadores são iguais: \\(3+\\sqrt a=5\\), logo \\(\\sqrt a=2\\) e \\(a=4\\).</p>\n  <p>Conferindo: \\(\\dfrac{\\sqrt9-\\sqrt4}{9-4}=\\dfrac{3-2}{5}=\\dfrac15\\). Correto.</p>\n  <p class=\"tip\">Também dá para resolver fazendo \"meios pelos extremos\": \\(5(3-\\sqrt a)=9-a\\). A fatoração é mais rápida e evita equação com raiz.</p>"
+        }
+      ],
+      "solutionsIntro": "<b>A ideia central.</b> A taxa média de variação (TMV) responde: \"em média, quanto \\(f\\) muda para cada unidade que \\(x\\) anda?\"\n$$\\text{TMV}_{[a,b]}=\\frac{\\Delta y}{\\Delta x}=\\frac{f(b)-f(a)}{b-a}.$$\nGeometricamente, é a <b>inclinação da reta secante</b> que liga os pontos \\((a;\\,f(a))\\) e \\((b;\\,f(b))\\) do gráfico. Em física, se \\(f\\) é a posição, a TMV é a <b>velocidade média</b>."
+    },
+    {
+      "title": "3. Definição formal de derivada",
+      "lead": "Em todos os exercícios deste tema, use a definição\n  $$f'(x) = \\lim_{h\\to 0}\\frac{f(x+h)-f(x)}{h}$$\n  e não as regras de derivação.",
+      "exercises": [
+        {
+          "id": "3.1",
+          "level": "easy",
+          "statement": "<p>Use a definição para calcular a derivada de \\(f(x)=3x+2\\).</p>",
+          "answer": "\\(f'(x)=3\\)",
+          "solution": "<p>\\(f(x+h)=3(x+h)+2=3x+3h+2\\). Então:</p>\n  $$\\frac{f(x+h)-f(x)}{h}=\\frac{(3x+3h+2)-(3x+2)}{h}=\\frac{3h}{h}=3.$$\n  $$f'(x)=\\lim_{h\\to0}3=3.$$\n  <p>Faz sentido: o gráfico de \\(3x+2\\) é uma reta de inclinação 3, e uma reta tem a mesma inclinação em todo ponto.</p>"
+        },
+        {
+          "id": "3.2",
+          "level": "easy",
+          "statement": "<p>Seja \\(f(x)=x^2\\). Use a definição para calcular \\(f'(3)\\), a inclinação da reta tangente em \\(P{{fig.P}}\\). Em seguida, escreva a equação dessa reta tangente.</p>\n  {{figure}}",
+          "figure": {
+            "graph": {
+              "title": "Figura 3.2: a reta tangente à parábola em P",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 90
+              },
+              "y": {
+                "range": [
+                  -2,
+                  16
+                ],
+                "unit": 22,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      -0.6,
+                      1.8
+                    ],
+                    "towards": [
+                      "U",
+                      "R"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 3
+                  },
+                  "domain": [
+                    1.4,
+                    4.4
+                  ],
+                  "colour": "warm"
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "P{coords}",
+                  "towards": [
+                    "L",
+                    "NW",
+                    "U"
+                  ]
+                }
+              ],
+              "labels": [
+                {
+                  "text": "inclinação = ?",
+                  "at": [
+                    2.65,
+                    0.9
+                  ],
+                  "towards": [
+                    "R",
+                    "D",
+                    "SE"
+                  ],
+                  "names": "t"
+                }
+              ]
+            },
+            "caption": "Figura 3.2: a reta tangente à parábola em P."
+          },
+          "answer": "\\(f'(3)=6\\); tangente \\(y=6x-9\\)",
+          "solution": "<p>Aplicamos a definição direto no ponto \\(x=3\\):</p>\n  $$f'(3)=\\lim_{h\\to0}\\frac{(3+h)^2-3^2}{h}=\\lim_{h\\to0}\\frac{9+6h+h^2-9}{h}=\\lim_{h\\to0}\\frac{h(6+h)}{h}=\\lim_{h\\to0}(6+h)=6.$$\n  <p>A tangente passa por \\(P(3;\\,9)\\) com inclinação 6:</p>\n  $$y-9=6(x-3)\\;\\Longrightarrow\\;y=6x-9.$$\n  <p>Conferindo: em \\(x=3\\), \\(6\\cdot3-9=9\\). A reta passa por P.</p>"
+        },
+        {
+          "id": "3.3",
+          "level": "mid",
+          "statement": "<p>Seja \\(f(x)=x^2-4x+1\\). Use a definição para encontrar \\(f'(x)\\) e depois a equação da reta tangente ao gráfico no ponto de abscissa \\(x=1\\).</p>",
+          "answer": "\\(f'(x)=2x-4\\); tangente \\(y=-2x\\)",
+          "solution": "<p>Troque todo \\(x\\) por \\((x+h)\\):</p>\n  $$f(x+h)=(x+h)^2-4(x+h)+1=x^2+2xh+h^2-4x-4h+1.$$\n  <p>Subtraia \\(f(x)=x^2-4x+1\\). Os termos \\(x^2\\), \\(-4x\\) e \\(1\\) se cancelam:</p>\n  $$f(x+h)-f(x)=2xh+h^2-4h=h\\,(2x+h-4).$$\n  $$f'(x)=\\lim_{h\\to0}\\frac{h(2x+h-4)}{h}=\\lim_{h\\to0}(2x+h-4)=2x-4.$$\n  <p><b>Tangente em \\(x=1\\):</b> a altura é \\(f(1)=1-4+1=-2\\), então o ponto é \\((1;\\,-2)\\), e a inclinação é \\(f'(1)=2-4=-2\\).</p>\n  $$y-(-2)=-2(x-1)\\;\\Longrightarrow\\;y+2=-2x+2\\;\\Longrightarrow\\;y=-2x.$$\n  {{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 3.3: a tangente a x² − 4x + 1 em x = 1",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 86
+              },
+              "y": {
+                "range": [
+                  -4,
+                  7
+                ],
+                "unit": 36
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 4x + 1",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      4.3,
+                      3.5
+                    ],
+                    "towards": [
+                      "R",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 1
+                  },
+                  "domain": [
+                    -1,
+                    2
+                  ],
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": [
+                      2.45,
+                      -3.7
+                    ],
+                    "towards": [
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "SW",
+                    "D",
+                    "L"
+                  ]
+                }
+              ]
+            },
+            "caption": "A reta \\(y=-2x\\) toca a parábola em \\({{sol.P}}\\) com a mesma inclinação que ela tem ali."
+          }
+        },
+        {
+          "id": "3.4",
+          "level": "mid",
+          "statement": "<p>Use a definição para calcular a derivada de \\(f(x)=\\dfrac{1}{x}\\) (com \\(x\\neq 0\\)) e depois o valor de \\(f'(2)\\).</p>",
+          "answer": "\\(f'(x)=-\\dfrac{1}{x^2}\\); \\(f'(2)=-\\dfrac14\\)",
+          "solution": "<p>Aqui aparece uma fração dentro da fração. O passo principal é juntar as frações do numerador com o denominador comum \\(x(x+h)\\):</p>\n  $$f(x+h)-f(x)=\\frac1{x+h}-\\frac1x=\\frac{x-(x+h)}{x(x+h)}=\\frac{-h}{x(x+h)}.$$\n  <p>Dividindo por \\(h\\) (o mesmo que multiplicar por \\(\\frac1h\\)):</p>\n  $$\\frac{f(x+h)-f(x)}{h}=\\frac{-h}{x(x+h)}\\cdot\\frac1h=\\frac{-1}{x(x+h)}.$$\n  $$f'(x)=\\lim_{h\\to0}\\frac{-1}{x(x+h)}=\\frac{-1}{x\\cdot x}=-\\frac{1}{x^2}.$$\n  <p>Então \\(f'(2)=-\\frac{1}{4}\\). O sinal negativo faz sentido: \\(\\frac1x\\) diminui quando \\(x\\) aumenta (para \\(x>0\\)).</p>"
+        },
+        {
+          "id": "3.5",
+          "level": "hard",
+          "statement": "<p>Use a definição para mostrar que, se \\(f(x)=\\sqrt{x}\\), então \\(f'(x)=\\dfrac{1}{2\\sqrt{x}}\\) (para \\(x>0\\)). Depois encontre a reta tangente ao gráfico em \\(x=4\\).</p>",
+          "answer": "tangente \\(y=\\dfrac{x}{4}+1\\)",
+          "solution": "<p>Montando a definição, caímos em \\(\\frac00\\) com raízes. É o mesmo truque do exercício 1.4: multiplicar pelo conjugado.</p>\n  $$\\frac{\\sqrt{x+h}-\\sqrt x}{h}\\cdot\\frac{\\sqrt{x+h}+\\sqrt x}{\\sqrt{x+h}+\\sqrt x}=\\frac{(x+h)-x}{h\\,(\\sqrt{x+h}+\\sqrt x)}=\\frac{h}{h\\,(\\sqrt{x+h}+\\sqrt x)}=\\frac{1}{\\sqrt{x+h}+\\sqrt x}.$$\n  $$f'(x)=\\lim_{h\\to0}\\frac{1}{\\sqrt{x+h}+\\sqrt x}=\\frac{1}{\\sqrt x+\\sqrt x}=\\frac{1}{2\\sqrt x}.$$\n  <p><b>Tangente em \\(x=4\\):</b> ponto \\(f(4)=\\sqrt4=2\\), inclinação \\(f'(4)=\\frac{1}{2\\cdot2}=\\frac14\\).</p>\n  $$y-2=\\tfrac14(x-4)\\;\\Longrightarrow\\;y=\\tfrac{x}{4}+1.$$\n  <p class=\"tip\">Repare: \\(\\frac{1}{2\\sqrt x}=\\frac12x^{-1/2}\\), exatamente o que a regra da potência dá para \\(x^{1/2}\\). A definição \"prova\" a regra nesse caso.</p>"
+        },
+        {
+          "id": "3.6",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^3\\). Use a definição para encontrar \\(f'(x)\\). Depois determine os pontos do gráfico em que a reta tangente é <b>paralela</b> à reta \\(y=12x+1\\) e escreva a equação de cada uma dessas tangentes.</p>",
+          "answer": "\\(f'(x)=3x^2\\); pontos \\({{sol.P}}\\) e \\({{sol.Q}}\\); tangentes \\(y=12x-16\\) e \\(y=12x+16\\)",
+          "solution": "<p>Primeiro expandimos \\((x+h)^3\\). Uma forma segura é \\((x+h)^3=(x+h)^2(x+h)=(x^2+2xh+h^2)(x+h)\\):</p>\n  $$(x+h)^3=x^3+3x^2h+3xh^2+h^3.$$\n  $$\\frac{f(x+h)-f(x)}{h}=\\frac{3x^2h+3xh^2+h^3}{h}=3x^2+3xh+h^2\\;\\xrightarrow{\\;h\\to0\\;}\\;3x^2.$$\n  <p>Logo \\(f'(x)=3x^2\\).</p>\n  <p><b>Tangentes paralelas a \\(y=12x+1\\):</b> retas paralelas têm a mesma inclinação, então queremos \\(f'(x)=12\\):</p>\n  $$3x^2=12\\;\\Longrightarrow\\;x^2=4\\;\\Longrightarrow\\;x=2\\ \\text{ou}\\ x=-2.$$\n  <p>Pontos: \\(f(2)=8\\), dando \\((2;\\,8)\\), e \\(f(-2)=-8\\), dando \\((-2;\\,-8)\\). As tangentes:</p>\n  $$y-8=12(x-2)\\Rightarrow y=12x-16,\\qquad y+8=12(x+2)\\Rightarrow y=12x+16.$$\n  {{figure}}\n  <p class=\"tip\">Erro comum: esquecer a solução negativa de \\(x^2=4\\).</p>",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 3.6: duas tangentes paralelas a y = 12x + 1",
+              "x": {
+                "range": [
+                  -3,
+                  3
+                ],
+                "unit": 100
+              },
+              "y": {
+                "range": [
+                  -14,
+                  14
+                ],
+                "unit": 15,
+                "step": 2,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^3",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      2.3,
+                      13
+                    ],
+                    "towards": [
+                      "L",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t1",
+                  "tangent": {
+                    "of": "f",
+                    "at": 2
+                  },
+                  "domain": [
+                    1,
+                    3
+                  ],
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": 1.3,
+                    "towards": [
+                      "R",
+                      "D"
+                    ]
+                  }
+                },
+                {
+                  "id": "t2",
+                  "tangent": {
+                    "of": "f",
+                    "at": -2
+                  },
+                  "domain": [
+                    -3,
+                    -1
+                  ],
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": -1.3,
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 2
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "R",
+                    "SE",
+                    "D"
+                  ]
+                },
+                {
+                  "id": "Q",
+                  "at": {
+                    "of": "f",
+                    "x": -2
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "L",
+                    "NW",
+                    "U"
+                  ]
+                }
+              ]
+            },
+            "caption": "As duas tangentes têm inclinação 12, a mesma da reta \\(y=12x+1\\) (que não está desenhada). Por isso são paralelas a ela e entre si."
+          }
+        }
+      ],
+      "solutionsIntro": "<b>A ideia central.</b> A derivada é a TMV num intervalo que encolhe até virar um ponto:\n$$f'(x)=\\lim_{h\\to0}\\frac{f(x+h)-f(x)}{h}.$$\n<b>Roteiro, sempre o mesmo:</b> (1) calcule \\(f(x+h)\\) trocando <i>todo</i> \\(x\\) por \\((x+h)\\); (2) subtraia \\(f(x)\\), e os termos sem \\(h\\) devem se cancelar; (3) coloque \\(h\\) em evidência e cancele com o \\(h\\) do denominador; (4) só então faça \\(h\\to0\\).\n<br>Se, depois do passo 2, sobrar um termo sem \\(h\\), houve erro de conta. Esse é um ótimo teste."
+    },
+    {
+      "title": "4. Regra da potência",
+      "exercises": [
+        {
+          "id": "4.1",
+          "level": "easy",
+          "statement": "<p>Derive:</p>\n  <ol class=\"items\" type=\"a\">\n    <li>\\(f(x)=x^5\\)</li>\n    <li>\\(g(x)=4x^3\\)</li>\n    <li>\\(h(x)=7\\)</li>\n  </ol>",
+          "answer": "a) \\(5x^4\\) &nbsp; b) \\(12x^2\\) &nbsp; c) \\(0\\)",
+          "solution": "<p><b>a)</b> \\(n=5\\): \\((x^5)'=5x^{5-1}=5x^4\\).</p>\n  <p><b>b)</b> A constante 4 multiplicando fica: \\((4x^3)'=4\\cdot3x^2=12x^2\\).</p>\n  <p><b>c)</b> A derivada de uma constante é zero: o gráfico de \\(h(x)=7\\) é uma reta horizontal, de inclinação 0.</p>"
+        },
+        {
+          "id": "4.2",
+          "level": "easy",
+          "statement": "<p>Derive \\(f(x)=3x^4-2x^2+5x-1\\) e calcule \\(f'(1)\\).</p>",
+          "answer": "\\(f'(x)=12x^3-4x+5\\); \\(f'(1)=13\\)",
+          "solution": "<p>Derivamos termo a termo:</p>\n  $$f'(x)=3\\cdot4x^3-2\\cdot2x+5\\cdot1-0=12x^3-4x+5.$$\n  <p>Lembre que \\((5x)'=5\\), porque \\(x=x^1\\) e \\((x^1)'=1\\cdot x^0=1\\). E o \\(-1\\) é uma constante, com derivada 0.</p>\n  $$f'(1)=12-4+5=13.$$"
+        },
+        {
+          "id": "4.3",
+          "level": "mid",
+          "statement": "<p>Derive, reescrevendo antes como potências de \\(x\\) quando precisar:</p>\n  <ol class=\"items\" type=\"a\">\n    <li>\\(f(x)=\\sqrt{x}+\\dfrac{1}{x^2}-\\dfrac{2}{\\sqrt[3]{x}}\\)</li>\n    <li>\\(g(x)=(2x+1)(x^2-3)\\)</li>\n  </ol>",
+          "answer": "a) \\(\\dfrac{1}{2\\sqrt x}-\\dfrac{2}{x^3}+\\dfrac{2}{3\\sqrt[3]{x^4}}\\) &nbsp; b) \\(6x^2+2x-6\\)",
+          "solution": "<p><b>a)</b> A regra da potência só funciona quando cada termo está no formato \\(c\\,x^n\\) (um número vezes \\(x\\) elevado a um expoente). Raízes e frações com \\(x\\) no denominador <b>não</b> estão nesse formato. Então o primeiro trabalho é só de álgebra: reescrever.</p>\n  <table class=\"ref\" style=\"width:auto;margin:4pt auto\">\n    <tr><th>Termo original</th><th>Por quê</th><th>Como potência</th></tr>\n    <tr><td>\\(\\sqrt{x}\\)</td><td>raiz quadrada = expoente \\(\\tfrac12\\)</td><td>\\(x^{1/2}\\)</td></tr>\n    <tr><td>\\(\\dfrac{1}{x^2}\\)</td><td>passar do denominador para o numerador troca o sinal do expoente</td><td>\\(x^{-2}\\)</td></tr>\n    <tr><td>\\(\\dfrac{2}{\\sqrt[3]{x}}\\)</td><td>\\(\\sqrt[3]{x}=x^{1/3}\\) e ela está no denominador, então o expoente fica negativo</td><td>\\(2x^{-1/3}\\)</td></tr>\n  </table>\n  <p>Portanto:</p>\n  $$f(x)=x^{1/2}+x^{-2}-2x^{-1/3}.$$\n  <p>Agora derivamos <b>termo a termo</b>. Em cada um, o expoente \\(n\\) desce multiplicando e o novo expoente é \\(n-1\\). A conta \\(n-1\\) com frações é onde mais se erra, então vamos fazer com calma.</p>\n  <p><b>1º termo</b>, \\(x^{1/2}\\): aqui \\(n=\\tfrac12\\), e \\(n-1=\\tfrac12-\\tfrac22=-\\tfrac12\\).</p>\n  $$\\left(x^{1/2}\\right)'=\\tfrac12\\,x^{-1/2}.$$\n  <p><b>2º termo</b>, \\(x^{-2}\\): aqui \\(n=-2\\), e \\(n-1=-2-1=-3\\). O \\(-2\\) desce multiplicando:</p>\n  $$\\left(x^{-2}\\right)'=-2\\,x^{-3}.$$\n  <p><b>3º termo</b>, \\(-2x^{-1/3}\\): o \\(-2\\) é uma constante multiplicando, então ele fica. Aqui \\(n=-\\tfrac13\\), e \\(n-1=-\\tfrac13-\\tfrac33=-\\tfrac43\\). O expoente \\(-\\tfrac13\\) desce e multiplica o \\(-2\\): \\((-2)\\cdot\\left(-\\tfrac13\\right)=+\\tfrac23\\) (menos com menos dá mais).</p>\n  $$\\left(-2x^{-1/3}\\right)'=-2\\cdot\\left(-\\tfrac13\\right)x^{-4/3}=\\tfrac23\\,x^{-4/3}.$$\n  <p>Juntando os três:</p>\n  $$f'(x)=\\tfrac12x^{-1/2}-2x^{-3}+\\tfrac23x^{-4/3}.$$\n  <p>Essa já é uma resposta correta. Se quiser voltar para a forma com raízes, desfaça a reescrita: expoente negativo volta para o denominador, e expoente fracionário vira raiz (\\(x^{4/3}=\\sqrt[3]{x^4}\\)):</p>\n  $$f'(x)=\\frac{1}{2\\sqrt x}-\\frac{2}{x^3}+\\frac{2}{3\\sqrt[3]{x^4}}.$$\n  <p class=\"tip\">Erro comum: calcular \\(-\\tfrac13-1\\) como \\(-\\tfrac23\\). Subtrair 1 de um número negativo deixa ele <b>mais</b> negativo: \\(-\\tfrac13-1=-\\tfrac43\\).</p>\n\n  <p><b>b)</b> Aqui temos um <b>produto</b> de dois parênteses, e a regra da potência não se aplica direto a um produto. Um erro muito comum é derivar cada parêntese e multiplicar: \\((2)\\cdot(2x)=4x\\). <b>Isso está errado</b>, porque a derivada de um produto não é o produto das derivadas.</p>\n  <p>Com o que temos até aqui, a saída é <b>expandir</b> (fazer a distributiva) e transformar o produto numa soma de potências. Cada termo do primeiro parêntese multiplica cada termo do segundo:</p>\n  $$2x\\cdot x^2=2x^3,\\qquad 2x\\cdot(-3)=-6x,\\qquad 1\\cdot x^2=x^2,\\qquad 1\\cdot(-3)=-3.$$\n  <p>Somando e ordenando pelo grau:</p>\n  $$g(x)=2x^3+x^2-6x-3.$$\n  <p>Agora sim, derivamos termo a termo: \\((2x^3)'=6x^2\\), \\((x^2)'=2x\\), \\((-6x)'=-6\\) e \\((-3)'=0\\).</p>\n  $$g'(x)=6x^2+2x-6.$$\n  <p class=\"tip\">Para ver que o \"atalho errado\" falha, basta testar um valor: em \\(x=1\\) a resposta certa dá \\(g'(1)=6+2-6=2\\), e o atalho errado dá \\(4\\cdot1=4\\). Os valores são diferentes, então o atalho não vale.</p>"
+        },
+        {
+          "id": "4.4",
+          "level": "mid",
+          "statement": "<p>Encontre a equação da reta tangente ao gráfico de \\(f(x)=x^3-3x\\) no ponto de abscissa \\(x=2\\).</p>",
+          "answer": "\\(y=9x-16\\)",
+          "solution": "<p>A reta tangente é a reta que \"encosta\" no gráfico num ponto, com a mesma inclinação que o gráfico tem ali. Para escrever a equação de qualquer reta precisamos de duas coisas: <b>um ponto</b> por onde ela passa e <b>a inclinação</b> dela. Depois usamos a forma ponto-inclinação \\(y-y_0=m\\,(x-x_0)\\).</p>\n  <p><b>1. O ponto.</b> A reta toca o gráfico em \\(x=2\\), então o ponto é \\((2;\\,f(2))\\):</p>\n  $$f(2)=2^3-3\\cdot2=8-6=2\\quad\\Longrightarrow\\quad (x_0;\\,y_0)=(2;\\,2).$$\n  <p><b>2. A derivada.</b> Termo a termo: \\((x^3)'=3x^2\\) e \\((-3x)'=-3\\).</p>\n  $$f'(x)=3x^2-3.$$\n  <p><b>3. A inclinação.</b> A inclinação da tangente em \\(x=2\\) é a derivada calculada em 2:</p>\n  $$m=f'(2)=3\\cdot2^2-3=3\\cdot4-3=12-3=9.$$\n  <p><b>4. A equação.</b> Substituímos na forma ponto-inclinação e isolamos \\(y\\):</p>\n  $$y-2=9(x-2)\\;\\Longrightarrow\\;y-2=9x-18\\;\\Longrightarrow\\;y=9x-16.$$\n  <p><b>5. Conferência.</b> Em \\(x=2\\) a reta dá \\(9\\cdot2-16=2\\), que é o valor de \\(f(2)\\). A reta passa mesmo pelo ponto de tangência.</p>\n  {{figure}}\n  <p class=\"tip\">Dois erros comuns: usar \\(f'(2)=9\\) como se fosse a altura do ponto (a altura é \\(f(2)=2\\)); ou deixar \\(f'(x)\\) com \\(x\\) na equação da reta. A inclinação de uma reta é um <b>número</b>, então é preciso calcular \\(f'\\) no ponto.</p>",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 4.4: a tangente a x³ − 3x em x = 2",
+              "x": {
+                "range": [
+                  -3,
+                  3.5
+                ],
+                "unit": 90
+              },
+              "y": {
+                "range": [
+                  -6,
+                  10
+                ],
+                "unit": 24,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^3 - 3x",
+                  "domain": [
+                    -3,
+                    3
+                  ],
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      -1.9,
+                      4
+                    ],
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 2
+                  },
+                  "domain": [
+                    1,
+                    3
+                  ],
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": [
+                      3.05,
+                      5
+                    ],
+                    "towards": [
+                      "SE",
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 2
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "R",
+                    "SE",
+                    "D"
+                  ]
+                }
+              ]
+            },
+            "caption": "A tangente em \\({{sol.P}}\\) tem inclinação 9: perto desse ponto, \\(f\\) sobe cerca de 9 unidades para cada 1 unidade em \\(x\\)."
+          }
+        },
+        {
+          "id": "4.5",
+          "level": "hard",
+          "statement": "<p>Encontre todos os pontos do gráfico de \\(f(x)=x^3-6x^2+9x+1\\) em que a reta tangente é horizontal.</p>",
+          "answer": "\\({{sol.max}}\\) e \\({{sol.min}}\\)",
+          "solution": "<p><b>Traduzindo a pergunta.</b> Uma reta horizontal tem inclinação zero. A inclinação da tangente é a derivada. Então \"tangente horizontal\" quer dizer \\(f'(x)=0\\). O problema virou: derivar e resolver uma equação.</p>\n  <p><b>1. Derivar</b> termo a termo: \\((x^3)'=3x^2\\), \\((-6x^2)'=-12x\\), \\((9x)'=9\\) e \\((1)'=0\\).</p>\n  $$f'(x)=3x^2-12x+9.$$\n  <p><b>2. Resolver \\(f'(x)=0\\).</b> Primeiro dividimos tudo por 3 para simplificar (dividir os dois lados de uma equação \\(=0\\) por 3 não muda as soluções):</p>\n  $$3x^2-12x+9=0\\;\\Longrightarrow\\;x^2-4x+3=0.$$\n  <p>Procuramos dois números com <b>soma 4</b> e <b>produto 3</b>: são 1 e 3. Então:</p>\n  $$(x-1)(x-3)=0\\;\\Longrightarrow\\;x=1\\ \\text{ou}\\ x=3.$$\n  <p>(Por Bhaskara dá o mesmo: \\(\\Delta=16-12=4\\) e \\(x=\\frac{4\\pm2}{2}\\), ou seja, \\(x=3\\) ou \\(x=1\\).)</p>\n  <p><b>3. Achar as alturas.</b> A pergunta pede <b>pontos</b> do gráfico, então calculamos \\(f\\) (a função original, não a derivada) em cada \\(x\\):</p>\n  $$f(1)=1^3-6\\cdot1^2+9\\cdot1+1=1-6+9+1=5,$$\n  $$f(3)=3^3-6\\cdot3^2+9\\cdot3+1=27-54+27+1=1.$$\n  {{figure}}\n  <p><b>O que esses pontos significam.</b> Em \\((1;\\,5)\\) o gráfico para de subir e começa a descer, como o topo de uma colina. Em \\((3;\\,1)\\) ele para de descer e começa a subir, como o fundo de um vale. Nos dois casos, bem no ponto de virada, a curva fica \"achatada\" e a tangente é horizontal.</p>\n  <p class=\"tip\">Erros comuns: responder só \\(x=1\\) e \\(x=3\\), sem as alturas; ou calcular a altura usando \\(f'\\) no lugar de \\(f\\). Nesse caso daria sempre 0, porque foi assim que achamos esses \\(x\\).</p>",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 4.5: tangentes horizontais",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 86
+              },
+              "y": {
+                "range": [
+                  -2,
+                  8
+                ],
+                "unit": 40
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^3 - 6x^2 + 9x + 1",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      4.2,
+                      7
+                    ],
+                    "towards": [
+                      "L",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t1",
+                  "tangent": {
+                    "of": "f",
+                    "at": 1
+                  },
+                  "domain": [
+                    0.1,
+                    1.9
+                  ],
+                  "series": "tangentes"
+                },
+                {
+                  "id": "t2",
+                  "tangent": {
+                    "of": "f",
+                    "at": 3
+                  },
+                  "domain": [
+                    2.1,
+                    3.9
+                  ],
+                  "series": "tangentes"
+                }
+              ],
+              "points": [
+                {
+                  "id": "max",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "U",
+                    "NE",
+                    "NW"
+                  ]
+                },
+                {
+                  "id": "min",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "D",
+                    "SE",
+                    "SW"
+                  ]
+                }
+              ],
+              "labels": [
+                {
+                  "text": "f′ = 0",
+                  "at": [
+                    1.9,
+                    5.4
+                  ],
+                  "towards": [
+                    "R",
+                    "U"
+                  ],
+                  "names": "tangentes"
+                }
+              ]
+            },
+            "caption": "Nos pontos \\({{sol.max}}\\) e \\({{sol.min}}\\) a tangente fica horizontal, com \\(f'=0\\)."
+          }
+        },
+        {
+          "id": "4.6",
+          "level": "hard",
+          "statement": "<p>Determine as constantes \\(a\\) e \\(b\\) para que a reta \\(y=3x-1\\) seja tangente ao gráfico de \\(f(x)=ax^2+bx\\) no ponto de abscissa \\(x=1\\).</p>",
+          "answer": "\\(a=1,\\ b=1\\)",
+          "solution": "<p><b>Quantas equações precisamos?</b> Há duas incógnitas, \\(a\\) e \\(b\\), então precisamos de duas equações. A frase \"a reta é tangente ao gráfico em \\(x=1\\)\" fornece exatamente duas informações:</p>\n  <ol class=\"items\">\n    <li>a reta e a curva <b>passam pelo mesmo ponto</b> em \\(x=1\\);</li>\n    <li>a reta e a curva têm <b>a mesma inclinação</b> em \\(x=1\\).</li>\n  </ol>\n  <p><b>Equação (i), mesmo ponto.</b> A altura da reta em \\(x=1\\) é \\(y=3\\cdot1-1=2\\). A altura da curva em \\(x=1\\) é \\(f(1)=a\\cdot1^2+b\\cdot1=a+b\\). Igualando:</p>\n  $$a+b=2.$$\n  <p><b>Equação (ii), mesma inclinação.</b> A inclinação da reta \\(y=3x-1\\) é o número que multiplica \\(x\\), ou seja, 3. A inclinação da curva é a derivada. Atenção: \\(a\\) e \\(b\\) são <b>números</b> (constantes), então derivamos só o \\(x\\):</p>\n  $$(ax^2)'=a\\cdot2x=2ax,\\qquad (bx)'=b\\qquad\\Longrightarrow\\qquad f'(x)=2ax+b.$$\n  <p>Em \\(x=1\\): \\(f'(1)=2a+b\\). Igualando à inclinação da reta:</p>\n  $$2a+b=3.$$\n  <p><b>Resolvendo o sistema.</b> Subtraímos a equação (i) da (ii). O \\(b\\) some:</p>\n  $$(2a+b)-(a+b)=3-2\\;\\Longrightarrow\\;a=1.$$\n  <p>Substituindo \\(a=1\\) em (i): \\(1+b=2\\), então \\(b=1\\). A função é \\(f(x)=x^2+x\\).</p>\n  <p><b>Conferência</b> das duas condições: \\(f(1)=1+1=2\\) (mesmo ponto da reta) e \\(f'(x)=2x+1\\), então \\(f'(1)=3\\) (mesma inclinação da reta). As duas batem.</p>\n  {{figure}}\n  <p class=\"tip\">Erro comum: usar só uma das condições. Com uma equação e duas incógnitas existem infinitas respostas. É a tangência (ponto <b>e</b> inclinação) que fixa \\(a\\) e \\(b\\).</p>",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 4.6: x² + x e a reta y = 3x − 1",
+              "x": {
+                "range": [
+                  -3,
+                  3.5
+                ],
+                "unit": 86
+              },
+              "y": {
+                "range": [
+                  -2,
+                  9
+                ],
+                "unit": 34
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 + x",
+                  "domain": [
+                    -3,
+                    3
+                  ],
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      -2.2,
+                      3.5
+                    ],
+                    "towards": [
+                      "L",
+                      "R",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 1
+                  },
+                  "domain": [
+                    -0.3,
+                    3
+                  ],
+                  "label": {
+                    "text": "y = {eq}",
+                    "at": [
+                      2.85,
+                      5.6
+                    ],
+                    "towards": [
+                      "SE",
+                      "R",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "{coords}",
+                  "towards": [
+                    "SE",
+                    "R",
+                    "D"
+                  ]
+                }
+              ]
+            },
+            "caption": "Com \\(a=b=1\\), a reta \\(y=3x-1\\) toca \\(y=x^2+x\\) em \\({{sol.P}}\\)."
+          }
+        }
+      ],
+      "solutionsIntro": "<b>A regra.</b> \\((x^n)'=n\\,x^{n-1}\\): o expoente \"desce\" multiplicando e o novo expoente é o antigo menos 1. Vale para qualquer expoente real, inclusive negativo e fracionário.\n<br><b>Ferramentas de reescrita:</b> \\(\\sqrt x=x^{1/2}\\), \\(\\sqrt[3]x=x^{1/3}\\), \\(\\frac1{x^n}=x^{-n}\\). Com as regras de soma e de múltiplo, derivamos um polinômio termo a termo."
+    },
+    {
+      "title": "5. Derivadas sucessivas (segunda e terceira derivada)",
+      "lead": "A derivada de uma função também é uma função, então podemos derivá-la de novo: \\(f''\\) (segunda derivada) é a derivada de \\(f'\\), e \\(f'''\\) (terceira derivada) é a derivada de \\(f''\\). Use a regra da potência em cada etapa.",
+      "exercises": [
+        {
+          "id": "5.1",
+          "level": "easy",
+          "statement": "<p>Seja \\(f(x)=x^4-3x^2+2x\\). Calcule \\(f'(x)\\), \\(f''(x)\\) e \\(f'''(x)\\).</p>",
+          "answer": "\\(f'=4x^3-6x+2;\\ \\ f''=12x^2-6;\\ \\ f'''=24x\\)",
+          "solution": "<p><b>Primeira derivada</b> (regra da potência termo a termo): \\((x^4)'=4x^3\\), \\((-3x^2)'=-6x\\) e \\((2x)'=2\\).</p>\n  $$f'(x)=4x^3-6x+2.$$\n  <p><b>Segunda derivada</b>: agora derivamos \\(f'\\), não \\(f\\). \\((4x^3)'=12x^2\\), \\((-6x)'=-6\\) e \\((2)'=0\\).</p>\n  $$f''(x)=12x^2-6.$$\n  <p><b>Terceira derivada</b>: derivamos \\(f''\\). \\((12x^2)'=24x\\) e \\((-6)'=0\\).</p>\n  $$f'''(x)=24x.$$\n  <p class=\"tip\">Repare que o grau cai 1 a cada derivada (4, 3, 2, 1) e que as constantes vão sumindo: o \\(+2\\) de \\(f'\\) virou 0 em \\(f''\\).</p>"
+        },
+        {
+          "id": "5.2",
+          "level": "easy",
+          "statement": "<p>Seja \\(f(x)=5x^3-2x+7\\). Calcule \\(f''(x)\\) e o valor de \\(f''(2)\\).</p>",
+          "answer": "\\(f''(x)=30x\\); \\(f''(2)=60\\)",
+          "solution": "<p>Para chegar à segunda derivada, precisamos passar pela primeira:</p>\n  $$f'(x)=15x^2-2\\qquad(\\text{o }7\\text{ é constante e some}),$$\n  $$f''(x)=30x\\qquad(\\text{o }-2\\text{ é constante e some}).$$\n  <p>Só no final substituímos o número: \\(f''(2)=30\\cdot2=60\\).</p>\n  <p class=\"tip\">Erro comum: substituir \\(x=2\\) cedo demais, em \\(f'\\), e depois derivar o número. \\(f'(2)=58\\) é uma constante, e a derivada de uma constante é 0. Primeiro derive tudo, depois substitua.</p>"
+        },
+        {
+          "id": "5.3",
+          "level": "mid",
+          "statement": "<p>Seja \\(f(x)=\\sqrt{x}+\\dfrac{1}{x}\\) (com \\(x>0\\)). Calcule \\(f''(x)\\) e o valor de \\(f''(1)\\).</p>",
+          "answer": "\\(f''(x)=-\\dfrac{1}{4x\\sqrt{x}}+\\dfrac{2}{x^3}\\); \\(f''(1)=\\dfrac74\\)",
+          "solution": "<p>Como no 4.3, reescrevemos como potências: \\(\\sqrt x=x^{1/2}\\) e \\(\\frac1x=x^{-1}\\).</p>\n  $$f(x)=x^{1/2}+x^{-1}.$$\n  <p><b>Primeira derivada.</b> Expoentes: \\(\\tfrac12-1=-\\tfrac12\\) e \\(-1-1=-2\\).</p>\n  $$f'(x)=\\tfrac12x^{-1/2}-x^{-2}.$$\n  <p><b>Segunda derivada.</b> Derivamos cada termo de \\(f'\\) com o mesmo cuidado.</p>\n  <p>1º termo: o \\(\\tfrac12\\) fica, o expoente \\(-\\tfrac12\\) desce e o novo expoente é \\(-\\tfrac12-1=-\\tfrac32\\). Então \\(\\tfrac12\\cdot\\left(-\\tfrac12\\right)x^{-3/2}=-\\tfrac14x^{-3/2}\\).</p>\n  <p>2º termo: o \\(-1\\) fica, o expoente \\(-2\\) desce e o novo expoente é \\(-3\\). Então \\(-1\\cdot(-2)x^{-3}=+2x^{-3}\\).</p>\n  $$f''(x)=-\\tfrac14x^{-3/2}+2x^{-3}=-\\frac{1}{4x\\sqrt x}+\\frac{2}{x^3}.$$\n  <p>(Usamos \\(x^{3/2}=x^1\\cdot x^{1/2}=x\\sqrt x\\).)</p>\n  <p><b>Valor em \\(x=1\\).</b> Como \\(1\\) elevado a qualquer expoente é \\(1\\):</p>\n  $$f''(1)=-\\tfrac14+2=\\tfrac74.$$"
+        },
+        {
+          "id": "5.4",
+          "level": "mid",
+          "statement": "<p>A posição de uma partícula, em metros, é \\(s(t)=t^3-6t^2+9t\\), com \\(t\\) em segundos (\\(t\\ge 0\\)). A velocidade é \\(v(t)=s'(t)\\) e a aceleração é \\(a(t)=s''(t)\\).</p>\n  <ol class=\"items\" type=\"a\">\n    <li>Encontre \\(v(t)\\) e \\(a(t)\\).</li>\n    <li>Em que instantes a partícula para, mesmo que só por um instante (\\(v=0\\))? Qual é a aceleração em cada um desses instantes?</li>\n    <li>Em que instante a aceleração é zero?</li>\n  </ol>",
+          "answer": "a) \\(v=3t^2-12t+9\\), \\(a=6t-12\\) &nbsp; b) \\(t=1\\) s (\\(a=-6\\ \\text{m/s}^2\\)) e \\(t=3\\) s (\\(a=6\\ \\text{m/s}^2\\)) &nbsp; c) \\(t=2\\) s",
+          "solution": "<p><b>a)</b> A velocidade é a primeira derivada da posição, e a aceleração é a segunda (ou seja, a derivada da velocidade):</p>\n  $$v(t)=s'(t)=3t^2-12t+9,\\qquad a(t)=v'(t)=s''(t)=6t-12.$$\n  <p><b>b)</b> \"Parar\" aqui significa velocidade zero naquele instante:</p>\n  $$3t^2-12t+9=0\\;\\Longrightarrow\\;t^2-4t+3=0\\;\\Longrightarrow\\;(t-1)(t-3)=0\\;\\Longrightarrow\\;t=1\\ \\text{s ou}\\ t=3\\ \\text{s}.$$\n  <p>A aceleração nesses instantes:</p>\n  $$a(1)=6-12=-6\\ \\text{m/s}^2,\\qquad a(3)=18-12=6\\ \\text{m/s}^2.$$\n  <p>Interpretação: a partícula não fica parada, ela para só por um instante. Em \\(t=1\\) a aceleração é negativa, então logo depois a velocidade fica negativa e ela passa a andar para trás. Em \\(t=3\\) a aceleração é positiva, então a velocidade volta a ser positiva e ela anda para frente de novo. Parar (\\(v=0\\)) não significa aceleração zero.</p>\n  <p><b>c)</b> \\(a(t)=6t-12=0\\) quando \\(t=2\\) s. É o instante em que a velocidade para de diminuir e começa a aumentar (o ponto mais baixo da curva de \\(v\\)).</p>\n  {{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "title": "Resolução 5.4: posição, velocidade e aceleração",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 110,
+                "name": "t"
+              },
+              "y": {
+                "range": [
+                  -14,
+                  14
+                ],
+                "unit": 16,
+                "step": 2,
+                "labelEvery": 2,
+                "name": ""
+              },
+              "functions": [
+                {
+                  "id": "s",
+                  "expr": "t^3 - 6t^2 + 9t",
+                  "domain": [
+                    0,
+                    4.3
+                  ],
+                  "colour": "key",
+                  "label": {
+                    "text": "s",
+                    "at": 4.3,
+                    "towards": [
+                      "R",
+                      "D"
+                    ],
+                    "size": 15
+                  },
+                  "legend": "s = {expr}   (posição, em m)"
+                },
+                {
+                  "id": "v",
+                  "expr": "3t^2 - 12t + 9",
+                  "domain": [
+                    0,
+                    4.3
+                  ],
+                  "colour": "ask",
+                  "label": {
+                    "text": "v",
+                    "at": 4.3,
+                    "towards": [
+                      "R",
+                      "D"
+                    ],
+                    "size": 15
+                  },
+                  "legend": "v = s′ = {expr}   (velocidade, em m/s)"
+                },
+                {
+                  "id": "a",
+                  "expr": "6t - 12",
+                  "domain": [
+                    0,
+                    4.3
+                  ],
+                  "colour": "warm",
+                  "label": {
+                    "text": "a",
+                    "at": 4.3,
+                    "towards": [
+                      "R",
+                      "U"
+                    ],
+                    "size": 15
+                  },
+                  "legend": "a = s″ = {expr}   (aceleração, em m/s²)"
+                }
+              ],
+              "guides": [
+                {
+                  "x": 1,
+                  "from": -7,
+                  "to": 14
+                },
+                {
+                  "x": 2,
+                  "from": -4,
+                  "to": 14
+                },
+                {
+                  "x": 3,
+                  "from": -4,
+                  "to": 14
+                }
+              ],
+              "points": [
+                {
+                  "at": {
+                    "of": "v",
+                    "x": 1
+                  },
+                  "colour": "ask"
+                },
+                {
+                  "at": {
+                    "of": "v",
+                    "x": 3
+                  },
+                  "colour": "ask"
+                },
+                {
+                  "at": {
+                    "of": "a",
+                    "x": 2
+                  },
+                  "colour": "warm"
+                },
+                {
+                  "at": {
+                    "of": "s",
+                    "x": 1
+                  },
+                  "colour": "key"
+                }
+              ]
+            },
+            "caption": "Posição, velocidade e aceleração no mesmo gráfico. Cada curva tem sua unidade (\\(s\\) em m, \\(v\\) em m/s, \\(a\\) em m/s²), então compare onde cada uma vale zero, não a altura de uma contra a outra. \\(v\\) vale zero onde \\(s\\) tem tangente horizontal (\\(t=1\\) e \\(t=3\\)), e \\(a\\) vale zero onde \\(v\\) atinge o valor mínimo (\\(t=2\\))."
+          }
+        },
+        {
+          "id": "5.5",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^5-5x^4\\).</p>\n  <ol class=\"items\" type=\"a\">\n    <li>Calcule \\(f'(x)\\), \\(f''(x)\\) e \\(f'''(x)\\).</li>\n    <li>Resolva a equação \\(f''(x)=0\\).</li>\n    <li>Continue derivando. Qual é a primeira ordem \\(n\\) para a qual \\(f^{(n)}(x)=0\\) para todo \\(x\\)? Explique por quê.</li>\n  </ol>",
+          "answer": "a) \\(5x^4-20x^3;\\ 20x^3-60x^2;\\ 60x^2-120x\\) &nbsp; b) \\(x=0\\) ou \\(x=3\\) &nbsp; c) \\(n=6\\)",
+          "solution": "<p><b>a)</b> Uma derivada de cada vez, sempre a partir da anterior:</p>\n  $$f'(x)=5x^4-20x^3,$$\n  $$f''(x)=20x^3-60x^2,$$\n  $$f'''(x)=60x^2-120x.$$\n  <p><b>b)</b> Para resolver \\(20x^3-60x^2=0\\), colocamos em evidência o que os dois termos têm em comum, que é \\(20x^2\\):</p>\n  $$20x^2(x-3)=0.$$\n  <p>Um produto é zero quando algum fator é zero: \\(20x^2=0\\) dá \\(x=0\\), e \\(x-3=0\\) dá \\(x=3\\).</p>\n  <p class=\"tip\">Erro comum: dividir a equação por \\(x^2\\) e perder a solução \\(x=0\\). Colocar em evidência não perde nenhuma solução.</p>\n  <p><b>c)</b> Continuamos derivando:</p>\n  $$f^{(4)}(x)=120x-120,\\qquad f^{(5)}(x)=120,\\qquad f^{(6)}(x)=0.$$\n  <p>Então \\(n=6\\). O motivo: cada derivada diminui o grau do polinômio em 1. \\(f\\) tem grau 5, e depois de 5 derivadas sobra uma constante (grau 0). A sexta derivada de uma constante é zero, e daí em diante tudo continua zero. De modo geral, <b>um polinômio de grau \\(n\\) tem a derivada de ordem \\(n+1\\) igual a zero</b>.</p>"
+        },
+        {
+          "id": "5.6",
+          "level": "hard",
+          "statement": "<p>Encontre as constantes \\(a\\), \\(b\\), \\(c\\) e \\(d\\) do polinômio \\(f(x)=ax^3+bx^2+cx+d\\) sabendo que\n  $$f(0)=1,\\qquad f'(0)=-2,\\qquad f''(0)=4,\\qquad f'''(0)=12.$$</p>",
+          "answer": "\\(a=2,\\ b=2,\\ c=-2,\\ d=1\\), ou seja, \\(f(x)=2x^3+2x^2-2x+1\\)",
+          "solution": "<p>A estratégia é calcular \\(f, f', f'', f'''\\) de forma geral e depois substituir \\(x=0\\). O zero apaga quase todos os termos, e cada condição acaba revelando uma constante.</p>\n  <p>Lembre que \\(a, b, c, d\\) são números, então derivamos só o \\(x\\):</p>\n  $$f(x)=ax^3+bx^2+cx+d,$$\n  $$f'(x)=3ax^2+2bx+c,$$\n  $$f''(x)=6ax+2b,$$\n  $$f'''(x)=6a.$$\n  <p>Agora usamos as condições, uma por linha:</p>\n  $$f(0)=d=1\\;\\Longrightarrow\\;d=1,$$\n  $$f'(0)=c=-2\\;\\Longrightarrow\\;c=-2,$$\n  $$f''(0)=2b=4\\;\\Longrightarrow\\;b=2,$$\n  $$f'''(0)=6a=12\\;\\Longrightarrow\\;a=2.$$\n  <p>Logo \\(f(x)=2x^3+2x^2-2x+1\\).</p>\n  <p><b>Conferência:</b> \\(f'(x)=6x^2+4x-2\\), \\(f''(x)=12x+4\\) e \\(f'''(x)=12\\). Em \\(x=0\\): \\(f(0)=1\\), \\(f'(0)=-2\\), \\(f''(0)=4\\) e \\(f'''(0)=12\\). Todas as condições batem.</p>\n  <p class=\"tip\">Repare no padrão: em \\(x=0\\), todo termo que ainda tem \\(x\\) vale 0. Na derivada de ordem \\(k\\), o único termo sem \\(x\\) é o que veio de \\(x^k\\) (por exemplo, em \\(f''(x)=6ax+2b\\), o \\(2b\\) veio de \\(bx^2\\)). Por isso cada condição isolou uma constante diferente.</p>"
+        }
+      ],
+      "solutionsTitle": "5. Derivadas sucessivas",
+      "solutionsIntro": "<b>A ideia central.</b> Depois de derivar \\(f\\), obtemos outra função, \\(f'\\). Nada impede de derivar de novo:\n$$f\\;\\xrightarrow{\\text{deriva}}\\;f'\\;\\xrightarrow{\\text{deriva}}\\;f''\\;\\xrightarrow{\\text{deriva}}\\;f'''\\;\\xrightarrow{\\text{deriva}}\\;f^{(4)}\\;\\cdots$$\nA partir da quarta usamos o número entre parênteses: \\(f^{(4)}, f^{(5)},\\dots\\) (também se escreve \\(\\frac{d^2y}{dx^2}\\) para a segunda derivada).\n<br><b>O que significam.</b> \\(f'\\) mede quão rápido \\(f\\) muda; \\(f''\\) mede quão rápido a <i>inclinação</i> muda. Na física: posição \\(\\to\\) velocidade \\(\\to\\) aceleração.\n<br><b>Regra de ouro:</b> derive sempre o <b>resultado anterior</b>, nunca a função original de novo. E simplifique cada etapa antes de seguir."
+    }
+  ],
+  "closing": "<b>Resumo final.</b> Limite: para onde a função \"aponta\". TMV: inclinação da secante (variação média). Derivada: limite da TMV quando o intervalo encolhe, ou seja, inclinação da tangente (variação instantânea). A regra da potência é o atalho para calcular essa derivada sem refazer o limite toda vez. Derivadas sucessivas são essa mesma derivada aplicada de novo ao resultado."
+}
