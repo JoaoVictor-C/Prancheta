@@ -1268,6 +1268,12 @@ class Build {
       // sitting on the curve it had just slid away from.
       const w = b.measure(text, size) - 8;
       const h = Math.ceil(size * 1.45);
+      // A spot with a 3px margin is preferred to one with 1px: the width is an
+      // estimate, and the same digits set in another machine's fallback font
+      // came out wide enough on CI (Linux) to touch a curve that hugs the
+      // axis -- "0" and "−3" beside the x = 0 asymptote of (x² + 1)/x. The
+      // 1px spot stays the fallback, so no number loses a spot it had.
+      const roomy = ([x, y]: [number, number]): boolean => b.clear(b.box(x, y, w, h), 3);
       const fits = ([x, y]: [number, number]): boolean => b.clear(b.box(x, y, w, h));
       // A backing over nothing but guides is the fallback as designed: the
       // guide is cut around the number (`breakGuides`) and no curve loses
@@ -1279,7 +1285,10 @@ class Build {
         const guides = this.guideMarks.reduce((n, m) => n + all - b.inkThrough(box, 1, m.id), 0);
         return all - guides > 0;
       };
-      const hit = cands.find(fits) ?? (cutsCurve(cands[0]!) ? spread().find(fits) : undefined);
+      const hit =
+        cands.find(roomy) ??
+        cands.find(fits) ??
+        (cutsCurve(cands[0]!) ? (spread().find(roomy) ?? spread().find(fits)) : undefined);
       const [x, y] = hit ?? cands[0]!;
       const block = b.label(text, x, y, { size, colour: FAINT, width: w, id, gridOf: "plane", ...(hit ? {} : { fill: PAPER }) });
       this.tickBoxes.push(b.box(x, y, block.width!, block.height!));
