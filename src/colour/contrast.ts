@@ -94,6 +94,24 @@ export function isTransparent(value: string): boolean {
   return parsed !== null && parsed.a === 0;
 }
 
+/** True for a colour that hides whatever was painted under it. */
+export function isOpaque(value: string): boolean {
+  const parsed = parseColour(value);
+  return parsed !== null && parsed.a >= 1;
+}
+
+/**
+ * Do these two spellings name one opaque colour? `"#FCFBF7"` and
+ * `"rgb(252, 251, 247)"` do. False when either is unparseable or not opaque,
+ * so an unknown colour is never taken for the paper.
+ */
+export function sameOpaqueColour(a: string, b: string): boolean {
+  const x = parseColour(a);
+  const y = parseColour(b);
+  if (x === null || y === null || x.a < 1 || y.a < 1) return false;
+  return Math.round(x.r) === Math.round(y.r) && Math.round(x.g) === Math.round(y.g) && Math.round(x.b) === Math.round(y.b);
+}
+
 /**
  * `over` painted on top of `under`: the colour a reader actually sees.
  *

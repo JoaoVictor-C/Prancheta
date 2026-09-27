@@ -1,0 +1,20 @@
+{
+  "preset": "function-graph",
+  "title": "Figura 1.2: gráfico de f perto de x = 2",
+  "x": { "range": [-1, 5], "unit": 80 },
+  "y": { "range": [-1, 6], "unit": 48 },
+  "functions": [
+    {
+      "id": "f",
+      "pieces": [
+        { "expr": "x + 1", "domain": [0, 2] },
+        { "expr": "(x - 2)^2 + 3", "domain": [2, 4.5] }
+      ],
+      "label": { "text": "y = f(x)", "at": [3.9, 5.4], "towards": ["R", "D", "L"] }
+    }
+  ],
+  "points": [
+    { "id": "buraco", "at": { "of": "f", "x": 2, "side": "left" }, "style": "open", "guides": true },
+    { "id": "f2", "at": [2, 1], "colour": "key" }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "preset": "vectors",
+  "title": "Projeção de u sobre v e decomposição de w",
+  "locale": "pt-BR",
+  "vectors": [
+    {
+      "name": "u",
+      "components": [
+        2,
+        4
+      ]
+    },
+    {
+      "name": "v",
+      "components": [
+        5,
+        1
+      ]
+    },
+    {
+      "projection": {
+        "of": "u",
+        "onto": "v"
+      }
+    },
+    {
+      "name": "w",
+      "magnitude": 5,
+      "angle": "143,13°",
+      "at": [
+        0,
+        0
+      ]
+    },
+    {
+      "decompose": "w"
+    }
+  ]
+}

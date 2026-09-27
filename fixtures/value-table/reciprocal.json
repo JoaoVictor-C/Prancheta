@@ -1,0 +1,9 @@
+{
+  "preset": "value-table",
+  "title": "Função com polo: f(x) = 1/x",
+  "variable": "x",
+  "xs": [-2, -1, 0, 1, 2],
+  "functions": [
+    { "name": "f", "expr": "1/x" }
+  ]
+}

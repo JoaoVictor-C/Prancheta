@@ -203,6 +203,9 @@ export function buildConnectors(
         toId: typeof connector.to === "string" ? connector.to : null,
         points,
         curve: lifted,
+        // Units, not coordinates: a scale is the same in scene and page
+        // space, so unlike `curve` this needs no lifting.
+        ...(connector.measuredIn === undefined ? {} : { measuredIn: { ...connector.measuredIn } }),
         arrow: connector.arrow ?? "end",
         arrowStyle: connector.arrowStyle ?? "closed",
         dashed: connector.dashed ?? false,
@@ -258,6 +261,13 @@ export function buildMarks(scenes: SceneRecord[], measured: PageMeasurement): Pl
         kind: "mark",
         id: mark.id ?? `${record.id}-mark-${i + 1}`,
         ...(mark.gridOf === undefined ? {} : { gridOf: mark.gridOf }),
+        ...(mark.series === undefined ? {} : { series: mark.series }),
+        ...(mark.on === undefined ? {} : { on: [...mark.on] }),
+        ...(mark.measuredIn === undefined ? {} : { measuredIn: { ...mark.measuredIn } }),
+        ...(mark.place === true ? { place: true } : {}),
+        ...(mark.tick === undefined
+          ? {}
+          : { tick: { ...mark.tick } }),
         points,
         closed,
         fill: mark.fill ?? "none",

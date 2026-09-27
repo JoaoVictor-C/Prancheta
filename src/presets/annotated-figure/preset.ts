@@ -79,6 +79,10 @@ export function expandAnnotatedFigure(input: AnnotatedFigureInput): FigureSpec {
       strokeWidth: 0,
       padding: 0,
       fontSize: typeScale.annotation,
+      // The callout names the leader that points from it (ADR 0035), so
+      // `annotation-nearest-its-owner` holds it at the leader's own end
+      // rather than letting it drift towards a part it does not point at.
+      annotates: `${id}--leader`,
     });
     connectors.push({
       id: `${id}--leader`,

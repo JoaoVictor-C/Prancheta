@@ -1,0 +1,7 @@
+{
+  "preset": "unit-circle",
+  "title": "ciclo trigonométrico: ângulos simétricos de π/3",
+  "angles": [
+    { "angle": "π/3", "projection": true, "symmetric": true }
+  ]
+}

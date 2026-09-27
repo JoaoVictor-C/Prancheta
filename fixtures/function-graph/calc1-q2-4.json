@@ -1,0 +1,35 @@
+{
+  "preset": "function-graph",
+  "title": "Figura 2.4: as secantes AB e BC",
+  "x": { "range": [-1, 7], "unit": 70 },
+  "y": { "range": [-1, 10], "unit": 34 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "-x^2 + 6x",
+      "domain": [-0.2, 6.2],
+      "label": { "text": "y = {expr}", "at": [3, 9], "towards": ["U", "NE"] }
+    }
+  ],
+  "lines": [
+    {
+      "id": "AB",
+      "through": ["A", "B"],
+      "domain": [1, 4],
+      "colour": "ask",
+      "label": { "text": "secante AB", "at": 2.5, "towards": ["D", "SE"] }
+    },
+    {
+      "id": "BC",
+      "through": ["B", "C"],
+      "domain": [4, 6],
+      "colour": "warm",
+      "label": { "text": "secante BC", "at": 5, "towards": ["SW", "L", "D"] }
+    }
+  ],
+  "points": [
+    { "id": "A", "at": { "of": "f", "x": 1 }, "label": "A", "towards": ["L", "NW", "U"] },
+    { "id": "B", "at": { "of": "f", "x": 4 }, "label": "B", "towards": ["U", "NE", "R"] },
+    { "id": "C", "at": { "of": "f", "x": 6 }, "label": "C", "towards": ["NE", "R", "U"] }
+  ]
+}

@@ -14,6 +14,7 @@
 import type {
   ConstraintToggles,
   LaidOutFigure,
+  MeasuredIn,
   PlacedBox,
   PlacedConnector,
   PlacedMark,
@@ -27,13 +28,21 @@ import { inkBounds, isEmpty as bleedIsEmpty, unionRects } from "./effects/bleed.
 import type { Bleed } from "./effects/bleed.ts";
 import { containsPoint } from "./geometry/shapes.ts";
 import { rotatePoint, rotatedBounds } from "./geometry/rotate.ts";
-import { WCAG_AA_NORMAL, compositeOver, contrastRatio, isTransparent } from "./colour/contrast.ts";
+import {
+  WCAG_AA_NORMAL,
+  compositeOver,
+  contrastRatio,
+  isOpaque,
+  isTransparent,
+  sameOpaqueColour,
+} from "./colour/contrast.ts";
 import {
   DICHROMACY_KINDS,
   MIN_DISTINGUISHABLE_DISTANCE,
   simulatedDistance,
 } from "./colour/colourblind.ts";
 import type { Constraint } from "./constraints/types.ts";
+import { parseNumber } from "./locale/format.ts";
 import { isConstraintSatisfied } from "./constraints/types.ts";
 
 export type CheckId =
@@ -51,6 +60,9 @@ export type CheckId =
   // this is its core-side counterpart, over geometry this project laid out
   // itself and can therefore test exactly rather than by DOM hit-testing.
   | "text-clear-of-ink"
+  // Its complement (ADR 0035): the text may be clear because it sits on a
+  // paper backing, and the backing then erased the line under it.
+  | "backing-hides-no-ink"
   | "content-within-canvas"
   | "connector-clear-of-boxes"
   | "boxes-do-not-overlap"
@@ -72,10 +84,33 @@ export type CheckId =
   // defect this whole line of work exists to prevent, reappearing inside the
   // primitive meant to cure it.
   | "sweep-matches-its-label"
+  // Its twin for straight runs (ADR 0028): a dimension line drawn 42 units
+  // long beside a label reading "50 m", or a velocity arrow scaled at 2px
+  // per m/s whose length disagrees with its printed "vA = 50 m/s".
+  | "length-matches-its-label"
+  // The obligation a PLACE label pays (ADR 0028). `annotation-nearest-its-owner`
+  // cannot measure a label naming a point where two lines meet -- the lines
+  // are always nearer -- so a place is measured by its own rule, under its
+  // own name, because the method differs.
+  | "label-nearest-its-place"
+  // What every proximity check above assumes (ADR 0035): that a label SAYS
+  // what it names. One that says nothing is invisible to all of them unless
+  // it is declared free-standing.
+  | "label-declares-what-it-names"
   // An "arc" whose two ends are not the same distance from its centre is not
   // an arc, and nothing else notices: the renderer averages the two radii and
   // draws a curve matching neither.
   | "arc-is-circular"
+  // Didactic checks (ADR 0024). A figure made to teach from can be
+  // well-formed and still fail the reader: a number the exercise cites is
+  // missing from the axis, or two curves differ only in a colour a
+  // photocopy or a colour-blind student cannot see.
+  | "axis-number-present"
+  | "series-distinguishable-without-colour"
+  | "curve-label-nearest-its-curve"
+  // The core counterpart of module-feature-on-its-stroke (ADR 0025): a
+  // marker that claims to lie on a curve, an axis or both is measured there.
+  | "feature-on-its-curve"
   // Animation (ADR 0012, M11). Motion-aware: verified over an interval of
   // time, not a single instant, so it is intentionally named apart from
   // "boxes-do-not-overlap" even though it reuses that check's same
@@ -186,7 +221,15 @@ export function runChecks(figure: LaidOutFigure): Check[] {
   checks.push(declaredSizeHonoured(boxes));
   checks.push(annotationNearestItsOwner(figure, boxes));
   checks.push(sweepMatchesItsLabel(figure, boxes));
+  checks.push(...lengthMatchesItsLabel(figure, boxes));
+  checks.push(labelNearestItsPlace(figure, boxes));
+  checks.push(labelDeclaresWhatItNames(figure, boxes));
+  checks.push(backingHidesNoInk(figure, boxes));
   checks.push(arcIsCircular(figure));
+  checks.push(axisNumberPresent(figure));
+  checks.push(seriesDistinguishableWithoutColour(figure, boxes));
+  checks.push(curveLabelNearestItsCurve(figure, boxes));
+  checks.push(featureOnItsCurve(figure));
   return checks;
 }
 
@@ -513,8 +556,11 @@ function textClearOfOtherBoxes(text: PlacedText, boxes: Map<string, PlacedBox>):
  *   - a mark or connector this label's OWNER names via `annotates` -- the
  *     same relief `annotates` buys against a box or a connector, extended to
  *     the mark id ir/types.ts's own validation already allows it to name
- *   - grid furniture (`Mark.gridOf`) -- a label crossing a ruled line is not
- *     a collision, exactly as it is not one against a tick's own gridline
+ *   - grid LATTICE lines (`Mark.gridOf`, not an axis) -- a label crossing a
+ *     faint ruled line is not a collision, exactly as it is not one against a
+ *     tick's own gridline. The two axes are NOT skipped (ADR 0035): text
+ *     struck through by the heaviest line on the plane is a defect a reader
+ *     sees, whatever the line is called
  *   - a mark with no visible stroke -- a filled region with no border is a
  *     surface a label may sit ON (contrast-sufficient scores that), not a
  *     line it can touch
@@ -533,12 +579,34 @@ function textClearOfInk(
   // pass. `annotation-nearest-its-owner` is what earns the proximity; this is
   // what earns the overlap, and only an opaque owner earns it.
   const hidesWhatItAnnotates = owner !== undefined && !isTransparent(owner.fill);
+  // An axis number on a paper backing is the one deliberate exception, and
+  // only for grid furniture. A number is never dropped (function-graph's
+  // tick rule): when no spot within half a division of its tick is clear,
+  // it keeps its spot and paints paper under itself, interrupting the curve
+  // for the width of one numeral. The glyph is then set on paper, not on the
+  // ink, which is what this check protects; `contrast-sufficient` still
+  // measures it against the backing it actually sits on.
+  const backedGridNumber = owner?.gridOf !== undefined && !isTransparent(owner.fill);
+  if (backedGridNumber) {
+    return {
+      id: "text-clear-of-ink",
+      target: text.id,
+      status: "pass",
+      detail: "an axis number on its own opaque backing; the ink beneath it is covered, not crossed",
+    };
+  }
 
   const touching: string[] = [];
   for (const element of ink) {
     if (hidesWhatItAnnotates && owner?.annotates === element.id) continue;
     if (element.kind === "mark") {
-      if (element.gridOf !== undefined) continue;
+      // The lattice is still exempt: a faint ruled line under a number is
+      // what a grid is, and every tick sits on its own. An AXIS is not
+      // (ADR 0035): it is the heaviest line on the plane, a reader sees text
+      // struck through by it, and presets had come to treat "exempt from the
+      // check" as "free room" -- the unit circle's arc label was biased onto
+      // the x axis for exactly that reason.
+      if (element.gridOf !== undefined && !isAxis(element)) continue;
       if (element.stroke === "none" || element.strokeWidth <= 0) continue;
     }
     if (polylineIntersectsBox(element.points, bounds)) touching.push(element.id);
@@ -552,6 +620,193 @@ function textClearOfInk(
         status: "fail",
         ownerId: text.ownerId ?? undefined,
         detail: `label sits on ${touching.join(", ")}`,
+      };
+}
+
+/**
+ * Is this mark one of a grid's two axes?
+ *
+ * Frame resolution gives the zero lines stable ids, `<frame>-axis-x` and
+ * `<frame>-axis-y` (ir/frames.ts), so a mark can claim to lie on an axis by
+ * name. The same ids tell an axis from the lattice: both are grid furniture,
+ * but the lattice is a faint ruled line a number may sit on and an axis is
+ * the heaviest line on the plane (ADR 0035).
+ */
+export function isAxis(mark: PlacedMark): boolean {
+  return mark.gridOf !== undefined && (mark.id === `${mark.gridOf}-axis-x` || mark.id === `${mark.gridOf}-axis-y`);
+}
+
+/** Does this mark or connector put a visible line on the page? */
+function drawsLine(element: PlacedMark | PlacedConnector): boolean {
+  if (element.kind === "mark" && (element.place === true || element.tick !== undefined)) return false;
+  if (element.stroke === "none" || element.strokeWidth <= 0) return false;
+  return !isTransparent(element.stroke);
+}
+
+/** Does this polyline cross the box AS DRAWN (in its own frame when it is turned)? */
+function polylineCrossesBox(points: Point[], box: PlacedBox): boolean {
+  return polylineIntersectsBox(points.map((point) => inFramePoint(point, box)), localRect(box));
+}
+
+/** The ids of every box that owns a label. */
+function labelledBoxes(figure: LaidOutFigure): Set<string> {
+  const owners = new Set<string>();
+  for (const element of figure.elements) {
+    if (element.kind === "text" && element.ownerId !== null) owners.add(element.ownerId);
+  }
+  return owners;
+}
+
+/**
+ * Does any label's opaque backing hide a line it does not name? (ADR 0035)
+ *
+ * A label gets a paper fill so its text stays legible over ink, and
+ * `text-clear-of-ink` then passes it: the GLYPHS are clear, set on paper.
+ * What nothing measured was the paper itself. Painter's order draws marks
+ * first and boxes over them, so the backing erases every mark under it for
+ * its whole width -- a tick number's backing cut a gap in a hyperbola at its
+ * vertex and in a polar rose at the origin; a unit-circle angle label's
+ * backing cut gaps in OP and in both axes. Every check passed, because each
+ * asked about the text and none about what the paper covered.
+ *
+ * A backing may cover:
+ *   - what its label `annotates` -- a tangent's value set on its own segment
+ *     is the relief ADR 0019 grants, and the reader reads that line as named
+ *     there, not as broken;
+ *   - grid LATTICE lines -- the halo ADR 0034 designed, which a tick number
+ *     earns only where its spot is otherwise clear of ink, and which breaks
+ *     a faint ruled line a reader still completes across one numeral.
+ *
+ * It may NOT cover an axis, a curve, a guide or any other stroked mark: a
+ * reader sees a gap in a line they are reading, whatever the checks call it.
+ *
+ * Only marks can be hidden. Connectors are painted after every box, so a
+ * backing is always under them; a label on a connector it does not name is
+ * `text-clear-of-ink`'s to report.
+ */
+function backingHidesNoInk(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
+  const id = "backing-hides-no-ink" as const;
+  const labelled = labelledBoxes(figure);
+  const backings = [...boxes.values()].filter((box) => labelled.has(box.id) && !isTransparent(box.fill));
+  if (backings.length === 0) {
+    return {
+      id,
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no label is set on an opaque backing",
+    };
+  }
+  const order = new Map<string, number>();
+  figure.elements.forEach((element, index) => order.set(element.id, index));
+  const marks = figure.elements.filter(
+    (element): element is PlacedMark => element.kind === "mark" && drawsLine(element),
+  );
+
+  const hidden: string[] = [];
+  let lattice = 0;
+  for (const box of backings) {
+    const painted = order.get(box.id) ?? Infinity;
+    const cut: string[] = [];
+    for (const mark of marks) {
+      if ((order.get(mark.id) ?? -1) > painted) continue; // drawn over the backing, not under it
+      if (box.annotates === mark.id) continue;
+      if (!polylineCrossesBox(mark.points, box)) continue;
+      if (mark.gridOf !== undefined && !isAxis(mark)) {
+        lattice += 1;
+        continue;
+      }
+      cut.push(mark.id);
+    }
+    if (cut.length > 0) hidden.push(`${box.id}'s backing hides ${cut.join(", ")}`);
+  }
+
+  const latticeNote = lattice === 0 ? "" : `; ${lattice} gridline crossing(s) under a backing allowed as a halo`;
+  return hidden.length === 0
+    ? {
+        id,
+        target: "figure",
+        status: "pass",
+        examined: backings.length,
+        detail: `no backing hides a line it does not name across ${backings.length} backed label(s)${latticeNote}`,
+      }
+    : {
+        id,
+        target: "figure",
+        status: "fail",
+        examined: backings.length,
+        detail: `${hidden.length} label backing(s) cut a gap in ink they do not name: ${hidden.join("; ")}`,
+      };
+}
+
+/**
+ * Text drawn on no shape of its own: no stroke, no border, and a fill that is
+ * either nothing or the paper itself. That is what a reader takes for a
+ * LABEL -- something that names what it sits beside -- rather than for a
+ * node, a bar or a cell that is itself the thing.
+ */
+function isBareLabel(box: PlacedBox, background: string): boolean {
+  const stroked = box.strokeWidth > 0 && box.stroke !== "none" && !isTransparent(box.stroke);
+  const bordered =
+    box.border !== undefined &&
+    Object.values(box.border).some((side) => side !== undefined && (side.width ?? 0) > 0 && side.color !== "none");
+  const filled = !isTransparent(box.fill) && !sameOpaqueColour(box.fill, background);
+  return !stroked && !bordered && !filled;
+}
+
+/**
+ * Does every bare label say what it names -- or say that it names nothing?
+ * (ADR 0035)
+ *
+ * The two proximity checks only examine a label that makes a claim:
+ * `annotation-nearest-its-owner` one with `annotates`, `label-nearest-its-place`
+ * one naming a place, `curve-label-nearest-its-curve` one with `names`. A
+ * label declaring none of them was invisible to all three, so it could sit
+ * beside the wrong thing and pass: the unit circle's sin value "√3/2" sat
+ * beside a symmetric point it did not name. Not a false pass inside any check,
+ * a figure that never made the claim those checks hold it to.
+ *
+ * So unclaimed is no longer the silent default. A bare label either declares
+ * what it names, or declares `freeStanding` -- a title, a caption, a note --
+ * which is a visible choice in the spec and in this check's count. Grid
+ * furniture (tick numbers) is the frame's own, and not asked.
+ */
+function labelDeclaresWhatItNames(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
+  const id = "label-declares-what-it-names" as const;
+  const labelled = labelledBoxes(figure);
+  const bare = [...boxes.values()].filter(
+    (box) => labelled.has(box.id) && box.gridOf === undefined && isBareLabel(box, figure.background),
+  );
+  if (bare.length === 0) {
+    return {
+      id,
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no text is set bare, as a label, on the figure",
+    };
+  }
+  const unclaimed = bare.filter(
+    (box) => box.annotates === undefined && box.names === undefined && box.freeStanding !== true,
+  );
+  const free = bare.filter((box) => box.freeStanding === true).length;
+  return unclaimed.length === 0
+    ? {
+        id,
+        target: "figure",
+        status: "pass",
+        examined: bare.length,
+        detail: `every one of ${bare.length} bare label(s) names something or is declared free-standing (${free} free-standing)`,
+      }
+    : {
+        id,
+        target: "figure",
+        status: "fail",
+        examined: bare.length,
+        detail:
+          `${unclaimed.length} label(s) name nothing and are not declared free-standing, so no check can tell ` +
+          `whether they sit beside what they mean: ${unclaimed.map((box) => box.id).join(", ")}. ` +
+          `Give each annotates, annotatesPlace or names -- or freeStanding: true for a title or caption.`,
       };
 }
 
@@ -740,13 +995,64 @@ function localRect(box: PlacedBox): Rect {
  * `checkRect` returns `bounds` for a rotated box, which is exact as a bound
  * and hopeless as an answer for a long thin bar on a diagonal: a 430px rule
  * at 30 degrees has a 372x215 bounding box covering most of the figure, and
- * every label in the picture reads as overlapping it. Mapping the rect into
- * the box's own frame first is still conservative -- an axis-aligned bound is
- * taken of the mapped corners -- but conservative about the LABEL, which is
- * small, instead of about the bar, which is not.
+ * every label in the picture reads as overlapping it.
+ *
+ * Answered by separating axes over the two rectangles AS ORIENTED, which is
+ * exact in both directions and costs four projections. Mapping the label into
+ * the box's frame with `inFrameOf` and re-bounding it was conservative about
+ * the LABEL instead, and that trade only holds while the label is small: the
+ * re-bound grows with the label's ASPECT and the angle, so a 1112x30 title
+ * back-rotated 62 degrees bounds to roughly 548x996 and collides with every
+ * steeply turned box on the canvas. A figure carrying a page-wide title and a
+ * column of angled counts could not be made to pass by moving anything --
+ * the false positive was a function of the title's WIDTH, not of any
+ * distance. Two of the four axes are (1, 0) and (0, 1), which is why the
+ * unrotated case still goes straight to `intersects`: those two reduce to it
+ * exactly, and the shortcut says so rather than leaving it to be rediscovered.
  */
 function overlapsBox(rect: Rect, box: PlacedBox): boolean {
-  return intersects(inFrameOf(rect, box), localRect(box));
+  if (box.rotation === undefined || box.rotationCenter === undefined) {
+    return intersects(rect, localRect(box));
+  }
+  const radians = (box.rotation * Math.PI) / 180;
+  const axes: Point[] = [
+    { x: 1, y: 0 },
+    { x: 0, y: 1 },
+    { x: Math.cos(radians), y: Math.sin(radians) },
+    { x: -Math.sin(radians), y: Math.cos(radians) },
+  ];
+  const label = cornersOf(rect);
+  const drawn = cornersOf(localRect(box)).map((corner) =>
+    rotatePoint(corner, box.rotationCenter!, box.rotation!),
+  );
+  return axes.every((axis) => !separatedAlong(axis, label, drawn));
+}
+
+/** A rect's four corners, clockwise from its top-left. */
+function cornersOf(rect: Rect): Point[] {
+  return [
+    { x: rect.x, y: rect.y },
+    { x: rect.x + rect.width, y: rect.y },
+    { x: rect.x + rect.width, y: rect.y + rect.height },
+    { x: rect.x, y: rect.y + rect.height },
+  ];
+}
+
+/**
+ * Do these two point sets' projections onto `axis` fall clear of one another?
+ *
+ * `axis` must be a UNIT vector, so the slack below stays in world pixels --
+ * the same EPSILON slack `intersects` applies, in the same direction: a
+ * shared edge, or an overlap thinner than half a pixel, is not a collision.
+ */
+function separatedAlong(axis: Point, a: Point[], b: Point[]): boolean {
+  const project = (points: Point[]): { min: number; max: number } => {
+    const onto = points.map((point) => point.x * axis.x + point.y * axis.y);
+    return { min: Math.min(...onto), max: Math.max(...onto) };
+  };
+  const first = project(a);
+  const second = project(b);
+  return first.max <= second.min + EPSILON || second.max <= first.min + EPSILON;
 }
 
 /**
@@ -754,9 +1060,13 @@ function overlapsBox(rect: Rect, box: PlacedBox): boolean {
  *
  * Returned unchanged when the box never turned. When it did, the rect's four
  * corners are rotated back about the same centre `attachBoxRotation` used and
- * their axis-aligned bound is taken -- which is exact for an unrotated rect
- * and slightly generous for a rotated one, erring toward "this box might be
- * under the label" rather than toward silence.
+ * their axis-aligned bound is taken -- exact when the box never turned, and
+ * generous by a factor that grows with the rect's ASPECT and the angle when
+ * it did, which is not slight: a 1112x30 rect back-rotated 62 degrees bounds
+ * to about 548x996. `overlapsBox` was built on this and is not any more, for
+ * precisely that reason. What is left are the two callers that need a RECT
+ * back rather than a yes/no -- a surface test and an enclosure test -- and
+ * both err toward naming a box rather than toward silence.
  */
 function inFrameOf(rect: Rect, box: PlacedBox): Rect {
   if (box.rotation === undefined || box.rotationCenter === undefined) return rect;
@@ -874,6 +1184,57 @@ function surfacesUnder(
   ];
 }
 
+/**
+ * The em box of a label's text: each line box trimmed vertically to its font
+ * size. A line box carries the line-height's leading above and below the
+ * glyphs, and a gridline running through that leading is under no glyph.
+ */
+function textInkBox(text: PlacedText): Rect {
+  return unionOf(
+    text.lines.map((line) => {
+      const inset = Math.max(0, (line.box.height - text.fontSize) / 2);
+      return { x: line.box.x, y: line.box.y + inset, width: line.box.width, height: line.box.height - inset * 2 };
+    }),
+  );
+}
+
+/**
+ * Every stroked line that visibly runs under a label's glyphs, with the
+ * colour a reader sees it in (ADR 0035).
+ *
+ * `surfacesUnder` treats a gridline as "not substrate", and for a FILL that
+ * is right: a 1px line does not decide what colour a label sits on. But a
+ * glyph crossed by that line is read against it along the crossing, and pale
+ * grey tick numbers over grey gridlines passed this check on the strength of
+ * the paper beside them. So every line through the text's em box counts --
+ * lattice, axis, curve or connector alike, since a glyph does not care what
+ * the line under it is called -- unless an opaque box painted after it
+ * covers the whole em box: a label's own paper backing hides the lattice it
+ * interrupts, and then the paper is what the glyphs sit on. A connector is
+ * painted after every box, so no backing ever hides one.
+ */
+function strokesUnder(
+  text: PlacedText,
+  boxes: Map<string, PlacedBox>,
+  lines: (PlacedMark | PlacedConnector)[],
+  order: Map<string, number>,
+  covered: string,
+): { id: string; colour: string }[] {
+  const ink = textInkBox(text);
+  if (ink.width <= 0 || ink.height <= 0) return [];
+  const coverers = [...boxes.values()].filter(
+    (box) => isOpaque(box.fill) && contains(localRect(box), inFrameOf(ink, box)),
+  );
+  const out: { id: string; colour: string }[] = [];
+  for (const line of lines) {
+    if (!polylineIntersectsBox(line.points, ink)) continue;
+    const painted = order.get(line.id) ?? -1;
+    if (line.kind === "mark" && coverers.some((box) => (order.get(box.id) ?? -1) > painted)) continue;
+    out.push({ id: line.id, colour: compositeOver(line.stroke, covered) ?? line.stroke });
+  }
+  return out;
+}
+
 function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check[] {
   const texts = figure.elements.filter((element): element is PlacedText => element.kind === "text");
   const marks = figure.elements.filter((element): element is PlacedMark => element.kind === "mark");
@@ -889,8 +1250,24 @@ function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>
     ];
   }
 
+  const order = new Map<string, number>();
+  figure.elements.forEach((element, index) => order.set(element.id, index));
+  const lines = figure.elements.filter(
+    (element): element is PlacedMark | PlacedConnector =>
+      (element.kind === "mark" || element.kind === "connector") && drawsLine(element),
+  );
+
   return texts.map((text) => {
     const surfaces = surfacesUnder(text, boxes, figure.background, marks);
+    // Every line visibly running under the glyphs is part of what they are
+    // read against (ADR 0035). Composited over the covered surface, and
+    // named in the detail so a failure says WHICH line.
+    const strokes = strokesUnder(text, boxes, lines, order, surfaces[0]!);
+    const named = new Map<string, string>();
+    for (const stroke of strokes) {
+      if (!named.has(stroke.colour)) named.set(stroke.colour, stroke.id);
+      if (!surfaces.includes(stroke.colour)) surfaces.push(stroke.colour);
+    }
     // Worst surface wins: a label straddling two of them has to be legible
     // against both, and reporting the kinder one would be the same silent
     // pass this check exists to prevent.
@@ -919,20 +1296,21 @@ function contrastSufficient(figure: LaidOutFigure, boxes: Map<string, PlacedBox>
     }
 
     const rounded = Math.round(ratio * 100) / 100;
+    const against = named.has(background) ? `${background} (the line ${named.get(background)} running under it)` : background;
     return ratio >= WCAG_AA_NORMAL
       ? {
           id: "contrast-sufficient",
           target: text.id,
           status: "pass",
           examined: 1,
-          detail: `${rounded}:1 against ${background}`,
+          detail: `${rounded}:1 against ${against}`,
         }
       : {
           id: "contrast-sufficient",
           target: text.id,
           status: "fail",
           examined: 1,
-          detail: `${rounded}:1 against ${background}, below the ${WCAG_AA_NORMAL}:1 WCAG AA threshold for normal text`,
+          detail: `${rounded}:1 against ${against}, below the ${WCAG_AA_NORMAL}:1 WCAG AA threshold for normal text`,
         };
   });
 }
@@ -1164,8 +1542,18 @@ function sectorDegrees(sector: PlacedMark): number {
   return Math.max(0, ...byRadius.values());
 }
 
+/**
+ * The number of degrees a label states, or null when it states none.
+ *
+ * Read in either locale: a figure printed in pt-BR says "37,5°" and "−30°"
+ * (decimal comma, typographic minus), and reading only "37.5" and "-30" left
+ * every pt-BR angle label silently outside the check that exists to guard it
+ * -- found when the unit-circle preset had to print its degrees in ASCII to be
+ * checked at all. A comma in a degree or a share is always the decimal mark:
+ * no angle or percentage is large enough to carry a thousands separator.
+ */
 function statedDegrees(text: string): number | null {
-  const trimmed = text.trim();
+  const trimmed = text.trim().replace(/−/g, "-").replace(/(\d),(\d)/g, "$1.$2");
   const share = /^\s*([+-]?\d+(?:\.\d+)?)\s*%\s*$/.exec(trimmed);
   if (share !== null) {
     const percent = Number(share[1]);
@@ -1224,14 +1612,20 @@ function distancePointToSegment(point: Point, a: Point, b: Point): number {
  * matters -- as is the owner itself.
  */
 function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
-  const annotations = [...boxes.values()].filter((box) => box.annotates !== undefined);
+  // A label naming a PLACE is measured by `label-nearest-its-place` instead,
+  // and a place is not ink: it competes for nobody's "nearest" here, since a
+  // reader cannot attribute a label to something that is not drawn.
+  const places = placesOf(figure);
+  const annotations = [...boxes.values()].filter(
+    (box) => box.annotates !== undefined && !places.has(box.annotates),
+  );
   if (annotations.length === 0) {
     return {
       id: "annotation-nearest-its-owner",
       target: "figure",
       status: "not-applicable",
       examined: 0,
-      detail: "not applicable: no block declares what it annotates",
+      detail: "not applicable: no block declares an element it annotates",
     };
   }
 
@@ -1241,8 +1635,18 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
   // whenever it ran diagonally, since that box is mostly empty space.
   const candidates: { id: string; distance: (from: Point) => number; encloses: (r: Rect) => boolean }[] =
     [];
+  const named = new Set(annotations.map((annotation) => annotation.annotates!));
   for (const [id, box] of boxes) {
     if (box.gridOf !== undefined) continue;
+    // Another LABEL is not a rival (ADR 0035, extending ADR 0028's rule for
+    // places): a reader attributes a label to something drawn, never to a
+    // second label. Measured centre to centre, two wide callouts stacked on
+    // one side of a cell read as each other's nearest neighbour while each
+    // sits at the end of its own leader. A box counts as a label once it
+    // makes a claim of its own -- `annotates`, `names`, or `freeStanding` --
+    // unless some annotation names it.
+    const isLabel = box.annotates !== undefined || box.names !== undefined || box.freeStanding === true;
+    if (isLabel && !named.has(id)) continue;
     const rect = localRect(box);
     candidates.push({
       id,
@@ -1261,6 +1665,7 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
     // Excluded in its mark form for the same reason it is excluded in its
     // block form: it is what the figure is drawn ON.
     if (element.kind === "mark" && element.gridOf !== undefined) continue;
+    if (element.kind === "mark" && element.place === true) continue;
     const points = element.points;
     candidates.push({
       id: element.id,
@@ -1304,6 +1709,390 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
         status: "fail",
         examined: annotations.length,
         detail: `${misattributed.length} annotation(s) sit nearer something they do not name: ${misattributed.join("; ")}`,
+      };
+}
+
+/**
+ * The places this figure's labels name, by the id of the mark that carries
+ * each one (ADR 0028). A place mark is a single point with no ink; see
+ * `Mark.place`.
+ */
+function placesOf(figure: LaidOutFigure): Map<string, Point> {
+  const places = new Map<string, Point>();
+  for (const element of figure.elements) {
+    if (element.kind === "mark" && element.place === true && element.points.length > 0) {
+      places.set(element.id, element.points[0]!);
+    }
+  }
+  return places;
+}
+
+/**
+ * A length a label claims: its magnitude, how finely it was written, and the
+ * unit it names, if any.
+ *
+ * `resolution` is half the last digit the label prints. That is the whole of
+ * the tolerance a reader grants it -- "50" covers anything that rounds to 50,
+ * "2,5" anything that rounds to 2,5 -- and it is the length counterpart of
+ * the one degree `sweep-matches-its-label` allows: tolerate what a reader
+ * could not see, and nothing a reader could.
+ */
+type StatedLength = { value: number; resolution: number; unit: string | null };
+
+/**
+ * The length a label states, or null when it states none.
+ *
+ * Read as the project's own formatter writes numbers (ADR 0023): pt-BR, so a
+ * COMMA is the decimal mark and "2,5" is two and a half. A dot is ambiguous
+ * between the two locales and is decided the way a Brazilian reader decides
+ * it -- "1.500" is fifteen hundred, being a dot followed by groups of exactly
+ * three digits -- and otherwise, as in "2.5", read as a decimal point, since
+ * no pt-BR writer puts a thousands mark before a single digit.
+ *
+ * A name in front is allowed and ignored: "vA = 50 m/s" and "d = 2,5 m" state
+ * 50 and 2,5 exactly as "50 m/s" does, and they are how an exam writes them.
+ * A unit after is kept -- "50m" and "50 m" alike -- so the caller can refuse
+ * to compare it against a frame that says it measures something else. A
+ * degree sign or a percentage is an ANGLE, which is the sweep check's to
+ * read, so it is not a length claim at all. Anything else that is not a
+ * number -- "N", "mg", "h" -- names the length without claiming a value and
+ * is null, the same rule and the same hole ADR 0019 records for "theta".
+ *
+ * The sign is dropped. A length is a magnitude, and "vx = −3 m/s" drawn as an
+ * arrow pointing left is three units long; checking that the arrow points
+ * the way its sign says is a different claim this check does not make.
+ */
+function statedLength(text: string): StatedLength | null {
+  let t = text.trim().replaceAll("−", "-").replaceAll(" ", " ");
+  const equals = t.lastIndexOf("=");
+  if (equals >= 0) t = t.slice(equals + 1).trim();
+  const match = /^[+-]?(\d[\d.]*(?:,\d+)?)\s*([^\s\d.,=+\-][^\s]*)?$/.exec(t);
+  if (match === null) return null;
+  const token = match[1]!;
+  const unit = match[2] ?? null;
+  if (unit !== null && /^(?:°|º|%|deg|degrees|rad)$/.test(unit)) return null;
+
+  let value: number;
+  let decimals: number;
+  if (token.includes(",")) {
+    const parsed = parseNumber(token, "pt-BR");
+    if (parsed === null) return null;
+    value = parsed;
+    decimals = token.length - token.indexOf(",") - 1;
+  } else if (/^\d{1,3}(?:\.\d{3})+$/.test(token)) {
+    value = Number(token.replaceAll(".", ""));
+    decimals = 0;
+  } else if (/^\d+(?:\.\d+)?$/.test(token)) {
+    value = Number(token);
+    decimals = token.includes(".") ? token.length - token.indexOf(".") - 1 : 0;
+  } else {
+    return null;
+  }
+  if (!Number.isFinite(value)) return null;
+  return { value: Math.abs(value), resolution: 0.5 * 10 ** -decimals, unit };
+}
+
+/** Units compared as written, less spacing: "m/s" and "m / s" are one unit, "cm" and "m" are not. */
+function sameUnit(a: string, b: string): boolean {
+  return a.replace(/\s+/g, "") === b.replace(/\s+/g, "");
+}
+
+/**
+ * How long the run from `from` to `to` is in the units of the frame it was
+ * stated in: the inverse of `resolveInFrame`, without the origin, since a
+ * length does not care where it starts.
+ */
+function lengthInUnits(from: Point, to: Point, scale: MeasuredIn): number {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const radians = (scale.rotation * Math.PI) / 180;
+  const along = dx * Math.cos(radians) - dy * Math.sin(radians);
+  const across = dx * Math.sin(radians) + dy * Math.cos(radians);
+  return Math.hypot(along / scale.xUnit, across / scale.yUnit);
+}
+
+/**
+ * Is every straight run as long as the length its label prints? (ADR 0028)
+ *
+ * The twin `sweep-matches-its-label` never got. Both reproduced exam figures
+ * this project has drawn depend on it: a dimension line and the "50 m" beside
+ * it are two numbers free to disagree, and so are "vA = 50 m/s" and an arrow
+ * scaled at 2px per m/s. Derivation makes the LINE agree with the frame it is
+ * stated in -- the 50 that draws it appears once -- but the label is typed
+ * independently, which is exactly the gap ADR 0019 says a check is for.
+ *
+ * Same shape as the sweep check, deliberately: the label is found through
+ * `annotates`, never by proximity; only a label that states a number is read;
+ * and the tolerance is what a reader could not see -- half the label's last
+ * digit, plus the half pixel every other check forgives, turned into units.
+ *
+ * The one real difference is units. An angle is degrees wherever it is
+ * drawn; a length is pixels unless a frame says otherwise, and a pixel count
+ * compared with "50 m" is not a check but a coincidence. So a run is measured
+ * only when frame resolution recorded the scale it was stated at
+ * (`MeasuredIn`), and a numeric label on a run with no such scale is
+ * reported NOT APPLICABLE, per run, naming why. Never a pass: a figure whose
+ * dimension line was drawn in canvas pixels has had nothing about its length
+ * verified, and a manifest must not say otherwise.
+ *
+ * Reported per run rather than once per figure, unlike the sweep check,
+ * because the runs of one figure can land in different states -- one
+ * measured and right, one unmeasurable -- and a single figure-level verdict
+ * would have to hide one of the two.
+ */
+function lengthMatchesItsLabel(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check[] {
+  const id = "length-matches-its-label" as const;
+  const texts = figure.elements.filter((element): element is PlacedText => element.kind === "text");
+  // A sweep's label is an angle and belongs to the sweep check; grid lines
+  // and places are not runs anyone labels with a length.
+  const runs = new Map<string, PlacedConnector | PlacedMark>();
+  for (const element of figure.elements) {
+    if (element.kind === "connector" && element.curve?.kind !== "sweep") runs.set(element.id, element);
+    if (element.kind === "mark" && element.gridOf === undefined && element.place !== true) {
+      runs.set(element.id, element);
+    }
+  }
+
+  const results: Check[] = [];
+  for (const [labelId, box] of boxes) {
+    if (box.annotates === undefined) continue;
+    const run = runs.get(box.annotates);
+    if (run === undefined) continue;
+    const text = texts.find((candidate) => candidate.ownerId === labelId);
+    if (text === undefined) continue;
+    const printed = text.lines.map((line) => line.text).join(" ");
+    const stated = statedLength(printed);
+    if (stated === null) continue; // names the length without claiming a value
+
+    const notApplicable = (why: string): void => {
+      results.push({
+        id,
+        target: run.id,
+        status: "not-applicable",
+        examined: 0,
+        detail: `not applicable: ${labelId} states "${truncate(printed)}" but ${why}`,
+      });
+    };
+
+    if (run.kind === "connector" && run.curve !== undefined) {
+      notApplicable(`${run.id} is a curved route, and a stated length measures a straight run`);
+      continue;
+    }
+    if (run.measuredIn === undefined) {
+      notApplicable(
+        run.kind === "mark" && (run.arcCentres.length > 0 || run.points.length > 3)
+          ? `${run.id} is not one straight segment, so it has no single length to compare`
+          : `${run.id} was not stated in a frame (or its ends sit in frames of different scale), ` +
+              `so its length has no unit to be measured in`,
+      );
+      continue;
+    }
+    const scale = run.measuredIn;
+    if (stated.unit !== null && scale.unit !== undefined && !sameUnit(stated.unit, scale.unit)) {
+      notApplicable(
+        `${run.id} is drawn in frame "${scale.frame}", whose unit is "${scale.unit}", not "${stated.unit}"`,
+      );
+      continue;
+    }
+
+    const from = run.points[0]!;
+    // A mark's single segment is its first two points; closing it back to the
+    // start adds a third that retraces the same line.
+    const to = run.kind === "mark" ? run.points[1]! : run.points[run.points.length - 1]!;
+    const drawn = lengthInUnits(from, to, scale);
+    const tolerance = stated.resolution + EPSILON / Math.min(scale.xUnit, scale.yUnit);
+    const unit = stated.unit ?? scale.unit ?? "units";
+    if (Math.abs(drawn - stated.value) > tolerance) {
+      results.push({
+        id,
+        target: run.id,
+        status: "fail",
+        examined: 1,
+        ownerId: labelId,
+        detail:
+          `${labelId} says ${fmt(stated.value)} but ${run.id} is drawn ${fmt(drawn)} ${unit} long ` +
+          `in frame "${scale.frame}" (${fmt(scale.xUnit)}px per unit)`,
+      });
+    } else {
+      results.push({
+        id,
+        target: run.id,
+        status: "pass",
+        examined: 1,
+        detail: `${run.id} is ${fmt(drawn)} ${unit} long, as ${labelId} states`,
+      });
+    }
+  }
+
+  if (results.length === 0) {
+    return [
+      {
+        id,
+        target: "figure",
+        status: "not-applicable",
+        examined: 0,
+        detail: "not applicable: no line or arrow is annotated with a stated length",
+      },
+    ];
+  }
+  return results;
+}
+
+/**
+ * Does every label that names a PLACE read as naming it? (ADR 0028)
+ *
+ * `annotation-nearest-its-owner` asks "is this label nearer what it names
+ * than anything else", and for a place the question has no good answer: the
+ * `0` at an origin is always nearer the two axes that MAKE the origin than
+ * the point itself, and a legend's texts are always nearer each other than
+ * their own swatches. Both failed the element rule while being correct, and
+ * twice the fix was to delete the annotation -- which leaves a figure's
+ * commonest labels claiming nothing. So a place is measured by its own rule:
+ *
+ *   - From the label's NEAR EDGE, not its centre: a wide legend text names
+ *     the swatch its left edge sits against, and its centre is nowhere near
+ *     it. `curve-label-nearest-its-curve` measures the same way for the same
+ *     reason.
+ *   - Beside means within the label's own size. A place has no extent, so
+ *     nothing competes with it along the lines that meet there -- a `0` slid
+ *     40px down the x axis is nearer nothing else, and would pass without
+ *     this bound. Farther from its point than it is big, a label has stopped
+ *     reading as beside it.
+ *   - Anything that PASSES THROUGH the place does not compete. Those are the
+ *     lines that make it a place: the axes at an origin, the swatch whose end
+ *     a legend row names. Everything else does, and so do the OTHER places
+ *     labels name -- which is what catches a legend row that has slid next
+ *     to its neighbour's swatch.
+ *   - Another label is not a competitor. A reader attributes a label to
+ *     something drawn, never to a second label, and legend rows are always
+ *     nearest each other.
+ *
+ * A place carries no ink, so a place label buys no relief from any collision
+ * check. This is an obligation without a matching freedom, which is why it
+ * can be measured more strictly than the element rule.
+ */
+/** The largest outline still read as a marker at a point rather than a region: a 24px dot or ring. */
+const MARKER_EXTENT = 24;
+
+function isMarkerSized(points: Point[]): boolean {
+  const bounds = unionOf(points.map((point) => ({ x: point.x, y: point.y, width: 0, height: 0 })));
+  return bounds.width <= MARKER_EXTENT && bounds.height <= MARKER_EXTENT;
+}
+
+function labelNearestItsPlace(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
+  const id = "label-nearest-its-place" as const;
+  const places = placesOf(figure);
+  const labels = [...boxes.values()].filter(
+    (box) => box.annotates !== undefined && places.has(box.annotates),
+  );
+  if (labels.length === 0) {
+    return {
+      id,
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no block names a place",
+    };
+  }
+
+  type Competitor = {
+    id: string;
+    /** Distance from a label's rect to this thing, 0 when they touch. */
+    distance: (rect: Rect) => number;
+    /** Does this thing pass through the point? Then it is what makes the place. */
+    through: (point: Point) => boolean;
+    encloses: (rect: Rect) => boolean;
+  };
+  const competitors: Competitor[] = [];
+  for (const [boxId, box] of boxes) {
+    if (box.gridOf !== undefined) continue;
+    // A label is not what a label names -- whether it names an element, a
+    // series, or (declared free-standing) nothing at all.
+    if (box.annotates !== undefined || box.names !== undefined || box.freeStanding === true) continue;
+    const drawn = cornersOf(localRect(box)).map((corner) =>
+      box.rotation === undefined || box.rotationCenter === undefined
+        ? corner
+        : rotatePoint(corner, box.rotationCenter, box.rotation),
+    );
+    const outline = [...drawn, drawn[0]!];
+    competitors.push({
+      id: boxId,
+      distance: (rect) => (overlapsBox(rect, box) ? 0 : distanceRectToPolyline(rect, outline)),
+      through: (point) => distancePointToRect(inFramePoint(point, box), localRect(box)) <= EPSILON,
+      encloses: (rect) => contains(localRect(box), inFrameOf(rect, box)),
+    });
+  }
+  for (const element of figure.elements) {
+    if (element.kind !== "connector" && element.kind !== "mark") continue;
+    if (element.kind === "mark" && (element.gridOf !== undefined || element.place === true)) continue;
+    const points = element.points;
+    // A MARKER drawn at the place -- a dot, a small ring -- is the place made
+    // visible, exactly as the lines that cross there are (ADR 0035). ADR 0031
+    // refused `annotatesPlace` for a point's own label because its dot
+    // competed: the dot's outline is always nearer the label than its centre
+    // is. Only a closed mark CONTAINING the place and no larger than a marker
+    // counts; a shaded region that merely contains the place still competes.
+    const marker =
+      element.kind === "mark" && element.closed && isMarkerSized(points)
+        ? (point: Point) => inPolyline(points, point)
+        : () => false;
+    competitors.push({
+      id: element.id,
+      distance: (rect) => distanceRectToPolyline(rect, points),
+      through: (point) => distancePointToPolyline(point, points) <= EPSILON || marker(point),
+      encloses: () => false,
+    });
+  }
+  for (const [placeId, at] of places) {
+    competitors.push({
+      id: placeId,
+      distance: (rect) => distancePointToRect(at, rect),
+      through: (point) => Math.hypot(point.x - at.x, point.y - at.y) <= EPSILON,
+      encloses: () => false,
+    });
+  }
+
+  const misread: string[] = [];
+  for (const label of labels) {
+    const placeId = label.annotates!;
+    const place = places.get(placeId)!;
+    const rect = checkRect(label);
+    const toPlace = distancePointToRect(place, rect);
+    const reach = Math.max(rect.width, rect.height);
+    if (toPlace > reach + EPSILON) {
+      misread.push(
+        `${label.id} sits ${fmt(toPlace)}px from the place it names, farther than its own size (${fmt(reach)}px)`,
+      );
+      continue;
+    }
+    for (const competitor of competitors) {
+      if (competitor.id === placeId) continue;
+      if (competitor.through(place)) continue;
+      if (competitor.encloses(rect)) continue;
+      const distance = competitor.distance(rect);
+      if (distance < toPlace - EPSILON) {
+        misread.push(
+          `${label.id} names a place ${fmt(toPlace)}px away but sits ${fmt(distance)}px from ${competitor.id}`,
+        );
+        break;
+      }
+    }
+  }
+
+  return misread.length === 0
+    ? {
+        id,
+        target: "figure",
+        status: "pass",
+        examined: labels.length,
+        detail: `every place label sits beside its place across ${labels.length} label(s)`,
+      }
+    : {
+        id,
+        target: "figure",
+        status: "fail",
+        examined: labels.length,
+        detail: `${misread.length} place label(s) do not read as naming their place: ${misread.join("; ")}`,
       };
 }
 
@@ -1631,4 +2420,268 @@ function constraintsSatisfied(figure: LaidOutFigure, boxes: Map<string, PlacedBo
     examined: constraints.length,
     detail: `checked ${constraints.length} constraint(s), all satisfied`,
   };
+}
+
+/**
+ * Is every number an axis promised actually printed at its tick?
+ *
+ * The promise is `GridAxis.require`, which leaves a zero-ink `Mark.tick` at
+ * each value. The number counts as present when some text on the figure
+ * reads as that value -- in either locale's spelling, "−1" or "0,5" or
+ * "17/3" -- and sits within half a division of the tick ALONG the axis (so
+ * it is nearer its own tick than the next) and within `reach` across it
+ * (so a number that slid along its gridline still counts, and a stray "4"
+ * in a label elsewhere does not).
+ *
+ * The defect this exists for: the Cálculo 1 sheet shipped a figure of
+ * y = x + 4 without the 4 on the y axis. The placer had dropped it because
+ * the line ran through its spot -- the one number the exercise was about.
+ */
+function axisNumberPresent(figure: LaidOutFigure): Check {
+  const ticks = figure.elements.filter(
+    (e): e is PlacedMark => e.kind === "mark" && e.tick !== undefined,
+  );
+  if (ticks.length === 0) {
+    return {
+      id: "axis-number-present",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no axis declares a required number",
+    };
+  }
+  const texts = figure.elements.filter((e): e is PlacedText => e.kind === "text");
+  const missing: string[] = [];
+  for (const mark of ticks) {
+    const tick = mark.tick!;
+    const at = mark.points[0]!;
+    const found = texts.some((text) => {
+      if (text.lines.length !== 1) return false;
+      const line = text.lines[0]!;
+      const value = parseNumber(line.text, "pt-BR") ?? parseNumber(line.text, "en");
+      if (value === null || Math.abs(value - tick.value) > 1e-6 * Math.max(1, Math.abs(tick.value))) return false;
+      const cx = line.box.x + line.box.width / 2;
+      const cy = line.box.y + line.box.height / 2;
+      const along = tick.axis === "x" ? Math.abs(cx - at.x) : Math.abs(cy - at.y);
+      const across = tick.axis === "x" ? Math.abs(cy - at.y) : Math.abs(cx - at.x);
+      return along <= tick.within + EPSILON && across <= tick.reach + EPSILON;
+    });
+    if (!found) missing.push(`${tick.axis} = ${tick.value}`);
+  }
+  return missing.length === 0
+    ? {
+        id: "axis-number-present",
+        target: "figure",
+        status: "pass",
+        examined: ticks.length,
+        detail: `all ${ticks.length} required axis number(s) are printed at their ticks`,
+      }
+    : {
+        id: "axis-number-present",
+        target: "figure",
+        status: "fail",
+        examined: ticks.length,
+        detail: `${missing.length} required axis number(s) missing or away from their tick: ${missing.join(", ")}`,
+      };
+}
+
+/** Every series a figure declares, with its marks. */
+function seriesOf(figure: LaidOutFigure): Map<string, PlacedMark[]> {
+  const series = new Map<string, PlacedMark[]>();
+  for (const element of figure.elements) {
+    if (element.kind !== "mark" || element.series === undefined) continue;
+    if (!series.has(element.series)) series.set(element.series, []);
+    series.get(element.series)!.push(element);
+  }
+  return series;
+}
+
+/**
+ * Can a reader tell every series apart without seeing colour?
+ *
+ * Colour is the channel a photocopy, a projector and one boy in twelve do
+ * not carry. The Cálculo 1 sheet's figure 2.5 drew a parabola and three
+ * secants, all solid, told apart by colour alone -- and its legend, being
+ * rows of coloured swatches, said the same thing again in the same channel.
+ *
+ * So a series passes when it has a DIRECT label on the drawing (a block that
+ * `names` it) or a stroke pattern no other series shares. A legend row does
+ * not count. Two series drawn solid, one of them unlabelled, fail.
+ */
+function seriesDistinguishableWithoutColour(
+  figure: LaidOutFigure,
+  boxes: Map<string, PlacedBox>,
+): Check {
+  const series = seriesOf(figure);
+  if (series.size < 2) {
+    return {
+      id: "series-distinguishable-without-colour",
+      target: "figure",
+      status: "not-applicable",
+      examined: series.size,
+      detail: "not applicable: fewer than two series are declared",
+    };
+  }
+  const labelled = new Set<string>();
+  for (const box of boxes.values()) if (box.names !== undefined) labelled.add(box.names);
+  const pattern = (marks: PlacedMark[]): string => [...new Set(marks.map((m) => m.lineStyle))].sort().join("+");
+  const byPattern = new Map<string, string[]>();
+  for (const [name, marks] of series) {
+    const key = pattern(marks);
+    if (!byPattern.has(key)) byPattern.set(key, []);
+    byPattern.get(key)!.push(name);
+  }
+  const colourOnly: string[] = [];
+  for (const [name, marks] of series) {
+    if (labelled.has(name)) continue;
+    const sharing = byPattern.get(pattern(marks))!.filter((other) => other !== name);
+    if (sharing.length > 0) colourOnly.push(`${name} (${pattern(marks)}, like ${sharing.join(", ")})`);
+  }
+  return colourOnly.length === 0
+    ? {
+        id: "series-distinguishable-without-colour",
+        target: "figure",
+        status: "pass",
+        examined: series.size,
+        detail: `each of ${series.size} series has a direct label or a stroke pattern of its own`,
+      }
+    : {
+        id: "series-distinguishable-without-colour",
+        target: "figure",
+        status: "fail",
+        examined: series.size,
+        detail:
+          `${colourOnly.length} series told apart by colour alone: ${colourOnly.join("; ")}. ` +
+          `Label each on the drawing (Block.names) or give it a stroke pattern of its own; a legend does not count.`,
+      };
+}
+
+/** Distance from a rect to a polyline: 0 when they touch. */
+function distanceRectToPolyline(rect: Rect, points: Point[]): number {
+  let best = Infinity;
+  const visit = (p: Point): void => {
+    best = Math.min(best, distancePointToRect(p, rect));
+  };
+  if (points.length === 1) visit(points[0]!);
+  for (let i = 1; i < points.length; i += 1) {
+    const a = points[i - 1]!;
+    const b = points[i]!;
+    const steps = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 2));
+    for (let k = 0; k <= steps; k += 1) visit({ x: a.x + ((b.x - a.x) * k) / steps, y: a.y + ((b.y - a.y) * k) / steps });
+  }
+  return best;
+}
+
+/**
+ * Is every curve label nearer its own curve than any other curve?
+ *
+ * A direct label is what makes `series-distinguishable-without-colour` pass,
+ * so it has to be read as naming the curve it names. A reader attributes a
+ * label to the curve it sits closest to: "y = 3x − 1" placed where the
+ * parabola passes nearer than the line names the parabola, whatever colour
+ * it is set in. Measured from the label's box, not its centre, because the
+ * near edge of a wide label is what sits against a curve.
+ */
+function curveLabelNearestItsCurve(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
+  const named = [...boxes.values()].filter((box) => box.names !== undefined);
+  if (named.length === 0) {
+    return {
+      id: "curve-label-nearest-its-curve",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no label names a series",
+    };
+  }
+  const series = seriesOf(figure);
+  const distanceTo = (rect: Rect, name: string): number =>
+    Math.min(...(series.get(name) ?? []).map((mark) => distanceRectToPolyline(rect, mark.points)));
+  const misread: string[] = [];
+  for (const label of named) {
+    const rect = checkRect(label);
+    const own = distanceTo(rect, label.names!);
+    for (const other of series.keys()) {
+      if (other === label.names) continue;
+      const d = distanceTo(rect, other);
+      if (d < own - EPSILON) {
+        misread.push(`${label.id} names ${label.names} at ${fmt(own)}px but sits ${fmt(d)}px from ${other}`);
+        break;
+      }
+    }
+  }
+  return misread.length === 0
+    ? {
+        id: "curve-label-nearest-its-curve",
+        target: "figure",
+        status: "pass",
+        examined: named.length,
+        detail: `every one of ${named.length} curve label(s) is nearest the curve it names`,
+      }
+    : {
+        id: "curve-label-nearest-its-curve",
+        target: "figure",
+        status: "fail",
+        examined: named.length,
+        detail: `${misread.length} curve label(s) sit nearer another curve: ${misread.join("; ")}`,
+      };
+}
+
+/**
+ * Does every marker lie on what it claims to lie on?
+ *
+ * The one relation a function plot asserts about its own arithmetic: a root
+ * is where the curve meets the x axis, an extremum is on its curve. The
+ * arithmetic that found them is not trusted; the drawing is measured. A
+ * marker's centre must be within 1.5px of every series or mark it names --
+ * a root that is on its curve but off the axis, or on the axis but off the
+ * curve, fails on the half it got wrong.
+ */
+function featureOnItsCurve(figure: LaidOutFigure): Check {
+  const claiming = figure.elements.filter(
+    (e): e is PlacedMark => e.kind === "mark" && e.on !== undefined && e.on.length > 0,
+  );
+  if (claiming.length === 0) {
+    return {
+      id: "feature-on-its-curve",
+      target: "figure",
+      status: "not-applicable",
+      examined: 0,
+      detail: "not applicable: no mark claims to lie on anything",
+    };
+  }
+  const marks = figure.elements.filter((e): e is PlacedMark => e.kind === "mark");
+  const broken: string[] = [];
+  for (const feature of claiming) {
+    const centre =
+      feature.arcCentres.length > 0
+        ? feature.arcCentres[0]!.centre
+        : {
+            x: feature.points.reduce((sum, p) => sum + p.x, 0) / feature.points.length,
+            y: feature.points.reduce((sum, p) => sum + p.y, 0) / feature.points.length,
+          };
+    for (const name of feature.on!) {
+      const targets = marks.filter((m) => m.id !== feature.id && (m.series === name || m.id === name));
+      if (targets.length === 0) {
+        broken.push(`${feature.id} claims to lie on ${name}, which nothing in the figure is`);
+        continue;
+      }
+      const distance = Math.min(...targets.map((m) => distancePointToPolyline(centre, m.points)));
+      if (distance > 1.5) broken.push(`${feature.id} does not lie on ${name} (${fmt(distance)}px away)`);
+    }
+  }
+  return broken.length === 0
+    ? {
+        id: "feature-on-its-curve",
+        target: "figure",
+        status: "pass",
+        examined: claiming.length,
+        detail: `all ${claiming.length} marker(s) lie on what they claim`,
+      }
+    : {
+        id: "feature-on-its-curve",
+        target: "figure",
+        status: "fail",
+        examined: claiming.length,
+        detail: `${broken.join("; ")}. The drawing refutes a relation the figure asserted about it.`,
+      };
 }

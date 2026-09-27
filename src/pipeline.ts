@@ -380,6 +380,8 @@ export function toLaidOutFigure(
       // figure by id once measurement has finished.
       ...(asked?.annotates === undefined ? {} : { annotates: asked.annotates }),
       ...(asked?.gridOf === undefined ? {} : { gridOf: asked.gridOf }),
+      ...(asked?.names === undefined ? {} : { names: asked.names }),
+      ...(asked?.freeStanding === true ? { freeStanding: true as const } : {}),
       fill: box.fill,
       stroke: box.stroke,
       strokeWidth: box.borderWidth,

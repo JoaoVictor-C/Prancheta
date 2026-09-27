@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { runChecks, EPSILON } from "../src/checks.ts";
 import type { LaidOutFigure, PlacedBox, PlacedText } from "../src/ir/types.ts";
+import { rotatedBounds } from "../src/geometry/rotate.ts";
 
 function box(overrides: Partial<PlacedBox> = {}): PlacedBox {
   return {
@@ -32,6 +33,19 @@ function text(overrides: Partial<PlacedText> = {}): PlacedText {
     lines: [],
     ...overrides,
   };
+}
+
+/**
+ * A box that opted into `rotateBox`, carrying exactly what
+ * geometry/rotate.ts's `attachBoxRotation` records on one: the turn, the
+ * centre it turns about, and the rotated bounding box `checkRect` reads.
+ * Built here rather than hand-written so a test can never disagree with the
+ * pipeline about where a turned box actually is.
+ */
+function turned(target: PlacedBox, degrees: number): PlacedBox {
+  const rotationCenter = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
+  const local = { x: target.x, y: target.y, width: target.width, height: target.height };
+  return { ...target, rotation: degrees, rotationCenter, bounds: rotatedBounds(local, rotationCenter, degrees) };
 }
 
 test("a text overflowing the bottom of its owner's content box fails text-fits-box with the true deficit", () => {
@@ -112,6 +126,62 @@ test("a text touching a non-owner box by less than EPSILON does not trip text-cl
   const check = checks.find((c) => c.id === "text-clear-of-other-boxes" && c.target === "text-1");
   assert.ok(check);
   assert.equal(check?.status, "pass");
+});
+
+/**
+ * The defect this pins was a property of the LABEL'S WIDTH rather than of
+ * either position: `overlapsBox` back-rotated the label's rect into the
+ * box's own frame and took an axis-aligned bound of it, and that bound grows
+ * with the rect's aspect. A 1112x30 title back-rotated 62 degrees bounds to
+ * roughly 548x996 -- enough to reach a 47x16 box nearly 250px below it, on a
+ * row of pixels the title's ink never touches. Shortening the same label to
+ * a third of its width made the identical figure pass, which is the tell.
+ *
+ * Numbers are from experiments/recreations/minard.mjs, which sets its
+ * headcount labels at -62 degrees the way the original lithograph does.
+ */
+test("a wide label sits clear of a distant steeply rotated box", () => {
+  const owner = box({ id: "t1", x: 240, y: 11, width: 1180, height: 30 });
+  const other = turned(box({ id: "t29", x: 866, y: 277, width: 47, height: 16 }), -62);
+  const label = text({
+    ownerId: "t1",
+    lines: [
+      // Ink at y 11..41; the turned box reaches no higher than y~260. The two
+      // share no row of the canvas, at any width.
+      { text: "Carte Figurative des pertes successives", x: 274, y: 33, box: { x: 274, y: 11, width: 1112, height: 30 }, baselineUncertain: false },
+    ],
+  });
+  const figure: LaidOutFigure = { width: 1880, height: 1020, background: "#fff", elements: [owner, other, label] };
+
+  const checks = runChecks(figure);
+  const check = checks.find((c) => c.id === "text-clear-of-other-boxes" && c.target === "text-1");
+  assert.ok(check);
+  assert.equal(check?.status, "pass", check?.detail);
+});
+
+/**
+ * The other half of the same claim: an exact test has to keep FAILING the
+ * collisions that are real. Same title, same turned box, the label dropped
+ * onto the box's own centre -- ink straight through the glyphs of "175.000".
+ */
+test("a wide label crossing a steeply rotated box still trips text-clear-of-other-boxes", () => {
+  const owner = box({ id: "t1", x: 240, y: 11, width: 1180, height: 30 });
+  const other = turned(box({ id: "t29", x: 866, y: 277, width: 47, height: 16 }), -62);
+  const label = text({
+    ownerId: "t1",
+    // Escaped its own box and landed across the turned one: ink at y 278..292,
+    // spanning x 274..1386, through that box's centre at (889.5, 285).
+    lines: [
+      { text: "Carte Figurative des pertes successives", x: 274, y: 289, box: { x: 274, y: 278, width: 1112, height: 14 }, baselineUncertain: false },
+    ],
+  });
+  const figure: LaidOutFigure = { width: 1880, height: 1020, background: "#fff", elements: [owner, other, label] };
+
+  const checks = runChecks(figure);
+  const check = checks.find((c) => c.id === "text-clear-of-other-boxes" && c.target === "text-1");
+  assert.ok(check);
+  assert.equal(check?.status, "fail");
+  assert.ok(check?.detail?.includes("t29"));
 });
 
 test("an element extending past the canvas trips content-within-canvas", () => {

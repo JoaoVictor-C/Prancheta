@@ -180,7 +180,7 @@ function renderStack(
     `align-items: ${alignItems}`,
   ].join("; ");
   const children = node.children.map(renderNode).join("");
-  return `<div data-pr-stack="${escapeAttr(id)}" style="${style}">${children}</div>`;
+  return `<div data-pr-stack="${escapeAttr(id)}" ${styleAttr(style)}>${children}</div>`;
 }
 
 /**
@@ -202,7 +202,7 @@ function renderScene(node: Scene, id: string, inner: string, options: HtmlOption
         `height: ${size?.height ?? node.height ?? 0}px`,
       ].join("; ")
     : "display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-start";
-  return `<div data-pr-scene="${escapeAttr(id)}" style="${style}">${inner}</div>`;
+  return `<div data-pr-scene="${escapeAttr(id)}" ${styleAttr(style)}>${inner}</div>`;
 }
 
 /** "dashdot" has no single-line CSS equivalent; "dashed" is close enough for a mirror never shown to anyone. Structural styles (double/ridge/groove) map to their literal CSS equivalents -- also never drawn from here, only measured. */
@@ -359,7 +359,7 @@ function renderBlock(
       ? ""
       : `<span data-pr-text="${escapeAttr(id)}"${labelStyle}>${escapeHtml(node.label)}</span>`;
 
-  return `<div data-pr-box="${escapeAttr(id)}" style="${style}">${label}</div>`;
+  return `<div data-pr-box="${escapeAttr(id)}" ${styleAttr(style)}>${label}</div>`;
 }
 
 export function escapeHtml(value: string): string {
@@ -371,4 +371,34 @@ export function escapeHtml(value: string): string {
 
 function escapeAttr(value: string): string {
   return escapeHtml(value).replace(/"/g, "&quot;");
+}
+
+/**
+ * A `style` attribute whose value is escaped for the attribute it sits in.
+ *
+ * Every declaration list above is assembled from author-supplied strings --
+ * `fontFamily`, `textColor`, a `fill`/`stroke` colour, a per-side border
+ * colour, `textAlign` -- and none of them is validated to a shape that
+ * excludes a double quote (the gradient-stop colour in ir/types.ts is the one
+ * that is, and it says so). Interpolated raw, the first `"` in a value CLOSED
+ * the attribute: a family stack like `"Iowan Old Style", Georgia, serif` --
+ * the exact shape every pack in typography.ts writes -- took the family and
+ * every declaration after it with it, so weight, tracking and colour were
+ * parsed as stray attributes and dropped.
+ *
+ * That failure is invisible by construction, which is why it survived. The
+ * SVG does not carry the spec's font forward; it carries what Chromium
+ * COMPUTED (measure.ts reads getComputedStyle, render/svg.ts writes it out).
+ * So the mirror measured one face and the drawing drew the same wrong one --
+ * the two agreed perfectly, and no check compares either against what was
+ * asked for. Unquoted multi-word names kept working throughout, which is what
+ * made it look like the feature worked at all.
+ *
+ * Escaped here rather than per-value: the attribute is the boundary, so one
+ * gate at the boundary cannot be forgotten by the next declaration added to
+ * the list. `&quot;` is decoded back to `"` before the CSS parser ever sees
+ * the value, so the declaration means exactly what the author wrote.
+ */
+function styleAttr(declarations: string): string {
+  return `style="${escapeAttr(declarations)}"`;
 }

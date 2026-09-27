@@ -26,13 +26,15 @@ test("a grid expands into stroked lines and numbered ticks", () => {
   const s = planeScene(smallGrid).root as Scene;
   // The lattice is MARKS: a filled rect can be a 1px line but not a dashed
   // one, and dashed gridlines are the norm in a plot. 5 vertical + 5
-  // horizontal.
-  assert.equal(s.marks!.filter((m) => m.id.includes("-grid-")).length, 10);
-  // The numbers are blocks, because they are measured text -- 5 on each axis,
-  // zero included: the two zeros land in different places, and where they
-  // genuinely would collide, tick-labels-do-not-collide says so.
+  // horizontal, the two through zero named as the axes (ADR 0025).
+  assert.equal(s.marks!.filter((m) => m.id.includes("-grid-") || m.id.includes("-axis-")).length, 10);
+  assert.ok(s.marks!.some((m) => m.id === "plane-axis-x") && s.marks!.some((m) => m.id === "plane-axis-y"));
+  // The numbers are blocks, because they are measured text -- 4 on each axis
+  // and ONE zero at the origin (ADR 0034): numbered per axis, each zero sat
+  // on the other axis.
   const ticks = s.children.filter((c) => (c as Block).gridOf === "plane");
-  assert.equal(ticks.filter((c) => c.id!.includes("-tick-")).length, 10);
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-")).length, 9);
+  assert.equal(ticks.filter((c) => c.id === "plane-tick-origin").length, 1);
 });
 
 test("a gridline never competes to be the nearest thing to a label", () => {
@@ -54,8 +56,10 @@ test("each axis sets its own label density", () => {
     y: { from: 0, to: 8, step: 1, labelEvery: 2 },
   }).root as Scene;
   const ticks = s.children.filter((c) => c.id!.includes("-tick-"));
-  assert.equal(ticks.filter((c) => c.id!.includes("-tick-x-")).length, 3, "0, 4, 8");
-  assert.equal(ticks.filter((c) => c.id!.includes("-tick-y-")).length, 5, "0, 2, 4, 6, 8");
+  // Zero is shared, printed once at the origin.
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-x-")).length, 2, "4, 8");
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-y-")).length, 4, "2, 4, 6, 8");
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-origin")).length, 1, "0");
 });
 
 test("an axis with no density of its own falls back to the grid's", () => {
@@ -65,8 +69,8 @@ test("an axis with no density of its own falls back to the grid's", () => {
     labelEvery: 2,
   }).root as Scene;
   const ticks = s.children.filter((c) => c.id!.includes("-tick-"));
-  assert.equal(ticks.filter((c) => c.id!.includes("-tick-x-")).length, 3, "fell back to 2");
-  assert.equal(ticks.filter((c) => c.id!.includes("-tick-y-")).length, 5, "stated its own 1");
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-x-")).length, 2, "fell back to 2: 2, 4 (+ the shared 0)");
+  assert.equal(ticks.filter((c) => c.id!.includes("-tick-y-")).length, 4, "stated its own 1: 1..4 (+ the shared 0)");
 });
 
 test("gridlines can be dashed, and the axes stay solid", () => {
@@ -185,4 +189,93 @@ test("colliding tick labels ARE reported — the obligation a grid pays", () => 
   assert.equal(clear.find((c) => c.id === "tick-labels-do-not-collide")?.status, "pass");
   const crowded = runChecks(figure([mk("plane-tick-x-0", 0), mk("plane-tick-x-1", 5)]));
   assert.equal(crowded.find((c) => c.id === "tick-labels-do-not-collide")?.status, "fail");
+});
+
+// --- tick numbers: locale, contrast, the origin, and ink (ADR 0034) ----------
+
+const tickOf = (s: Scene, id: string): Block => s.children.find((c) => c.id === id) as Block;
+
+test("without a locale, tick numbers print exactly as they always have", () => {
+  const s = planeScene({ x: { from: -1, to: 1, step: 0.5 }, y: { from: -1, to: 1, step: 0.5 } }).root as Scene;
+  const labels = s.children.filter((c) => c.id!.includes("-tick-x-")).map((c) => (c as Block).label);
+  assert.deepEqual(labels, ["-1", "-0.5", "0.5", "1"]);
+});
+
+test("with a locale, tick numbers go through the project's formatter", () => {
+  const s = planeScene({ x: { from: -1, to: 1, step: 0.5 }, y: { from: -1, to: 1, step: 0.5 }, locale: "pt-BR" }).root as Scene;
+  const labels = s.children.filter((c) => c.id!.includes("-tick-x-")).map((c) => (c as Block).label);
+  assert.deepEqual(labels, ["−1", "−0,5", "0,5", "1"]);
+});
+
+test("the single origin zero sits in the corner, clear of both axes", () => {
+  // Origin at (200, 200): the box must lie wholly left of x = 200 and below
+  // y = 200, so neither axis runs through it.
+  const zero = tickOf(planeScene(smallGrid).root as Scene, "plane-tick-origin");
+  assert.equal(zero.label, "0");
+  assert.ok(zero.x! + zero.width! < 199, `right edge ${zero.x! + zero.width!}`);
+  assert.ok(zero.y! > 201, `top ${zero.y}`);
+});
+
+test("a plane numbered along its low edge keeps two zeros", () => {
+  // Neither axis spans zero here, so there is no origin corner to share.
+  const s = planeScene({ x: { from: 1, to: 3 }, y: { from: 1, to: 3 } }).root as Scene;
+  assert.equal(s.children.filter((c) => c.id === "plane-tick-origin").length, 0);
+});
+
+test("tick numbers are darker than the lattice by default", () => {
+  const t = tickOf(planeScene(smallGrid).root as Scene, "plane-tick-x-0");
+  assert.equal(t.textColor, "#4B5563");
+});
+
+function plane(grid: unknown, extra: Record<string, unknown> = {}, background?: string) {
+  return parseSpec({
+    version: 1,
+    ...(background === undefined ? {} : { canvas: { background } }),
+    root: {
+      type: "scene",
+      layout: "absolute",
+      width: 400,
+      height: 400,
+      frames: [{ id: "plane", origin: { x: 200, y: 200 }, xUnit: 40, grid }],
+      children: [],
+      ...extra,
+    },
+  }).root as Scene;
+}
+
+test("on a solid paper, a tick number is backed with it, interrupting its gridline", () => {
+  const s = plane({ x: { from: -2, to: 2 }, y: { from: -2, to: 2 } }, {}, "#FCFBF7");
+  assert.equal(tickOf(s, "plane-tick-x-0").fill, "#FCFBF7");
+  // No solid paper, no backing: nothing is guessed.
+  assert.equal(tickOf(plane({ x: { from: -2, to: 2 }, y: { from: -2, to: 2 } }), "plane-tick-x-0").fill, "none");
+});
+
+test("a tick number steps off a line drawn along its own gridline", () => {
+  // A vector along x = −2 crosses the axis exactly where "−2" is printed,
+  // above and below, and runs the whole gridline; the number moves sideways,
+  // still nearer its own tick (80px from the next) than any other.
+  const grid = { x: { from: -2, to: 2, step: 2 }, y: { from: -2, to: 2 } };
+  const s = plane(grid, {
+    connectors: [{ id: "AB", from: { frame: "plane", x: -2, y: -2 }, to: { frame: "plane", x: -2, y: 2 }, arrow: "end" }],
+  }, "#FCFBF7");
+  const t = tickOf(s, "plane-tick-x-0");
+  assert.equal(t.label, "-2");
+  const lineX = 120;
+  assert.ok(t.x! > lineX || t.x! + t.width! < lineX, `box ${t.x}..${t.x! + t.width!} still on x = ${lineX}`);
+  assert.ok(Math.abs(t.x! + t.width! / 2 - lineX) < 40, "stayed nearer its own tick than the next");
+  assert.equal(t.fill, "#FCFBF7", "a clear spot earns the backing");
+});
+
+test("when no spot is clear, the number keeps its place WITHOUT a backing", () => {
+  // A backing would let text-clear-of-ink wave the collision through, and a
+  // connector paints over boxes anyway -- so the collision is left visible
+  // for the check to report.
+  const grid = { x: { from: -2, to: 2 }, y: { from: -2, to: 2 } };
+  const wall = [-1.4, -1.2, -1, -0.8, -0.6].map((x, i) => ({
+    id: `w${i}`, from: { frame: "plane", x, y: -2 }, to: { frame: "plane", x, y: 2 },
+  }));
+  const s = plane(grid, { connectors: wall }, "#FCFBF7");
+  const t = tickOf(s, "plane-tick-x-1");
+  assert.equal(t.fill, "none");
+  assert.equal(t.y, 205, "the first-choice spot, just below the axis");
 });

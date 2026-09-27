@@ -16,6 +16,11 @@
  * `normalise` runs more than once per render, and a resolution that left its
  * own input in place would transform the same coordinates twice.
  *
+ * One thing survives the stripping: the SCALE a straight run was stated at
+ * (`MeasuredIn`, ADR 0028). Every check that asks where ink is wants pixels;
+ * the one that asks whether a line is as long as its label says wants the
+ * units the label speaks, and those are exactly what stripping throws away.
+ *
  * Frame axes point UP, not down. Every figure this serves — a coordinate
  * plane, an incline's normal, a vector diagram — is written by someone for
  * whom +y is up, and asking them to negate every y to suit the canvas would
@@ -25,8 +30,23 @@
  * is the one sharp edge here and it is tested directly.
  */
 
-import type { Block, FigureNode, FigureSpec, Frame, FramedPoint, GridSpec, Mark, MarkSegment, Point, Scene } from "./types.ts";
+import type {
+  Block,
+  FigureNode,
+  FigureSpec,
+  Frame,
+  FramedPoint,
+  GridSpec,
+  Mark,
+  MarkSegment,
+  MeasuredIn,
+  Point,
+  Rect,
+  Scene,
+} from "./types.ts";
 import { SpecError } from "./types.ts";
+import { formatNumber } from "../locale/format.ts";
+import type { Locale } from "../locale/format.ts";
 
 /** A point stated in a frame, or one already in canvas coordinates. */
 export function isFramedPoint(value: unknown): value is FramedPoint {
@@ -65,21 +85,138 @@ export function resolveInFrame(frame: Frame & { origin: Point }, x: number, y: n
  * is a frame defined in terms of itself with no fixed point to fall back on.
  */
 
-/** Every value from `from` to `to` inclusive, stepping by `step`. */
-function ticksOf(axis: { from: number; to: number; step?: number }): number[] {
+/**
+ * Every lattice value in [`from`, `to`], stepping by `step` from `origin`
+ * (default `from`, which is every value from `from` on).
+ *
+ * Exported so a preset that must keep its own labels clear of the grid's tick
+ * numbers asks this function where they will be, instead of re-deriving the
+ * lattice and drifting from it.
+ */
+export function ticksOf(axis: { from: number; to: number; step?: number; origin?: number }): number[] {
   const step = Math.abs(axis.step ?? 1);
   if (step === 0 || !Number.isFinite(step)) return [];
+  const lo = Math.min(axis.from, axis.to);
+  const hi = Math.max(axis.from, axis.to);
+  const origin = axis.origin ?? axis.from;
   const out: number[] = [];
   // Counted rather than accumulated: adding a float repeatedly drifts, and a
   // gridline half a pixel out of true is exactly the kind of defect this
-  // project spends its time removing.
-  const count = Math.floor((axis.to - axis.from) / step + 1e-9);
-  for (let i = 0; i <= count; i += 1) out.push(axis.from + i * step);
+  // project spends its time removing. Snapped to the origin's own lattice so
+  // 0.1 * 3 is 0.3 and zero is exactly zero.
+  const first = Math.ceil((lo - origin) / step - 1e-9);
+  const last = Math.floor((hi - origin) / step + 1e-9);
+  for (let i = first; i <= last; i += 1) {
+    const value = origin + i * step;
+    out.push(Math.abs(value) < step * 1e-9 ? 0 : Number(value.toPrecision(12)));
+  }
   return out;
+}
+
+/** Does the closed range of this axis contain zero? */
+function spansZero(axis: { from: number; to: number }): boolean {
+  return Math.min(axis.from, axis.to) <= 0 && Math.max(axis.from, axis.to) >= 0;
 }
 
 const GRID_LINE_PX = 1;
 const AXIS_LINE_PX = 2;
+
+/**
+ * Tick numbers are set darker than the lattice they number (ADR 0034). The
+ * old default, #6B7280, cleared WCAG AA against paper (4.7:1) and still read
+ * as grey-on-grey: `contrast-sufficient` scores a number against the SURFACE
+ * under it, and a gridline is deliberately not a surface, so the check could
+ * not see the complaint a reader made. #4B5563 is 7.3:1 on #FCFBF7 and
+ * stays visibly quieter than a figure's own ink.
+ */
+const TICK_COLOUR = "#4B5563";
+const TICK_FONT = 11;
+/** The tick block's height: one 11px line box (16px) plus slack. */
+const TICK_H = 18;
+/** Gap between an axis and the near edge of the number printed beside it. */
+const TICK_GAP_X = 5; // below/above the x axis
+const TICK_GAP_Y = 14; // left/right of the y axis
+/** Gap between the origin and the single "0" printed in its corner. */
+const ORIGIN_GAP = 5;
+
+/** What a tick number must stay off: other ink, and other text. Canvas pixels. */
+export type GridObstacles = { ink: Point[][]; boxes: Rect[] };
+
+/**
+ * How wide an 11px tick number is set, glyph by glyph, erring wide: a digit
+ * is about 6.2px, the ASCII hyphen 4, the typographic minus 6.8, a comma or
+ * point under 3. Used for what the checks measure -- the TEXT, not its box --
+ * so a number is not moved for a neighbour its glyphs do not touch.
+ */
+function tickTextWidth(text: string): number {
+  let w = 0;
+  for (const ch of text) w += /\d/.test(ch) ? 6.2 : ch === "-" ? 4.2 : ch === "−" ? 6.8 : ch === "," || ch === "." ? 2.8 : 6.6;
+  return w;
+}
+
+/** The tick's block: its text plus a pixel each side, the extent of its paper backing. */
+function tickWidth(text: string): number {
+  return Math.ceil(tickTextWidth(text) + 2);
+}
+
+/** Where a spot's text sits inside its box: one 16px line at the top, aligned as the box says. */
+function textIn(spot: TickSpot, text: string): Rect {
+  const w = tickTextWidth(text);
+  const { box, align } = spot;
+  const x = align === "start" ? box.x : align === "end" ? box.x + box.width - w : box.x + (box.width - w) / 2;
+  return { x, y: box.y, width: w, height: 16 };
+}
+
+/** Liang–Barsky: does segment a–b pass through the rect? */
+function segmentHitsRect(a: Point, b: Point, r: Rect): boolean {
+  let t0 = 0;
+  let t1 = 1;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  for (const [p, q] of [
+    [-dx, a.x - r.x],
+    [dx, r.x + r.width - a.x],
+    [-dy, a.y - r.y],
+    [dy, r.y + r.height - a.y],
+  ] as const) {
+    if (p === 0) {
+      if (q < 0) return false;
+      continue;
+    }
+    const t = q / p;
+    if (p < 0) {
+      if (t > t1) return false;
+      if (t > t0) t0 = t;
+    } else {
+      if (t < t0) return false;
+      if (t < t1) t1 = t;
+    }
+  }
+  return true;
+}
+
+function rectsMeet(a: Rect, b: Rect): boolean {
+  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+}
+
+/** Is this box, padded by a pixel, clear of every obstacle? */
+/**
+ * Is this spot clear? Of ink, the whole box, padded a pixel: a line through
+ * the paper backing would be painted over it. Of other boxes, only the text:
+ * that is what `text-clear-of-other-boxes` measures, and holding a number
+ * to more would move it off spots the checks were always content with.
+ */
+function clearOf(spot: TickSpot, text: string, obstacles: GridObstacles): boolean {
+  const box = spot.box;
+  const padded = { x: box.x - 1, y: box.y - 1, width: box.width + 2, height: box.height + 2 };
+  for (const line of obstacles.ink) {
+    for (let i = 0; i < line.length - 1; i += 1) {
+      if (segmentHitsRect(line[i]!, line[i + 1]!, padded)) return false;
+    }
+  }
+  const glyphs = textIn(spot, text);
+  return !obstacles.boxes.some((other) => rectsMeet(glyphs, other));
+}
 
 /**
  * A frame's `grid` as ordinary blocks: one thin rect per line, plus numbered
@@ -95,22 +232,26 @@ const AXIS_LINE_PX = 2;
  * which keeps a rotated frame honest: the line runs between the points the
  * frame actually puts at its ends rather than being drawn axis-aligned and
  * rotated afterwards.
+ *
+ * `obstacles` is the rest of the scene -- its connectors' and marks' ink and
+ * its labelled blocks, already in canvas pixels -- so a tick number can step
+ * off a line it would otherwise be printed on (ADR 0034). `paper` is the
+ * canvas background, when it is a solid colour: a number with a clear spot is
+ * set on a paper backing that interrupts the gridline it sits on.
  */
 function expandGrid(
   frame: Frame & { origin: Point },
   grid: GridSpec,
+  obstacles: GridObstacles = { ink: [], boxes: [] },
+  paper?: string,
 ): { blocks: Block[]; marks: Mark[] } {
   const out: Block[] = [];
   const lines: Mark[] = [];
   const stroke = grid.stroke ?? "#D8DCE3";
   const axisStroke = grid.axisStroke ?? "#8A93A3";
-  const labelColor = grid.labelColor ?? "#6B7280";
+  const labelColor = grid.labelColor ?? TICK_COLOUR;
   const drawAxes = grid.axes !== false;
   const drawLabels = grid.labels !== false;
-  const everyOn = (axis: { labelEvery?: number }): number =>
-    Math.max(1, Math.round(axis.labelEvery ?? grid.labelEvery ?? 1));
-  const everyX = everyOn(grid.x);
-  const everyY = everyOn(grid.y);
 
   const xs = ticksOf(grid.x);
   const ys = ticksOf(grid.y);
@@ -135,10 +276,13 @@ function expandGrid(
     });
   };
 
+  // The zero lines carry stable ids -- `<frame>-axis-x` is the x axis,
+  // `<frame>-axis-y` the y axis -- whether or not the lattice lands on zero,
+  // so a mark can claim to lie on an axis by name (Mark.on).
   for (const [i, x] of xs.entries()) {
     const isAxis = drawAxes && x === 0;
     line(
-      `${frame.id}-grid-v-${i}`,
+      isAxis ? `${frame.id}-axis-y` : `${frame.id}-grid-v-${i}`,
       resolveInFrame(frame, x, grid.y.from),
       resolveInFrame(frame, x, grid.y.to),
       isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
@@ -149,7 +293,7 @@ function expandGrid(
   for (const [i, y] of ys.entries()) {
     const isAxis = drawAxes && y === 0;
     line(
-      `${frame.id}-grid-h-${i}`,
+      isAxis ? `${frame.id}-axis-x` : `${frame.id}-grid-h-${i}`,
       resolveInFrame(frame, grid.x.from, y),
       resolveInFrame(frame, grid.x.to, y),
       isAxis ? AXIS_LINE_PX : GRID_LINE_PX,
@@ -157,51 +301,280 @@ function expandGrid(
       !isAxis,
     );
   }
+  // The zero line is drawn whenever the range CONTAINS zero, not only when
+  // the lattice happens to land on it. A grid over [−13, 13] in steps of 2,
+  // or [−0.5, 4.5] in steps of 1, rules every line but the one a reader
+  // needs most, and the figure silently loses its axes -- which is how the
+  // Cálculo 1 sheet shipped a plot with no x axis.
+  if (drawAxes && spansZero(grid.x) && !xs.includes(0)) {
+    line(`${frame.id}-axis-y`, resolveInFrame(frame, 0, grid.y.from), resolveInFrame(frame, 0, grid.y.to), AXIS_LINE_PX, axisStroke, false);
+  }
+  if (drawAxes && spansZero(grid.y) && !ys.includes(0)) {
+    line(`${frame.id}-axis-x`, resolveInFrame(frame, grid.x.from, 0), resolveInFrame(frame, grid.x.to, 0), AXIS_LINE_PX, axisStroke, false);
+  }
+
+  // Ticks are numbered along the axis when zero is in range, and along the
+  // low edge otherwise -- a plane showing only positive values still needs
+  // its numbers somewhere.
+  const yBase = spansZero(grid.y) ? 0 : grid.y.from;
+  const xBase = spansZero(grid.x) ? 0 : grid.x.from;
+
+  // A required number leaves a trace with no ink at its tick, so the check
+  // can look for the printed number there whoever printed it -- this grid,
+  // or a preset that numbers its own axes and turned `labels` off.
+  const stepX = Math.abs(grid.x.step ?? 1) * Math.abs(frame.xUnit ?? 1);
+  const stepY = Math.abs(grid.y.step ?? 1) * Math.abs(frame.yUnit ?? frame.xUnit ?? 1);
+  const requirement = (axis: "x" | "y", value: number, i: number): void => {
+    const at = axis === "x" ? resolveInFrame(frame, value, yBase) : resolveInFrame(frame, xBase, value);
+    lines.push({
+      id: `${frame.id}-require-${axis}-${i}`,
+      gridOf: frame.id,
+      from: at,
+      segments: [{ line: at }],
+      close: false,
+      fill: "none",
+      stroke: "none",
+      strokeWidth: 0,
+      tick: {
+        axis,
+        value,
+        within: (axis === "x" ? stepX : stepY) / 2,
+        reach: (axis === "x" ? stepY : stepX) / 2 + 24,
+      },
+    });
+  };
+  (grid.x.require ?? []).forEach((v, i) => requirement("x", v, i));
+  (grid.y.require ?? []).forEach((v, i) => requirement("y", v, i));
 
   if (!drawLabels) return { blocks: out, marks: lines };
 
-  // Zero is numbered like any other tick. An earlier version skipped it to
-  // avoid writing "0" twice at the origin, which was over-caution: the two
-  // zeros sit in different places (one below the plot, one to its left), and
-  // where they genuinely would collide `tick-labels-do-not-collide` says so
-  // rather than this quietly deciding for the author.
-  //
-  // Ticks are numbered along the axis when there is one in range, and along
-  // the low edge otherwise -- a plane showing only positive values still
-  // needs its numbers somewhere.
-  const yBase = ys.includes(0) ? 0 : grid.y.from;
-  const xBase = xs.includes(0) ? 0 : grid.x.from;
-  const tick = (id: string, at: Point, text: string, align: "center" | "end"): Block => ({
-    type: "block",
-    id,
-    x: align === "center" ? at.x - 18 : at.x - 40,
-    y: at.y - 9,
-    width: align === "center" ? 36 : 34,
-    height: 18,
-    padding: 0,
-    fill: "none",
-    stroke: "none",
-    strokeWidth: 0,
-    wrap: "none",
-    fontSize: 11,
-    textAlign: align === "center" ? "center" : "end",
-    textColor: labelColor,
-    label: text,
-    gridOf: frame.id,
-  });
-
-  const format = (value: number): string => String(Math.round(value * 1000) / 1000);
-  for (const [i, x] of xs.entries()) {
-    if (i % everyX !== 0) continue;
-    const at = resolveInFrame(frame, x, yBase);
-    out.push(tick(`${frame.id}-tick-x-${i}`, { x: at.x, y: at.y + 14 }, format(x), "center"));
-  }
-  for (const [i, y] of ys.entries()) {
-    if (i % everyY !== 0) continue;
-    const at = resolveInFrame(frame, xBase, y);
-    out.push(tick(`${frame.id}-tick-y-${i}`, { x: at.x - 8, y: at.y }, format(y), "end"));
+  // Tick numbers already placed are obstacles for the ones after them: a
+  // number that stepped off a line must not step onto its neighbour.
+  const taken: GridObstacles = { ink: obstacles.ink, boxes: [...obstacles.boxes] };
+  for (const { id, text, spots } of tickPlan(frame, grid)) {
+    // The first spot is where the number has always been printed. It moves
+    // only when that spot has ink or another label on it, and only to a spot
+    // still beside its own tick; if nothing is clear it keeps the first spot
+    // WITHOUT a backing, so `text-clear-of-ink` reports the collision rather
+    // than a paper patch hiding it (connectors paint over boxes, so a backing
+    // would not even cover the line it was hiding).
+    const clear = spots.find((spot) => clearOf(spot, text, taken));
+    const { box, align } = clear ?? spots[0]!;
+    taken.boxes.push(box);
+    out.push({
+      type: "block",
+      id,
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+      padding: 0,
+      fill: clear !== undefined && paper !== undefined ? paper : "none",
+      stroke: "none",
+      strokeWidth: 0,
+      wrap: "none",
+      fontSize: TICK_FONT,
+      textAlign: align,
+      textColor: labelColor,
+      label: text,
+      gridOf: frame.id,
+    });
   }
   return { blocks: out, marks: lines };
+}
+
+export type TickSpot = { box: Rect; align: "start" | "center" | "end" };
+
+/**
+ * Every tick number a grid prints, with the spots it may be printed in, in
+ * order of preference -- the first is where it goes when nothing is in the
+ * way (ADR 0034). Exported so a preset keeping its own labels clear of the
+ * numbers asks this function where they will be instead of re-deriving it.
+ * Empty when the grid's `labels` are off.
+ */
+export function tickPlan(
+  frame: Frame & { origin: Point },
+  grid: GridSpec,
+): { id: string; text: string; spots: TickSpot[] }[] {
+  const plan: { id: string; text: string; spots: TickSpot[] }[] = [];
+  if (grid.labels === false) return plan;
+  const everyOn = (axis: { labelEvery?: number }): number =>
+    Math.max(1, Math.round(axis.labelEvery ?? grid.labelEvery ?? 1));
+  const everyX = everyOn(grid.x);
+  const everyY = everyOn(grid.y);
+  const xs = ticksOf(grid.x);
+  const ys = ticksOf(grid.y);
+  const yBase = spansZero(grid.y) ? 0 : grid.y.from;
+  const xBase = spansZero(grid.x) ? 0 : grid.x.from;
+  const stepX = Math.abs(grid.x.step ?? 1) * Math.abs(frame.xUnit ?? 1);
+  const stepY = Math.abs(grid.y.step ?? 1) * Math.abs(frame.yUnit ?? frame.xUnit ?? 1);
+  const locale = grid.locale;
+  const format = (value: number): string =>
+    locale === undefined ? String(Math.round(value * 1000) / 1000) : formatNumber(value, locale);
+
+  // How far a number may slide along its own gridline, away from the axis:
+  // never past half a division, so it stays nearer its own tick's row than
+  // the next one's.
+  const slides = (room: number): number[] => {
+    const out: number[] = [];
+    for (let k = 2; k <= room; k += 2) out.push(k);
+    return out;
+  };
+
+  // How far a number may step sideways off its own gridline: from just
+  // clear of it to just short of halfway to the next one, so it is always
+  // nearer its own tick than its neighbour's.
+  const sideways = (from: number, to: number): number[] => {
+    const out: number[] = [];
+    for (let k = from; k <= to; k += 3) out.push(k);
+    return out;
+  };
+
+  // Zero is printed ONCE, in the corner of the origin, when both axes would
+  // number it there. Printed per axis, the x axis's "0" sat on the y axis
+  // and the y axis's "0" sat on the x axis -- one number, struck through
+  // twice. Only when both bases ARE the origin: a plane numbered along its
+  // low edge has two different zeros, and each keeps its own.
+  const xZero = xs.findIndex((x) => x === 0);
+  const yZero = ys.findIndex((y) => y === 0);
+  const sharedZero =
+    xBase === 0 && yBase === 0 && xZero >= 0 && yZero >= 0 && xZero % everyX === 0 && yZero % everyY === 0;
+
+  for (const [i, x] of xs.entries()) {
+    if (i % everyX !== 0 || (sharedZero && i === xZero)) continue;
+    const at = resolveInFrame(frame, x, yBase);
+    const text = format(x);
+    const w = tickWidth(text);
+    const left = at.x - w / 2;
+    const below = at.y + TICK_GAP_X;
+    const above = at.y - TICK_GAP_X - TICK_H;
+    // A number whose box starts within half a division of the axis is still
+    // read as this row's, not as a label on the next gridline across.
+    const room = Math.max(0, stepY / 2 - TICK_GAP_X);
+    plan.push({ id: `${frame.id}-tick-x-${i}`, text, spots: [
+      { box: { x: left, y: below, width: w, height: TICK_H }, align: "center" },
+      { box: { x: left, y: above, width: w, height: TICK_H }, align: "center" },
+      // Then further along its own gridline, away from the axis -- below
+      // first, the side the row of numbers is read along. On its gridline it
+      // cannot be mistaken for another x.
+      ...slides(room).map((k) => ({ box: { x: left, y: below + k, width: w, height: TICK_H }, align: "center" as const })),
+      ...slides(room).map((k) => ({ box: { x: left, y: above - k, width: w, height: TICK_H }, align: "center" as const })),
+      // Last, off its own gridline to either side -- for when something is
+      // drawn ALONG that gridline (a vector at x = −6 is ink on the whole
+      // gridline). Only while it stays nearer its own tick than the next.
+      ...sideways(w / 2 + 3, stepX / 2 - w / 2 - 2).flatMap((k) =>
+        [left - k, left + k].flatMap((x) => [
+          { box: { x, y: below, width: w, height: TICK_H }, align: "center" as const },
+          { box: { x, y: above, width: w, height: TICK_H }, align: "center" as const },
+        ]),
+      ),
+    ] });
+  }
+  for (const [i, y] of ys.entries()) {
+    if (i % everyY !== 0 || (sharedZero && i === yZero)) continue;
+    const at = resolveInFrame(frame, xBase, y);
+    const text = format(y);
+    const w = tickWidth(text);
+    const top = at.y - TICK_H / 2;
+    const leftOf = at.x - TICK_GAP_Y - w;
+    const rightOf = at.x + TICK_GAP_Y;
+    const room = Math.max(0, stepX / 2 - TICK_GAP_Y);
+    plan.push({ id: `${frame.id}-tick-y-${i}`, text, spots: [
+      { box: { x: leftOf, y: top, width: w, height: TICK_H }, align: "end" },
+      { box: { x: rightOf, y: top, width: w, height: TICK_H }, align: "start" },
+      // Then further out along its own gridline.
+      ...slides(room).flatMap((k) => [
+        { box: { x: leftOf - k, y: top, width: w, height: TICK_H }, align: "end" as const },
+        { box: { x: rightOf + k, y: top, width: w, height: TICK_H }, align: "start" as const },
+      ]),
+      // Last, off its own gridline, up or down, the same way.
+      ...sideways(TICK_H / 2 + 3, stepY / 2 - TICK_H / 2 - 2).flatMap((k) =>
+        [top - k, top + k].flatMap((y) => [
+          { box: { x: leftOf, y, width: w, height: TICK_H }, align: "end" as const },
+          { box: { x: rightOf, y, width: w, height: TICK_H }, align: "start" as const },
+        ]),
+      ),
+    ] });
+  }
+  if (sharedZero) {
+    const o = resolveInFrame(frame, 0, 0);
+    const text = format(0);
+    const w = tickWidth(text);
+    const box = (dx: -1 | 1, dy: -1 | 1): { box: Rect; align: "start" | "end" } => ({
+      box: {
+        x: dx < 0 ? o.x - ORIGIN_GAP - w : o.x + ORIGIN_GAP,
+        y: dy > 0 ? o.y + ORIGIN_GAP : o.y - ORIGIN_GAP - TICK_H,
+        width: w,
+        height: TICK_H,
+      },
+      align: dx < 0 ? "end" : "start",
+    });
+    // Below-left first: the corner a textbook prints its origin in.
+    plan.push({ id: `${frame.id}-tick-origin`, text, spots: [box(-1, 1), box(1, 1), box(-1, -1), box(1, -1)] });
+  }
+  return plan;
+}
+
+/** A minor arc from `a` to `b` about `centre`, as a short polyline. */
+function arcPoints(a: Point, b: Point, centre: Point): Point[] {
+  const r = Math.hypot(a.x - centre.x, a.y - centre.y);
+  const a0 = Math.atan2(a.y - centre.y, a.x - centre.x);
+  let delta = Math.atan2(b.y - centre.y, b.x - centre.x) - a0;
+  while (delta > Math.PI) delta -= 2 * Math.PI;
+  while (delta < -Math.PI) delta += 2 * Math.PI;
+  const out: Point[] = [];
+  for (let k = 0; k <= 12; k += 1) {
+    const t = a0 + (delta * k) / 12;
+    out.push({ x: centre.x + r * Math.cos(t), y: centre.y + r * Math.sin(t) });
+  }
+  return out;
+}
+
+/**
+ * What a scene's tick numbers must stay off, from the scene's own resolved
+ * connectors, marks and labelled blocks. Only what can be located before
+ * layout counts: a connector ending on a block id has no route yet, and a
+ * curve other than a sweep is not modelled; both are left to the checks.
+ */
+function obstaclesOf(children: FigureNode[], connectors: Scene["connectors"], marks: Mark[]): GridObstacles {
+  const ink: Point[][] = [];
+  for (const c of connectors ?? []) {
+    if (typeof c.from === "string" || typeof c.to === "string") continue;
+    if (c.stroke === "none" || (c.strokeWidth !== undefined && c.strokeWidth <= 0)) continue;
+    const from = c.from as Point;
+    const to = c.to as Point;
+    if (c.curve === undefined) ink.push([from, to]);
+    else if (c.curve.kind === "sweep") ink.push(arcPoints(from, to, c.curve.centre as Point));
+  }
+  for (const m of marks) {
+    if (m.gridOf !== undefined || m.place === true) continue;
+    if (m.stroke === undefined || m.stroke === "none" || (m.strokeWidth ?? 1) <= 0) continue;
+    const pts: Point[] = [m.from as Point];
+    for (const s of m.segments) {
+      const prev = pts[pts.length - 1]!;
+      if ("line" in s) pts.push(s.line as Point);
+      else pts.push(...arcPoints(prev, s.arc as Point, s.centre as Point).slice(1));
+    }
+    if (m.close === true) pts.push(pts[0]!);
+    ink.push(pts);
+  }
+  const boxes: Rect[] = [];
+  for (const child of children) {
+    if (child.type !== "block") continue;
+    const b = child as Block;
+    if (b.gridOf !== undefined || typeof b.label !== "string" || b.label === "") continue;
+    if (b.rotation !== undefined && b.rotation !== 0) continue;
+    if (typeof b.x !== "number" || typeof b.y !== "number" || typeof b.width !== "number" || typeof b.height !== "number") continue;
+    boxes.push({ x: b.x, y: b.y, width: b.width, height: b.height });
+  }
+  return { ink, boxes };
+}
+
+/** A canvas background a tick number can be backed with, if it is a solid colour. */
+function paperOf(background: string | undefined): string | undefined {
+  if (background === undefined) return undefined;
+  const hex = /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i;
+  return hex.test(background.trim()) ? background.trim() : undefined;
 }
 
 function framesOf(
@@ -263,6 +636,51 @@ function resolvePoint(
 }
 
 /**
+ * The scale a straight run from `a` to `b` was stated at, or undefined when
+ * it has no single one (ADR 0028).
+ *
+ * Resolution is about to strip both frames, and `length-matches-its-label`
+ * is the one check that needs what they said: pixels per unit, and which way
+ * the unit runs. Recorded only when both ends are framed and the two frames
+ * agree on scale -- the SAME frame is the common case (a dimension line, a
+ * vector in its own scaled frame), and two frames of one scale are the
+ * incline figure's case (an arrow leaving a point stated in the tilted frame
+ * and ending in the level one). Anything else has no honest unit, and the
+ * check then says "not applicable" rather than this function inventing one.
+ *
+ * A non-square frame measures a diagonal differently depending on which way
+ * its axes run, so two non-square frames must share a rotation too. A square
+ * one does not care, and demanding it would refuse the incline for nothing.
+ */
+function scaleOf(
+  a: Point | FramedPoint,
+  b: Point | FramedPoint,
+  frames: Map<string, Frame & { origin: Point }>,
+): MeasuredIn | undefined {
+  if (!isFramedPoint(a) || !isFramedPoint(b)) return undefined;
+  const fa = frames.get(a.frame);
+  const fb = frames.get(b.frame);
+  if (fa === undefined || fb === undefined) return undefined; // resolvePoint throws with the message
+  const scale = (f: Frame) => {
+    const xUnit = Math.abs(f.xUnit ?? 1);
+    return { xUnit, yUnit: Math.abs(f.yUnit ?? f.xUnit ?? 1) };
+  };
+  const sa = scale(fa);
+  const sb = scale(fb);
+  if (sa.xUnit !== sb.xUnit || sa.yUnit !== sb.yUnit) return undefined;
+  if (fa.unit !== fb.unit) return undefined;
+  const turn = (f: Frame): number => ((((f.rotation ?? 0) % 360) + 360) % 360);
+  if (sa.xUnit !== sa.yUnit && Math.abs(turn(fa) - turn(fb)) > 1e-9) return undefined;
+  return {
+    frame: fa.id,
+    xUnit: sa.xUnit,
+    yUnit: sa.yUnit,
+    rotation: fa.rotation ?? 0,
+    ...(fa.unit === undefined ? {} : { unit: fa.unit }),
+  };
+}
+
+/**
  * Every frame reference in the spec replaced by the canvas coordinate it
  * denotes, and every `frame` field removed.
  *
@@ -270,35 +688,64 @@ function resolvePoint(
  * decision 0003 imposes on repairs.
  */
 export function resolveFrames(spec: FigureSpec): FigureSpec {
-  return { ...spec, root: resolveNode(spec.root, new Map()) };
+  return { ...spec, root: resolveNode(spec.root, new Map(), paperOf(spec.canvas?.background)) };
 }
 
 function resolveNode(
   node: FigureNode,
   inherited: Map<string, Frame & { origin: Point }>,
+  paper?: string,
 ): FigureNode {
   if (node.type === "stack") {
-    return { ...node, children: node.children.map((child) => resolveNode(child, inherited)) };
+    return { ...node, children: node.children.map((child) => resolveNode(child, inherited, paper)) };
   }
   if (node.type === "scene") {
     // A scene's own frames win over an enclosing scene's, by id.
     const frames = framesOf(node, inherited);
 
-    // Generated first so it paints first: a grid is what the figure stands on.
-    const furniture: Block[] = [];
-    const furnitureMarks: Mark[] = [];
-    for (const declared of node.frames ?? []) {
-      if (declared.grid === undefined) continue;
-      const expanded = expandGrid(frames.get(declared.id)!, declared.grid);
-      furniture.push(...expanded.blocks);
-      furnitureMarks.push(...expanded.marks);
-    }
-    const children = [
-      ...furniture,
-      ...node.children.map((child) => resolveNode(child, frames) as Block),
+    // A label that names a PLACE (ADR 0028) leaves resolution naming a MARK
+    // at that place: no stroke, no fill, one point -- the tick requirement's
+    // shape, for the tick requirement's reason. Layout already lifts every
+    // mark into page space, so the place lands where the label's box does
+    // without a second lifting path, and `annotates` already reaches the
+    // placed figure, so nothing else in the pipeline has to learn a new field.
+    // Rewriting `annotatesPlace` away is what keeps this idempotent, exactly
+    // as stripping `frame` does for positions.
+    const placeMarks: Mark[] = [];
+    const takenIds = new Set((node.marks ?? []).map((mark) => mark.id));
+    const ownChildren = [
+      ...node.children.map((child, i) => {
+        const resolved = resolveNode(child, frames, paper) as Block;
+        if (child.annotatesPlace === undefined) return resolved;
+        const at = resolvePoint(child.annotatesPlace, frames, `children[${i}].annotatesPlace`);
+        const id = `${child.id}-place`;
+        if (takenIds.has(id)) {
+          throw new SpecError(
+            `block "${child.id}" names a place, recorded as mark "${id}" -- which this scene already declares`,
+          );
+        }
+        takenIds.add(id);
+        placeMarks.push({
+          id,
+          place: true,
+          from: at,
+          segments: [{ line: at }],
+          close: false,
+          fill: "none",
+          stroke: "none",
+          strokeWidth: 0,
+        });
+        const named: Block = { ...resolved, annotates: id };
+        delete named.annotatesPlace;
+        return named;
+      }),
     ];
     const connectors = node.connectors?.map((connector, i) => {
       const where = `connectors[${i}]`;
+      const measuredIn =
+        typeof connector.from === "string" || typeof connector.to === "string"
+          ? undefined
+          : scaleOf(connector.from, connector.to, frames);
       const curve =
         connector.curve?.kind === "sweep"
           ? {
@@ -317,13 +764,22 @@ function resolveNode(
             ? connector.to
             : resolvePoint(connector.to, frames, `${where}.to`),
         ...(curve === undefined ? {} : { curve }),
+        ...(measuredIn === undefined ? {} : { measuredIn }),
       };
     });
 
-    const marks = [...furnitureMarks, ...(node.marks ?? [])].map((mark, i) => {
+    const ownMarks = [...(node.marks ?? []), ...placeMarks].map((mark, i) => {
       const where = `marks[${i}]`;
+      // Only a single straight run has one length to state; a path of
+      // several segments, or an arc, is not what "50 m" measures.
+      const only = mark.segments.length === 1 ? mark.segments[0]! : undefined;
+      const measuredIn =
+        mark.gridOf === undefined && only !== undefined && "line" in only
+          ? scaleOf(mark.from, only.line, frames)
+          : undefined;
       return {
         ...mark,
+        ...(measuredIn === undefined ? {} : { measuredIn }),
         from: resolvePoint(mark.from, frames, `${where}.from`),
         segments: mark.segments.map((segment, j) =>
           "line" in segment
@@ -335,6 +791,21 @@ function resolveNode(
         ),
       } as Mark;
     });
+
+    // Generated first so it paints first: a grid is what the figure stands on.
+    // Expanded AFTER the scene's own elements are resolved, because a tick
+    // number has to know where their ink is to stay off it (ADR 0034).
+    const furniture: Block[] = [];
+    const furnitureMarks: Mark[] = [];
+    const obstacles = obstaclesOf(ownChildren, connectors, ownMarks);
+    for (const declared of node.frames ?? []) {
+      if (declared.grid === undefined) continue;
+      const expanded = expandGrid(frames.get(declared.id)!, declared.grid, obstacles, paper);
+      furniture.push(...expanded.blocks);
+      furnitureMarks.push(...expanded.marks);
+    }
+    const children = [...furniture, ...ownChildren];
+    const marks = [...furnitureMarks, ...ownMarks];
 
     const resolved: Scene = {
       ...node,

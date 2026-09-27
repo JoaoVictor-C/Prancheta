@@ -1,0 +1,10 @@
+{
+  "preset": "value-table",
+  "title": "Comparação de funções: f(x) = x² − 1 e g(x) = 2x + 1",
+  "variable": "x",
+  "xs": [-2, -1, 0, 1, 2],
+  "functions": [
+    { "name": "f", "expr": "x^2 - 1" },
+    { "name": "g", "expr": "2x + 1" }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "preset": "function-graph",
+  "title": "Resolução 1.3: a reta y = x + 4 com um buraco",
+  "x": { "range": [-1, 7], "unit": 66 },
+  "y": { "range": [-1, 12], "unit": 28, "labelEvery": 2, "require": [4, 8] },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x + 4",
+      "label": {
+        "text": "y = {expr}, x ≠ {buraco.x}",
+        "at": [5.5, 10.2],
+        "towards": ["R", "D", "U"]
+      }
+    }
+  ],
+  "points": [
+    {
+      "id": "buraco",
+      "at": { "of": "f", "x": 4 },
+      "style": "open",
+      "guides": true,
+      "label": "{coords} fica de fora",
+      "colour": "ask",
+      "towards": ["L", "NW", "U"]
+    }
+  ]
+}

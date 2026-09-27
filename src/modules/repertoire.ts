@@ -120,17 +120,12 @@ export const MODULES: ModuleInfo[] = [
   {
     id: "plot",
     summary:
-      "Function curves with their roots and extrema, or a scatter with a least-squares fit. " +
-      "Every root is declared to lie on its own curve and on the x axis, and both are checked.",
-    entries: [{ path: "modules/plot/function.py" }],
+      "A scatter with a least-squares fit, its R² and each residual. Every fitted value is " +
+      "declared to lie on the fit and on its own residual, and both are checked. Function " +
+      "curves moved to the function-graph preset.",
+    entries: [{ path: "modules/plot/fit.py" }],
     dependencies: ["numpy"],
-    shortcuts: [
-      "quadratic",
-      "sine_cosine",
-      "damped_oscillation",
-      "linear_fit_demo",
-      "quadratic_fit_demo",
-    ],
+    shortcuts: ["linear_fit_demo", "quadratic_fit_demo"],
     misdeclare: true,
   },
   {

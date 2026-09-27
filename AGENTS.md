@@ -34,7 +34,7 @@ almost none of that minute concerns the file you just edited.
 `npm run test:one -- --test-name-pattern="sRGB" tests/colour.test.ts` runs a
 single test.
 
-**The suite is split by dependency, not by strictness.** Fifteen test files
+**The suite is split by dependency, not by strictness.** Sixteen test files
 spawn `python` and fail loudly when an interpreter or a module import is
 missing — a probe that goes quietly green is indistinguishable from one that
 never ran. That is right for a maintainer and wrong as a first impression, so
@@ -78,6 +78,7 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `module` | <command> [--args] [--width] [--height] [--out] | Run a figure module in another language and verify what it drew. |
 | `diff` | <before> <after> | Lay out two states of a figure and report what changed between them: appeared, disappeared, moved, resized, restyled, retexted.. |
 | `animate` | <states> [--out] [--durationMs] [--delayMs] [--easing] [--loop] | Tween a sequence of two or more states of a figure into an animated SVG: eased position for moved boxes, crossfades for those arriving and leaving, optional per-element stagger, and a motion check that models what the renderer actually does at every transition and every state boundary.. |
+| `sheet` | <sheet> [--out] [--pdf] [--pages] [--dpi] [--katex] | Build an exercise sheet from one structured file: every figure rendered and checked, HTML with KaTeX, an A4 PDF, a PNG per page, and an answer key generated from the answers.. |
 
 ## Repertoire
 
@@ -88,6 +89,12 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `mindmap` | A single-rooted tree radiating outward. | yes |
 | `annotated-figure` | A shape or scene with callouts on leader lines. | yes |
 | `chart` | Bar charts: values with a scale, not a graph. | yes |
+| `function-graph` | Curves y = f(x) on a numbered plane, with tangents, secants and computed points. | yes |
+| `sign-chart` | The sign table of a function: where f, f′, f″ or a product's factors are +, − or 0, and where f rises and falls. | yes |
+| `value-table` | A table of values of one or more functions at chosen points, every cell computed from the expression. | yes |
+| `number-line` | The real line with intervals and solution sets of inequalities; unions and intersections computed. | yes |
+| `vectors` | Vectors in the plane with sums, multiples, components, projections and angles derived from them. | yes |
+| `unit-circle` | The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles. | yes |
 
 ## Figure modules
 
@@ -107,11 +114,54 @@ and each occurrence is taken verbatim, which is why several modules use `;` and
 | `genomic` | Gene arrows on a real base-pair axis; arrow direction is the strand. | `dna_features_viewer` | `--args "modules/genomic/render.py,--name=plasmid_simple"` |
 | `map` | Region and country maps, longitude/latitude projected to Web Mercator, with labels placed at each region's representative point. | `pyproj`, `shapely` | `--args "modules/map/render.py,--name=campaign"` |
 | `molecule` | 2D skeletal chemical structures from SMILES, with stereo wedges -- one molecule, or a whole reaction scheme laid out as an equation and its participants. | `rdkit` | `--args "modules/molecule/render.py,--name=glucose"` |
-| `plot` | Function curves with their roots and extrema, or a scatter with a least-squares fit. Every root is declared to lie on its own curve and on the x axis, and both are checked. | `numpy` | `--args "modules/plot/function.py,--name=quadratic"` |
+| `plot` | A scatter with a least-squares fit, its R² and each residual. Every fitted value is declared to lie on the fit and on its own residual, and both are checked. Function curves moved to the function-graph preset. | `numpy` | `--args "modules/plot/fit.py,--name=linear_fit_demo"` |
 | `skewt` | A Skew-T log-P atmospheric sounding with temperature and dewpoint traces, a lifted-parcel profile and the LCL. | `numpy`, `metpy` | `--args "modules/skewt/render.py,--name=midlatitude_summer"` |
 
 Read `modules/README.md` for the protocol, what the core checks, and the
 standing limit: these verify malformation, never misrepresentation.
+
+## Function graphs and exercise sheets
+
+A curve y = f(x) is the `function-graph` preset, and a figure is **data**:
+functions are expressions (`"x^2 - 4x + 1"`, `"1000(1 + 0.2t)"`), points
+are read off them (`{"of": "f", "x": 3}`), tangents and secants are computed
+(`{"tangent": {"of": "f", "at": 3}}`, `{"through": ["A", "B"]}`), and every
+label is a template filled from those values -- `"P{coords}"` prints
+`P(3; 9)`. A coordinate pair typed into a label is refused. Numbers are
+written by one pt-BR formatter (decimal comma, `(2,5; 7,25)`, the minus
+`−`, `17/3` rather than `5,667`). Axis numbers are never dropped,
+the zero line is always drawn when the range contains zero, and the legend
+finds its own free space. Four checks hold it to that: `axis-number-present`,
+`series-distinguishable-without-colour` (label every curve on the drawing or
+give it its own dash pattern -- a legend does not count),
+`curve-label-nearest-its-curve` and `feature-on-its-curve` (a root lies on
+its curve and on the x axis). Worked examples: `fixtures/function-graph/`.
+
+Its sign table is the `sign-chart` preset: give it the same expression and
+rows (`"f"`, `"f'"`, `"f''"`, `"variation"`, `"concavity"`, or
+`factors` for an inequality) and it finds the roots, poles, signs and the
+values at maxima and minima itself -- `√3`, not `1,732`. In a sheet, put
+both in one exercise: `"solutionFigure": [graph, table]`, placed with
+`{{figure}}` and `{{figure2}}`. Examples: `fixtures/sign-chart/`.
+
+A whole exercise list is **one file** and the `sheet` command:
+
+```bash
+node src/cli.ts sheet experiments/exercises/calculo1/lista.json
+```
+
+Per exercise: `level` (easy/mid/hard), `statement` (HTML with KaTeX
+`\\( \\)` and `$$ $$`), `figure` (`{"graph": <function-graph input>,
+"caption": ...}`), `answer`, `solution`, `solutionFigure`. `{{figure}}`
+marks where a figure goes; `{{fig.P}}` prints point P of the exercise's
+figure through the same formatter as its label (TeX inside math, text
+outside). The answer key is generated from `answer`, and the same field
+closes each worked solution -- never type an answer twice. Output goes to
+`ProjectHub/Listas/<name>/` (`--out` or `PRANCHETA_SHEETS_DIR` to change
+it): figures, HTML, an A4 PDF, a PNG per page (PyMuPDF), and the source. The
+command fails, naming each one, on a KaTeX error, a broken image or a figure
+that failed a check. Look at the page PNGs before handing a sheet over: green
+checks do not mean legible.
 
 ## Over MCP
 
@@ -131,6 +181,12 @@ resources:
 | `prancheta://preset/mindmap` | mindmap preset |
 | `prancheta://preset/annotated-figure` | annotated-figure preset |
 | `prancheta://preset/chart` | chart preset |
+| `prancheta://preset/function-graph` | function-graph preset |
+| `prancheta://preset/sign-chart` | sign-chart preset |
+| `prancheta://preset/value-table` | value-table preset |
+| `prancheta://preset/number-line` | number-line preset |
+| `prancheta://preset/vectors` | vectors preset |
+| `prancheta://preset/unit-circle` | unit-circle preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

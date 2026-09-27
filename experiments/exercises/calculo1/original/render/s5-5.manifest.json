@@ -1,0 +1,615 @@
+{
+  "version": 1,
+  "title": ": ",
+  "figure": {
+    "width": 900,
+    "height": 250
+  },
+  "elements": [
+    {
+      "id": "m1",
+      "kind": "decoration",
+      "box": {
+        "x": 116,
+        "y": 70,
+        "width": 89,
+        "height": 0
+      }
+    },
+    {
+      "id": "m2",
+      "kind": "decoration",
+      "box": {
+        "x": 205,
+        "y": 66.22,
+        "width": 9,
+        "height": 7.560000000000002
+      }
+    },
+    {
+      "id": "m4",
+      "kind": "decoration",
+      "box": {
+        "x": 376,
+        "y": 70,
+        "width": 89,
+        "height": 0
+      }
+    },
+    {
+      "id": "m5",
+      "kind": "decoration",
+      "box": {
+        "x": 465,
+        "y": 66.22,
+        "width": 9,
+        "height": 7.560000000000002
+      }
+    },
+    {
+      "id": "m7",
+      "kind": "decoration",
+      "box": {
+        "x": 636,
+        "y": 70,
+        "width": 89,
+        "height": 0
+      }
+    },
+    {
+      "id": "m8",
+      "kind": "decoration",
+      "box": {
+        "x": 725,
+        "y": 66.22,
+        "width": 9,
+        "height": 7.560000000000002
+      }
+    },
+    {
+      "id": "b0",
+      "kind": "box",
+      "box": {
+        "x": 30,
+        "y": 42,
+        "width": 80,
+        "height": 56
+      }
+    },
+    {
+      "id": "b1",
+      "kind": "box",
+      "box": {
+        "x": 220,
+        "y": 42,
+        "width": 150,
+        "height": 56
+      }
+    },
+    {
+      "id": "b2",
+      "kind": "box",
+      "box": {
+        "x": 480,
+        "y": 42,
+        "width": 150,
+        "height": 56
+      }
+    },
+    {
+      "id": "b3",
+      "kind": "box",
+      "box": {
+        "x": 740,
+        "y": 42,
+        "width": 120,
+        "height": 56
+      }
+    },
+    {
+      "id": "t10",
+      "kind": "box",
+      "box": {
+        "x": 100,
+        "y": 160,
+        "width": 700,
+        "height": 30
+      }
+    },
+    {
+      "id": "t11",
+      "kind": "box",
+      "box": {
+        "x": 140,
+        "y": 200,
+        "width": 620,
+        "height": 24
+      }
+    },
+    {
+      "id": "t3",
+      "kind": "box",
+      "box": {
+        "x": 120,
+        "y": 88,
+        "width": 90,
+        "height": 24
+      }
+    },
+    {
+      "id": "t6",
+      "kind": "box",
+      "box": {
+        "x": 376,
+        "y": 88,
+        "width": 98,
+        "height": 24
+      }
+    },
+    {
+      "id": "t9",
+      "kind": "box",
+      "box": {
+        "x": 636,
+        "y": 88,
+        "width": 98,
+        "height": 24
+      }
+    },
+    {
+      "id": "b0--label",
+      "kind": "text",
+      "ownerId": "b0",
+      "box": {
+        "x": 65.08,
+        "y": 58.95,
+        "width": 9.829999999999998,
+        "height": 21
+      },
+      "lines": [
+        "x"
+      ]
+    },
+    {
+      "id": "b1--label",
+      "kind": "text",
+      "ownerId": "b1",
+      "box": {
+        "x": 255.08,
+        "y": 58.95,
+        "width": 79.83000000000001,
+        "height": 21
+      },
+      "lines": [
+        "u = x² + 1"
+      ]
+    },
+    {
+      "id": "b2--label",
+      "kind": "text",
+      "ownerId": "b2",
+      "box": {
+        "x": 513.08,
+        "y": 58.95,
+        "width": 83.84000000000003,
+        "height": 21
+      },
+      "lines": [
+        "v = u³ + 2"
+      ]
+    },
+    {
+      "id": "b3--label",
+      "kind": "text",
+      "ownerId": "b3",
+      "box": {
+        "x": 776.45,
+        "y": 58.95,
+        "width": 47.09000000000003,
+        "height": 21
+      },
+      "lines": [
+        "f = v⁴"
+      ]
+    },
+    {
+      "id": "t10--label",
+      "kind": "text",
+      "ownerId": "t10",
+      "box": {
+        "x": 248.63,
+        "y": 162.95,
+        "width": 402.73,
+        "height": 24
+      },
+      "lines": [
+        "f′(x) = 4v³ · 3u² · 2x = 24x (x² + 1)² [(x² + 1)³ + 2]³"
+      ]
+    },
+    {
+      "id": "t11--label",
+      "kind": "text",
+      "ownerId": "t11",
+      "box": {
+        "x": 272.7,
+        "y": 201.84,
+        "width": 354.59,
+        "height": 19
+      },
+      "lines": [
+        "multiplica-se a derivada de cada elo, de fora para dentro"
+      ]
+    },
+    {
+      "id": "t3--label",
+      "kind": "text",
+      "ownerId": "t3",
+      "box": {
+        "x": 129.47,
+        "y": 89.84,
+        "width": 71.06,
+        "height": 19
+      },
+      "lines": [
+        "du/dx = 2x"
+      ]
+    },
+    {
+      "id": "t6--label",
+      "kind": "text",
+      "ownerId": "t6",
+      "box": {
+        "x": 386.11,
+        "y": 89.84,
+        "width": 77.76999999999998,
+        "height": 19
+      },
+      "lines": [
+        "dv/du = 3u²"
+      ]
+    },
+    {
+      "id": "t9--label",
+      "kind": "text",
+      "ownerId": "t9",
+      "box": {
+        "x": 648.17,
+        "y": 89.84,
+        "width": 73.65999999999997,
+        "height": 19
+      },
+      "lines": [
+        "df/dv = 4v³"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "text-fits-box",
+      "target": "b0--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "b0--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "b0--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "b0--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "b1--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "b1--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "b1--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "b1--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "b2--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "b2--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "b2--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "b2--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "b3--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "b3--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "b3--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "b3--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t10--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t10--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t10--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t10--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t11--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t11--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t11--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t11--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t3--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t3--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t3--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t3--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t6--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t6--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t6--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t6--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "t9--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "t9--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "t9--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "t9--label",
+      "status": "pass"
+    },
+    {
+      "id": "boxes-do-not-overlap",
+      "target": "figure",
+      "status": "pass",
+      "examined": 36,
+      "detail": "resolved 36 pair(s); 14 needed an overlap test"
+    },
+    {
+      "id": "content-within-canvas",
+      "target": "figure",
+      "status": "pass",
+      "examined": 24,
+      "detail": "examined 24 element(s)"
+    },
+    {
+      "id": "effect-within-canvas",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no element carries an effect that reaches past its own bounds"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "b0--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "15.34:1 against rgb(238, 242, 247)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "b1--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.47:1 against rgb(227, 236, 248)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "b2--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "15.14:1 against rgb(230, 243, 239)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "b3--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "14.81:1 against rgb(246, 236, 228)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t10--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "8.1:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t11--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "7.07:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t3--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.57:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t6--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.57:1 against #FCFBF7"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "t9--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "5.57:1 against #FCFBF7"
+    },
+    {
+      "id": "categorical-colours-distinguishable",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no categoryGroup has two or more members to compare"
+    },
+    {
+      "id": "tick-labels-do-not-collide",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no axis tick labels found"
+    },
+    {
+      "id": "constraints-satisfied",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no constraints declared"
+    },
+    {
+      "id": "declared-size-honoured",
+      "target": "figure",
+      "status": "pass",
+      "examined": 9,
+      "detail": "every declared size was honoured across 9 block(s)"
+    },
+    {
+      "id": "annotation-nearest-its-owner",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no block declares what it annotates"
+    },
+    {
+      "id": "sweep-matches-its-label",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: nothing in this figure draws a swept angle"
+    },
+    {
+      "id": "arc-is-circular",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: the figure draws no arcs"
+    }
+  ],
+  "repairs": [],
+  "passes": 1,
+  "unrepaired": [],
+  "warnings": [],
+  "ok": true
+}

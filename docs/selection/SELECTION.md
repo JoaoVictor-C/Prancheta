@@ -10,7 +10,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, or a set.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, or an angle.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -37,6 +37,14 @@ A set of items with no relations between them is a stack of labelled blocks (`S-
 Plain flow is the **absence** of an idiom, not a signal. It nudges towards blocks and never carries a figure by itself (`I-plain-flow-favours-blocks`). An earlier version of this table weighted it as real evidence, and every ordinary flowchart came out as a graph composed with a redundant stack of blocks.
 
 A series with a scale is a chart (`S-series-favours-chart`), as is any request that asks to be drawn as one (`I-chart-favours-chart`) — quarterly revenue, request counts by endpoint, anything where length or position stands for a number. Built entirely from the same boxes every other preset composes: a bar's height or width **is** the encoded value, arithmetic rather than new geometry, so the whole pipeline — text measurement, the repair loop, every check — applies with no new code. A pie or donut is this preset's too, as of the Mark: a wedge is not a box, but it is an outline the IR can state and the checks can walk, and a slice's printed share is measured against the angle it actually sweeps. This sentence used to say the opposite, and said so correctly until ADR 0019 changed what the core could express.
+
+A function is none of those (`S-function-favours-function-graph`). *"Draw y = x² and its tangent at (3; 9)"* names a curve over a continuum, and everything a reader takes from the figure — where it crosses the axis, which point is open, how steep the tangent is — is a property of the function, not of any list of values. So it is not a graph, whatever the word suggests (`S-function-disqualifies-graph`); it is not a chart, which joins the samples it was handed and so draws whatever those samples happened to be (`S-function-disqualifies-chart`); and it is not a stack of blocks, which has no plane at all (`S-function-disqualifies-blocks`). The preset evaluates the expression it is given, computes every labelled point from it, and refuses a coordinate typed by hand — which is how the Cálculo 1 sheet ended up printing "(2, 5)" next to the decimal "0,5". The same function also has a second honest picture, its sign table (`S-function-favours-sign-chart-weakly`): where f, f′ or f″ are positive, negative or zero, and where f rises and falls. It is offered at the floor and never chosen over the graph, because it answers a narrower question — and it is found from the same expression, so the two cannot disagree. A table of its values at chosen points is a third view at the same floor (`S-function-favours-value-table-weakly`), for the exercise that asks "complete the table" before it asks "draw the curve"; every cell is evaluated, none is typed.
+
+An interval is not a function and not a set (`S-interval-favours-number-line`). *"Represente na reta real a solução de x < −1 ou 2 ≤ x < 5"* is a stretch of a continuum whose only facts are its endpoints and whether each belongs, and the number line draws exactly those — ● or ○, a ray to infinity — and computes a union or intersection row from the rows above it rather than accepting one typed. A stack of blocks has no line to stretch along (`S-interval-disqualifies-blocks`).
+
+A vector is not an edge (`S-vector-favours-vectors`, `S-vector-disqualifies-graph`). An edge joins two things and may be drawn any length; a force or a displacement has a length and a direction that must be drawn to scale, and what an exercise does with vectors — adds them, decomposes them, projects one onto another — is arithmetic the preset performs from the vectors themselves, with every printed length measured against the arrow it names.
+
+An angle on the trigonometric circle is its own question (`S-angle-favours-unit-circle`). *"Marque 5π/4 no ciclo e indique seu seno e cosseno"* asks where a rotation lands and what its projections are, not what curve sin traces over time — so it is the unit circle, where the point is (cos θ, sin θ) computed from the angle, the notable values print exactly (√2/2, not 0,707), and the arc beside the printed angle is checked against it.
 
 ## Answer three questions, not two
 

@@ -104,7 +104,7 @@ That only holds while *the thing measured is the thing drawn*, which is why the 
 
 ## What gets checked
 
-Fifteen checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). Eleven answer *is this figure malformed*. The last four answer a narrower question that is not the same thing — *does this figure agree with itself* — and they exist because a figure can be perfectly well formed and still assert something untrue (ADR 0019). A pie is drawn by that machinery: a slice's printed share is measured against the angle it actually sweeps.
+Nineteen checks, deterministic and model-free, in [src/checks.ts](src/checks.ts). Eleven answer *is this figure malformed*. Four answer a narrower question that is not the same thing — *does this figure agree with itself* — and they exist because a figure can be perfectly well formed and still assert something untrue (ADR 0019). A pie is drawn by that machinery: a slice's printed share is measured against the angle it actually sweeps. The last four are *didactic*: what a figure made to teach from owes its reader (ADR 0024, 0025).
 
 | check | what it asks |
 | --- | --- |
@@ -123,6 +123,10 @@ Fifteen checks, deterministic and model-free, in [src/checks.ts](src/checks.ts).
 | `annotation-nearest-its-owner` | Is every label nearer the element it names than to any other? A reader attributes a label to whatever it sits closest to. |
 | `sweep-matches-its-label` | Does an angle mark sweep the angle its own label prints? |
 | `arc-is-circular` | Are both ends of every arc the same distance from the centre it turns about? An arc stated as two endpoints *and* a centre is over-determined, and the three can disagree. |
+| `axis-number-present` | Is every number an axis promised (`GridAxis.require`) printed within half a division of its tick? The intercept an exercise cites is the number a tidy placer drops. |
+| `series-distinguishable-without-colour` | Can every data series be told apart without colour — a direct label on the drawing, or a stroke pattern of its own? A legend does not count. |
+| `curve-label-nearest-its-curve` | Is every curve label nearer the curve it names than any other curve? |
+| `feature-on-its-curve` | Does every marker lie on what it claims — a root on its curve *and* on the x axis? |
 
 Two more live in [src/anim/checks.ts](src/anim/checks.ts) and run over the *interior* of an animated transition rather than over a static figure; see [Animation](#animation) below.
 
@@ -175,7 +179,7 @@ It answers with a preset, a composition of two, or *no preset fits — author ra
 
 ## The repertoire
 
-**Five presets**, drawn with the core's own IR — see [src/presets](src/presets):
+**Seven presets**, drawn with the core's own IR — see [src/presets](src/presets):
 
 | preset | what it is |
 | --- | --- |
@@ -184,6 +188,10 @@ It answers with a preset, a composition of two, or *no preset fits — author ra
 | [`mindmap`](src/presets/mindmap/PRESET.md) | A single-rooted tree radiating outward. |
 | [`annotated-figure`](src/presets/annotated-figure/PRESET.md) | A shape or scene with callouts on leader lines. |
 | [`chart`](src/presets/chart/PRESET.md) | Bar, line and scatter: values with a scale, not a graph. |
+| [`function-graph`](src/presets/function-graph/PRESET.md) | Curves y = f(x) as data: expressions, tangents and secants, open and closed points, computed labels. |
+| [`sign-chart`](src/presets/sign-chart/PRESET.md) | The sign table of a function — signs of f, f′, f″ or a product's factors, and where f rises and falls — found from the expression, never typed. |
+
+**A function graph is data, not code.** Functions are expressions the core parses itself (no `eval`), points are read off them, tangents and secants are computed, and every label is a template — `"P{coords}"` prints `P(3; 9)` from f(3); a coordinate typed by hand is refused. Numbers go through one pt-BR formatter shared with the text around the figure: decimal comma, `(2,5; 7,25)`, the minus `−`, `17/3` rather than a rounded decimal. Axis numbers are never dropped (a number with ink on its spot slides along its own gridline), the zero line is always drawn when the range contains zero, and the legend searches for free space. The fourteen curves of a real Cálculo 1 exercise list are its fixtures ([fixtures/function-graph](fixtures/function-graph)).
 
 **Free outlines** where a box cannot reach. A `Mark` is a start point and a run of segments — lines, and circular arcs about a stated centre — flattened at layout time into the polyline every check walks, at the same 0.05px bound a curved connector uses. It carries no label and takes no part in layout: it is ink, painted beneath everything else, and a filled one is a surface `contrast-sufficient` reads. This is what draws the region between a chord and its arc, which no inscribed polygon can express.
 
@@ -191,7 +199,7 @@ It answers with a preset, a composition of two, or *no preset fits — author ra
 
 **Thirteen block shapes** — seven geometric (`rect`, `circle`, `ellipse`, `diamond`, `hexagon`, `stadium`, `triangle`) and six symbols (`parallelogram`, `trapezoid`, `chevron`, `cross`, `star`, `note`). Every one is a polygon, deliberately: `shapeVertices` hands the same vertex list to `inPolygon` for containment and to the `<polygon>` for drawing, so `label-within-shape` answers about the shape on the page rather than an approximation. A curved symbol — a cylinder, a cloud — would break that identity and is not offered. [docs/design/GEOMETRY.generated.md](docs/design/GEOMETRY.generated.md) states each one's inscribed area, which is what tells a container from a marker: a `star` holds 27.6% of its bounding box and a `cross` 55.2%, and neither will take an ordinary label.
 
-**Seven figure modules** (`node src/cli.ts modules`), in Python, for geometry the core cannot compute — crystal unit cells, dendrograms, gene maps, real maps, molecules and reaction schemes, function plots, Skew-T soundings. It was eleven: four rows stopped clearing the bar that puts a figure outside the core at all, and one was never a separate module. The index, and the record of what came out and why, is [modules/README.md](modules/README.md).
+**Seven figure modules** (`node src/cli.ts modules`), in Python, for geometry the core cannot compute — crystal unit cells, dendrograms, gene maps, real maps, molecules and reaction schemes, least-squares fits, Skew-T soundings. Function curves were a module too, until the core learned to evaluate them ([ADR 0025](docs/decisions/0025-function-graph-absorbs-plot.md)). It was eleven: four rows stopped clearing the bar that puts a figure outside the core at all, and one was never a separate module. The index, and the record of what came out and why, is [modules/README.md](modules/README.md).
 
 The module contract is that **the module declares semantics and the core measures geometry**. A module says what it drew and what each element means; it may not certify that what it drew is correct. Nobody certifies their own work.
 
@@ -289,8 +297,17 @@ Six ADRs: [0012](docs/decisions/0012-animation-m11-scope.md) scope · [0013](doc
 | `module <command>` | Run a figure module and verify what it drew. `--args` `--width` `--height` `--out` |
 | `diff <before> <after>` | Report what changed between two states of a figure. |
 | `animate <state...>` | Tween two or more states into an animated SVG, with the motion checked. `--durationMs` `--delayMs` `--loop` `--easing` |
+| `sheet <file>` | Build an exercise sheet from one JSON file: every figure rendered and checked, HTML + KaTeX, an A4 PDF, a PNG per page (PyMuPDF), an answer key generated from the answers. Writes to `ProjectHub/Listas/<name>/`. `--out` `--pdf` `--pages` `--dpi` `--katex` |
 
 Run `node src/cli.ts <command> --help` for the full options of any one.
+
+### Exercise sheets
+
+```bash
+node src/cli.ts sheet experiments/exercises/calculo1/lista.json
+```
+
+A sheet is one document: per exercise a `level`, a `statement`, a `figure` (a `function-graph` input), an `answer` and a `solution`, in HTML with KaTeX. The answer key is generated from `answer`, and the same field closes each worked solution, so the two cannot disagree. `{{fig.P}}` in the text prints point P of the exercise's figure through the formatter its label uses — `\left(2;\,5\right)` inside math, `(2; 5)` outside. The command fails, naming each one, on a KaTeX error, a broken image or a figure that failed a check. [ADR 0026](docs/decisions/0026-the-sheet-command.md); the converted Cálculo 1 list is [experiments/exercises/calculo1](experiments/exercises/calculo1).
 
 ## From an agent
 
@@ -337,6 +354,12 @@ Generated files are generated for a reason: a hand-written table of effect bleed
 - **One browser per process, and a loop you do not dread** — 195 Chromium launches per run was the cost; the fix is a batch resource, and the ladder `test:one` → `test:fast` → the suite. [0020-the-test-loop](docs/decisions/0020-the-test-loop.md)
 - **Opening the repository** — a licence that is granted and not merely declared, secrets ignored by the clone rather than by one developer's machine, and a suite split by dependency so a fresh clone runs green without Python. [0021-opening-the-repository](docs/decisions/0021-opening-the-repository.md)
 - **The preset input is validated, and the line against the checks is drawn at repair** — the one surface an agent authors was the one surface nothing read. [0018-preset-input-validation](docs/decisions/0018-preset-input-validation.md)
+- **Function graphs are a preset, and a figure is data** — expressions parsed by a closed grammar, labels computed, typed coordinates refused. [0022-function-graph-preset](docs/decisions/0022-function-graph-preset.md)
+- **One number formatter for the figure and the text** — `(2,5; 7,25)`, `−`, `17/3`. [0023-one-number-formatter](docs/decisions/0023-one-number-formatter.md)
+- **Didactic checks** — a number the exercise cites is on the axis, curves are told apart without colour, labels sit by what they name. [0024-didactic-checks](docs/decisions/0024-didactic-checks.md)
+- **function-graph absorbs the plot module's curves** — one evaluator of one expression language; the module keeps least-squares fits. [0025-function-graph-absorbs-plot](docs/decisions/0025-function-graph-absorbs-plot.md)
+- **The sign table is found from the function** — roots, poles and signs computed, √3 printed as √3; it sits beside the graph and cannot contradict it. [0027-sign-chart](docs/decisions/0027-sign-chart.md)
+- **An exercise sheet is one document** — the answer written once, numbers in the text computed from the figures, every error returned. [0026-the-sheet-command](docs/decisions/0026-the-sheet-command.md)
 
 ## Further reading
 

@@ -34,6 +34,7 @@ node src/cli.ts <command> [options]
 | `module` | <command> [--args] [--width] [--height] [--out] | Run a figure module in another language and verify what it drew. |
 | `diff` | <before> <after> | Lay out two states of a figure and report what changed between them: appeared, disappeared, moved, resized, restyled, retexted.. |
 | `animate` | <states> [--out] [--durationMs] [--delayMs] [--easing] [--loop] | Tween a sequence of two or more states of a figure into an animated SVG: eased position for moved boxes, crossfades for those arriving and leaving, optional per-element stagger, and a motion check that models what the renderer actually does at every transition and every state boundary.. |
+| `sheet` | <sheet> [--out] [--pdf] [--pages] [--dpi] [--katex] | Build an exercise sheet from one structured file: every figure rendered and checked, HTML with KaTeX, an A4 PDF, a PNG per page, and an answer key generated from the answers.. |
 
 Start with `select`. Then write a preset input as JSON and `render` it. Every
 render prints its checks; a figure that fails them is reported, never hidden.
@@ -47,6 +48,12 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `mindmap` | A single-rooted tree radiating outward. | yes |
 | `annotated-figure` | A shape or scene with callouts on leader lines. | yes |
 | `chart` | Bar charts: values with a scale, not a graph. | yes |
+| `function-graph` | Curves y = f(x) on a numbered plane, with tangents, secants and computed points. | yes |
+| `sign-chart` | The sign table of a function: where f, f′, f″ or a product's factors are +, − or 0, and where f rises and falls. | yes |
+| `value-table` | A table of values of one or more functions at chosen points, every cell computed from the expression. | yes |
+| `number-line` | The real line with intervals and solution sets of inequalities; unions and intersections computed. | yes |
+| `vectors` | Vectors in the plane with sums, multiples, components, projections and angles derived from them. | yes |
+| `unit-circle` | The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles. | yes |
 
 ## Figure modules
 
@@ -63,12 +70,55 @@ declares what it drew, the core measures it.
 | `genomic` | Gene arrows on a real base-pair axis; arrow direction is the strand. | `dna_features_viewer` | `--args "modules/genomic/render.py,--name=plasmid_simple"` |
 | `map` | Region and country maps, longitude/latitude projected to Web Mercator, with labels placed at each region's representative point. | `pyproj`, `shapely` | `--args "modules/map/render.py,--name=campaign"` |
 | `molecule` | 2D skeletal chemical structures from SMILES, with stereo wedges -- one molecule, or a whole reaction scheme laid out as an equation and its participants. | `rdkit` | `--args "modules/molecule/render.py,--name=glucose"` |
-| `plot` | Function curves with their roots and extrema, or a scatter with a least-squares fit. Every root is declared to lie on its own curve and on the x axis, and both are checked. | `numpy` | `--args "modules/plot/function.py,--name=quadratic"` |
+| `plot` | A scatter with a least-squares fit, its R² and each residual. Every fitted value is declared to lie on the fit and on its own residual, and both are checked. Function curves moved to the function-graph preset. | `numpy` | `--args "modules/plot/fit.py,--name=linear_fit_demo"` |
 | `skewt` | A Skew-T log-P atmospheric sounding with temperature and dewpoint traces, a lifted-parcel profile and the LCL. | `numpy`, `metpy` | `--args "modules/skewt/render.py,--name=midlatitude_summer"` |
 
 `--args` is repeatable and each occurrence is taken verbatim, which is why
 several modules use `;` and `:` as delimiters rather than commas. Read
 `modules/README.md` for the protocol and the limits.
+
+## Function graphs and exercise sheets
+
+A curve y = f(x) is the `function-graph` preset, and a figure is **data**:
+functions are expressions (`"x^2 - 4x + 1"`, `"1000(1 + 0.2t)"`), points
+are read off them (`{"of": "f", "x": 3}`), tangents and secants are computed
+(`{"tangent": {"of": "f", "at": 3}}`, `{"through": ["A", "B"]}`), and every
+label is a template filled from those values -- `"P{coords}"` prints
+`P(3; 9)`. A coordinate pair typed into a label is refused. Numbers are
+written by one pt-BR formatter (decimal comma, `(2,5; 7,25)`, the minus
+`−`, `17/3` rather than `5,667`). Axis numbers are never dropped,
+the zero line is always drawn when the range contains zero, and the legend
+finds its own free space. Four checks hold it to that: `axis-number-present`,
+`series-distinguishable-without-colour` (label every curve on the drawing or
+give it its own dash pattern -- a legend does not count),
+`curve-label-nearest-its-curve` and `feature-on-its-curve` (a root lies on
+its curve and on the x axis). Worked examples: `fixtures/function-graph/`.
+
+Its sign table is the `sign-chart` preset: give it the same expression and
+rows (`"f"`, `"f'"`, `"f''"`, `"variation"`, `"concavity"`, or
+`factors` for an inequality) and it finds the roots, poles, signs and the
+values at maxima and minima itself -- `√3`, not `1,732`. In a sheet, put
+both in one exercise: `"solutionFigure": [graph, table]`, placed with
+`{{figure}}` and `{{figure2}}`. Examples: `fixtures/sign-chart/`.
+
+A whole exercise list is **one file** and the `sheet` command:
+
+```bash
+node src/cli.ts sheet experiments/exercises/calculo1/lista.json
+```
+
+Per exercise: `level` (easy/mid/hard), `statement` (HTML with KaTeX
+`\\( \\)` and `$$ $$`), `figure` (`{"graph": <function-graph input>,
+"caption": ...}`), `answer`, `solution`, `solutionFigure`. `{{figure}}`
+marks where a figure goes; `{{fig.P}}` prints point P of the exercise's
+figure through the same formatter as its label (TeX inside math, text
+outside). The answer key is generated from `answer`, and the same field
+closes each worked solution -- never type an answer twice. Output goes to
+`ProjectHub/Listas/<name>/` (`--out` or `PRANCHETA_SHEETS_DIR` to change
+it): figures, HTML, an A4 PDF, a PNG per page (PyMuPDF), and the source. The
+command fails, naming each one, on a KaTeX error, a broken image or a figure
+that failed a check. Look at the page PNGs before handing a sheet over: green
+checks do not mean legible.
 
 ---
 
@@ -84,7 +134,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, or a set.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, or an angle.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -111,6 +161,14 @@ A set of items with no relations between them is a stack of labelled blocks (`S-
 Plain flow is the **absence** of an idiom, not a signal. It nudges towards blocks and never carries a figure by itself (`I-plain-flow-favours-blocks`). An earlier version of this table weighted it as real evidence, and every ordinary flowchart came out as a graph composed with a redundant stack of blocks.
 
 A series with a scale is a chart (`S-series-favours-chart`), as is any request that asks to be drawn as one (`I-chart-favours-chart`) — quarterly revenue, request counts by endpoint, anything where length or position stands for a number. Built entirely from the same boxes every other preset composes: a bar's height or width **is** the encoded value, arithmetic rather than new geometry, so the whole pipeline — text measurement, the repair loop, every check — applies with no new code. A pie or donut is this preset's too, as of the Mark: a wedge is not a box, but it is an outline the IR can state and the checks can walk, and a slice's printed share is measured against the angle it actually sweeps. This sentence used to say the opposite, and said so correctly until ADR 0019 changed what the core could express.
+
+A function is none of those (`S-function-favours-function-graph`). *"Draw y = x² and its tangent at (3; 9)"* names a curve over a continuum, and everything a reader takes from the figure — where it crosses the axis, which point is open, how steep the tangent is — is a property of the function, not of any list of values. So it is not a graph, whatever the word suggests (`S-function-disqualifies-graph`); it is not a chart, which joins the samples it was handed and so draws whatever those samples happened to be (`S-function-disqualifies-chart`); and it is not a stack of blocks, which has no plane at all (`S-function-disqualifies-blocks`). The preset evaluates the expression it is given, computes every labelled point from it, and refuses a coordinate typed by hand — which is how the Cálculo 1 sheet ended up printing "(2, 5)" next to the decimal "0,5". The same function also has a second honest picture, its sign table (`S-function-favours-sign-chart-weakly`): where f, f′ or f″ are positive, negative or zero, and where f rises and falls. It is offered at the floor and never chosen over the graph, because it answers a narrower question — and it is found from the same expression, so the two cannot disagree. A table of its values at chosen points is a third view at the same floor (`S-function-favours-value-table-weakly`), for the exercise that asks "complete the table" before it asks "draw the curve"; every cell is evaluated, none is typed.
+
+An interval is not a function and not a set (`S-interval-favours-number-line`). *"Represente na reta real a solução de x < −1 ou 2 ≤ x < 5"* is a stretch of a continuum whose only facts are its endpoints and whether each belongs, and the number line draws exactly those — ● or ○, a ray to infinity — and computes a union or intersection row from the rows above it rather than accepting one typed. A stack of blocks has no line to stretch along (`S-interval-disqualifies-blocks`).
+
+A vector is not an edge (`S-vector-favours-vectors`, `S-vector-disqualifies-graph`). An edge joins two things and may be drawn any length; a force or a displacement has a length and a direction that must be drawn to scale, and what an exercise does with vectors — adds them, decomposes them, projects one onto another — is arithmetic the preset performs from the vectors themselves, with every printed length measured against the arrow it names.
+
+An angle on the trigonometric circle is its own question (`S-angle-favours-unit-circle`). *"Marque 5π/4 no ciclo e indique seu seno e cosseno"* asks where a rotation lands and what its projections are, not what curve sin traces over time — so it is the unit circle, where the point is (cos θ, sin θ) computed from the angle, the notable values print exactly (√2/2, not 0,707), and the arc beside the printed angle is checked against it.
 
 ## Answer three questions, not two
 
@@ -433,3 +491,390 @@ Stacked, showing composition rather than comparison:
 ```
 
 Fixtures: [`fixtures/chart-quarterly-revenue.json`](../../../fixtures/chart-quarterly-revenue.json), [`fixtures/chart-stacked-budget.json`](../../../fixtures/chart-stacked-budget.json), [`fixtures/chart-stacked100-horizontal.json`](../../../fixtures/chart-stacked100-horizontal.json), [`fixtures/chart-line-latency.json`](../../../fixtures/chart-line-latency.json), [`fixtures/chart-scatter-single.json`](../../../fixtures/chart-scatter-single.json)
+
+### function-graph
+
+Curves on a numbered plane: functions y = f(x) (piecewise if needed), parametric, polar and implicit curves, tangent and secant lines, closed and open points, dashed guides to the axes, direct labels and a legend. A figure is a document — nothing in it is code, and nothing in it is a number typed twice.
+
+**Choose it when** the content is a function over a continuum (`S-function-favours-function-graph`): a parabola and its tangent, the secants that approach it, a piecewise function with a hole, position–velocity–acceleration on one set of axes, simple against compound interest — or a curve of Geometria Analítica that is not the graph of a function: a conic from its equation, a cardioid, a curve traced by a parameter.
+
+**Do not choose it when** the content is a finite list of values — that is a series, and a `chart` (`S-function-disqualifies-chart` refuses the chart the other way round). A function is never a node-and-edge `graph`, whatever the word says (`S-function-disqualifies-graph`).
+
+## Input
+
+```json
+{
+  "preset": "function-graph",
+  "locale": "pt-BR",
+  "x": { "range": [-1, 5], "unit": 90, "name": "x" },
+  "y": { "range": [-2, 16], "unit": 22, "labelEvery": 2, "require": [9] },
+  "functions": [
+    { "id": "f", "expr": "x^2", "label": { "text": "y = {expr}", "at": -0.6, "towards": ["U", "R"] } }
+  ],
+  "lines": [
+    { "id": "t", "tangent": { "of": "f", "at": 3 }, "domain": [1.4, 4.4], "colour": "warm",
+      "label": { "text": "inclinação = {slope}", "at": 1.8, "towards": ["R", "D"] } }
+  ],
+  "points": [
+    { "id": "P", "at": { "of": "f", "x": 3 }, "label": "P{coords}", "towards": ["L", "NW"], "guides": true }
+  ]
+}
+```
+
+- **Axes.** `range` in axis units, `unit` in pixels per unit, `step` for the lattice (default 1), `labelEvery` to print every nth number, `name` for the axis name ("" for none), `require` for numbers that must be printed even off the lattice. The lattice is anchored at zero, so a range of [−0.5, 4.5] still rules its lines at the integers.
+- **Functions.** `expr` over `domain` (default: the whole x range), or `pieces: [{expr, domain}]`. Expressions accept `x` (or the x axis's name, e.g. `t`), `+ − * / ^`, implicit multiplication (`2x`, `3(x + 1)`), `x²`, `√`, `pi`, `e`, and `sin cos tan asin acos atan sinh cosh tanh exp ln log(=log₁₀) log2 sqrt cbrt abs sign`. Decimals use a point in expressions (`1.2`); the figure prints them in the locale. `features: ["roots", "extrema"]` marks computed roots and local extrema.
+- **Curves that are not graphs** (ADR 0029). In `functions`, instead of `expr`:
+  - **parametric** — `{"id": "c", "x": "cos(t)", "y": "sin(t)", "t": [0, "2pi"]}`: both expressions in `t`;
+  - **polar** — `{"id": "k", "r": "1 + cos(θ)", "theta": [0, "2pi"]}`: `r` in `θ` (or `theta`); negative r is drawn opposite;
+  - **implicit** — `{"id": "e", "implicit": "x^2/9 + y^2/4 = 1"}`: an equation in `x` and `y` (or the axes' names), drawn wherever it holds in the plotted range.
+
+  An interval's ends may be expressions without variables (`"2pi"`, `"pi/2"`), since JSON cannot write 2π. `xy` is x·y when x and y are both variables; see `src/math/expr.ts` for the rule. Parametric and polar curves are sampled adaptively in pixels, so they are smooth where they are fast and are **broken, not joined**, across a pole or a jump; an implicit curve is traced by marching squares with every vertex bisected onto the curve (`src/math/contour.ts`). All three are clipped exactly at the plotted range, are series like any function, and take labels, legends and the checks below. `domain` and `features` belong to y = f(x) and are refused on them. A curve that draws nothing in the range is refused.
+
+  What differs is how a place on them is named: a label's numeric `at`, a point's `{of, …}` and a tangent's `at` are the curve's own coordinate — `x` on a graph, `t` on a parametric curve, `θ` on a polar one (`{"of": "k", "theta": "pi/2"}`). An implicit curve has none: its label takes a point `[x, y]` and is anchored at the curve's nearest point, and points and tangents on it are refused. `{expr}` prints `(cos(t); sin(t))`, `1 + cos(θ)`, `x²/9 + y²/4 = 1`.
+- **Lines.** Exactly one of `through: [A, B]` (a secant), `point` + `slope`, or `tangent: {of, at}` (slope computed; for a parametric or polar curve `at` is t or θ and the slope is y′/x′ — a vertical tangent is refused, a line here is y = mx + b). `domain` is the x interval drawn. `series` groups several lines as one thing to tell apart.
+- **Points.** `at` is `[x, y]`, the id of an earlier point, or a point read off a curve: `{of: "f", x: 2, side: "left"}` on a graph (`side` picks the piece at a break), `{of: "c", t: 1}` on a parametric curve, `{of: "k", theta: "pi/2"}` on a polar one. `style: "open"` draws ○ (does not belong to the graph), default ● (belongs). `guides: true` draws dashed guides to both axes.
+- **Guides.** `{x, from, to}` or `{y, from, to}`: a dashed reference line. Guides are cut around any axis number they would run through.
+- **Labels.** `labels: [{text, at, towards, names}]` for free text; `names` marks it as the direct label of a series.
+- **Legend.** Every function or line with a `legend` text gets a row. The legend is placed by search — the first spot clear of curves, guides, axes, numbers and labels, corners first. `legend.at` pins it, but the search is the point.
+- **Colours.** `ink key ask rust warm soft purple ochre`, or `#rrggbb`.
+
+### Text is computed, never typed
+
+Every label, curve label and legend row is a template:
+
+| placeholder | prints |
+| --- | --- |
+| `{coords}`, `{x}`, `{y}` | the labelled point's own coordinates |
+| `{P}`, `{P.x}`, `{P.y}` | point `P`'s |
+| `{expr}`, `{f.expr}` | a function's formula, set as `x² − 4x + 1` |
+| `{slope}`, `{L.slope}` | a line's slope |
+| `{=0.5}` | a number, formatted |
+| `{y:2}` | any of the above with fixed decimals, as for money |
+
+A literal pair such as `(2; 5)` or `(2, 5)` in label text is **refused**: it is a second statement of a number the figure already computes, free to disagree with it. The formatter (`src/locale/format.ts`) writes pt-BR pairs with a semicolon, `(2,5; 7,25)`, decimals with a comma, the minus as `−`, and a value like 17/3 as `17/3` rather than a rounded decimal that is a different number.
+
+## What the checks hold it to
+
+- **Axis numbers.** Every number the preset prints, and every one in `require`, is declared on the grid; `axis-number-present` fails if one is missing or has drifted more than half a division from its tick. A number whose usual spot has ink slides along its own gridline, to either side of the axis, and only as a last resort keeps its spot on a paper backing.
+- **The zero line** is drawn whenever the range contains zero.
+- **Series told apart without colour.** Each function and line is a series; `series-distinguishable-without-colour` fails when two share a stroke style and one has no direct label. A legend does not count — a legend tells series apart by colour.
+- **Curve labels.** A direct label must sit nearer its own curve than any other (`curve-label-nearest-its-curve`).
+- **Every label names something** (`label-declares-what-it-names`, ADR 0035). A point's label names its point and a legend row the end of its swatch (`label-nearest-its-place` holds both beside them); a free label names its series, or else the point it is anchored at; the axis names are declared free-standing.
+- **Backings hide nothing.** A tick number's paper backing may break its own gridline, never a curve or an axis (`backing-hides-no-ink`); a number's contrast is measured against the gridlines running under it too.
+
+## Where it came from
+
+The Cálculo 1 sheet in `experiments/exercises/calculo1/` was drawn with a helper script; its fifteen figures are now the fixtures of this preset (`fixtures/function-graph/calc1-*.json`), and the defects that reached the student are the reason for each rule above. See ADR 0022. The curves beyond graphs of functions are ADR 0029; their fixtures are `fixtures/function-graph/curve-*.json` — an ellipse and a circle from their equations, and a cardioid with a point and tangent read off it by θ.
+
+### sign-chart
+
+The sign table of a function — the *quadro de sinais*: where f, f′, f″ or the factors of a product are positive, negative or zero, where f is undefined, and where f rises and falls. Written once, as the function's expression; every boundary, sign and value in the table is found from it.
+
+**Choose it when** the question is about intervals rather than shapes: where is f positive, where does it grow, where is it concave up, which x solve an inequality like (x − 1)(x + 2)/(x − 3) ≥ 0. It is offered beside `function-graph` for any function (`S-function-favours-sign-chart-weakly`) and never chosen over it: the graph shows the shape, the table states the intervals, and both are computed from the same expression, so they cannot disagree. In a sheet, put the two side by side (`"solutionFigure": [graph, table]`, markers `{{figure}}` and `{{figure2}}`).
+
+## Input
+
+```json
+{
+  "preset": "sign-chart",
+  "expr": "x^3 - 3x",
+  "rows": [{ "row": "f'", "label": "f′(x) = 3x² − 3" }, "variation"]
+}
+```
+
+- **`expr`** — the function, in the same expression language as `function-graph` (`x^2`, `2x`, `1/x`, `sqrt(x)`, `ln(x)`...).
+- **`rows`** — top to bottom, any of: `"f"` (sign of f), `"f'"` (sign of f′), `"f''"` (sign of f″), `"variation"` (arrows for where f rises and falls, with f's value at each critical point: at the top for a maximum, at the bottom for a minimum), `"concavity"` (∪ or ∩). A row may be `{ "row": "f'", "label": "f′(x) = 3x² − 3" }` to print the derivative's formula — a label, never a number the table uses. Default `["f'", "variation"]`.
+- **`factors`** — `[{ "label": "x − 1", "expr": "x - 1" }, ...]`: one sign row per factor above the others, the classic table for solving an inequality. With factors and no `rows`, the last row is the sign of f itself.
+- **`search`** — where to look for roots and poles, default `[-10, 10]`.
+- **`undefinedAt`** — points outside the domain the search cannot see, such as a removable hole.
+- **`variable`**, **`name`** — for the header and the default labels (`t`, `s`); default `x` and `f`.
+
+## How the table is found
+
+- **Roots** by sign change and bisection, plus roots that touch zero without crossing it ((x − 1)² at 1), found as near-zero minima of |g|.
+- **Poles**: a sign change where the function is huge, not small, is a pole — 1/x changes sign at 0 without ever being 0 — and is marked **‖** in every row, since f′ and f″ are undefined there too.
+- **Exact values**: each root is snapped to the fraction or square root it is, if the function vanishes there, so the header prints `√3` and `5/3`, not `1,732` and `1,667`.
+- **Signs** are the sign of each row's function at the midpoint of each interval. f′ and f″ are central differences of f, so nothing about the derivative is typed.
+
+## What is not covered
+
+A root outside `search` is not found, and neither is a hole the function does not visibly skip (write it in `undefinedAt`). The value printed at a critical point is f there; limits at ±∞ and at poles are not computed — the arrows say which way f goes, not where it ends.
+
+### value-table
+
+A table of x values and function values: the *tabela de valores* used in Cálculo 1 and school mathematics to evaluate functions at specified points. Written once, as the functions' expressions; every cell is computed from them.
+
+**Choose it when** you need to show numeric values of one or more functions at specific points — to illustrate growth, compare functions, find where they are equal, or solve equations numerically. The table complements a `function-graph` (the graph shows shape, the table shows exact values at points you choose) or stands alone.
+
+## Input
+
+```json
+{
+  "preset": "value-table",
+  "variable": "x",
+  "xs": [-2, -1, 0, 1, 2],
+  "functions": [
+    { "name": "f", "expr": "x^2 - 1" },
+    { "name": "g", "expr": "2x + 1" }
+  ],
+  "orientation": "rows"
+}
+```
+
+- **`xs`** — the x values (points where functions are evaluated). Array of numbers; required.
+- **`functions`** — array of `{ name, expr }`, required.
+  - **`name`** — how the function is labelled (e.g., "f", "P(x)", "arrecadação").
+  - **`expr`** — the function, in the same expression language as `function-graph` (`x^2`, `2x`, `1/x`, `sqrt(x)`, `ln(x)`...).
+- **`orientation`** — `"rows"` (default) or `"columns"`.
+  - `"rows"`: functions are rows, x values are columns (standard Brazilian format).
+  - `"columns"`: functions are columns, x values are rows.
+- **`variable`** — the variable's name, printed in the header. Default `"x"`.
+- **`locale`** — `"pt-BR"` (default) or `"en"`.
+
+## How values are computed and printed
+
+- **Every cell is computed** by evaluating the compiled expression at that x value. The author never types a cell value.
+- **Undefined values** (poles, roots of fractions, etc.) are marked **∄** (symbol for "does not exist").
+- **Numbers print** with the figure's locale (decimal comma in pt-BR, fractions like 17/3 preferred over rounded decimals).
+- **Central differences** would let you compute f′(x) from f: future work if an exercise asks for it.
+
+## What is not covered
+
+- No orientation combination (matrix transpose) — choose one layout up front.
+- No automatic x values (like `{start: -2, step: 0.5, count: 9}`): list the points you want.
+- No multiple sheets per table (like `function-graph` allows) — one table per preset call.
+
+### number-line
+
+The "reta real" used to answer an inequality, a domain, or a union/intersection of sets — a horizontal line with the boundary points marked (● included, ○ excluded) and the solution picked out in ink, rays to ±∞ carrying an arrow. Written once, as text; every boundary, every open-or-closed mark and the axis range itself are found from it.
+
+**Choose it when** the answer is a set of real numbers described by an inequality, a domain restriction, or a combination (union/intersection) of such sets — the figure a Brazilian Cálculo 1 student draws under an inequality to state the solution set.
+
+## Input
+
+```json
+{ "preset": "number-line", "set": "x < -1 ou 2 ≤ x < 5" }
+```
+
+```json
+{ "preset": "number-line", "set": "[-2, 3) ∪ (4, +∞)" }
+```
+
+Several named rows, with a combined row **computed**, never typed:
+
+```json
+{
+  "preset": "number-line",
+  "rows": [
+    { "label": "A", "set": "x ≥ -1" },
+    { "label": "B", "set": "x < 3" },
+    { "label": "A ∩ B", "op": "intersection" }
+  ]
+}
+```
+
+- **`set`** — shorthand for one unlabelled row. Mutually exclusive with `rows`.
+- **`rows`** — top to bottom. A leaf row is `{ label?, set }`: text describing a set. A computed row is `{ label, op: "union" | "intersection", of? }`: its interval set is found by combining the rows named in `of` (default: every row declared before it) — nothing about a computed row is written by hand except its label and which rows feed it.
+- **`variable`** — the letter read in an inequality chain and printed at the right end of the axis. Default `x`.
+- **`locale`** — `pt-BR` (default) or `en`; only changes the decimal mark and pair separator, never the mathematics.
+
+## The set-description grammar
+
+Two notations, and either may be used for any row or branch:
+
+- **Interval brackets**: `[a, b]`, `(a, b)`, and the Brazilian `]a, b[` for an open end (`]` and `(` are interchangeable as an opening exclusive mark, likewise `[` and `)` as a closing exclusive mark). `+∞`/`-∞` (or `inf`/`infinito`) are accepted as a bound and are always exclusive — `[2, +∞]` is refused, write `[2, +∞)`.
+- **Inequality chains**: `x < 5`, `5 ≤ x`, `-1 < x ≤ 3`, or two one-sided inequalities joined by `e` ("and"): `x > 1 e x < 5`. `<=`, `>=`, `≤`, `≥` are all accepted.
+
+Several branches of either notation may be joined with `∪` or `ou` ("or") to describe a union directly in one row: `x < -1 ou 2 ≤ x < 5`. `R`, `ℝ` and "todos os reais" mean the whole line; `∅`, "vazio" mean the empty set.
+
+**Separator inside brackets.** An interval's two bounds are split on `;` if the bracket contains one, else on the first `,`. This is why a decimal endpoint needs care: write `[2,5; 3,7]` (semicolon separates, comma is the decimal mark, matching this project's pt-BR pair convention elsewhere) or `[2.5, 3.7]` (comma separates, dot is the decimal mark). `[2,5, 3,7]` is ambiguous and is refused rather than guessed at.
+
+**Endpoint numbers.** A plain number is written through the project's one pt-BR formatter (`src/locale/format.ts`) — `-1` prints as `−1`. A fraction (`5/3`) or a square root (`√2`, `raiz de 2`) is kept exactly as stated, the same discipline `sign-chart` (ADR 0027) holds for a snapped root: the input asserts the exact value, so the label prints the exact value, never a rounded decimal.
+
+## What is drawn
+
+A single unlabelled row draws one line: the axis, tick marks and numbers at every boundary, arrows at both ends, and the solution picked out in a heavier stroke with a filled or open circle at each finite endpoint.
+
+Several rows draw a line per row (labelled at the left, in declaration order) above one shared axis at the bottom, whose tick marks are every boundary pooled from every row — so a reader compares row A against row B against the computed row directly below, the classic layout for solving a system of inequalities.
+
+## What is not covered
+
+The axis range is derived only from the boundaries the rows actually state; a row whose set has no finite boundary at all (the whole line, or the empty set) does not by itself widen or narrow it. Equalities (`x = 3`, a single point) are not part of the grammar — write the point's neighbourhood as two touching inequalities if a single marked point is truly needed.
+
+### vectors
+
+Vectors in R², for Geometria Analítica and Física 1. A vector is given three
+ways: by components, by two named points, or by magnitude and angle. Every
+sum, difference, scalar multiple, decomposition into x/y components,
+projection of one vector onto another, and the angle between two vectors is
+**derived** from the vectors already named — never typed. A sum's arrowhead
+lands where component addition puts it; an angle arc's sweep is the angle its
+two arms actually make. The number a reader would compute by hand is computed
+here instead, and printed in pt-BR with the project's one locale formatter —
+a magnitude whose square is an integer prints as an exact root, `|(3, 1)|` as
+`√10`, the way `sign-chart` snaps a root of the function it is given.
+
+**Choose it when** the content is one or more vectors in the plane and the
+question is about their arithmetic or their geometry: a resultant force, a
+displacement between two points, the component of one vector along another,
+the angle between two directions. It is not for a single arrow inside a
+larger scene (that is `annotated-figure`'s callout) or for a function's
+curve (`function-graph`).
+
+## Input
+
+```json
+{
+  "preset": "vectors",
+  "points": [
+    { "name": "A", "at": [-6, -6] },
+    { "name": "B", "at": [-2, -2] }
+  ],
+  "vectors": [
+    { "name": "F1", "components": [6, 0] },
+    { "name": "F2", "components": [0, 5] },
+    { "name": "AB", "from": "A", "to": "B" },
+    { "name": "R", "sum": ["F1", "F2"] }
+  ]
+}
+```
+
+- **`points`** — named points, `{ "name": "A", "at": [x, y] }`, for a vector
+  stated `from`/`to`.
+- **`vectors`** — each item is exactly one of the shapes below. `locale`
+  (default `"pt-BR"`) and `title` are top-level, alongside `points`.
+
+### Typed — a vector the author states
+
+- **`{ "name": "u", "components": [x, y] }`** — tail at the origin by
+  default, or at `"at": [x, y]`.
+- **`{ "name": "AB", "from": "A", "to": "B" }`** — from one named point to
+  another.
+- **`{ "name": "w", "magnitude": 5, "angle": "37°" }`** — `angle` is degrees,
+  as a number or a string (`"37°"`, `37`, and a pt-BR comma are all read).
+
+### Derived — never typed, always computed from vectors already named
+
+- **`{ "name": "s", "sum": ["u", "v", ...] }`** — component-wise addition.
+  `"construction": "head-to-tail"` adds dashed guides chaining each addend
+  from where the last one ended; `"construction": "parallelogram"` (exactly
+  two addends) adds the two translated copies that complete the
+  parallelogram. Neither construction changes the resultant; both are guides
+  only.
+- **`{ "name": "d", "difference": ["u", "v"] }`** — `u − v`, component-wise.
+- **`{ "name": "m", "scale": "u", "factor": -2 }`** — a scalar multiple.
+  `factor` must not be zero.
+- **`{ "decompose": "u" }`** — dashed guides showing `u`'s x and y
+  components, each labelled with its own value. Draws no new vector.
+- **`{ "projection": { "of": "u", "onto": "v" } }`** — the vector projection
+  of `u` onto `v`, drawn with the perpendicular from `u`'s head to the foot
+  and a right-angle mark there. `name` is optional (default
+  `proj_v(u)`); refused if `v` is the zero vector.
+- **`{ "angleBetween": ["u", "v"] }`** — the angle between two vectors,
+  drawn as an arc at the origin (vectors are compared by direction alone,
+  regardless of where each is drawn) with its computed value printed beside
+  it. `name` is optional, used only as an id.
+
+Every typed and most derived items accept an optional `label` to override
+the printed name — refused if it types a coordinate pair by hand (the same
+rule `function-graph` and `sign-chart` apply: compute it, do not type it).
+
+## What is drawn
+
+One gridded plane: a `Frame` named `"plane"` with a `grid`, so the lattice,
+the axes and their numbers are the frame's own derived geometry
+(`docs/decisions/0019-derived-geometry-and-annotation.md`), never redrawn by
+hand. The range is derived from every point the figure touches — every
+vector's tail and head, every construction guide's corner, the projection's
+foot — padded and rounded to a plane wide enough to hold them, with the
+origin always in view. The lattice steps by whole numbers (1, 2, 5, ...), and
+its tick numbers are written in the figure's locale — "−4", "2,5" — with one
+"0" at the origin's corner (ADR 0034).
+
+Every arrow's endpoints are stated **in the frame**
+(`{"frame": "plane", x, y}`), not pre-resolved to canvas pixels, so a
+straight run whose ends share the frame keeps its scale through resolution
+as `Connector.measuredIn` (ADR 0028). Each vector carries two labels beside
+its own shaft: its name, and — printed as a decimal to hundredths, not the
+exact-root form below — its magnitude, so `length-matches-its-label` can
+check that number against the arrow's own length in frame units. Every label
+is placed only after all the ink is drawn, and only beside its own arrow,
+nearer that arrow than any other; when no such spot exists it stays on its
+own shaft and the checks report it rather than the label drifting to
+wherever there is room. An angle between two vectors prints its value to
+hundredths (`57,53°`) just outside its arc.
+
+A caption panel below the plane lists one reading per named or computed
+quantity — `u = (3; 1), |u| = √10`, `s = u + v = (4; 5), |s| = √41`,
+`ângulo(u, v) ≈ 57,53°` — in the exact-root, pt-BR form a reader would write
+by hand: roots simplified (`√20` is `2√5`), a rational radicand rationalised
+(`7√26/13`), and a name that already is its derivation (`u+v`, `AB`) not
+repeated (`u+v = (5; 4)`, never `u+v = u + v = (5; 4)`).
+
+## What is not covered
+
+- Vectors in R³, or in a space with a physical unit attached (`N`, `m/s`) —
+  a `Frame.unit` could be added, but nothing here names one yet.
+- A vector's own tail feeding into a derived operation: `sum`, `difference`,
+  `scale`, `projection` and `angleBetween` all work on **components** (the
+  free-vector reading), so a derived result is always drawn from the origin
+  regardless of where its operands were drawn. Projecting or summing two
+  `from`/`to` vectors that are not both anchored at the origin still uses
+  only their components.
+- Non-right angles between more than two vectors, or an angle stated between
+  vectors that do not share components computed the same way.
+
+### unit-circle
+
+The *ciclo trigonométrico* used before trig derivatives: a circle of radius 1 on axes, with one or more angles marked on it. Written once, as text — `"π/6"`, `"5π/4"`, `"150°"`, `"-π/3"` — every point, arc, projection and tangent is computed from that.
+
+**Choose it when** the content is an angle placed on the unit circle: reading off cos θ and sin θ, comparing an angle with its symmetric partners (π − θ, π + θ, 2π − θ), or reading tan θ off the tangent axis. A function of a continuous variable (y = sin x, drawn over a range) is `function-graph`, not this.
+
+## Input
+
+```json
+{
+  "preset": "unit-circle",
+  "angles": [
+    { "angle": "π/6", "arc": true, "projection": true, "symmetric": ["pi-minus-theta"] },
+    "π/2"
+  ],
+  "quadrantLabels": true
+}
+```
+
+- **`angles`** — one entry per marked point, each a bare string (shorthand for `{"angle": <string>}`) or an object:
+  - **`angle`** (required) — text, in one of three forms: a multiple of π (`"π/6"`, `"5π/4"`, `"-π/3"`, `"π"`), degrees (`"150°"`, `"-60°"`), or a plain number of radians (`"1.2"`).
+  - **`label`** — overrides the default point label, which is the angle itself formatted: a π-fraction when it is one (denominator ≤ 12), otherwise a whole number of degrees, otherwise the radian value.
+  - **`arc`** — draws the angle arc from the positive x axis to the point, with its degree value printed on it, and draws the radius OP itself (the angle's terminal side) so the arc visibly sits *between* the x axis and OP rather than hanging disconnected near the origin. Refused for |θ| ≥ 180°: a two-endpoint sweep connector always draws the *shorter* arc between its arms (`sweptDegrees`, bounded 0–180°), so a reflex angle cannot be drawn as itself.
+  - **`projection`** — dashed guides from the point to both axes, with cos θ and sin θ printed at their feet, each label naming that exact foot (`Block.annotatesPlace`, ADR 0028) rather than floating free.
+  - **`tangent`** — the tangent segment on the line x = 1 (the *eixo das tangentes*), from (1, 0) to (1, tan θ), with tan θ printed; also draws OP (if `arc` did not already) and a dashed extension of it from P out to (1, tan θ), so a reader sees *why* that segment's height is tan θ rather than taking it on faith. Refused where cos θ = 0 (tangent undefined) or |tan θ| > 2 (too steep to draw legibly).
+  - **`symmetric`** — also mark π − θ, π + θ and/or 2π − θ, each its own point computed from its own value (never reflected by hand): `true` for all three, or an array of `"pi-minus-theta"`, `"pi-plus-theta"`, `"two-pi-minus-theta"`. A symmetric point gets a point and a label only — no arc, projection or tangent of its own.
+- **`radius`** — circle radius in px. Default 150.
+- **`quadrantLabels`** — print I, II, III, IV. Default false.
+- **`locale`**, **`title`** — as elsewhere.
+
+## What is computed, never typed
+
+- **The point.** (cos θ, sin θ) is computed from the parsed angle; nothing about a point's position is written by hand.
+- **cos θ and sin θ**, when `projection` is on, are printed as the exact notable value — `0`, `1/2`, `√2/2`, `√3/2`, `1`, and their negatives — when the computed float is one of them (within float noise), and through the ordinary pt-BR/en formatter otherwise. The same discipline `sign-chart` uses for roots (ADR 0027).
+- **tan θ**, when `tangent` is on, is the same value the segment's own endpoint is drawn at — never a separately typed number.
+- **The symmetric angles** are each their own `Math.cos`/`Math.sin` of their own computed radian value (π − θ, π + θ, 2π − θ), not a mirrored copy of θ's point.
+
+## What is checked
+
+The angle arc's geometry (its sweep) is derived from the same two points the circle uses, via a `curve: {kind: "sweep"}` connector (ADR 0019) — so the drawn arc cannot disagree with where the point actually is. What it *can* disagree with is its own printed degree label, typed as a separate number on the annotation block, and that is exactly what `sweep-matches-its-label` checks. The label is printed in plain digits and a bare `°` — a preset convention now, not a technical necessity: `checks.ts`'s `statedDegrees` reads a pt-BR comma and the typographic minus too (see ADR 0031), but this preset only ever prints a whole number of degrees, so the two formatters would look identical here.
+
+The tangent segment is checked the same way, for length rather than angle. It is stated at both ends in a second frame (`"radius"`, 1 unit = the circle's own radius in px) purely so frame resolution records the scale it was drawn at; `length-matches-its-label` (ADR 0028) then reads the segment's length back in that frame's units — which IS tan θ — and compares it against the number printed in `"tg θ = …"`.
+
+`projection`'s cos and sin labels each carry `annotatesPlace` naming the exact foot of that projection on its own axis (ADR 0028) — the point where the dashed guide meets the x axis or the y axis — so `label-nearest-its-place` holds each one to sitting beside its own foot, not merely somewhere unclaimed on the canvas. Before this, neither label named anything at all: see "What was refused" in ADR 0031 for why that let one drift onto a *symmetric* point's territory with every check still green.
+
+Every point's own label names its point the same way (`annotatesPlace`, ADR 0035): the dot drawn there is the place made visible, so it no longer competes with the label, and `label-nearest-its-place` holds the label within its own size of the point. The axis names and the quadrant letters are declared free-standing — they name an axis the grid draws later and a region nothing draws — and the quadrant letters are placed last, so they yield to a point's label instead of pushing it away. The axes are recorded as ink for the label search (`Board.addFrame`): exempt from some checks is not free room, and no label is printed across one.
+
+## What is not covered
+
+- `arc` is refused for angles at or past 180° in magnitude (see above).
+- `tangent` is refused where cos θ = 0 or |tan θ| > 2.
+- A symmetric point never carries its own arc, projection or tangent — request those on a primary angle entry instead.
+- OP (and the tangent's dashed extension of it) is drawn only for a primary angle with `arc` or `tangent`. A plain `projection`-only point draws no OP: there is no arc or tangent construction for it to connect to, and drawing one anyway crowds the sin label of a *symmetric pair* sharing that same sin value (30°/150°, 45°/135°, ...) — their sin labels sit on the axis side opposite their own point by design (continuing the direction their own guide already travels), which is exactly where the other point's OP would run.
+- The circle is always the unit circle (radius 1 in math terms, `radius` px on the canvas); there is no scaled or off-centre circle here.

@@ -1,0 +1,57 @@
+{
+  "preset": "function-graph",
+  "title": "Figura 2.5: secantes por P que se aproximam da tangente",
+  "x": { "range": [-1, 5], "unit": 100 },
+  "y": { "range": [-2, 20], "unit": 19, "labelEvery": 2 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x^2 + 1",
+      "label": { "text": "y = {expr}", "at": [4.2, 19], "towards": ["L", "D"] }
+    }
+  ],
+  "lines": [
+    {
+      "id": "s1",
+      "through": ["P", "Q1"],
+      "domain": [1.1, 4.35],
+      "colour": "rust",
+      "width": 1.8,
+      "legend": "secante h = {=2}, Q{Q1}",
+      "label": { "text": "h = {=2}", "at": 4.35, "towards": ["R"], "size": 13 }
+    },
+    {
+      "id": "s2",
+      "through": ["P", "Q2"],
+      "domain": [1.1, 4.35],
+      "colour": "ochre",
+      "width": 1.8,
+      "legend": "secante h = {=1}, Q{Q2}",
+      "label": { "text": "h = {=1}", "at": 4.35, "towards": ["R"], "size": 13 }
+    },
+    {
+      "id": "s3",
+      "through": ["P", "Q3"],
+      "domain": [1.1, 4.35],
+      "colour": "purple",
+      "width": 1.8,
+      "legend": "secante h = {=0.5}, Q{Q3}",
+      "label": { "text": "h = {=0.5}", "at": 4.35, "towards": ["R"], "size": 13 }
+    },
+    {
+      "id": "t",
+      "tangent": { "of": "f", "at": 2 },
+      "domain": [0.6, 4.4],
+      "colour": "warm",
+      "width": 2.2,
+      "style": "dashed",
+      "legend": "tangente em P"
+    }
+  ],
+  "points": [
+    { "id": "Q1", "at": { "of": "f", "x": 4 }, "colour": "rust" },
+    { "id": "Q2", "at": { "of": "f", "x": 3 }, "colour": "ochre" },
+    { "id": "Q3", "at": { "of": "f", "x": 2.5 }, "colour": "purple" },
+    { "id": "P", "at": { "of": "f", "x": 2 }, "label": "P{coords}", "towards": ["NW", "L", "U"] }
+  ]
+}

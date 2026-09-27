@@ -1,0 +1,1 @@
+{ "preset": "value-table", "variable": "x", "xs": [-12.5, -0.125, 0, 3.75, 1000], "functions": [ { "name": "f", "expr": "x^3 - 2x" }, { "name": "g", "expr": "sqrt(x)" } ] }

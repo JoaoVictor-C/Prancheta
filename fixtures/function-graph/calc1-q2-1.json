@@ -1,0 +1,38 @@
+{
+  "preset": "function-graph",
+  "title": "Figura 2.1: a parábola y = x² e a secante AB",
+  "x": { "range": [-1, 4], "unit": 100 },
+  "y": { "range": [-1, 12], "unit": 28, "labelEvery": 2 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x^2",
+      "label": { "text": "f(x) = {expr}", "at": [-0.6, 3.5], "towards": ["U", "R", "D"] }
+    }
+  ],
+  "lines": [
+    {
+      "id": "secante",
+      "through": ["A", "B"],
+      "domain": [0.2, 3.35],
+      "colour": "ask",
+      "label": { "text": "secante AB", "at": [1.3, 4.3], "towards": ["L", "U"] }
+    }
+  ],
+  "points": [
+    {
+      "id": "A",
+      "at": { "of": "f", "x": 1 },
+      "label": "A{coords}",
+      "towards": ["R", "D", "SE"],
+      "guides": true
+    },
+    {
+      "id": "B",
+      "at": { "of": "f", "x": 3 },
+      "label": "B{coords}",
+      "towards": ["L", "NW", "U"],
+      "guides": true
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "preset": "sign-chart",
+  "title": "Quadro de sinais de f(x) = x³ − 3x",
+  "expr": "x^3 - 3x",
+  "rows": [{ "row": "f'", "label": "f′(x) = 3x² − 3" }, "variation"]
+}

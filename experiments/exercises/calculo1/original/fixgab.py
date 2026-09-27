@@ -1,0 +1,6 @@
+s = open('lista.html', encoding='utf-8').read()
+a = s.index('Gabarito rápido</p>')
+b = s.index('Parte II: Resoluções comentadas</p>')
+mid = s[a:b].replace(r'\tfrac', r'\dfrac')
+open('lista.html', 'w', encoding='utf-8').write(s[:a] + mid + s[b:])
+print(mid.count(r'\dfrac'))

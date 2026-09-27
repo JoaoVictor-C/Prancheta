@@ -109,6 +109,25 @@ test(
   },
 );
 
+function withLabel(spec: ReturnType<typeof arcScene>, label: string) {
+  const scene = spec as unknown as { root: { children: { id: string; label: string }[] } };
+  for (const child of scene.root.children) if (child.id === "tag") child.label = label;
+  return spec;
+}
+
+test(
+  "a pt-BR label is read too: \"30,0°\" passes the arc it names, \"21,5°\" fails it",
+  { timeout: 60000 },
+  async () => {
+    const centre = { x: 100, y: 200 };
+    const agrees = await sweepCheck(withLabel(arcScene({ kind: "sweep", centre }), "30,0°"));
+    assert.equal(agrees?.status, "pass");
+    assert.equal(agrees?.examined, 1);
+    const disagrees = await sweepCheck(withLabel(arcScene({ kind: "sweep", centre }), "21,5°"));
+    assert.equal(disagrees?.status, "fail");
+  },
+);
+
 test(
   "an arc that sweeps a different angle from its label is reported",
   { timeout: 60000 },

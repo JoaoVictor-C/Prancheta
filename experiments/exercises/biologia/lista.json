@@ -1,0 +1,228 @@
+{
+  "name": "exemplo-biologia",
+  "title": "Lista de exemplo — Biologia em gráficos",
+  "subtitle": "Crescimento populacional · Cinética enzimática · Temperatura e enzimas · Glicemia",
+  "locale": "pt-BR",
+  "footer": "Exemplo · Biologia em gráficos",
+  "contentsNote": "<p style=\"margin:4pt 0 0\">Níveis: <span class=\"tag easy\" style=\"margin-left:0\">fácil</span> <span class=\"tag mid\">médio</span> <span class=\"tag hard\">difícil</span>. Todas as curvas vêm de modelos simplificados, mas usados de verdade na biologia. Depois dos exercícios vêm o <b>gabarito rápido</b> e as <b>resoluções comentadas</b>.</p>",
+  "exercisesLead": "Leia sempre os eixos antes de responder: o que está no eixo horizontal, o que está no vertical e em que unidade. As coordenadas de um ponto são separadas por ponto e vírgula, porque a vírgula já é usada nos decimais: \\((4;\\,500)\\) é o ponto com \\(t=4\\) e \\(N=500\\).",
+  "answersLead": "Só as respostas finais, para conferir.",
+  "solutionsLead": "Cada resolução mostra o raciocínio e o que ele significa biologicamente.",
+  "sections": [
+    {
+      "title": "1. Crescimento populacional",
+      "exercises": [
+        {
+          "id": "1.1",
+          "level": "easy",
+          "statement": "<p>Uma cultura de bactérias começa com 100 células e, com nutrientes à vontade, <b>dobra a cada hora</b>: \\(N(t)=100\\cdot 2^t\\), com \\(t\\) em horas.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Quantas bactérias haverá depois de 3 horas?</li><li>Quanto a população aumentou entre \\(t=2\\) e \\(t=3\\)? E entre \\(t=0\\) e \\(t=1\\)? Por que os aumentos são diferentes se o tempo é o mesmo?</li></ol>",
+          "figure": {
+            "graph": {
+              "x": { "range": [-0.5, 3.5], "unit": 130, "name": "t (h)" },
+              "y": { "range": [-100, 1000], "unit": 0.3, "step": 100, "labelEvery": 2, "name": "N (células)" },
+              "functions": [
+                { "id": "N", "expr": "100*2^x", "domain": [0, 3.3], "label": { "text": "N(t) = 100·2ᵗ", "at": [1.2, 700], "towards": ["U", "L"] } }
+              ],
+              "points": [
+                { "id": "A", "at": { "of": "N", "x": 0 } },
+                { "id": "B", "at": { "of": "N", "x": 1 }, "label": "{y}", "towards": ["NW", "U"] },
+                { "id": "C", "at": { "of": "N", "x": 2 }, "label": "{y}", "towards": ["NW", "U"] }
+              ]
+            },
+            "caption": "Figura 1.1: crescimento exponencial de uma cultura de bactérias."
+          },
+          "answer": "a) \\({{sol.D.y}}\\) bactérias &nbsp; b) \\(400\\) entre 2 h e 3 h, e \\(100\\) entre 0 h e 1 h",
+          "solution": "<p><b>a)</b> Basta substituir: \\(N(3)=100\\cdot 2^3=100\\cdot 8=800\\).</p><p><b>b)</b> Entre \\(t=2\\) e \\(t=3\\): \\(800-400=400\\) células. Entre \\(t=0\\) e \\(t=1\\): \\(200-100=100\\) células.</p><p>Os aumentos são diferentes porque, no crescimento exponencial, a população cresce em <b>proporção ao seu tamanho</b>: cada bactéria se divide, então quanto mais bactérias existem, mais bactérias novas surgem na hora seguinte. O que é constante não é o aumento, é a <b>taxa</b>: a população sempre dobra.</p>{{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-0.5, 3.5], "unit": 130, "name": "t (h)" },
+              "y": { "range": [-100, 1000], "unit": 0.3, "step": 100, "labelEvery": 2, "name": "N (células)" },
+              "functions": [
+                { "id": "N", "expr": "100*2^x", "domain": [0, 3.3], "label": { "text": "N(t) = 100·2ᵗ", "at": [1.2, 700], "towards": ["U", "L"] } }
+              ],
+              "points": [
+                { "id": "A", "at": { "of": "N", "x": 0 } },
+                { "id": "B", "at": { "of": "N", "x": 1 }, "label": "{y}", "towards": ["NW", "U"] },
+                { "id": "C", "at": { "of": "N", "x": 2 }, "label": "{y}", "towards": ["NW", "U"] },
+                { "id": "D", "at": { "of": "N", "x": 3 }, "label": "{y}", "towards": ["NW", "L", "U"], "guides": true }
+              ]
+            },
+            "caption": "Em \\(t=3\\) h, \\(N={{sol.D.y}}\\) células."
+          }
+        },
+        {
+          "id": "1.2",
+          "level": "mid",
+          "statement": "<p>Uma população de coelhos numa ilha segue o <b>modelo logístico</b></p>$$N(t)=\\frac{1000}{1+9e^{-0{,}5t}},$$<p>com \\(t\\) em anos. A reta tracejada é a <b>capacidade de suporte</b> \\(K\\) da ilha.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Qual é a população inicial \\(N(0)\\)?</li><li>Qual é a capacidade de suporte \\(K\\)? O que ela representa biologicamente?</li><li>Em que instante a população atinge metade de \\(K\\)? Por que esse é o momento em que a população cresce mais rápido?</li></ol>",
+          "figure": {
+            "graph": {
+              "x": { "range": [-1, 12], "unit": 45, "name": "t (anos)" },
+              "y": { "range": [-100, 1150], "unit": 0.27, "step": 100, "labelEvery": 2, "name": "N (coelhos)" },
+              "functions": [
+                { "id": "N", "expr": "1000/(1 + 9*exp(-0.5x))", "domain": [0, 12], "label": { "text": "N(t)", "at": [6.2, 700], "towards": ["R", "D"] } }
+              ],
+              "lines": [
+                { "id": "K", "point": [0, 1000], "slope": 0, "domain": [0, 12], "colour": "soft", "style": "dashed", "label": { "text": "K = {=1000}", "at": 1.5, "towards": ["U"] } }
+              ]
+            },
+            "caption": "Figura 1.2: crescimento logístico, limitado pelos recursos da ilha."
+          },
+          "answer": "a) \\(N(0)=100\\) &nbsp; b) \\(K=1000\\) coelhos &nbsp; c) \\(t=2\\ln 9\\approx {{sol.M.x:1}}\\) anos",
+          "solution": "<p><b>a)</b> \\(N(0)=\\dfrac{1000}{1+9e^{0}}=\\dfrac{1000}{1+9}=100\\) coelhos.</p><p><b>b)</b> Quando \\(t\\) cresce, \\(e^{-0{,}5t}\\) vai a zero e \\(N(t)\\) se aproxima de \\(\\dfrac{1000}{1+0}=1000\\). Essa é a capacidade de suporte: o maior número de coelhos que os recursos da ilha (alimento, espaço, abrigo) conseguem manter por muito tempo.</p><p><b>c)</b> Metade de \\(K\\) é \\(500\\):</p>$$\\frac{1000}{1+9e^{-0{,}5t}}=500\\;\\Longrightarrow\\;1+9e^{-0{,}5t}=2\\;\\Longrightarrow\\;e^{-0{,}5t}=\\frac19\\;\\Longrightarrow\\;t=2\\ln 9\\approx {{sol.M.x:1}}.$${{figure}}<p>Antes desse ponto há poucos coelhos para se reproduzir; depois dele sobram poucos recursos. Em \\(N=K/2\\) as duas coisas se equilibram, e a curva está mais inclinada.</p>",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-1, 12], "unit": 45, "name": "t (anos)" },
+              "y": { "range": [-100, 1150], "unit": 0.27, "step": 100, "labelEvery": 2, "name": "N (coelhos)" },
+              "functions": [
+                { "id": "N", "expr": "1000/(1 + 9*exp(-0.5x))", "domain": [0, 12], "label": { "text": "N(t)", "at": [6.2, 700], "towards": ["R", "D"] } }
+              ],
+              "lines": [
+                { "id": "K", "point": [0, 1000], "slope": 0, "domain": [0, 12], "colour": "soft", "style": "dashed", "label": { "text": "K = {=1000}", "at": 1.5, "towards": ["U"] } }
+              ],
+              "points": [
+                { "id": "N0", "at": { "of": "N", "x": 0 }, "label": "N(0) = {y}", "towards": ["NE", "R"] },
+                { "id": "M", "at": { "of": "N", "x": 4.394449154672439 }, "label": "K/2 em t ≈ {x:1}", "towards": ["R", "SE", "D"], "guides": true }
+              ]
+            },
+            "caption": "A população passa por \\(K/2=500\\) em \\(t\\approx{{sol.M.x:1}}\\) anos, onde a curva é mais inclinada."
+          }
+        },
+        {
+          "id": "1.3",
+          "level": "hard",
+          "statement": "<p>A figura compara dois modelos para a mesma população, os dois começando com 100 indivíduos: o <b>exponencial</b> \\(E(t)=100\\,e^{0{,}5t}\\) e o <b>logístico</b> do exercício 1.2.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Calcule \\(E(2)\\) e \\(N(2)\\). Os modelos ainda estão próximos?</li><li>Por que as curvas quase coincidem no começo e depois se separam tanto?</li><li>Qual dos dois modelos pode valer para sempre numa ilha real? Justifique.</li></ol>",
+          "figure": {
+            "graph": {
+              "x": { "range": [-1, 12], "unit": 45, "name": "t (anos)" },
+              "y": { "range": [-100, 1150], "unit": 0.27, "step": 100, "labelEvery": 2, "name": "N" },
+              "functions": [
+                { "id": "E", "expr": "100*exp(0.5x)", "domain": [0, 4.9], "colour": "ask", "label": { "text": "exponencial", "at": [3.3, 900], "towards": ["L", "U"] } },
+                { "id": "N", "expr": "1000/(1 + 9*exp(-0.5x))", "domain": [0, 12], "label": { "text": "logístico", "at": [8, 900], "towards": ["D", "R"] } }
+              ],
+              "lines": [
+                { "id": "K", "point": [0, 1000], "slope": 0, "domain": [0, 12], "colour": "soft", "style": "dashed", "label": { "text": "K", "at": 11.5, "towards": ["U"] } }
+              ]
+            },
+            "caption": "Figura 1.3: crescimento exponencial e logístico a partir da mesma população."
+          },
+          "answer": "a) \\(E(2)\\approx 271{,}8\\) e \\(N(2)\\approx 231{,}9\\): ainda próximos &nbsp; b) no começo sobram recursos e a competição é desprezível; perto de \\(K\\) ela freia o logístico &nbsp; c) nenhum crescimento exponencial dura para sempre: só o logístico respeita o limite de recursos",
+          "solution": "<p><b>a)</b> \\(E(2)=100\\,e^{1}\\approx 271{,}8\\) e \\(N(2)=\\dfrac{1000}{1+9e^{-1}}\\approx\\dfrac{1000}{4{,}311}\\approx 231{,}9\\). A diferença ainda é pequena.</p><p><b>b)</b> O modelo logístico pode ser escrito como \\(N'=r\\,N\\left(1-\\dfrac{N}{K}\\right)\\). Quando \\(N\\) é bem menor que \\(K\\), o fator \\(1-\\dfrac NK\\) é quase \\(1\\) e o logístico se comporta como o exponencial \\(N'=rN\\). Conforme \\(N\\) se aproxima de \\(K\\), o fator vai a zero: é a <b>resistência do meio</b> (competição por alimento e espaço, predação, doenças) freando o crescimento.</p><p><b>c)</b> Só o logístico. O exponencial prevê mais de 1000 coelhos antes de \\(t=5\\) anos e cresce sem limite, o que nenhum ambiente com recursos finitos sustenta.</p>"
+        }
+      ]
+    },
+    {
+      "title": "2. Enzimas",
+      "exercises": [
+        {
+          "id": "2.1",
+          "level": "mid",
+          "statement": "<p>A velocidade de uma reação catalisada por uma enzima depende da concentração do substrato \\([S]\\) segundo a equação de <b>Michaelis–Menten</b>:</p>$$v=\\frac{V_{\\max}\\,[S]}{K_m+[S]},\\qquad V_{\\max}=10\\ \\mu\\text{mol/min},\\quad K_m=2\\ \\text{mM}.$${{figure}}<ol class=\"items\" type=\"a\"><li>Calcule \\(v\\) quando \\([S]=2\\) mM. Que fração de \\(V_{\\max}\\) é essa?</li><li>Com base no item a), explique o significado de \\(K_m\\).</li><li>O que acontece com \\(v\\) quando \\([S]\\) fica muito grande? Explique em termos dos sítios ativos da enzima.</li></ol>",
+          "figure": {
+            "graph": {
+              "x": { "range": [-1, 20], "unit": 28, "labelEvery": 2, "name": "[S] (mM)" },
+              "y": { "range": [-1, 11.5], "unit": 27, "name": "v (µmol/min)" },
+              "functions": [
+                { "id": "v", "expr": "10x/(2 + x)", "domain": [0, 20], "label": { "text": "v([S])", "at": [8, 8.8], "towards": ["D", "R"] } }
+              ],
+              "lines": [
+                { "id": "Vmax", "point": [0, 10], "slope": 0, "domain": [0, 20], "colour": "soft", "style": "dashed", "label": { "text": "Vmax = {=10}", "at": 14, "towards": ["U"] } }
+              ]
+            },
+            "caption": "Figura 2.1: velocidade da reação em função da concentração de substrato."
+          },
+          "answer": "a) \\(v={{sol.P.y}}\\ \\mu\\text{mol/min}\\), metade de \\(V_{\\max}\\) &nbsp; b) \\(K_m\\) é a concentração de substrato em que \\(v=V_{\\max}/2\\) &nbsp; c) \\(v\\) se aproxima de \\(V_{\\max}\\): a enzima satura",
+          "solution": "<p><b>a)</b> \\(v=\\dfrac{10\\cdot 2}{2+2}=\\dfrac{20}{4}=5\\ \\mu\\text{mol/min}\\), exatamente metade de \\(V_{\\max}=10\\).</p><p><b>b)</b> Isso não é coincidência: com \\([S]=K_m\\), a equação fica \\(v=\\dfrac{V_{\\max}K_m}{2K_m}=\\dfrac{V_{\\max}}{2}\\). Então \\(K_m\\) é a concentração de substrato que leva a enzima à metade da velocidade máxima. \\(K_m\\) pequeno significa que a enzima chega perto da velocidade máxima mesmo com pouco substrato (grande afinidade).</p><p><b>c)</b> Para \\([S]\\) muito grande, \\(K_m+[S]\\approx[S]\\) e \\(v\\approx V_{\\max}\\). Biologicamente, todos os sítios ativos estão ocupados o tempo todo: a enzima está <b>saturada</b>, e colocar mais substrato não acelera a reação.</p>{{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-1, 20], "unit": 28, "labelEvery": 2, "name": "[S] (mM)" },
+              "y": { "range": [-1, 11.5], "unit": 27, "name": "v (µmol/min)" },
+              "functions": [
+                { "id": "v", "expr": "10x/(2 + x)", "domain": [0, 20], "label": { "text": "v([S])", "at": [8, 8.8], "towards": ["D", "R"] } }
+              ],
+              "lines": [
+                { "id": "Vmax", "point": [0, 10], "slope": 0, "domain": [0, 20], "colour": "soft", "style": "dashed", "label": { "text": "Vmax = {=10}", "at": 14, "towards": ["U"] } }
+              ],
+              "points": [
+                { "id": "P", "at": { "of": "v", "x": 2 }, "label": "Km: v = Vmax/2", "towards": ["R", "SE"], "guides": true }
+              ]
+            },
+            "caption": "Em \\([S]=K_m={{sol.P.x}}\\) mM, a velocidade é \\({{sol.P.y}}\\), metade de \\(V_{\\max}\\)."
+          }
+        },
+        {
+          "id": "2.2",
+          "level": "easy",
+          "statement": "<p>A atividade de uma enzima humana, em porcentagem da atividade máxima, varia com a temperatura \\(T\\) (em °C) como mostra o gráfico.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Qual é a temperatura ótima dessa enzima? Por que esse valor faz sentido para uma enzima humana?</li><li>Estime a atividade a 45 °C.</li><li>Acima da temperatura ótima a atividade cai rapidamente. Explique por quê.</li></ol>",
+          "figure": {
+            "graph": {
+              "x": { "range": [-5, 65], "unit": 8.5, "step": 5, "labelEvery": 2, "name": "T (°C)" },
+              "y": { "range": [-10, 115], "unit": 2.7, "step": 10, "labelEvery": 2, "name": "atividade (%)" },
+              "functions": [
+                { "id": "A", "expr": "100*exp(-((x - 37)/8)^2)", "domain": [0, 65], "label": { "text": "atividade", "at": [14, 3], "towards": ["U"] } }
+              ]
+            },
+            "caption": "Figura 2.2: atividade enzimática em função da temperatura (modelo simplificado)."
+          },
+          "answer": "a) \\({{sol.O.x}}\\ ^\\circ\\text{C}\\), a temperatura do corpo humano &nbsp; b) cerca de \\({{sol.Q.y:1}}\\%\\) &nbsp; c) o calor desnatura a enzima e desfaz o sítio ativo",
+          "solution": "<p><b>a)</b> O pico da curva está em \\(T={{sol.O.x}}\\) °C. Faz sentido: é a temperatura do corpo humano, onde essa enzima trabalha. Enzimas de bactérias de fontes termais, por exemplo, têm ótimos muito mais altos.</p><p><b>b)</b> Lendo o gráfico em \\(T=45\\) °C, a atividade é de cerca de \\(37\\%\\) da máxima.</p>{{figure}}<p><b>c)</b> Até o ótimo, o calor acelera a reação (as moléculas se movem e colidem mais). Acima dele, a agitação térmica rompe as ligações fracas que mantêm a forma tridimensional da proteína: a enzima se <b>desnatura</b>, o sítio ativo perde o formato e o substrato não se encaixa mais.</p>",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-5, 65], "unit": 8.5, "step": 5, "labelEvery": 2, "name": "T (°C)" },
+              "y": { "range": [-10, 115], "unit": 2.7, "step": 10, "labelEvery": 2, "name": "atividade (%)" },
+              "functions": [
+                { "id": "A", "expr": "100*exp(-((x - 37)/8)^2)", "domain": [0, 65], "label": { "text": "atividade", "at": [14, 3], "towards": ["U"] } }
+              ],
+              "points": [
+                { "id": "O", "at": { "of": "A", "x": 37 }, "label": "ótimo: {x} °C", "towards": ["U", "NE", "NW"], "guides": true },
+                { "id": "Q", "at": { "of": "A", "x": 45 }, "label": "{y:1}%", "towards": ["R", "NE"], "guides": true }
+              ]
+            },
+            "caption": "Atividade máxima em \\({{sol.O.x}}\\) °C; a \\(45\\) °C ela cai para cerca de \\({{sol.Q.y:1}}\\%\\)."
+          }
+        }
+      ]
+    },
+    {
+      "title": "3. Fisiologia",
+      "exercises": [
+        {
+          "id": "3.1",
+          "level": "mid",
+          "statement": "<p>Depois de uma refeição, a concentração de glicose no sangue (glicemia) de uma pessoa saudável foi modelada por</p>$$G(t)=90+60\\,t\\,e^{-t},$$<p>com \\(G\\) em mg/dL e \\(t\\) em horas após a refeição.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Qual é a glicemia de jejum (em \\(t=0\\))?</li><li>Pelo gráfico, quando ocorre o pico da glicemia e qual é o seu valor aproximado?</li><li>Qual hormônio é o principal responsável pela queda da glicemia depois do pico, e de onde ele vem?</li></ol>",
+          "figure": {
+            "graph": {
+              "x": { "range": [-0.5, 6], "unit": 90, "name": "t (h)" },
+              "y": { "range": [0, 150], "unit": 2.4, "step": 10, "labelEvery": 2, "name": "G (mg/dL)" },
+              "functions": [
+                { "id": "G", "expr": "90 + 60x*exp(-x)", "domain": [0, 6], "label": { "text": "G(t)", "at": [3, 108], "towards": ["U", "R"] } }
+              ],
+              "lines": [
+                { "id": "jejum", "point": [0, 90], "slope": 0, "domain": [0, 6], "colour": "soft", "style": "dashed", "label": { "text": "jejum", "at": 5.4, "towards": ["D"] } }
+              ]
+            },
+            "caption": "Figura 3.1: curva de glicemia depois de uma refeição."
+          },
+          "answer": "a) \\({{sol.J.y}}\\ \\text{mg/dL}\\) &nbsp; b) cerca de \\(1\\) h depois da refeição, com aproximadamente \\(112\\ \\text{mg/dL}\\) &nbsp; c) a insulina, produzida pelas células beta do pâncreas",
+          "solution": "<p><b>a)</b> \\(G(0)=90+60\\cdot 0\\cdot e^0=90\\) mg/dL.</p><p><b>b)</b> O ponto mais alto da curva está em \\(t=1\\) h, com \\(G(1)=90+60e^{-1}\\approx 112\\) mg/dL. (Quem já estudou a regra do produto pode conferir: \\(G'(t)=60e^{-t}(1-t)\\), que zera exatamente em \\(t=1\\).)</p>{{figure}}<p><b>c)</b> A glicose absorvida no intestino eleva a glicemia. Em resposta, as <b>células beta das ilhotas pancreáticas</b> liberam <b>insulina</b>, que faz as células do músculo e do tecido adiposo captarem glicose e o fígado armazená-la como glicogênio. Por isso a curva volta ao nível de jejum em poucas horas. No diabetes, essa volta é lenta ou não acontece.</p>",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-0.5, 6], "unit": 90, "name": "t (h)" },
+              "y": { "range": [0, 150], "unit": 2.4, "step": 10, "labelEvery": 2, "name": "G (mg/dL)" },
+              "functions": [
+                { "id": "G", "expr": "90 + 60x*exp(-x)", "domain": [0, 6], "label": { "text": "G(t)", "at": [3, 108], "towards": ["U", "R"] } }
+              ],
+              "lines": [
+                { "id": "jejum", "point": [0, 90], "slope": 0, "domain": [0, 6], "colour": "soft", "style": "dashed", "label": { "text": "jejum", "at": 5.4, "towards": ["D"] } }
+              ],
+              "points": [
+                { "id": "J", "at": { "of": "G", "x": 0 } },
+                { "id": "Pico", "at": { "of": "G", "x": 1 }, "label": "pico ≈ {y:0} mg/dL", "towards": ["NE", "U", "R"], "guides": true }
+              ]
+            },
+            "caption": "O pico ocorre em \\(t={{sol.Pico.x}}\\) h, com \\(G\\approx{{num:112}}\\) mg/dL; depois a insulina traz a glicemia de volta ao jejum."
+          }
+        }
+      ]
+    }
+  ]
+}

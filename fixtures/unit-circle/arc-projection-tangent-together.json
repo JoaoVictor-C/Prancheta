@@ -1,0 +1,10 @@
+{
+  "preset": "unit-circle",
+  "title": "π/4: seno, cosseno e tangente",
+  "quadrantLabels": true,
+  "angles": [
+    { "angle": "π/4", "arc": true, "projection": true, "tangent": true },
+    "5π/6",
+    "-π/2"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "preset": "function-graph",
+  "title": "Resolução 3.6: duas tangentes paralelas a y = 12x + 1",
+  "x": { "range": [-3, 3], "unit": 100 },
+  "y": { "range": [-14, 14], "unit": 15, "step": 2, "labelEvery": 2 },
+  "functions": [
+    {
+      "id": "f",
+      "expr": "x^3",
+      "label": { "text": "y = {expr}", "at": [2.3, 13], "towards": ["L", "D"] }
+    }
+  ],
+  "lines": [
+    {
+      "id": "t1",
+      "tangent": { "of": "f", "at": 2 },
+      "domain": [1, 3],
+      "label": { "text": "y = {eq}", "at": 1.3, "towards": ["R", "D"] }
+    },
+    {
+      "id": "t2",
+      "tangent": { "of": "f", "at": -2 },
+      "domain": [-3, -1],
+      "label": { "text": "y = {eq}", "at": -1.3, "towards": ["L", "U"] }
+    }
+  ],
+  "points": [
+    { "id": "P", "at": { "of": "f", "x": 2 }, "label": "{coords}", "towards": ["R", "SE", "D"] },
+    { "id": "Q", "at": { "of": "f", "x": -2 }, "label": "{coords}", "towards": ["L", "NW", "U"] }
+  ]
+}

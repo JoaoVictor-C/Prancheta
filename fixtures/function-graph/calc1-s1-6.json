@@ -1,0 +1,32 @@
+{
+  "preset": "function-graph",
+  "title": "Resolução 1.6: com k = 5/3 os dois pedaços se encontram",
+  "x": { "range": [-1, 4], "unit": 100 },
+  "y": { "range": [-2, 9], "unit": 36, "require": [-1] },
+  "functions": [
+    {
+      "id": "esquerda",
+      "expr": "5/3 x^2 - 1",
+      "domain": [-1, 2],
+      "label": { "text": "y = {expr}", "at": [0.85, 4.6], "towards": ["L", "D"] }
+    },
+    {
+      "id": "direita",
+      "expr": "x + 2 + 5/3",
+      "domain": [2, 4],
+      "colour": "warm",
+      "label": { "text": "y = {expr}", "at": [3.2, 6.5], "towards": ["SE", "D", "R"] }
+    }
+  ],
+  "points": [
+    {
+      "id": "encontro",
+      "at": { "of": "esquerda", "x": 2 },
+      "style": "open",
+      "colour": "ink",
+      "guides": true,
+      "label": "{coords}",
+      "towards": ["U", "NW", "L"]
+    }
+  ]
+}

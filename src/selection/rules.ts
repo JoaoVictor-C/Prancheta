@@ -305,6 +305,136 @@ export const RULES: Rule[] = [
     priority: 85,
     statement: "A series needs a scale; labelled blocks would show values as unordered text.",
   },
+
+  // --- function ----------------------------------------------------------
+  {
+    id: "S-function-favours-function-graph",
+    axis: "structure",
+    when: "function",
+    preset: "function-graph",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A function over a continuum is drawn by function-graph: evaluated from its expression, on a numbered plane.",
+  },
+  {
+    id: "S-function-disqualifies-graph",
+    axis: "structure",
+    when: "function",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement: "A function is not a graph of nodes and edges; the word \"graph\" is the only thing they share.",
+  },
+  {
+    id: "S-function-disqualifies-chart",
+    axis: "structure",
+    when: "function",
+    preset: "chart",
+    effect: "disqualify",
+    weight: 0,
+    priority: 85,
+    statement:
+      "A function is not a list of values: a chart joins the samples it was given, and a curve's tangent, root or hole is not among them.",
+  },
+  {
+    id: "S-function-disqualifies-blocks",
+    axis: "structure",
+    when: "function",
+    preset: "labelled-blocks",
+    effect: "disqualify",
+    weight: 0,
+    priority: 85,
+    statement: "A function needs a plane; labelled blocks have none.",
+  },
+  {
+    id: "S-function-favours-sign-chart-weakly",
+    axis: "structure",
+    when: "function",
+    preset: "sign-chart",
+    effect: "favour",
+    // Exactly FLOOR, like S-hierarchy-favours-graph-weakly: the sign table
+    // is a second view of the same function -- offered alongside the graph,
+    // never chosen over it.
+    weight: 2,
+    priority: 40,
+    statement:
+      "A function's sign table is offered beside its graph: the same expression, read as intervals instead of a curve.",
+  },
+  {
+    id: "S-function-favours-value-table-weakly",
+    axis: "structure",
+    when: "function",
+    preset: "value-table",
+    effect: "favour",
+    // FLOOR, like the sign table: a third view of the same expression,
+    // offered when the question is "what are its values at these points".
+    weight: 2,
+    priority: 40,
+    statement:
+      "A function's table of values is offered beside its graph: every cell computed from the same expression.",
+  },
+
+  // --- interval ----------------------------------------------------------
+  {
+    id: "S-interval-favours-number-line",
+    axis: "structure",
+    when: "interval",
+    preset: "number-line",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "An interval or the solution set of an inequality is drawn on the number line: endpoints open or closed, unions and intersections computed.",
+  },
+  {
+    id: "S-interval-disqualifies-blocks",
+    axis: "structure",
+    when: "interval",
+    preset: "labelled-blocks",
+    effect: "disqualify",
+    weight: 0,
+    priority: 85,
+    statement: "An interval is a stretch of a continuum; labelled blocks have no line to stretch along.",
+  },
+
+  // --- vector ------------------------------------------------------------
+  {
+    id: "S-vector-favours-vectors",
+    axis: "structure",
+    when: "vector",
+    preset: "vectors",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "Vectors are drawn by the vectors preset: on a numbered plane, with sums, components and projections derived from the vectors themselves.",
+  },
+  {
+    id: "S-vector-disqualifies-graph",
+    axis: "structure",
+    when: "vector",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement: "A vector is not an edge: an edge joins two things, a vector has a length and a direction that must be drawn to scale.",
+  },
+
+  // --- angle -------------------------------------------------------------
+  {
+    id: "S-angle-favours-unit-circle",
+    axis: "structure",
+    when: "angle",
+    preset: "unit-circle",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "An angle on the trigonometric circle is drawn by unit-circle: its point, cos and sin computed from the angle, never placed by hand.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

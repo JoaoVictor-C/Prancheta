@@ -1,0 +1,6 @@
+{
+  "preset": "sign-chart",
+  "title": "Sinal, crescimento e concavidade de f(x) = x³ − 3x",
+  "expr": "x^3 - 3x",
+  "rows": ["f", "f'", "variation", "f''", "concavity"]
+}
