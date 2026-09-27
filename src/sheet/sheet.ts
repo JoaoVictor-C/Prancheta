@@ -15,7 +15,9 @@
  * the same field closes each worked solution -- there is no second copy to
  * disagree. Numbers in the text can be placeholders resolved through the
  * locale formatter the figures use (`{{fig.P}}` prints P's coordinates in
- * the figure's spelling).
+ * the figure's spelling). An exercise's `params` are the one source of its
+ * numbers: `{{= …}}` computes text from them and figures are substituted
+ * from them before they are parsed (ADR 0040, `calc.ts`).
  *
  * Every error a reader would see is returned rather than printed and
  * forgotten: a KaTeX parse error, an image that did not load, a figure that
@@ -37,6 +39,10 @@ import { functionGraphPoints } from "../presets/function-graph/preset.ts";
 import type { FunctionGraphInput } from "../presets/function-graph/preset.ts";
 import { render } from "../pipeline.ts";
 import * as v from "../presets/validate.ts";
+import { EMPTY_ENV, calcPlaceholder, evaluateParams, substituteFigure, validateParams } from "./calc.ts";
+import type { ParamEnv, ParamSpec } from "./calc.ts";
+import { VariantsError, mulberry32, predicateName, sampleDomain } from "./variants.ts";
+import type { Domains, Predicate } from "./variants.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -71,6 +77,26 @@ export type SheetExercise = {
   /** HTML. `{{figure}}`, `{{figure2}}`... mark where the solution's figures go. */
   solution?: string;
   solutionFigure?: SheetFigure | SheetFigure[];
+  /**
+   * Numbers and expressions every other field derives from (ADR 0040):
+   * `{"a": 2, "b": "a + 1", "f(x)": "a*x^2"}`. Printed with `{{= …}}` or
+   * `{{a}}`, used in figures as `"{{= b}}"`.
+   */
+  params?: ParamSpec;
+  /**
+   * Which number params a fresh version of this exercise samples, and which
+   * draws are kept (ADR 0041, 0042). Absent: the exercise is the same in
+   * every version.
+   */
+  variants?: ExerciseVariants;
+};
+
+/** Sampled params: each a key of the exercise's own `params`. */
+export type ExerciseVariants = {
+  domains: Domains;
+  predicates?: Predicate[];
+  /** Draws to attempt before reporting a shortfall. Default 50 per version, at least 200. */
+  maxTries?: number;
 };
 
 export type SheetSection = {
@@ -103,6 +129,8 @@ export type SheetInput = {
   solutionsLead?: string;
   /** HTML box closing the solutions. */
   closing?: string;
+  /** Params shared by every exercise (and usable in the sheet's own texts). */
+  params?: ParamSpec;
   sections: SheetSection[];
 };
 
@@ -117,6 +145,41 @@ function figure(value: unknown, path: string): void {
   }
   v.optionalString(f, "caption", path);
   v.optionalBoolean(f, "wide", path);
+}
+
+/** A `variants` block: domains over the exercise's own number params, known predicate kinds. */
+function validateVariants(raw: unknown, params: ParamSpec | undefined, path: string): void {
+  const o = v.object(raw, path);
+  const domains = v.object(o.domains, `${path}.domains`);
+  const names = Object.keys(domains);
+  if (names.length === 0) throw new SpecError(`${path}.domains must name at least one param to sample`);
+  const own = Object.keys(params ?? {});
+  for (const name of names) {
+    if (!own.includes(name)) {
+      const hint = own.some((k) => k.startsWith(`${name}(`))
+        ? "it is a function; only number params are sampled"
+        : own.length === 0 ? "the exercise has no params" : `the exercise's params are ${own.join(", ")}`;
+      throw new SpecError(`${path}.domains.${name} names no param of the exercise (${hint})`);
+    }
+    try {
+      sampleDomain(name, domains[name] as Domains[string], mulberry32(0));
+    } catch (error) {
+      throw new SpecError(`${path}.domains.${name}: ${(error as Error).message}`);
+    }
+  }
+  if (o.predicates !== undefined) {
+    v.array(o, "predicates", path, "predicates").forEach((p, i) => {
+      try {
+        predicateName(v.object(p, `${path}.predicates[${i}]`) as Predicate);
+      } catch (error) {
+        if (!(error instanceof VariantsError)) throw error;
+        throw new SpecError(`${path}.predicates[${i}]: ${error.message}`);
+      }
+    });
+  }
+  if (o.maxTries !== undefined && !(Number.isInteger(o.maxTries) && (o.maxTries as number) > 0)) {
+    throw new SpecError(`${path}.maxTries must be a positive integer`);
+  }
 }
 
 /** Structure only; figures are validated when they are expanded. */
@@ -136,6 +199,7 @@ export function validateSheet(raw: unknown): SheetInput {
       if (typeof b !== "string") throw new SpecError(`sheet.cover[${i}] must be an HTML string`);
     });
   }
+  validateParams(s.params, "sheet.params");
   const ids: { id: string; at: string }[] = [];
   v.nonEmptyArray(s, "sections", "sheet", "sections").forEach((section, i) => {
     const at = `sheet.sections[${i}]`;
@@ -151,6 +215,8 @@ export function validateSheet(raw: unknown): SheetInput {
       const level = v.optionalEnum(e, "level", where, ["easy", "mid", "hard"]);
       if (level === undefined) v.requiredString(e, "level", where);
       v.optionalString(e, "note", where);
+      validateParams(e.params, `${where}.params`);
+      if (e.variants !== undefined) validateVariants(e.variants, e.params as ParamSpec | undefined, `${where}.variants`);
       const statement = v.requiredString(e, "statement", where);
       v.requiredString(e, "answer", where);
       const solution = v.optionalString(e, "solution", where);
@@ -198,8 +264,11 @@ type Points = { fig: Map<string, { x: number; y: number }>; sol: Map<string, { x
  *   {{fig.P.y:1}}                     one coordinate with fixed decimals
  *   {{num:2.5}} {{num:2073.6:2}}      a number, optionally with fixed decimals
  *   {{pt:2.5,7.25}}                   an ordered pair
+ *   {{= integral(f(x), x, 0, b)}}     a computed value, exact when it is one (ADR 0040)
+ *   {{= b/3 : 2}}                     the same with fixed decimals
+ *   {{a}}                             a param, shorthand for {{= a}}
  */
-export function fillText(html: string, points: Points, locale: Locale, where: string): string {
+export function fillText(html: string, points: Points, locale: Locale, where: string, env: ParamEnv = EMPTY_ENV): string {
   let out = "";
   let math = false;
   let i = 0;
@@ -220,7 +289,7 @@ export function fillText(html: string, points: Points, locale: Locale, where: st
       const end = html.indexOf("}}", i);
       if (end < 0) throw new SpecError(`${where}: "{{" without a closing "}}"`);
       const body = html.slice(i + 2, end).trim();
-      out += /^figure\d*$/.test(body) ? `{{${body}}}` : placeholder(body, points, locale, math, where);
+      out += /^figure\d*$/.test(body) ? `{{${body}}}` : placeholder(body, points, locale, math, where, env);
       i = end + 2;
       continue;
     }
@@ -230,7 +299,7 @@ export function fillText(html: string, points: Points, locale: Locale, where: st
   return out;
 }
 
-function placeholder(body: string, points: Points, locale: Locale, math: boolean, where: string): string {
+function placeholder(body: string, points: Points, locale: Locale, math: boolean, where: string, env: ParamEnv): string {
   const num = (value: number, decimals?: number): string =>
     math
       ? formatNumberTex(value, locale, decimals === undefined ? {} : { decimals })
@@ -255,9 +324,14 @@ function placeholder(body: string, points: Points, locale: Locale, math: boolean
   if (numRef !== null) return num(Number(numRef[1]), numRef[2] === undefined ? undefined : Number(numRef[2]));
   const ptRef = /^pt:\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)$/.exec(body);
   if (ptRef !== null) return pt(Number(ptRef[1]), Number(ptRef[2]));
+  const computed = calcPlaceholder(body, env, locale, math, where);
+  if (computed !== undefined) return computed;
+  const params = [...env.values.keys()];
   throw new SpecError(
     `${where}: unknown placeholder {{${body}}}. Available: {{fig.P}} {{fig.P.x}} {{sol.P}}, {{num:2.5}}, ` +
-      `{{num:2073.6:2}}, {{pt:2.5,7.25}}, and {{figure}} for where the figure goes.`,
+      `{{num:2073.6:2}}, {{pt:2.5,7.25}}, {{= expression}}, ` +
+      (params.length === 0 ? "{{a}} for a param (none is declared here)" : `{{a}} for a param (${params.join(", ")})`) +
+      `, and {{figure}} for where the figure goes.`,
   );
 }
 
@@ -359,87 +433,40 @@ const figureKey = (kind: "q" | "s", id: string, index = 0): string =>
 const keysOf = (kind: "q" | "s", e: SheetExercise): string[] =>
   listOf(kind === "q" ? e.figure : e.solutionFigure).map((_, i) => figureKey(kind, e.id, i));
 
-/** The whole document. Figures are referenced by the relative paths in `figures`. */
-export function sheetHtml(sheet: SheetInput, texts: Map<string, string>, figures: Figures, katex = KATEX): string {
-  const t = (key: string): string => texts.get(key) ?? "";
-  const tag = (level: SheetLevel): string => `<span class="tag ${level}">${LEVELS[level]}</span>`;
-  const out: string[] = [];
+/** What one printed document shows besides its content: which version, which seed. */
+export type SheetStamp = {
+  /** Appended to the title in <title>: "versão 2 de 3". */
+  label?: string;
+  /** A line under the subtitle on the cover. */
+  line?: string;
+};
+
+type Texts = (key: string) => string;
+
+const tagHtml = (level: SheetLevel): string => `<span class="tag ${level}">${LEVELS[level]}</span>`;
+
+function pushHead(out: string[], sheet: SheetInput, katex: string, title: string): void {
   out.push(`<!DOCTYPE html>
 <html lang="${sheet.locale ?? "pt-BR"}">
 <head>
 <meta charset="utf-8">
-<title>${escape(sheet.title)}</title>
+<title>${escape(title)}</title>
 <link rel="stylesheet" href="${katex}/katex.min.css">
 <script src="${katex}/katex.min.js"></script>
 <script src="${katex}/contrib/auto-render.min.js"></script>
 <style>${STYLE}</style>
 </head>
-<body>
-<section class="cover">
-  <h1>${escape(sheet.title)}</h1>`);
-  if (sheet.subtitle !== undefined) out.push(`  <p class="sub">${escape(sheet.subtitle)}</p>`);
-  const range = (s: SheetSection): string => {
-    const ids = s.exercises.map((e) => e.id);
-    return ids.length === 1 ? `exercício ${ids[0]}` : `exercícios ${ids[0]} a ${ids[ids.length - 1]}`;
-  };
-  out.push(`  <div class="toc">
-    <b>Como a lista está organizada</b>
-    <ol>
-${sheet.sections.map((s) => `      <li><b>${escape(s.title.replace(/^\d+\.\s*/, ""))}</b>: ${range(s)}</li>`).join("\n")}
-    </ol>
-    ${t("contentsNote")}
-  </div>`);
-  for (const [i] of (sheet.cover ?? []).entries()) out.push(`  <div class="box">${t(`cover.${i}`)}</div>`);
-  out.push(`</section>
+<body>`);
+}
 
-<section class="part">
-<p class="part-title">Parte I: Exercícios</p>`);
-  if (sheet.exercisesLead !== undefined) out.push(`<p class="lead">${t("exercisesLead")}</p>`);
-  for (const [i, section] of sheet.sections.entries()) {
-    out.push(`\n<h2>${escape(section.title)}</h2>`);
-    if (section.lead !== undefined) out.push(`<p class="lead">${t(`s${i}.lead`)}</p>`);
-    for (const e of section.exercises) {
-      const note = e.note === undefined ? "" : ` <span class="note">${escape(e.note)}</span>`;
-      out.push(
-        `<div class="q ${e.level}"><div class="qh">${escape(e.id)} ${tag(e.level)}${note}</div>\n` +
-          place(t(`${e.id}.statement`), keysOf("q", e).map((k) => figureHtml(k, figures))) +
-          `\n</div>`,
-      );
-    }
-  }
-  out.push(`</section>
+/** Opens a page-breaking part; `first` suppresses the break when nothing precedes it. */
+function pushPart(out: string[], title: string, first = false): void {
+  out.push(`<section class="part"${first ? ' style="break-before:auto"' : ""}>
+<p class="part-title">${title}</p>`);
+}
 
-<section class="part">
-<p class="part-title">Gabarito rápido</p>`);
-  if (sheet.answersLead !== undefined) out.push(`<p class="lead">${t("answersLead")}</p>`);
-  out.push(`<table class="ref gab">`);
-  for (const section of sheet.sections) {
-    for (const e of section.exercises) out.push(`  <tr><td>${escape(e.id)}</td><td>${t(`${e.id}.answer`)}</td></tr>`);
-  }
-  out.push(`</table>
-</section>
-
-<section class="part">
-<p class="part-title">Parte II: Resoluções comentadas</p>`);
-  if (sheet.solutionsLead !== undefined) out.push(`<p class="lead">${t("solutionsLead")}</p>`);
-  for (const [i, section] of sheet.sections.entries()) {
-    out.push(`\n<h2>${escape(section.solutionsTitle ?? section.title)}</h2>`);
-    if (section.solutionsIntro !== undefined) out.push(`<div class="box">${t(`s${i}.solutionsIntro`)}</div>`);
-    for (const e of section.exercises) {
-      if (e.solution === undefined) continue;
-      const note = e.note === undefined ? "" : ` ${escape(e.note)}`;
-      out.push(
-        `<div class="sol"><div class="qh">${escape(e.id)}${note}</div>\n` +
-          place(t(`${e.id}.solution`), keysOf("s", e).map((k) => figureHtml(k, figures))) +
-          // The answer key's own field, so the two cannot disagree.
-          `\n  <span class="ans">Resposta: ${t(`${e.id}.answer`)}</span>\n</div>`,
-      );
-    }
-  }
-  if (sheet.closing !== undefined) out.push(`<div class="box">${t("closing")}</div>`);
-  out.push(`</section>
-
-<script>
+function pushTail(out: string[]): void {
+  out.push(`<script>
   window.__mathDone = false;
   document.addEventListener("DOMContentLoaded", () => {
     // throwOnError: false so a bad formula becomes a .katex-error element the
@@ -457,6 +484,146 @@ ${sheet.sections.map((s) => `      <li><b>${escape(s.title.replace(/^\d+\.\s*/, 
 </body>
 </html>
 `);
+}
+
+function pushExercises(out: string[], sheet: SheetInput, t: Texts, figures: Figures): void {
+  if (sheet.exercisesLead !== undefined) out.push(`<p class="lead">${t("exercisesLead")}</p>`);
+  for (const [i, section] of sheet.sections.entries()) {
+    out.push(`\n<h2>${escape(section.title)}</h2>`);
+    if (section.lead !== undefined) out.push(`<p class="lead">${t(`s${i}.lead`)}</p>`);
+    for (const e of section.exercises) {
+      const note = e.note === undefined ? "" : ` <span class="note">${escape(e.note)}</span>`;
+      out.push(
+        `<div class="q ${e.level}"><div class="qh">${escape(e.id)} ${tagHtml(e.level)}${note}</div>\n` +
+          place(t(`${e.id}.statement`), keysOf("q", e).map((k) => figureHtml(k, figures))) +
+          `\n</div>`,
+      );
+    }
+  }
+}
+
+function pushAnswers(out: string[], sheet: SheetInput, t: Texts): void {
+  if (sheet.answersLead !== undefined) out.push(`<p class="lead">${t("answersLead")}</p>`);
+  out.push(`<table class="ref gab">`);
+  for (const section of sheet.sections) {
+    for (const e of section.exercises) out.push(`  <tr><td>${escape(e.id)}</td><td>${t(`${e.id}.answer`)}</td></tr>`);
+  }
+  out.push(`</table>`);
+}
+
+function pushSolutions(out: string[], sheet: SheetInput, t: Texts, figures: Figures): void {
+  if (sheet.solutionsLead !== undefined) out.push(`<p class="lead">${t("solutionsLead")}</p>`);
+  for (const [i, section] of sheet.sections.entries()) {
+    out.push(`\n<h2>${escape(section.solutionsTitle ?? section.title)}</h2>`);
+    if (section.solutionsIntro !== undefined) out.push(`<div class="box">${t(`s${i}.solutionsIntro`)}</div>`);
+    for (const e of section.exercises) {
+      if (e.solution === undefined) continue;
+      const note = e.note === undefined ? "" : ` ${escape(e.note)}`;
+      out.push(
+        `<div class="sol"><div class="qh">${escape(e.id)}${note}</div>\n` +
+          place(t(`${e.id}.solution`), keysOf("s", e).map((k) => figureHtml(k, figures))) +
+          // The answer key's own field, so the two cannot disagree.
+          `\n  <span class="ans">Resposta: ${t(`${e.id}.answer`)}</span>\n</div>`,
+      );
+    }
+  }
+}
+
+export type SheetHtmlOptions = {
+  /** "all" (default): exercises, answer key and worked solutions. "exercises": the statements only. */
+  parts?: "all" | "exercises";
+  stamp?: SheetStamp;
+};
+
+/** The whole document. Figures are referenced by the relative paths in `figures`. */
+export function sheetHtml(
+  sheet: SheetInput,
+  texts: Map<string, string>,
+  figures: Figures,
+  katex = KATEX,
+  options: SheetHtmlOptions = {},
+): string {
+  const t: Texts = (key) => texts.get(key) ?? "";
+  const { parts = "all", stamp = {} } = options;
+  const out: string[] = [];
+  pushHead(out, sheet, katex, stamp.label === undefined ? sheet.title : `${sheet.title} — ${stamp.label}`);
+  out.push(`<section class="cover">
+  <h1>${escape(sheet.title)}</h1>`);
+  if (sheet.subtitle !== undefined) out.push(`  <p class="sub">${escape(sheet.subtitle)}</p>`);
+  if (stamp.line !== undefined) out.push(`  <p class="sub">${escape(stamp.line)}</p>`);
+  const range = (s: SheetSection): string => {
+    const ids = s.exercises.map((e) => e.id);
+    return ids.length === 1 ? `exercício ${ids[0]}` : `exercícios ${ids[0]} a ${ids[ids.length - 1]}`;
+  };
+  out.push(`  <div class="toc">
+    <b>Como a lista está organizada</b>
+    <ol>
+${sheet.sections.map((s) => `      <li><b>${escape(s.title.replace(/^\d+\.\s*/, ""))}</b>: ${range(s)}</li>`).join("\n")}
+    </ol>
+    ${t("contentsNote")}
+  </div>`);
+  for (const [i] of (sheet.cover ?? []).entries()) out.push(`  <div class="box">${t(`cover.${i}`)}</div>`);
+  out.push(`</section>\n`);
+  // An exercises-only sheet has one part: it starts on the cover page, with
+  // no part title to strand at a page's foot above a figure that did not fit.
+  if (parts === "exercises") out.push(`<section class="part" style="break-before:auto">`);
+  else pushPart(out, "Parte I: Exercícios");
+  pushExercises(out, sheet, t, figures);
+  if (parts === "all") {
+    out.push(`</section>\n`);
+    pushPart(out, "Gabarito rápido");
+    pushAnswers(out, sheet, t);
+    out.push(`</section>\n`);
+    pushPart(out, "Parte II: Resoluções comentadas");
+    pushSolutions(out, sheet, t, figures);
+    if (sheet.closing !== undefined) out.push(`<div class="box">${t("closing")}</div>`);
+  }
+  out.push(`</section>\n`);
+  pushTail(out);
+  return out.join("\n");
+}
+
+/** One set of answers in a gabarito: a version's texts and solution figures. */
+export type GabaritoEntry = {
+  /** "Versão 2"; absent for a single (non-variant) build. */
+  label?: string;
+  texts: Map<string, string>;
+  figures: Figures;
+};
+
+/**
+ * The answer document, apart from the exercises: per entry (per version),
+ * the quick answer key and the worked solutions -- never a statement, so a
+ * student can print the exercises alone and check themselves afterwards.
+ */
+export function gabaritoHtml(sheet: SheetInput, entries: GabaritoEntry[], katex = KATEX, stamp: SheetStamp = {}): string {
+  const out: string[] = [];
+  pushHead(out, sheet, katex, `${sheet.title} — ${stamp.label ?? "gabarito"}`);
+  out.push(`<section class="cover" style="padding-top:0">
+  <h1>${escape(sheet.title)}</h1>
+  <p class="sub">Gabarito e resoluções comentadas</p>`);
+  if (stamp.line !== undefined) out.push(`  <p class="sub">${escape(stamp.line)}</p>`);
+  out.push(`</section>\n`);
+  entries.forEach((entry, i) => {
+    const t: Texts = (key) => entry.texts.get(key) ?? "";
+    if (entry.label === undefined) {
+      // One set of answers: the key and the solutions as the inline sheet prints them.
+      pushPart(out, "Gabarito rápido", i === 0);
+      pushAnswers(out, sheet, t);
+      out.push(`</section>
+`);
+      pushPart(out, "Resoluções comentadas");
+    } else {
+      // Per version: one part, the key on top of its own solutions.
+      pushPart(out, escape(entry.label), i === 0);
+      out.push(`<h3>Gabarito rápido</h3>`);
+      pushAnswers(out, sheet, t);
+    }
+    pushSolutions(out, sheet, t, entry.figures);
+    if (i === entries.length - 1 && sheet.closing !== undefined) out.push(`<div class="box">${t("closing")}</div>`);
+    out.push(`</section>\n`);
+  });
+  pushTail(out);
   return out.join("\n");
 }
 
@@ -475,6 +642,8 @@ export type SheetResult = {
   pageErrors: string[];
   /** Why a step could not run (no Python, no PyMuPDF, KaTeX did not load). */
   problems: string[];
+  /** The separate answer document, with `answers: "separate"`. */
+  gabarito?: { html: string; pdf?: string; pages: string[] };
 };
 
 /** Where sheets go unless told otherwise: ProjectHub/Listas/<name>, beside this repository. */
@@ -493,6 +662,16 @@ function figureSpec(f: SheetFigure, where: string): FigureSpec {
   }
 }
 
+/**
+ * Numbers that replace some params' definitions -- a sampled variant. Keys
+ * of `exercises` are exercise ids. Every param derived from an overridden one
+ * is recomputed, and every text and figure follows.
+ */
+export type SheetParamOverrides = {
+  sheet?: Readonly<Record<string, number>>;
+  exercises?: Readonly<Record<string, Readonly<Record<string, number>>>>;
+};
+
 export type SheetOptions = {
   out?: string;
   pdf?: boolean;
@@ -502,20 +681,80 @@ export type SheetOptions = {
   katex?: string;
   /** The source document, copied into the output folder verbatim. */
   source?: string;
+  /** Override params (ADR 0040): what a variant generator passes. */
+  params?: SheetParamOverrides;
+  /**
+   * "inline" (default): one document, answer key and solutions after the
+   * exercises. "separate": the exercises in `<name>.html`, the answers and
+   * solutions in `<name>-gabarito.html` (ADR 0042).
+   */
+  answers?: "inline" | "separate";
 };
 
-export async function buildSheet(raw: unknown, options: SheetOptions = {}): Promise<SheetResult> {
+/** One figure of an exercise, with the params already substituted. */
+export type ResolvedFigure = {
+  key: string;
+  exercise: string;
+  kind: "q" | "s";
+  figure: SheetFigure;
+  captionKey: string;
+};
+
+export type ResolvedSheet = {
+  sheet: SheetInput;
+  locale: Locale;
+  /** Every text, placeholders resolved, by key ("1.2.statement", "cover.0"...). */
+  texts: Map<string, string>;
+  figures: ResolvedFigure[];
+  /** The sheet's params, and each exercise's (the sheet's included), by exercise id. */
+  params: { sheet: ParamEnv; exercises: Map<string, ParamEnv> };
+};
+
+/**
+ * Everything but the drawing: params evaluated, figures substituted, every
+ * placeholder resolved. Pure and fast -- what a variant generator can call
+ * to inspect a candidate before paying for a render.
+ */
+export function resolveSheet(raw: unknown, overrides: SheetParamOverrides = {}): ResolvedSheet {
   const sheet = validateSheet(raw);
   const locale = sheet.locale ?? "pt-BR";
-  const outDir = resolve(options.out ?? defaultSheetDir(sheet.name));
-  await mkdir(join(outDir, "figures"), { recursive: true });
+  const sheetEnv = evaluateParams(sheet.params, overrides.sheet, EMPTY_ENV, "sheet.params");
+  const known = new Set(sheet.sections.flatMap((s) => s.exercises.map((e) => e.id)));
+  for (const id of Object.keys(overrides.exercises ?? {})) {
+    if (!known.has(id)) throw new SpecError(`params override names exercise "${id}", which the sheet does not have`);
+  }
 
-  // Text first: every placeholder resolved against the figure it cites,
-  // before anything is drawn, so a bad reference fails fast.
+  // Params first, then every figure with them substituted -- the points the
+  // text cites are read off the substituted figures.
+  const envs = new Map<string, ParamEnv>();
+  const figures: ResolvedFigure[] = [];
+  const own = new Map<string, { q: SheetFigure[]; s: SheetFigure[] }>();
+  for (const section of sheet.sections) {
+    for (const e of section.exercises) {
+      const env = evaluateParams(e.params, overrides.exercises?.[e.id], sheetEnv, `${e.id}.params`);
+      envs.set(e.id, env);
+      const sub = (f: SheetFigure, path: string): SheetFigure =>
+        f.graph !== undefined
+          ? { ...f, graph: substituteFigure(f.graph, env, `${path}.graph`) }
+          : { ...f, spec: substituteFigure(f.spec, env, `${path}.spec`) };
+      const q = listOf(e.figure).map((f, k) => sub(f, `${e.id}.figure[${k}]`));
+      const s = listOf(e.solutionFigure).map((f, k) => sub(f, `${e.id}.solutionFigure[${k}]`));
+      own.set(e.id, { q, s });
+      q.forEach((f, k) =>
+        figures.push({ key: figureKey("q", e.id, k), exercise: e.id, kind: "q", figure: f, captionKey: `${e.id}.figure.${k}.caption` }),
+      );
+      s.forEach((f, k) =>
+        figures.push({ key: figureKey("s", e.id, k), exercise: e.id, kind: "s", figure: f, captionKey: `${e.id}.solutionFigure.${k}.caption` }),
+      );
+    }
+  }
+
+  // Text: every placeholder resolved against the figure it cites, before
+  // anything is drawn, so a bad reference fails fast.
   const texts = new Map<string, string>();
   const none = { fig: new Map(), sol: new Map() };
-  const put = (key: string, html: string | undefined, points: Points = none): void => {
-    if (html !== undefined) texts.set(key, fillText(html, points, locale, key));
+  const put = (key: string, html: string | undefined, points: Points = none, env: ParamEnv = sheetEnv): void => {
+    if (html !== undefined) texts.set(key, fillText(html, points, locale, key, env));
   };
   put("contentsNote", sheet.contentsNote);
   (sheet.cover ?? []).forEach((b, i) => put(`cover.${i}`, b));
@@ -525,9 +764,9 @@ export async function buildSheet(raw: unknown, options: SheetOptions = {}): Prom
   put("closing", sheet.closing);
   // A placeholder names a point of any of the exercise's (or solution's)
   // function graphs; the first one to declare it wins.
-  const pointsOf = (f: SheetFigure | SheetFigure[] | undefined): Map<string, { x: number; y: number }> => {
+  const pointsOf = (list: SheetFigure[]): Map<string, { x: number; y: number }> => {
     const merged = new Map<string, { x: number; y: number }>();
-    for (const one of listOf(f)) {
+    for (const one of list) {
       if (one.graph === undefined) continue;
       for (const [id, p] of functionGraphPoints(one.graph)) if (!merged.has(id)) merged.set(id, p);
     }
@@ -537,44 +776,177 @@ export async function buildSheet(raw: unknown, options: SheetOptions = {}): Prom
     put(`s${i}.lead`, section.lead);
     put(`s${i}.solutionsIntro`, section.solutionsIntro);
     for (const e of section.exercises) {
-      const points = { fig: pointsOf(e.figure), sol: pointsOf(e.solutionFigure) };
-      put(`${e.id}.statement`, e.statement, points);
-      put(`${e.id}.answer`, e.answer, points);
-      put(`${e.id}.solution`, e.solution, points);
-      listOf(e.figure).forEach((f, k) => put(`${e.id}.figure.${k}.caption`, f.caption, points));
-      listOf(e.solutionFigure).forEach((f, k) => put(`${e.id}.solutionFigure.${k}.caption`, f.caption, points));
+      const figs = own.get(e.id)!;
+      const env = envs.get(e.id)!;
+      const points = { fig: pointsOf(figs.q), sol: pointsOf(figs.s) };
+      put(`${e.id}.statement`, e.statement, points, env);
+      put(`${e.id}.answer`, e.answer, points, env);
+      put(`${e.id}.solution`, e.solution, points, env);
+      figs.q.forEach((f, k) => put(`${e.id}.figure.${k}.caption`, f.caption, points, env));
+      figs.s.forEach((f, k) => put(`${e.id}.solutionFigure.${k}.caption`, f.caption, points, env));
     }
   }
+  return { sheet, locale, texts, figures, params: { sheet: sheetEnv, exercises: envs } };
+}
 
-  // Figures, each through the full pipeline: its checks are the sheet's checks.
+/** A figure drawn through the pipeline: its SVG and the checks it failed. */
+export type RenderedFigure = { svg: string; failing: string[]; checkIds: string[] };
+
+/**
+ * Renders by content: the same substituted figure is drawn once, however
+ * many versions of a sheet (or admission attempts) ask for it.
+ */
+export type FigureCache = Map<string, RenderedFigure>;
+
+/** Draw one resolved figure through the full pipeline -- its checks are the sheet's checks. */
+export async function renderSheetFigure(r: ResolvedFigure, cache?: FigureCache): Promise<RenderedFigure> {
+  const key = JSON.stringify(r.figure.graph ?? r.figure.spec);
+  const hit = cache?.get(key);
+  if (hit !== undefined) return hit;
+  const result = await render(figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`), {
+    raster: false,
+  });
+  const fails = result.manifest.checks.filter((c) => c.status === "fail");
+  const drawn = {
+    svg: result.svg,
+    failing: fails.map((c) => `${c.id} ${c.target}: ${c.detail ?? ""}`),
+    checkIds: fails.map((c) => c.id),
+  };
+  cache?.set(key, drawn);
+  return drawn;
+}
+
+/** Render every figure of a resolved sheet into `<outDir>/<folder>/`, referenced relatively. */
+export async function writeFigures(
+  resolved: ResolvedSheet,
+  outDir: string,
+  folder: string,
+  cache?: FigureCache,
+): Promise<{ figures: Figures; written: string[]; failures: SheetResult["figureFailures"] }> {
+  await mkdir(join(outDir, folder), { recursive: true });
   const figures: Figures = new Map();
   const written: string[] = [];
-  const figureFailures: SheetResult["figureFailures"] = [];
-  for (const section of sheet.sections) {
-    for (const e of section.exercises) {
-      const all = [
-        ...listOf(e.figure).map((f, k) => ["q", f, k, `${e.id}.figure.${k}.caption`] as const),
-        ...listOf(e.solutionFigure).map((f, k) => ["s", f, k, `${e.id}.solutionFigure.${k}.caption`] as const),
-      ];
-      for (const [kind, f, index, captionKey] of all) {
-        const key = figureKey(kind, e.id, index);
-        const result = await render(figureSpec(f, `exercise ${e.id} ${kind === "q" ? "figure" : "solutionFigure"}`), {
-          raster: false,
+  const failures: SheetResult["figureFailures"] = [];
+  for (const r of resolved.figures) {
+    const drawn = await renderSheetFigure(r, cache);
+    const file = join(outDir, folder, `${r.key}.svg`);
+    await writeFile(file, drawn.svg, "utf8");
+    written.push(file);
+    if (drawn.failing.length > 0) failures.push({ figure: `${folder}/${r.key}`.replace(/^figures\//, ""), checks: drawn.failing });
+    figures.set(r.key, { src: `${folder}/${r.key}.svg`, caption: resolved.texts.get(r.captionKey), wide: r.figure.wide });
+  }
+  return { figures, written, failures };
+}
+
+/** One HTML file to print: where its PDF and page PNGs go, and what its footer says. */
+export type PrintJob = {
+  html: string;
+  pdf: string;
+  pagesDir: string;
+  footer: string;
+  /** Prefix for every problem found in this document ("parametros-v2.html: "). */
+  tag?: string;
+};
+
+export type PrintResult = { pdf?: string; pages: string[] };
+
+type Problems = Pick<SheetResult, "katexErrors" | "brokenImages" | "pageErrors" | "problems">;
+
+/**
+ * Print HTML documents to A4 PDFs in one browser, then rasterise each PDF's
+ * pages. Every KaTeX error, broken image and page error is appended to
+ * `problems`, tagged with its document.
+ */
+export async function printDocuments(jobs: PrintJob[], options: SheetOptions, problems: Problems): Promise<PrintResult[]> {
+  const results: PrintResult[] = jobs.map(() => ({ pages: [] }));
+  const katex = options.katex ?? KATEX;
+  const browser = await chromium.launch();
+  try {
+    for (const [i, job] of jobs.entries()) {
+      const tag = job.tag ?? "";
+      const page = await browser.newPage();
+      page.on("pageerror", (error) => problems.pageErrors.push(tag + String(error)));
+      page.on("console", (message) => {
+        if (message.type() === "error") problems.pageErrors.push(tag + message.text());
+      });
+      await page.goto(pathToFileURL(job.html).href, { waitUntil: "networkidle" });
+      try {
+        await page.waitForFunction(() => (window as unknown as { __mathDone?: boolean }).__mathDone === true, null, {
+          timeout: 30000,
         });
-        const file = join(outDir, "figures", `${key}.svg`);
-        await writeFile(file, result.svg, "utf8");
-        written.push(file);
-        const failing = result.manifest.checks.filter((c) => c.status === "fail");
-        if (failing.length > 0) {
-          figureFailures.push({ figure: key, checks: failing.map((c) => `${c.id} ${c.target}: ${c.detail ?? ""}`) });
-        }
-        figures.set(key, { src: `figures/${key}.svg`, caption: texts.get(captionKey), wide: f.wide });
+      } catch {
+        problems.problems.push(
+          `${tag}KaTeX did not finish loading from ${katex} -- no network, or a wrong --katex; ` +
+            `the PDF would show raw TeX, so it was not written`,
+        );
+        await page.close();
+        continue;
+      }
+      await page.evaluate(() => document.fonts.ready);
+      const katexErrors = await page.evaluate(() =>
+        Array.from(document.querySelectorAll(".katex-error")).map((e) => (e as HTMLElement).title || e.textContent || ""),
+      );
+      const broken = await page.evaluate(() =>
+        Array.from(document.images).filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.getAttribute("src") ?? i.src),
+      );
+      problems.katexErrors.push(...katexErrors.map((e) => tag + e));
+      problems.brokenImages.push(...broken.map((e) => tag + e));
+      await page.pdf({
+        path: job.pdf,
+        format: "A4",
+        printBackground: true,
+        margin: { top: "18mm", bottom: "20mm", left: "17mm", right: "17mm" },
+        displayHeaderFooter: true,
+        headerTemplate: "<span></span>",
+        footerTemplate:
+          `<div style="font-size:8pt;color:#777;width:100%;text-align:center;font-family:Segoe UI">` +
+          `${escape(job.footer)} · <span class="pageNumber"></span>/<span class="totalPages"></span></div>`,
+      });
+      await page.close();
+      results[i]!.pdf = job.pdf;
+    }
+  } finally {
+    await browser.close();
+  }
+
+  if (options.pages !== false) {
+    for (const [i, job] of jobs.entries()) {
+      if (results[i]!.pdf === undefined) continue;
+      await rm(job.pagesDir, { recursive: true, force: true });
+      await mkdir(job.pagesDir, { recursive: true });
+      const script = fileURLToPath(new URL("./pages.py", import.meta.url));
+      const run = spawnSync(process.env.PRANCHETA_PYTHON ?? "python", [script, job.pdf, job.pagesDir, String(options.dpi ?? 110)], {
+        encoding: "utf8",
+      });
+      if (run.error !== undefined || run.status !== 0) {
+        problems.problems.push(
+          `${job.tag ?? ""}page PNGs not written: ${run.error?.message ?? run.stderr.trim()} ` +
+            `(needs Python with PyMuPDF: python -m pip install pymupdf)`,
+        );
+      } else {
+        results[i]!.pages = (await readdir(job.pagesDir))
+          .filter((f) => f.endsWith(".png"))
+          .sort()
+          .map((f) => join(job.pagesDir, f));
       }
     }
   }
+  return results;
+}
+
+export async function buildSheet(raw: unknown, options: SheetOptions = {}): Promise<SheetResult> {
+  const resolved = resolveSheet(raw, options.params);
+  const { sheet, texts } = resolved;
+  const outDir = resolve(options.out ?? defaultSheetDir(sheet.name));
+  const katex = options.katex ?? KATEX;
+  const separate = options.answers === "separate";
+
+  const { figures, written, failures } = await writeFigures(resolved, outDir, "figures");
 
   const htmlPath = join(outDir, `${sheet.name}.html`);
-  await writeFile(htmlPath, sheetHtml(sheet, texts, figures, options.katex ?? KATEX), "utf8");
+  await writeFile(htmlPath, sheetHtml(sheet, texts, figures, katex, separate ? { parts: "exercises" } : {}), "utf8");
+  const gabaritoPath = join(outDir, `${sheet.name}-gabarito.html`);
+  if (separate) await writeFile(gabaritoPath, gabaritoHtml(sheet, [{ texts, figures }], katex), "utf8");
   if (options.source !== undefined) await writeFile(join(outDir, `${sheet.name}.json`), options.source, "utf8");
 
   const result: SheetResult = {
@@ -582,74 +954,32 @@ export async function buildSheet(raw: unknown, options: SheetOptions = {}): Prom
     html: htmlPath,
     pages: [],
     figures: written,
-    figureFailures,
+    figureFailures: failures,
     katexErrors: [],
     brokenImages: [],
     pageErrors: [],
     problems: [],
   };
+  if (separate) result.gabarito = { html: gabaritoPath, pages: [] };
   if (options.pdf === false) return result;
 
-  const pdfPath = join(outDir, `${sheet.name}.pdf`);
-  const browser = await chromium.launch();
-  try {
-    const page = await browser.newPage();
-    page.on("pageerror", (error) => result.pageErrors.push(String(error)));
-    page.on("console", (message) => {
-      if (message.type() === "error") result.pageErrors.push(message.text());
+  const footer = sheet.footer ?? sheet.title;
+  const jobs: PrintJob[] = [{ html: htmlPath, pdf: join(outDir, `${sheet.name}.pdf`), pagesDir: join(outDir, "pages"), footer }];
+  if (separate) {
+    jobs.push({
+      html: gabaritoPath,
+      pdf: join(outDir, `${sheet.name}-gabarito.pdf`),
+      pagesDir: join(outDir, "pages", "gabarito"),
+      footer: `${footer} · gabarito`,
+      tag: `${sheet.name}-gabarito.html: `,
     });
-    await page.goto(pathToFileURL(htmlPath).href, { waitUntil: "networkidle" });
-    try {
-      await page.waitForFunction(() => (window as unknown as { __mathDone?: boolean }).__mathDone === true, null, {
-        timeout: 30000,
-      });
-    } catch {
-      result.problems.push(
-        `KaTeX did not finish loading from ${options.katex ?? KATEX} -- no network, or a wrong --katex; ` +
-          `the PDF would show raw TeX, so it was not written`,
-      );
-      return result;
-    }
-    await page.evaluate(() => document.fonts.ready);
-    result.katexErrors = await page.evaluate(() =>
-      Array.from(document.querySelectorAll(".katex-error")).map((e) => (e as HTMLElement).title || e.textContent || ""),
-    );
-    result.brokenImages = await page.evaluate(() =>
-      Array.from(document.images).filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.getAttribute("src") ?? i.src),
-    );
-    const footer = escape(sheet.footer ?? sheet.title);
-    await page.pdf({
-      path: pdfPath,
-      format: "A4",
-      printBackground: true,
-      margin: { top: "18mm", bottom: "20mm", left: "17mm", right: "17mm" },
-      displayHeaderFooter: true,
-      headerTemplate: "<span></span>",
-      footerTemplate:
-        `<div style="font-size:8pt;color:#777;width:100%;text-align:center;font-family:Segoe UI">` +
-        `${footer} · <span class="pageNumber"></span>/<span class="totalPages"></span></div>`,
-    });
-    result.pdf = pdfPath;
-  } finally {
-    await browser.close();
   }
-
-  if (options.pages !== false) {
-    const pagesDir = join(outDir, "pages");
-    await rm(pagesDir, { recursive: true, force: true });
-    await mkdir(pagesDir, { recursive: true });
-    const script = fileURLToPath(new URL("./pages.py", import.meta.url));
-    const run = spawnSync(process.env.PRANCHETA_PYTHON ?? "python", [script, pdfPath, pagesDir, String(options.dpi ?? 110)], {
-      encoding: "utf8",
-    });
-    if (run.error !== undefined || run.status !== 0) {
-      result.problems.push(
-        `page PNGs not written: ${run.error?.message ?? run.stderr.trim()} ` +
-          `(needs Python with PyMuPDF: python -m pip install pymupdf)`,
-      );
-    } else {
-      result.pages = (await readdir(pagesDir)).filter((f) => f.endsWith(".png")).sort().map((f) => join(pagesDir, f));
-    }
+  const printed = await printDocuments(jobs, options, result);
+  if (printed[0]!.pdf !== undefined) result.pdf = printed[0]!.pdf;
+  result.pages = printed[0]!.pages;
+  if (separate) {
+    if (printed[1]!.pdf !== undefined) result.gabarito!.pdf = printed[1]!.pdf;
+    result.gabarito!.pages = printed[1]!.pages;
   }
   return result;
 }

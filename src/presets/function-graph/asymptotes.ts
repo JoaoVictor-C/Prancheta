@@ -28,69 +28,18 @@ import type { Node } from "../../math/expr.ts";
 import { compileTree, freeVariables } from "../../math/expr.ts";
 import { limit } from "../../math/numeric.ts";
 import type { LimitResult } from "../../math/numeric.ts";
-import { MINUS, formatNumber } from "../../locale/format.ts";
-import type { Locale } from "../../locale/format.ts";
+import { MINUS, formatNumber, snapExact } from "../../locale/format.ts";
+import type { Exact, Locale } from "../../locale/format.ts";
 import { criticalPoints } from "../sign-chart/preset.ts";
 
 export type Fn = (x: number) => number;
 
 // ---- exact values ---------------------------------------------------------------
 
-const MAX_Q = 12;
-
-/**
- * A number and how it is written: snapped to the exact value it agrees with
- * (within `tolerance`, relative), or left as it was and flagged inexact.
- */
-export type Exact =
-  | { value: number; exact: true; form: "rational" }
-  | { value: number; exact: true; form: "sqrt"; n: number }
-  | { value: number; exact: true; form: "pi"; k: number; q: number }
-  | { value: number; exact: false };
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
-}
-
-/**
- * The exact value `r` is, if it is one of the numbers a Cálculo 1 figure
- * meets: p/q with q ≤ 12, ±√n with n ≤ 400, or kπ/q with q ≤ 12. The nearest
- * candidate within `tolerance · max(1, |r|)` wins, rationals first on a tie.
- */
-export function snapExact(r: number, tolerance: number): Exact {
-  const slack = tolerance * Math.max(1, Math.abs(r));
-  let best = { value: r, exact: false } as Exact;
-  let gap = Infinity;
-  const offer = (candidate: Exact): void => {
-    const d = Math.abs(candidate.value - r);
-    if (d <= slack && d < gap - 1e-15) {
-      best = candidate;
-      gap = d;
-    }
-  };
-  for (let q = 1; q <= MAX_Q; q += 1) offer({ value: Math.round(r * q) / q, exact: true, form: "rational" });
-  const n = Math.round(r * r);
-  if (n >= 2 && n <= 400 && !Number.isInteger(Math.sqrt(n))) {
-    offer({ value: Math.sign(r) * Math.sqrt(n), exact: true, form: "sqrt", n });
-  }
-  for (let q = 1; q <= MAX_Q; q += 1) {
-    const k = Math.round((r * q) / Math.PI);
-    if (k === 0) continue;
-    const g = gcd(k, q);
-    offer({ value: (k * Math.PI) / q, exact: true, form: "pi", k: k / g, q: q / g });
-  }
-  if (best.exact && Math.abs(best.value) < 1e-12) return { value: 0, exact: true, form: "rational" };
-  return best;
-}
-
-/** An exact value as a reader writes it: 2, 1/2, 0,5, √3, π/2, −3π/2; rounded when inexact. */
-export function writeExact(e: Exact, locale: Locale): string {
-  if (!e.exact || e.form === "rational") return formatNumber(e.value, locale);
-  const sign = e.value < 0 ? MINUS : "";
-  if (e.form === "sqrt") return `${sign}√${e.n}`;
-  const k = Math.abs(e.k);
-  return `${sign}${k === 1 ? "" : k}π${e.q === 1 ? "" : `/${e.q}`}`;
-}
+// The snapping helper moved to the one formatter (ADR 0040); re-exported so
+// every existing importer keeps its path.
+export { snapExact, writeExact } from "../../locale/format.ts";
+export type { Exact } from "../../locale/format.ts";
 
 // ---- where to look --------------------------------------------------------------
 

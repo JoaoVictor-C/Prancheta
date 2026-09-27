@@ -29,6 +29,7 @@ import { MODULES, exampleArgs } from "./modules/repertoire.ts";
 import { bleedOf, isEmpty as bleedIsEmpty } from "./effects/bleed.ts";
 import { THEMES } from "./theme.ts";
 import { KATEX, buildSheet, defaultSheetDir, sheetFailures } from "./sheet/sheet.ts";
+import { buildVariantSheets, variantFailures } from "./sheet/versions.ts";
 import { WCAG_AA_NORMAL, contrastRatio } from "./colour/contrast.ts";
 
 const NEWLINE = String.fromCharCode(10);
@@ -1042,23 +1043,82 @@ const sheetCommand: Command = {
     { name: "pages", type: "boolean", description: "Rasterise each PDF page to PNG with PyMuPDF.", default: true },
     { name: "dpi", type: "number", description: "Page PNG resolution.", default: 110 },
     { name: "katex", type: "string", description: "Base URL of the KaTeX dist folder.", default: KATEX },
+    {
+      name: "variants",
+      type: "number",
+      description:
+        "Build N versions of the list: version k is <name>-v<k>.html/.pdf (exercises only), version 1 the " +
+        "author's own numbers; exercises with a `variants` block get fresh numbers, admitted only when every " +
+        "figure passes its checks. Answers go to one <name>-gabarito.html/.pdf; a manifest to <name>-variants.json.",
+    },
+    {
+      name: "seed",
+      type: "string",
+      description: "Replay key for --variants; default the sheet's name. Printed on every page so the set can be regenerated.",
+    },
+    {
+      name: "answers",
+      type: "string",
+      description:
+        '"inline" puts the answer key and solutions after the exercises; "separate" writes them to <name>-gabarito.html. ' +
+        "Default inline for a single build, separate with --variants.",
+    },
+    {
+      name: "allowShortfall",
+      type: "boolean",
+      description: "With --variants, build even when an exercise could not reach N distinct admitted versions (they repeat).",
+      default: false,
+    },
   ],
   async run(args) {
     const path = String(args.sheet);
     const source = await readFile(path, "utf8");
-    const result = await buildSheet(JSON.parse(source), {
+    const answers = args.answers === undefined ? undefined : String(args.answers);
+    if (answers !== undefined && answers !== "inline" && answers !== "separate") {
+      throw new Error(`--answers must be "inline" or "separate", got ${JSON.stringify(answers)}`);
+    }
+    const common = {
       ...(args.out === undefined ? {} : { out: String(args.out) }),
       pdf: args.pdf !== false,
       pages: args.pages !== false,
       dpi: Number(args.dpi ?? 110),
       katex: String(args.katex ?? KATEX),
       source,
-    });
+      ...(answers === undefined ? {} : { answers: answers as "inline" | "separate" }),
+    };
+    if (args.variants !== undefined) {
+      const allow = args.allowShortfall === true;
+      const result = await buildVariantSheets(JSON.parse(source), {
+        ...common,
+        count: Number(args.variants),
+        ...(args.seed === undefined ? {} : { seed: String(args.seed) }),
+        allowShortfall: allow,
+      });
+      const failures = variantFailures(result, allow);
+      const lines = [
+        `${result.outDir}`,
+        `  seed   "${result.seed}", ${result.count} version(s)`,
+        ...result.versions.map((v) => `  v${v.version}     ${v.pdf ?? v.html} (${v.pages.length} page(s))`),
+        ...(result.gabarito === undefined ? [] : [`  gabarito ${result.gabarito.pdf ?? result.gabarito.html} (${result.gabarito.pages.length} page(s))`]),
+        `  manifest ${result.manifest}`,
+        ...result.exercises.map((x) => {
+          const rejected = Object.entries(x.rejections).map(([k, n]) => `${k} ×${n}`).join("; ");
+          return `  ${x.exercise}: ${x.admitted}/${x.requested} admitted in ${x.triesUsed} draw(s)` + (rejected === "" ? "" : ` -- rejected: ${rejected}`);
+        }),
+        ...(allow ? result.shortfalls.map((s) => `  WARN shortfall (allowed): ${s}`) : []),
+        ...failures.map((f) => `  FAIL ${f}`),
+        failures.length === 0 ? "  ok   no KaTeX error, no broken image, every figure passed its checks" : "",
+      ].filter((line) => line !== "");
+      return { text: lines.join(NEWLINE), data: result, exitCode: failures.length === 0 ? 0 : 2 };
+    }
+    if (args.seed !== undefined) throw new Error("--seed only means something with --variants");
+    const result = await buildSheet(JSON.parse(source), common);
     const failures = sheetFailures(result);
     const lines = [
       `${result.outDir}`,
       `  html   ${result.html}`,
       ...(result.pdf === undefined ? [] : [`  pdf    ${result.pdf}`]),
+      ...(result.gabarito === undefined ? [] : [`  gabarito ${result.gabarito.pdf ?? result.gabarito.html}`]),
       `  figures ${result.figures.length}, pages ${result.pages.length}`,
       ...failures.map((f) => `  FAIL ${f}`),
       failures.length === 0 ? "  ok   no KaTeX error, no broken image, every figure passed its checks" : "",

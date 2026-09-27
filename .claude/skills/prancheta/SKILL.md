@@ -34,7 +34,7 @@ node src/cli.ts <command> [options]
 | `module` | <command> [--args] [--width] [--height] [--out] | Run a figure module in another language and verify what it drew. |
 | `diff` | <before> <after> | Lay out two states of a figure and report what changed between them: appeared, disappeared, moved, resized, restyled, retexted.. |
 | `animate` | <states> [--out] [--durationMs] [--delayMs] [--easing] [--loop] | Tween a sequence of two or more states of a figure into an animated SVG: eased position for moved boxes, crossfades for those arriving and leaving, optional per-element stagger, and a motion check that models what the renderer actually does at every transition and every state boundary.. |
-| `sheet` | <sheet> [--out] [--pdf] [--pages] [--dpi] [--katex] | Build an exercise sheet from one structured file: every figure rendered and checked, HTML with KaTeX, an A4 PDF, a PNG per page, and an answer key generated from the answers.. |
+| `sheet` | <sheet> [--out] [--pdf] [--pages] [--dpi] [--katex] [--variants] [--seed] [--answers] [--allowShortfall] | Build an exercise sheet from one structured file: every figure rendered and checked, HTML with KaTeX, an A4 PDF, a PNG per page, and an answer key generated from the answers.. |
 
 Start with `select`. Then write a preset input as JSON and `render` it. Every
 render prints its checks; a figure that fails them is reported, never hidden.
@@ -113,12 +113,43 @@ Per exercise: `level` (easy/mid/hard), `statement` (HTML with KaTeX
 marks where a figure goes; `{{fig.P}}` prints point P of the exercise's
 figure through the same formatter as its label (TeX inside math, text
 outside). The answer key is generated from `answer`, and the same field
-closes each worked solution -- never type an answer twice. Output goes to
+closes each worked solution -- never type an answer twice.
+
+Numbers the text and the figure share come from the exercise's `params`
+(ADR 0040): `{"a": 2, "b": "a + 1", "f(x)": "a*x^2", "A":
+"integral(f(x), x, 0, b)"}` -- numbers, expressions over other params, and
+functions; a sheet-level `params` is shared by every exercise. In text,
+`{{= <expression>}}` prints a computed value, exact when it is one (`8/3`,
+`√2`, `π/2`), `{{a}}` prints a param and `{{f}}` a function's formula;
+the expression may call `integral(e, x, lo, hi)`, `deriv(e, x, at)`,
+`lim(e, x, at[, left|right])` (`at` may be `inf`) and `f(2)`, and a
+pole, a corner or a limit that does not settle is refused. In a figure, a
+string that is exactly `"{{= b}}"` becomes a number, and `"{{f}}"` or
+`"{{= a}}*x^2"` fills an expression. Example:
+`experiments/exercises/parametros/lista.json`. Output goes to
 `ProjectHub/Listas/<name>/` (`--out` or `PRANCHETA_SHEETS_DIR` to change
 it): figures, HTML, an A4 PDF, a PNG per page (PyMuPDF), and the source. The
 command fails, naming each one, on a KaTeX error, a broken image or a figure
 that failed a check. Look at the page PNGs before handing a sheet over: green
 checks do not mean legible.
+
+Fresh numbers for revision (ADR 0041, 0042): give an exercise
+`"variants": {"domains": {"b": {"int": [1, 4]}, "a": {"choice": ["1/2", 1,
+2]}}, "predicates": [{"range": ["A", 0.1, 5]}]}` -- which of its number
+`params` are sampled (`int` with `exclude`, `choice`, `decimal`,
+`sign`) and which draws are kept (`integer`, `fraction` with
+`maxDen`, `range`, `nonzero`, `positive`, `distinct`, over any
+param, derived ones included). Then `sheet <file> --variants 3 [--seed S]`
+writes `<name>-v1.html/.pdf` ... `<name>-v3` (exercises only; version 1
+is the author's own numbers), ONE `<name>-gabarito.html/.pdf` with every
+version's answer key and worked solutions, and `<name>-variants.json`
+(seed, each version's values, per exercise what was rejected and why).
+A draw is admitted only if its params compute, its text resolves and every
+figure renders with every check passing -- write figure ranges and units
+as `{{= …}}` of the params, or most draws will be refused. The seed
+defaults to the sheet's name and is printed on every page. An exercise that
+cannot reach N distinct versions fails the build (`--allowShortfall`
+repeats instead). `--answers separate` splits a single build the same way.
 
 ---
 

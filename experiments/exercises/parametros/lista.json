@@ -1,0 +1,103 @@
+{
+  "name": "parametros",
+  "title": "Lista com parâmetros — Cálculo 1",
+  "subtitle": "Cada número vem dos parâmetros do exercício: o enunciado, a figura e o gabarito não podem discordar",
+  "locale": "pt-BR",
+  "footer": "Cálculo 1 · Lista com parâmetros",
+  "contentsNote": "<p style=\"margin:4pt 0 0\">Um exemplo de <b>texto calculado</b> (ADR 0040): os números do enunciado, das figuras e do gabarito vêm dos parâmetros de cada exercício.</p>",
+  "sections": [
+    {
+      "title": "1. Integrais e áreas",
+      "exercises": [
+        {
+          "id": "1.1",
+          "level": "easy",
+          "params": { "a": 0.5, "b": 3, "f(x)": "a*x^2", "A": "integral(f(x), x, 0, b)" },
+          "variants": {
+            "domains": { "a": { "choice": ["1/2", 1, 2, 3] }, "b": { "int": [1, 4] } },
+            "predicates": [{ "range": ["a*b^2", 0.5, 6] }, { "range": ["A", 0.1, 5] }, { "fraction": "A", "maxDen": 6 }]
+          },
+          "statement": "<p>Calcule a área da região sob o gráfico de \\(f(x) = {{f}}\\), acima do eixo \\(x\\), entre \\(x = 0\\) e \\(x = {{b}}\\).</p>\n  {{figure}}",
+          "figure": {
+            "graph": {
+              "x": { "range": [-0.6, "{{= b + 0.6}}"], "unit": "{{= 378/(b + 1.2)}}" },
+              "y": { "range": [-0.8, "{{= f(b) + 0.8}}"], "unit": "{{= 305/(f(b) + 1.6)}}" },
+              "functions": [
+                { "id": "f", "expr": "{{f}}", "label": { "text": "y = {expr}", "at": "{{= b - 0.4}}", "towards": ["L", "U"] } }
+              ],
+              "areas": [{ "id": "A", "of": "f", "from": 0, "to": "{{= b}}" }]
+            },
+            "caption": "A região sob \\(y = {{f}}\\) em \\([0;\\,{{b}}]\\)."
+          },
+          "answer": "\\(A = {{A}}\\)",
+          "solution": "<p>A área é a integral de \\(f\\) no intervalo:</p>\n  $$A = \\int_0^{ {{b}} } {{f}}\\,dx = {{a}}\\cdot\\frac{x^3}{3}\\Bigg|_0^{ {{b}} } = {{a}}\\cdot\\frac{ {{= b^3}} }{3} = {{A}}.$$\n  <p>Em decimal, {{= A : 2}} — o mesmo número que a figura escreve na região.</p>"
+        },
+        {
+          "id": "1.2",
+          "level": "mid",
+          "params": { "k": 2, "h(x)": "sin(k x)", "T": "pi/k", "I": "integral(h(x), x, 0, T)" },
+          "statement": "<p>Calcule \\(\\displaystyle\\int_0^{ {{T}} } {{h}}\\,dx\\).</p>",
+          "answer": "\\({{I}}\\)",
+          "solution": "<p>Uma primitiva de \\({{h}}\\) é \\(-\\frac{1}{ {{k}} }\\cos({{k}}x)\\). Entre \\(0\\) e \\({{T}}\\) o argumento vai de \\(0\\) a \\({{= k*T}}\\):</p>\n  $$\\int_0^{ {{T}} } {{h}}\\,dx = -\\frac{1}{ {{k}} }\\Big(\\cos({{= k*T}}) - \\cos 0\\Big) = \\frac{2}{ {{k}} } = {{I}}.$$\n  {{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-0.4, "{{= T + 0.6}}"], "unit": 160, "step": 0.5 },
+              "y": { "range": [-0.4, 1.4], "unit": 110, "step": 0.5 },
+              "functions": [
+                { "id": "h", "expr": "{{h}}", "label": { "text": "y = {expr}", "at": "{{= T + 0.3}}", "towards": ["U", "R"] } }
+              ],
+              "areas": [{ "id": "A", "of": "h", "from": 0, "to": "{{= T}}" }]
+            },
+            "caption": "A área sob um arco de \\(y = {{h}}\\) vale {{I}}."
+          }
+        }
+      ]
+    },
+    {
+      "title": "2. Derivadas e limites",
+      "exercises": [
+        {
+          "id": "2.1",
+          "level": "mid",
+          "params": { "c": 2, "f(x)": "x^3 - 3x", "y0": "f(c)", "m": "deriv(f(x), x, c)", "q": "y0 - m*c", "t(x)": "m*x + q", "w(y)": "y - y0", "p(x)": "m*(x - c)" },
+          "variants": { "domains": { "c": { "int": [-2, 3], "exclude": [0] } } },
+          "statement": "<p>Encontre a equação da reta tangente ao gráfico de \\(f(x) = {{f}}\\) no ponto de abscissa \\(x = {{c}}\\).</p>",
+          "answer": "\\(y = {{t}}\\)",
+          "solution": "<p>O ponto de tangência é \\(P = {{sol.P}}\\), pois \\(f({{c}}) = {{y0}}\\). A inclinação é a derivada no ponto: \\(f'(x) = 3x^2 - 3\\), logo \\(m = f'({{c}}) = {{m}}\\). Pela forma ponto-inclinação,</p>\n  $${{w}} = {{p}} \\quad\\Longrightarrow\\quad y = {{t}}.$$\n  {{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-2.6, 3.2], "unit": 80, "step": 1 },
+              "y": { "range": [-4, "{{= y0 + 10}}"], "unit": "{{= 352/(y0 + 14)}}", "step": 2, "labelEvery": 1 },
+              "functions": [
+                { "id": "f", "expr": "{{f}}", "label": { "text": "y = {expr}", "at": "{{= -c/2}}", "towards": ["U"] } }
+              ],
+              "lines": [
+                { "id": "t", "tangent": { "of": "f", "at": "{{= c}}" }, "domain": ["{{= c - 0.8}}", "{{= c + 0.8}}"], "colour": "warm", "style": "dashed", "label": { "text": "tangente", "at": "{{= c + 0.7}}", "towards": ["R", "D", "L", "U"] } }
+              ],
+              "points": [{ "id": "P", "at": { "of": "f", "x": "{{= c}}" }, "label": "P{coords}", "towards": ["NW", "L", "U", "SE", "R", "D"] }]
+            }
+          }
+        },
+        {
+          "id": "2.2",
+          "level": "easy",
+          "params": { "a": 3, "b": "a^2", "g(x)": "(x^2 - b)/(x - a)", "L": "lim(g(x), x, a)" },
+          "variants": { "domains": { "a": { "int": [1, 5] } } },
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to {{a}}} {{g}}\\).</p>",
+          "answer": "\\({{L}}\\)",
+          "solution": "<p>Substituir \\(x = {{a}}\\) dá \\(\\frac{0}{0}\\). Fatorando o numerador, \\(x^2 - {{b}} = (x - {{a}})(x + {{a}})\\), e para \\(x \\neq {{a}}\\):</p>\n  $$\\lim_{x\\to {{a}}} {{g}} = \\lim_{x\\to {{a}}} (x + {{a}}) = {{L}}.$$\n  <p>A figura acha o buraco sozinha, a partir da expressão: em \\(x = {{a}}\\), na altura {{L}}.</p>\n  {{figure}}",
+          "solutionFigure": {
+            "graph": {
+              "x": { "range": [-0.6, "{{= 2*a}}"], "unit": "{{= 528/(2*a + 0.6)}}", "step": 1 },
+              "y": { "range": [-0.8, "{{= L + 3}}"], "unit": "{{= 392/(L + 3.8)}}", "step": 1, "labelEvery": 2 },
+              "functions": [
+                { "id": "g", "expr": "{{g}}", "holes": { "label": "{coords}", "towards": ["NW", "U", "L"] }, "label": { "text": "y = {expr}", "at": 1, "towards": ["D", "R"] } }
+              ]
+            },
+            "caption": "O gráfico é a reta \\(y = x + {{a}}\\) com um buraco em \\(x = {{a}}\\)."
+          }
+        }
+      ]
+    }
+  ]
+}

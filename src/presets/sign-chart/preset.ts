@@ -21,7 +21,7 @@
 import type { FigureSpec, Point } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { ExprError, compile, derivative } from "../../math/expr.ts";
-import { LOCALES, MINUS, formatNumber } from "../../locale/format.ts";
+import { LOCALES, MINUS, formatNumber, snapExact, writeExact } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
@@ -167,15 +167,12 @@ export function criticalPoints(g: Fn, a: number, b: number): Critical[] {
   return out.sort((p, q) => p.x - q.x);
 }
 
-/** A value as a reader writes it: 5/3, √3, −√2, 2,5. */
+/**
+ * A value as a reader writes it: 5/3, √3, −√2, 2,5, π/2. The one snapping
+ * helper (ADR 0040) at a root finder's precision.
+ */
 export function exactLabel(value: number, locale: Locale): string {
-  const plain = formatNumber(value, locale);
-  if (/\/|^[−]?\d+([.,]\d{1,3})?$/.test(plain) && !/[.,]\d{3}$/.test(plain)) return plain;
-  const n = Math.round(value * value);
-  if (n > 0 && Math.abs(Math.sqrt(n) - Math.abs(value)) < 1e-9 * Math.max(1, n)) {
-    return `${value < 0 ? MINUS : ""}√${n}`;
-  }
-  return plain;
+  return writeExact(snapExact(value, 1e-9), locale);
 }
 
 // ---- the build -------------------------------------------------------------

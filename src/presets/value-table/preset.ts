@@ -31,7 +31,7 @@ import { SpecError, parseSpec } from "../../ir/types.ts";
 import { ExprError, compile } from "../../math/expr.ts";
 import { decimalUnit, limit } from "../../math/numeric.ts";
 import type { LimitResult, LimitSide } from "../../math/numeric.ts";
-import { LOCALES, MINUS, formatNumber } from "../../locale/format.ts";
+import { LOCALES, MINUS, formatNumber, snapExact, writeExact } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
@@ -232,25 +232,12 @@ const SUP_PLUS = "⁺";
 /** How close a limit's numeric value must be to a candidate to snap to it. Looser than
  * `formatNumber`'s own tolerance because a decimal-schedule sample is a coarser estimate. */
 const SNAP_TOLERANCE = 1e-4;
-const SNAP_MAX_DENOMINATOR = 12;
-const SNAP_MAX_SQUARE = 400;
 
-/** `value` snapped to a small fraction or ±√n if it is close enough to be that one, else null. */
-function snapExact(value: number): string | null {
-  if (Math.abs(value) < SNAP_TOLERANCE) return "0";
-  for (let q = 1; q <= SNAP_MAX_DENOMINATOR; q += 1) {
-    const p = Math.round(value * q);
-    if (p === 0) continue;
-    if (Math.abs(p / q - value) <= SNAP_TOLERANCE * Math.max(1, Math.abs(value))) {
-      if (q === 1) return p < 0 ? `${MINUS}${Math.abs(p)}` : `${p}`;
-      return `${p < 0 ? MINUS : ""}${Math.abs(p)}/${q}`;
-    }
-  }
-  const n = Math.round(value * value);
-  if (n > 0 && n <= SNAP_MAX_SQUARE && Math.abs(Math.sqrt(n) - Math.abs(value)) <= SNAP_TOLERANCE * Math.max(1, Math.abs(value))) {
-    return `${value < 0 ? MINUS : ""}√${n}`;
-  }
-  return null;
+/** `value` written exactly (a small fraction, ±√n, kπ/q) if it is close enough to be one, else null. The
+ * one snapping helper (ADR 0040), at this caller's tolerance. */
+function snapExactText(value: number, locale: Locale): string | null {
+  const e = snapExact(value, SNAP_TOLERANCE);
+  return e.exact ? writeExact(e, locale) : null;
 }
 
 /**
@@ -260,7 +247,7 @@ function snapExact(value: number): string | null {
  * formatted decimal with "≈" otherwise.
  */
 function limitValueText(value: number, locale: Locale): string {
-  const snapped = snapExact(value);
+  const snapped = snapExactText(value, locale);
   return snapped ?? `≈ ${formatNumber(value, locale)}`;
 }
 
