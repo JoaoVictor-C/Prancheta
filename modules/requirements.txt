@@ -21,3 +21,4 @@ dna_features_viewer>=3.1    # genomic -- gene feature level packing
 pyproj>=3.7                 # map -- lon/lat to Web Mercator
 shapely>=2.1                # map -- polygon geometry, label placement
 rdkit>=2026.3               # molecule, reaction -- 2D coordinates, stereo
+pymupdf>=1.26               # the sheet command -- A4 PDF pages to PNG, no poppler

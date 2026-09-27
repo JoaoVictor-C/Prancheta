@@ -82,11 +82,14 @@ test("validation refuses what cannot be built", () => {
   assert.throws(() => validateSheet(badLevel), /level/);
 });
 
-test("the default folder is ProjectHub/Listas/<name>, beside the repository", () => {
+test("the default folder is Listas/<name>, beside the repository", () => {
   const saved = process.env.PRANCHETA_SHEETS_DIR;
   delete process.env.PRANCHETA_SHEETS_DIR;
   try {
-    assert.match(defaultSheetDir("calculo1").replaceAll("\\", "/"), /ProjectHub\/Listas\/calculo1$/);
+    // Beside the repository, wherever it is checked out -- in ProjectHub that
+    // is ProjectHub/Listas; on a CI runner it is a sibling of the checkout.
+    const repo = fileURLToPath(new URL("..", import.meta.url));
+    assert.equal(defaultSheetDir("calculo1"), join(repo, "..", "Listas", "calculo1"));
     process.env.PRANCHETA_SHEETS_DIR = join(tmpdir(), "listas");
     assert.equal(defaultSheetDir("x"), join(tmpdir(), "listas", "x"));
   } finally {
