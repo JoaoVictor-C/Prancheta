@@ -16,6 +16,7 @@ import { SHAPE_KINDS } from "../geometry/shapes.ts";
 import type { ShapeKind } from "../geometry/shapes.ts";
 import type { Bleed } from "../effects/bleed.ts";
 import type { Constraint } from "../constraints/types.ts";
+import type { Locale } from "../locale/format.ts";
 
 export type FigureSpec = {
   version: 1;
@@ -221,6 +222,19 @@ export type Frame = {
   /** Canvas px per unit along y. Defaults to `xUnit`, so a frame is square unless told otherwise. */
   yUnit?: number;
   /**
+   * What one unit of this frame IS -- `"m"`, `"m/s"`, `"N"` -- when it is
+   * anything. Optional, and read by exactly one check (ADR 0028).
+   *
+   * `xUnit` says how many pixels a unit is; it cannot say what a unit is,
+   * and `length-matches-its-label` needs both to read "50 m" against a line.
+   * Unset, the label's own unit is taken on trust and only its number is
+   * compared. Set, a label stating a DIFFERENT unit is reported as not
+   * comparable rather than compared: "20 N" beside an arrow drawn in a
+   * metres frame is a claim about some other quantity, and converting units
+   * would put a table of physics inside a checker that knows none.
+   */
+  unit?: string;
+  /**
    * Draw this frame as a coordinate plane: a lattice, its axes, and numbered
    * ticks along them.
    *
@@ -260,6 +274,12 @@ export type GridSpec = {
   axisStroke?: string;
   labelColor?: string;
   /**
+   * Print tick numbers through the locale formatter ("2,5", "−4"). Left
+   * unset, ticks print as before ("2.5", "-4"), so a figure that never
+   * asked is unchanged. ADR 0034.
+   */
+  locale?: Locale;
+  /**
    * Stroke pattern for the lattice lines. Default "solid".
    *
    * Dashed gridlines are the norm in a scientific plot, and they are the
@@ -280,10 +300,50 @@ export type GridAxis = {
   step?: number;
   /** Number every nth line on this axis. Falls back to `GridSpec.labelEvery`. */
   labelEvery?: number;
+  /**
+   * A value the lattice passes through. Default `from`.
+   *
+   * A range that starts off a round number -- [−0.5, 4.5], [−13, 13] with a
+   * step of 2 -- otherwise rules its lines at −0.5, 0.5, 1.5... and puts not
+   * one of them at a number a reader counts by. `origin: 0` anchors the
+   * lattice at zero and lets the range end wherever it ends.
+   */
+  origin?: number;
+  /**
+   * Numbers that MUST be printed along this axis -- an intercept the
+   * exercise cites, a vertex. Checked by `axis-number-present`, which fails
+   * when one is missing rather than letting a tidy lattice drop it.
+   */
+  require?: number[];
 };
 
 /** A point stated in a named frame rather than in canvas coordinates. */
 export type FramedPoint = { frame: string; x: number; y: number };
+
+/**
+ * The scale a straight run was stated at, kept after frame resolution strips
+ * the frame itself (ADR 0028). Set by ir/frames.ts, never authored.
+ *
+ * Resolution turns every framed point into canvas pixels, which is right for
+ * every check that asks where ink IS and wrong for the one that asks how LONG
+ * it is in the figure's own units: "50 m" beside a line is a claim in metres,
+ * and a pixel length means nothing without the pixels-per-metre it was drawn
+ * at. So the frame's scale and orientation travel with the geometry -- only
+ * when BOTH ends were stated at one scale, because a line from a point in one
+ * frame to a point in a differently scaled one has no single unit to be
+ * measured in, and guessing one would be the check deciding what the figure
+ * meant.
+ */
+export type MeasuredIn = {
+  /** The frame the run's first end was stated in; for reporting only. */
+  frame: string;
+  xUnit: number;
+  yUnit: number;
+  /** Degrees counter-clockwise, as `Frame.rotation`; matters only when xUnit !== yUnit. */
+  rotation: number;
+  /** Carried from `Frame.unit`; see there. */
+  unit?: string;
+};
 
 /**
  * Free geometry: an outline the shape system cannot express.
@@ -320,6 +380,53 @@ export type Mark = {
   stroke?: string;
   strokeWidth?: number;
   lineStyle?: LineStyle;
+  /**
+   * The data series this ink draws -- a curve, a tangent line -- by name.
+   *
+   * Several marks may share one series (a curve clipped at the plot's edge
+   * leaves in runs), and a label names a series with `Block.names`. Declared
+   * so two didactic checks can see what a reader has to tell apart:
+   * `series-distinguishable-without-colour` and
+   * `curve-label-nearest-its-curve`.
+   */
+  series?: string;
+  /**
+   * Set by frame resolution for each value a grid axis declares in
+   * `GridAxis.require`. Never authored. Carries no ink: it is the tick's
+   * position, and `axis-number-present` looks for the printed number there.
+   */
+  tick?: TickRequirement;
+  /**
+   * What this mark claims to lie ON: series names (`Mark.series`) or mark
+   * ids. A root marker claims its curve AND the x axis; an extremum only its
+   * curve. `feature-on-its-curve` measures the claim against the drawing --
+   * the core counterpart of a module's `on` (ADR 0025).
+   */
+  on?: string[];
+  /** Set by frame resolution on a single straight segment stated in one frame's scale; see MeasuredIn. */
+  measuredIn?: MeasuredIn;
+  /**
+   * Set by frame resolution for each `Block.annotatesPlace`: this mark is the
+   * PLACE a label names, not ink. Never authored. It carries no stroke and no
+   * fill, exactly like a tick requirement, and exists so the place travels
+   * through layout -- lifted into page space by the same code that lifts
+   * every other mark -- and reaches `label-nearest-its-place`. See ADR 0028.
+   */
+  place?: boolean;
+};
+
+/**
+ * A number an axis promises to print, and where.
+ *
+ * `within` is how far along the axis the number may sit from its tick --
+ * half a division, so it stays nearer its own tick than the next -- and
+ * `reach` how far across the axis it may have slid along its own gridline.
+ */
+export type TickRequirement = {
+  axis: "x" | "y";
+  value: number;
+  within: number;
+  reach: number;
 };
 
 /**
@@ -493,6 +600,12 @@ export type Connector = {
   curve?: ConnectorCurve;
   /** Visual effects, by design-system name or literal. See effects/types.ts. */
   effect?: EffectRef | EffectRef[];
+  /**
+   * Set by frame resolution when both ends were stated at one frame's scale;
+   * see MeasuredIn. Never authored. What `length-matches-its-label` reads to
+   * turn this connector's pixels back into the units its label speaks.
+   */
+  measuredIn?: MeasuredIn;
 };
 
 export type Align = "start" | "center" | "end";
@@ -630,6 +743,46 @@ export type Block = {
    */
   annotates?: string;
   /**
+   * The PLACE this block names, when it names a place rather than an element
+   * (ADR 0028): the `0` at an origin, which names the point where two axes
+   * meet and not either axis; a legend row, which names the end of its own
+   * swatch. In canvas coordinates or in a frame, like any other point.
+   *
+   * `annotates` could not say this. Measured against an element, the `0` is
+   * always nearer one of the axes that make its origin than to anything, and
+   * a legend's texts are always nearer each other than their own swatches --
+   * so twice the honest fix was to delete the annotation, leaving the
+   * commonest labels in the repertoire claiming nothing and checked by
+   * nothing.
+   *
+   * Buys NO relief: a place has no ink to overlap. It costs one obligation,
+   * `label-nearest-its-place`. Resolved into `annotates` naming a stroke-less
+   * `Mark.place` at `<id>-place`, so the block must have an id and may not
+   * also declare `annotates`.
+   */
+  annotatesPlace?: Point | FramedPoint;
+  /**
+   * The series (`Mark.series`) this label names directly on the drawing --
+   * "y = x²" beside its parabola. A legend row does not count: a legend
+   * tells series apart by colour, which is the thing a direct label is for
+   * not relying on. See `series-distinguishable-without-colour`.
+   */
+  names?: string;
+  /**
+   * This text names nothing drawn: a title, a caption, a note, a legend
+   * heading. ADR 0035.
+   *
+   * A bare label (text on no shape of its own) that declares none of
+   * `annotates`, `annotatesPlace` or `names` is invisible to every check that
+   * asks whether a label sits beside what it names -- the unit circle's
+   * "√3/2" sat beside the wrong point and passed that way. So being unclaimed
+   * is no longer the silent default: `label-declares-what-it-names` fails a
+   * bare label that claims nothing unless it says so here. Buys no relief
+   * from any other check. Only `true` is accepted, and never together with a
+   * claim -- a label that names something is not free-standing.
+   */
+  freeStanding?: true;
+  /**
    * The frame this block's `x`/`y` are stated in. Unset means canvas
    * coordinates, exactly as before frames existed.
    *
@@ -758,6 +911,16 @@ export type PlacedMark = {
   id: string;
   /** Carried straight from the spec's Mark.gridOf; see there. */
   gridOf?: string;
+  /** Carried straight from the spec's Mark.series; see there. */
+  series?: string;
+  /** Carried straight from the spec's Mark.tick; see there. */
+  tick?: TickRequirement;
+  /** Carried straight from the spec's Mark.on; see there. */
+  on?: string[];
+  /** Carried straight from the spec's Mark.measuredIn; see there. */
+  measuredIn?: MeasuredIn;
+  /** Carried straight from the spec's Mark.place; see there. */
+  place?: boolean;
   points: Point[];
   closed: boolean;
   fill: string;
@@ -788,6 +951,8 @@ export type PlacedConnector = {
   points: Point[];
   /** The curve this route was flattened from, if any. Provenance, not geometry. */
   curve?: ConnectorCurve;
+  /** Carried straight from the spec's Connector.measuredIn; see there. */
+  measuredIn?: MeasuredIn;
   arrow: "none" | "end" | "both";
   arrowStyle: ArrowStyle;
   dashed: boolean;
@@ -825,6 +990,10 @@ export type PlacedBox = {
   annotates?: string;
   /** Carried straight from the spec's Block.gridOf; see there. */
   gridOf?: string;
+  /** Carried straight from the spec's Block.names; see there. */
+  names?: string;
+  /** Carried straight from the spec's Block.freeStanding; see there. */
+  freeStanding?: true;
   /** Carried straight from the spec's Block.motion; see there. Absent means the whole transition. */
   motion?: MotionWindow;
   /** Carried straight from the spec's Block.shape. Default "rect" when unset. */
@@ -1306,6 +1475,20 @@ function validateNode(
         `${path}.verticalAlign must be "start", "center" or "end", got ${JSON.stringify(node.verticalAlign)}`,
       );
     }
+    // ADR 0035. Free-standing is a stated choice, so it takes one spelling,
+    // and it cannot sit beside a claim: a label either names something (and
+    // is measured against it) or names nothing, never both.
+    if (node.freeStanding !== undefined) {
+      if (node.freeStanding !== true) {
+        throw new SpecError(`${path}.freeStanding must be true when present, got ${JSON.stringify(node.freeStanding)}`);
+      }
+      const claims = (["annotates", "annotatesPlace", "names"] as const).filter((key) => node[key] !== undefined);
+      if (claims.length > 0) {
+        throw new SpecError(
+          `${path} declares freeStanding and ${claims.join(", ")}; a label that names something is not free-standing`,
+        );
+      }
+    }
     validateEffect(node.effect, `${path}.effect`);
     return;
   }
@@ -1397,11 +1580,37 @@ function validateNode(
             throw new SpecError(`${where}.${key} must not be zero`);
           }
         }
+        if (frame.unit !== undefined && (typeof frame.unit !== "string" || frame.unit.trim() === "")) {
+          throw new SpecError(`${where}.unit must be a non-empty string such as "m", got ${JSON.stringify(frame.unit)}`);
+        }
       });
     }
     // Checked here rather than in the block branch because this is where a
     // block's SIBLINGS are known -- the same reason a connector's endpoints
     // are validated here and not where the connector is shaped.
+    // A place label becomes `annotates` naming a generated mark, `<id>-place`
+    // (ir/frames.ts), so it needs the id that name is built from, and it
+    // cannot also name an element: one label names one thing.
+    for (const [i, child] of (node.children as Block[]).entries()) {
+      if (child.annotatesPlace === undefined) continue;
+      const where = `${path}.children[${i}].annotatesPlace`;
+      const place = child.annotatesPlace as Point;
+      if (
+        typeof place !== "object" || place === null ||
+        typeof place.x !== "number" || typeof place.y !== "number" ||
+        !Number.isFinite(place.x) || !Number.isFinite(place.y)
+      ) {
+        throw new SpecError(`${where} must be an {x, y} point, optionally with a frame`);
+      }
+      if (typeof child.id !== "string" || child.id === "") {
+        throw new SpecError(`${where} needs the block to have an id; the place it names is recorded under it`);
+      }
+      if (child.annotates !== undefined) {
+        throw new SpecError(
+          `${path}.children[${i}] declares both annotates and annotatesPlace; a label names an element or a place, not both`,
+        );
+      }
+    }
     for (const [i, child] of (node.children as Block[]).entries()) {
       if (child.annotates === undefined) continue;
       if (typeof child.annotates !== "string") {
@@ -1416,6 +1625,57 @@ function validateNode(
         throw new SpecError(
           `${path}.children[${i}].annotates names "${child.annotates}", which is not a block, connector or mark in this scene`,
         );
+      }
+    }
+    // A label that names a series names something a mark in this scene
+    // draws. A dangling name would make both series checks vacuous for it:
+    // the label counts as nobody's direct label and is nearest nothing.
+    const series = new Set<string>();
+    if (Array.isArray(node.marks)) {
+      (node.marks as Mark[]).forEach((mark, i) => {
+        if (mark.series === undefined) return;
+        if (typeof mark.series !== "string" || mark.series === "") {
+          throw new SpecError(`${path}.marks[${i}].series must be a non-empty string`);
+        }
+        series.add(mark.series);
+      });
+      (node.marks as Mark[]).forEach((mark, i) => {
+        if (mark.on === undefined) return;
+        if (!Array.isArray(mark.on) || mark.on.length === 0 || mark.on.some((x) => typeof x !== "string")) {
+          throw new SpecError(`${path}.marks[${i}].on must be a non-empty array of series names or mark ids`);
+        }
+      });
+    }
+    for (const [i, child] of (node.children as Block[]).entries()) {
+      if (child.names === undefined) continue;
+      if (typeof child.names !== "string" || !series.has(child.names)) {
+        throw new SpecError(
+          `${path}.children[${i}].names names ${JSON.stringify(child.names)}, which no mark in this scene ` +
+            `declares as its series` + (series.size === 0 ? "" : ` (declared: ${[...series].join(", ")})`),
+        );
+      }
+    }
+    for (const [i, frame] of ((node.frames ?? []) as Frame[]).entries()) {
+      if (frame.grid === undefined) continue;
+      for (const axis of ["x", "y"] as const) {
+        const spec = frame.grid[axis] as GridAxis | undefined;
+        const where = `${path}.frames[${i}].grid.${axis}`;
+        if (spec === undefined) continue;
+        if (spec.origin !== undefined && (typeof spec.origin !== "number" || !Number.isFinite(spec.origin))) {
+          throw new SpecError(`${where}.origin must be a finite number`);
+        }
+        if (spec.require !== undefined) {
+          if (!Array.isArray(spec.require) || spec.require.some((v) => typeof v !== "number" || !Number.isFinite(v))) {
+            throw new SpecError(`${where}.require must be an array of finite numbers`);
+          }
+          const outside = spec.require.filter((v) => v < Math.min(spec.from, spec.to) || v > Math.max(spec.from, spec.to));
+          if (outside.length > 0) {
+            throw new SpecError(
+              `${where}.require asks for ${outside.join(", ")}, outside the axis [${spec.from}, ${spec.to}]; ` +
+                `a number off the axis cannot be printed on it`,
+            );
+          }
+        }
       }
     }
     if (node.connectors !== undefined) {

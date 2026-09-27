@@ -162,7 +162,9 @@ export function expandChart(input: ChartInput): FigureSpec {
                 // just repeat the same comparison per category for no gain.
                 categoryGroup: "series",
               },
-              { type: "block", label: name, role: "muted", fill: "transparent", strokeWidth: 0, padding: 0, wrap: "none" },
+              // A legend entry: free-standing (ADR 0035). It names its swatch by
+              // sharing a row with it, which no proximity check models.
+              { type: "block", label: name, role: "muted", fill: "transparent", strokeWidth: 0, padding: 0, wrap: "none", freeStanding: true },
             ],
           })),
         }
@@ -203,6 +205,9 @@ export function expandChart(input: ChartInput): FigureSpec {
                   {
                     type: "block",
                     label: formatValue(category.values[si]!, suffix),
+                    // It names its bar (ADR 0035), and is held beside it by
+                    // `annotation-nearest-its-owner`.
+                    annotates: `bar-${ci}-${si}`,
                     role: "muted",
                     fill: "transparent",
                     strokeWidth: 0,
@@ -224,6 +229,9 @@ export function expandChart(input: ChartInput): FigureSpec {
               {
                 type: "block",
                 label: category.label,
+                // A category name is read by its column of bars, as a table
+                // header is: free-standing (ADR 0035).
+                freeStanding: true,
                 role: "muted",
                 fill: "transparent",
                 strokeWidth: 0,
@@ -256,6 +264,7 @@ export function expandChart(input: ChartInput): FigureSpec {
                     {
                       type: "block" as const,
                       label: formatValue(value, suffix),
+                      annotates: `bar-${ci}-${si}`,
                       role: "muted" as const,
                       fill: "transparent",
                       strokeWidth: 0,
@@ -276,6 +285,9 @@ export function expandChart(input: ChartInput): FigureSpec {
               {
                 type: "block",
                 label: category.label,
+                // A category name is read by its column of bars, as a table
+                // header is: free-standing (ADR 0035).
+                freeStanding: true,
                 role: "muted",
                 fill: "transparent",
                 strokeWidth: 0,
@@ -333,6 +345,10 @@ export function expandChart(input: ChartInput): FigureSpec {
         ? {
             type: "block",
             label: formatValue(stacking === "stacked100" ? 100 : total, stacking === "stacked100" ? "%" : suffix),
+            // The total names the whole stack of segments, which is no one
+            // element: free-standing (ADR 0035), read by its position at the
+            // bar's end.
+            freeStanding: true,
             role: "muted",
             fill: "transparent",
             strokeWidth: 0,
@@ -355,6 +371,7 @@ export function expandChart(input: ChartInput): FigureSpec {
             {
               type: "block",
               label: category.label,
+              freeStanding: true,
               role: "muted",
               fill: "transparent",
               strokeWidth: 0,
@@ -374,6 +391,7 @@ export function expandChart(input: ChartInput): FigureSpec {
           {
             type: "block",
             label: category.label,
+            freeStanding: true,
             role: "muted",
             fill: "transparent",
             strokeWidth: 0,
@@ -466,6 +484,8 @@ function buildSeriesChart(
       type: "block",
       id: "y-axis-max-label",
       label: formatValue(maxValue, suffix),
+      // An axis number with no drawn axis: free-standing, like a tick (ADR 0035).
+      freeStanding: true,
       role: "muted",
       fill: "transparent",
       strokeWidth: 0,
@@ -481,6 +501,7 @@ function buildSeriesChart(
       type: "block",
       id: "y-axis-zero-label",
       label: formatValue(0, suffix),
+      freeStanding: true,
       role: "muted",
       fill: "transparent",
       strokeWidth: 0,
@@ -509,6 +530,7 @@ function buildSeriesChart(
       type: "block",
       id: `x-axis-label-${ci}`,
       label: category.label,
+      freeStanding: true,
       role: "muted",
       fill: "transparent",
       strokeWidth: 0,
@@ -764,6 +786,8 @@ function buildPieChart(input: ChartInput, chartType: "pie" | "donut"): FigureSpe
         {
           type: "block",
           label: `${category.label} — ${Math.round((shares[i] ?? 0) * 1000) / 10}%`,
+          // A legend entry: free-standing (ADR 0035).
+          freeStanding: true,
           role: "muted",
           fill: "transparent",
           strokeWidth: 0,
