@@ -1,0 +1,10 @@
+{
+  "preset": "unit-circle",
+  "title": "ciclo trigonométrico: quatro quadrantes",
+  "quadrantLabels": true,
+  "angles": [
+    { "angle": "45°", "projection": true },
+    { "angle": "135°", "projection": true },
+    { "angle": "-60°", "projection": true }
+  ]
+}

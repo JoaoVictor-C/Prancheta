@@ -1,0 +1,14 @@
+{
+  "preset": "function-graph",
+  "title": "Rosácea polar r = cos(2θ)",
+  "x": { "range": [-1.5, 1.5], "unit": 150, "step": 0.5 },
+  "y": { "range": [-1.5, 1.5], "unit": 150, "step": 0.5 },
+  "functions": [
+    {
+      "id": "r",
+      "r": "cos(2θ)",
+      "theta": [0, "2pi"],
+      "label": { "text": "r = {expr}", "at": 0.3, "towards": ["NE", "R", "U"] }
+    }
+  ]
+}

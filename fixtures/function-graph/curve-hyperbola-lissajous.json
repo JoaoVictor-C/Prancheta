@@ -1,0 +1,18 @@
+{
+  "preset": "function-graph",
+  "title": "Hipérbole implícita e curva paramétrica",
+  "x": { "range": [-4, 4], "unit": 60 },
+  "y": { "range": [-3, 3], "unit": 60 },
+  "functions": [
+    { "id": "h", "implicit": "x^2/4 - y^2 = 1", "legend": "x²/4 − y² = 1" },
+    {
+      "id": "l",
+      "x": "2cos(t)",
+      "y": "sin(2t)",
+      "t": [0, "2pi"],
+      "style": "dashed",
+      "colour": "ask",
+      "legend": "(2cos t, sen 2t)"
+    }
+  ]
+}

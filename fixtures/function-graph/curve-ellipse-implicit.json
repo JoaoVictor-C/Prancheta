@@ -1,0 +1,20 @@
+{
+  "preset": "function-graph",
+  "title": "A elipse (x − 1)²/9 + (y − 1)²/4 = 1 e a circunferência inscrita, dadas pelas equações",
+  "x": { "range": [-3, 5], "unit": 55 },
+  "y": { "range": [-2, 4], "unit": 55 },
+  "functions": [
+    {
+      "id": "elipse",
+      "implicit": "(x - 1)^2/9 + (y - 1)^2/4 = 1",
+      "label": { "text": "{expr}", "at": [3.2, 2.6], "towards": ["NE", "R", "U"] }
+    },
+    {
+      "id": "circulo",
+      "implicit": "(x - 1)^2 + (y - 1)^2 = 4",
+      "colour": "warm",
+      "style": "dashed",
+      "legend": "{expr}"
+    }
+  ]
+}

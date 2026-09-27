@@ -1,0 +1,35 @@
+{
+  "preset": "vectors",
+  "title": "Um deslocamento entre dois pontos e uma força por componentes",
+  "locale": "pt-BR",
+  "points": [
+    {
+      "name": "A",
+      "at": [
+        -6,
+        -6
+      ]
+    },
+    {
+      "name": "B",
+      "at": [
+        -6,
+        2
+      ]
+    }
+  ],
+  "vectors": [
+    {
+      "name": "AB",
+      "from": "A",
+      "to": "B"
+    },
+    {
+      "name": "F",
+      "components": [
+        6,
+        -4
+      ]
+    }
+  ]
+}
