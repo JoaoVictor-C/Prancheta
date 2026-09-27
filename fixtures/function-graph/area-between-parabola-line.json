@@ -1,0 +1,13 @@
+{
+  "preset": "function-graph",
+  "title": "Área da região limitada por y = x² e y = x + 2 (limites nas interseções)",
+  "x": { "range": [-1.8, 2.8], "unit": 100 },
+  "y": { "range": [-0.8, 5.4], "unit": 55 },
+  "functions": [
+    { "id": "g", "expr": "x + 2", "colour": "warm", "label": { "text": "y = {expr}", "at": 2.5, "towards": ["D", "R"] } },
+    { "id": "f", "expr": "x^2", "label": { "text": "y = {expr}", "at": -1.7, "towards": ["L", "U"] } }
+  ],
+  "areas": [
+    { "id": "A", "between": ["g", "f"], "colour": "purple" }
+  ]
+}

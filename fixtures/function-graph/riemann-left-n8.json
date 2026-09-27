@@ -1,0 +1,12 @@
+{
+  "preset": "function-graph",
+  "title": "Soma de Riemann (pela esquerda, n = 8) de y = x² em [0, 2]",
+  "x": { "range": [-0.6, 2.6], "unit": 110, "step": 0.5, "labelEvery": 2 },
+  "y": { "range": [-0.9, 4.8], "unit": 50 },
+  "functions": [
+    { "id": "f", "expr": "x^2", "label": { "text": "y = {expr}", "at": 2.15, "towards": ["L", "U"] } }
+  ],
+  "riemann": [
+    { "id": "S", "of": "f", "from": 0, "to": 2, "n": 8, "rule": "left", "label": true, "integral": true }
+  ]
+}
