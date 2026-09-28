@@ -1,0 +1,10 @@
+{
+  "preset": "space",
+  "title": "Dois planos e a reta em que se cortam",
+  "planes": [
+    { "name": "α", "equation": "x + y + z = 4" },
+    { "name": "β", "equation": "x − y = 0" }
+  ],
+  "lines": [{ "name": "r", "intersection": ["α", "β"] }],
+  "measures": [{ "angle": ["α", "β"] }]
+}

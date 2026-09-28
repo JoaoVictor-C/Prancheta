@@ -1,0 +1,7 @@
+{
+  "preset": "solid",
+  "title": "cubo de aresta 2 e sua diagonal",
+  "solids": [
+    { "kind": "cube", "edge": 2, "labels": true, "show": ["edge", "faceDiagonal", "spaceDiagonal"], "readings": ["measures", "volume", "area"] }
+  ]
+}

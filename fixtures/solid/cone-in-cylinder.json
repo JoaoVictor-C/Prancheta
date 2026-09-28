@@ -1,0 +1,8 @@
+{
+  "preset": "solid",
+  "title": "cone inscrito no cilindro",
+  "solids": [
+    { "kind": "cylinder", "name": "Cilindro", "radius": 2, "height": 4, "labels": true, "show": ["radius", "height"], "readings": ["volume"] },
+    { "kind": "cone", "name": "Cone", "inscribedIn": "Cilindro", "show": ["slant"], "readings": ["measures", "volume"] }
+  ]
+}

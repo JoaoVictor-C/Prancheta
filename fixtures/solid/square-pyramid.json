@@ -1,0 +1,7 @@
+{
+  "preset": "solid",
+  "title": "pirâmide quadrangular regular: altura e apótema",
+  "solids": [
+    { "kind": "pyramid", "sides": 4, "edge": 10, "height": 12, "labels": true, "show": ["height", "baseApothem", "slant"], "readings": ["measures", "volume", "area"] }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "preset": "solid",
+  "title": "esfera de raio 3",
+  "solids": [
+    { "kind": "sphere", "radius": 3, "labels": true, "show": ["radius", "equator"], "readings": ["volume", "area"] }
+  ]
+}

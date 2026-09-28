@@ -1,0 +1,8 @@
+{
+  "preset": "solid",
+  "title": "paralelepípedo 4 × 3 × 2",
+  "unit": "cm",
+  "solids": [
+    { "kind": "box", "width": 4, "depth": 3, "height": 2, "labels": true, "show": ["dimensions"], "readings": ["measures", "volume", "area"] }
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "preset": "space",
+  "title": "O ponto P(2; 3; 4) e o paralelepípedo das suas coordenadas",
+  "axes": { "ticks": true },
+  "points": [{ "name": "P", "at": [2, 3, 4], "box": true }]
+}

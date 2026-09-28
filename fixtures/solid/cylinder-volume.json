@@ -1,0 +1,7 @@
+{
+  "preset": "solid",
+  "title": "cilindro de raio 2 e altura 3",
+  "solids": [
+    { "kind": "cylinder", "radius": 2, "height": 3, "labels": true, "show": ["radius", "height"], "readings": ["volume", "area"] }
+  ]
+}

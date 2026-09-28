@@ -1,0 +1,14 @@
+{
+  "preset": "space",
+  "title": "Retas reversas e a sua perpendicular comum",
+  "points": [
+    { "name": "A", "at": [3, 0, 0] },
+    { "name": "B", "at": [0, 3, 0] },
+    { "name": "C", "at": [0, 0, 3] }
+  ],
+  "lines": [
+    { "name": "r", "through": ["A", "B"] },
+    { "name": "s", "point": "C", "direction": [1, 1, 0] }
+  ],
+  "measures": [{ "commonPerpendicular": ["r", "s"] }]
+}

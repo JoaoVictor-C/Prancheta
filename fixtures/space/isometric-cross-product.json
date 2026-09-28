@@ -1,0 +1,32 @@
+{
+  "preset": "space",
+  "title": "O mesmo produto vetorial, em perspectiva isométrica",
+  "camera": "isometric",
+  "vectors": [
+    {
+      "name": "u",
+      "components": [
+        2,
+        1,
+        0
+      ]
+    },
+    {
+      "name": "v",
+      "components": [
+        0,
+        2,
+        1
+      ],
+      "box": "floor"
+    },
+    {
+      "name": "u × v",
+      "cross": [
+        "u",
+        "v"
+      ],
+      "box": "floor"
+    }
+  ]
+}
