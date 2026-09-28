@@ -54,6 +54,9 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `number-line` | The real line with intervals and solution sets of inequalities; unions and intersections computed. | yes |
 | `vectors` | Vectors in the plane with sums, multiples, components, projections and angles derived from them. | yes |
 | `unit-circle` | The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles. | yes |
+| `construction` | Plane and analytic geometry built from definitions: intersections, perpendiculars, bisectors, tangents, triangle centres and conics, with every length and angle computed. | yes |
+| `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed. | yes |
+| `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
 
 ## Figure modules
 
@@ -165,7 +168,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, or an angle.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, or a school solid.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -200,6 +203,12 @@ An interval is not a function and not a set (`S-interval-favours-number-line`). 
 A vector is not an edge (`S-vector-favours-vectors`, `S-vector-disqualifies-graph`). An edge joins two things and may be drawn any length; a force or a displacement has a length and a direction that must be drawn to scale, and what an exercise does with vectors — adds them, decomposes them, projects one onto another — is arithmetic the preset performs from the vectors themselves, with every printed length measured against the arrow it names.
 
 An angle on the trigonometric circle is its own question (`S-angle-favours-unit-circle`). *"Marque 5π/4 no ciclo e indique seu seno e cosseno"* asks where a rotation lands and what its projections are, not what curve sin traces over time — so it is the unit circle, where the point is (cos θ, sin θ) computed from the angle, the notable values print exactly (√2/2, not 0,707), and the arc beside the printed angle is checked against it.
+
+A construction is not a scene and not a graph (`S-construction-favours-construction`, `S-construction-disqualifies-graph`). A triangle with its circumcircle, an altitude with the lengths it cuts, an ellipse from its foci — each is a chain of definitions, and a figure drawn by hand beside the numbers it claims can disagree with them in every link. The `construction` preset carries the chain out: free points are the only typed coordinates; every intersection, foot, bisector, tangent and conic is computed; and the only numbers on the drawing, lengths and angles, are measured against the ink they label.
+
+A configuration in space is its own question (`S-space-favours-space`). *"Represente o plano 2x + 3y + 6z = 12 e a reta r que o fura em I"* is about which points, lines and planes there are, and which part of r a reader sees through π. The `vectors` preset has no third axis (`S-space-disqualifies-vectors`), and a graph has no coordinates at all (`S-space-disqualifies-graph`). The `space` preset draws it through the textbook's cavalier camera. Typed coordinates are the only input. Every intersection, foot, cross product and common perpendicular is computed. Every distance, angle and equation is printed exact in the panel, and a line is dashed exactly where a plane patch is nearer the reader.
+
+A school solid is its own question (`S-solid-favours-solid`). *"Um cone tem raio 2 e altura 4; calcule a geratriz e o volume"* is about a body and the numbers its dimensions fix, not about points on axes. The `space` preset draws lines and planes and has no rims or silhouettes (`S-solid-disqualifies-space`), and a graph has no geometry at all (`S-solid-disqualifies-graph`). The `solid` preset takes the dimensions once. Every vertex, rim ellipse and silhouette is computed from them. Hidden edges are dashed by which faces the reader sees. Diagonals, slant heights, volumes and areas are printed exact (`2√3`, `2√5`, `16π/3`), and each length on the drawing is measured in true 3D length. Composites (a sphere in a cube, a cone in a cylinder) are transparent: each solid dashes only its own hidden edges.
 
 ## Answer three questions, not two
 
@@ -995,3 +1004,460 @@ Every point's own label names its point the same way (`annotatesPlace`, ADR 0035
 - A symmetric point never carries its own arc, projection or tangent — request those on a primary angle entry instead.
 - OP (and the tangent's dashed extension of it) is drawn only for a primary angle with `arc` or `tangent`. A plain `projection`-only point draws no OP: there is no arc or tangent construction for it to connect to, and drawing one anyway crowds the sin label of a *symmetric pair* sharing that same sin value (30°/150°, 45°/135°, ...) — their sin labels sit on the axis side opposite their own point by design (continuing the direction their own guide already travels), which is exactly where the other point's OP would run.
 - The circle is always the unit circle (radius 1 in math terms, `radius` px on the canvas); there is no scaled or off-centre circle here.
+
+### construction
+
+Plane geometry and Geometria Analítica in the plane, as a list of **named
+objects, each defined from objects named before it**. Free points are the only
+coordinates an author types; every other point, line, circle and conic is
+**computed** from its definition through the shared vector algebra
+(`src/geometry/vec.ts`, ADR 0043), and every printed measure — a side's
+length, an angle's degrees, a conic's equation — is computed from the drawing
+rather than typed beside it. The two kinds of number that look typed on the
+figure, lengths and angles, are measured against the ink by
+`length-matches-its-label` and `sweep-matches-its-label`.
+
+**Choose it when** the content is a ruler-and-compass construction or an
+analytic-geometry figure: a triangle and its centres, a circle through three
+points, a tangent from a point, an altitude with its right angle and the
+lengths it cuts, a conic from its foci or its focus and directrix, the
+distance between two points and the line through them. It is not for a
+function's graph (`function-graph`), for vector arithmetic (`vectors`), or for
+angles on the trigonometric circle (`unit-circle`).
+
+## Input
+
+```json
+{
+  "preset": "construction",
+  "axes": false,
+  "equalTicks": true,
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [6, 0] },
+    { "name": "B'", "rotation": { "of": "B", "about": "A", "angle": 52 }, "hidden": true },
+    { "name": "A'", "rotation": { "of": "A", "about": "B", "angle": -52 }, "hidden": true },
+    { "name": "C", "intersection": ["AB'", "BA'"] },
+    { "name": "ABC", "polygon": ["A", "B", "C"] },
+    { "name": "H", "foot": { "of": "C", "on": "AB" } },
+    { "name": "CH", "perpendicular": { "through": "C", "to": "AB" }, "draw": "segment", "dashed": true }
+  ],
+  "annotations": [
+    { "angle": ["B", "A", "C"] },
+    { "angle": ["A", "C", "B"], "name": "x" },
+    { "angle": ["C", "H", "B"] }
+  ]
+}
+```
+
+Top level: `title`, `locale` (default `"pt-BR"`), `axes` (default `false`;
+`true` draws a numbered grid with pt-BR ticks, ADR 0034), `equalTicks`
+(tick every group of drawn segments that come out equal), `objects`,
+`annotations`.
+
+Two names written together — `"AB"` — mean **the line through A and B**
+wherever a line is expected and no object has that name, as a statement says
+"the perpendicular from C to AB".
+
+### Points
+
+| definition | meaning |
+| --- | --- |
+| `{ "A": [x, y] }` or `{ "name": "A", "at": [x, y] }` | a free point — the only typed coordinates |
+| `"midpoint": ["A", "B"]` | midpoint of AB |
+| `"intersection": ["r", "c"]` | where two lines, a line and a circle, or two circles meet. Two solutions need `"which": 0 \| 1` (ordered by x, then y — vec.ts's rule) or `"other": "P"` (the one that is not P) |
+| `"foot": { "of": "P", "on": "r" }` | foot of the perpendicular from P |
+| `"onCircle": { "circle": "c", "angle": 30 }` | the point of c at 30° (counter-clockwise from +x) |
+| `"reflection": { "of": "P", "over": "r" }` | reflection over a line, or over a point |
+| `"rotation": { "of": "P", "about": "O", "angle": 90 }` | rotation, degrees counter-clockwise |
+| `"centroid" / "incenter" / "circumcenter" / "orthocenter": ["A", "B", "C"]` | triangle centres (or the name of a triangle polygon) |
+
+Point options: `label` (text, or `false`), `coords: true` (prints the
+computed pair, `A(−2; 1)`), `dot: false`, `hidden: true`.
+
+### Lines
+
+| definition | meaning |
+| --- | --- |
+| `"segment" / "line" / "ray": ["A", "B"]` | through two points (a ray starts at A) |
+| `"perpendicular": { "through": "P", "to": "r" }` | `"draw": "segment"` draws P to the foot — an altitude |
+| `"parallel": { "through": "P", "to": "r" }` | |
+| `"perpendicularBisector": ["A", "B"]` | mediatriz |
+| `"angleBisector": ["A", "V", "B"]` | the internal bisector of angle AVB; a ray from V, or `"draw": "segment"` to side AB, or `"draw": "line"` |
+| `"tangent": { "from": "P", "to": "c" }` | tangent from P; `"which"` picks one of two, `"touch": "T"` names the point of tangency, `"draw": "segment"` draws P to T |
+
+### Circles, polygons, conics
+
+| definition | meaning |
+| --- | --- |
+| `"circle": { "center": "O", "radius": 3 }` | radius a number or an expression over lengths: `"dist(A,B)"`, `"dist(A,B)/2"` |
+| `"circle": { "center": "O", "through": "P" }` | |
+| `"circumcircle": ["A", "B", "C"]`, `"incircle": [...]` | |
+| `"polygon": ["A", "B", "C", ...]` | sides are drawn as separate measured segments; optional `"fill"` |
+| `"ellipse": { "foci": ["F1", "F2"], "a": 5 }` | or `{ "center": "O", "a": 5, "b": 3, "rotation": 30 }` |
+| `"hyperbola": { "foci": ["F1", "F2"], "a": 3 }` | both branches; or `{ "center", "a", "b", "rotation" }` |
+| `"parabola": { "focus": "F", "directrix": "d" }` | the directrix is a line object, drawn by its own style |
+
+Conics are drawn **analytically** from these elements (parametric ellipse,
+cosh/sinh branches, the vertex form of the parabola) — never traced from a
+contour. `"show"` adds `"foci"`, `"vertices"`, `"asymptotes"` (hyperbola),
+`"vertex"`, `"axis"` (parabola) and `"equation"` — the canonical equation,
+computed when the conic's axis is parallel to a coordinate axis
+(`x²/25 + y²/9 = 1`, `(x − 2)²/9 − (y − 1)²/16 = 1`, `x² = 8y`) and refused
+otherwise.
+
+Every object takes `label` (`true` prints its name), `dashed`, `colour`,
+`hidden` (computed and usable, not drawn).
+
+### Annotations
+
+| annotation | what is drawn |
+| --- | --- |
+| `{ "length": "AB" }` or `{ "length": ["A", "B"], "name": "c" }` | the computed length beside a **drawn** segment or polygon side (`5`, `2,4`, `c = 7,21`), measured by `length-matches-its-label` |
+| `{ "angle": ["A", "V", "B"] }` | an arc at V with the computed degrees (`36,87°`), measured by `sweep-matches-its-label`; a 90° angle becomes a right-angle square |
+| `{ "angle": [...], "name": "x" }` | the arc labelled with a name — the unknown an exercise asks for |
+| `{ "equal": ["AC", "BC"] }` | equal-length ticks, **refused** unless the segments are equal |
+| `{ "equation": "r" }` | the line's reduced equation (or a circle's, or a conic's) in the readings panel |
+
+The **readings panel** under the figure holds what the drawing cannot say
+exactly: `AB = √13 ≈ 3,61` beside a line labelled `3,61`, `∠CBA ≈ 36,87°`,
+equations. Nothing the drawing states exactly is repeated there.
+
+### Word-problem pictograms (ADR 0047)
+
+A `picto` option decorates an object already defined -- it adds no coordinate
+of its own, so the scene a word problem describes (a ladder, a shadow, a
+sight line to a boat) is drawn from the same numbers as the triangle that
+solves it.
+
+On a drawn **segment** (`"picto"` alongside `"segment": [A, B]`):
+
+| picto | what it draws |
+| --- | --- |
+| `"ground"` | hatch ticks beside the segment |
+| `"wall"` | hatch ticks beside the segment (the same mark, the reader's word for a vertical one) |
+| `"ladder"` | a second rail parallel to the segment plus evenly spaced rungs |
+| `"ramp"` | hatch ticks along the segment's underside |
+| `"pole"` | a short crossbar at the segment's own top (not a ring: an open ring is this project's mark for a point that does not belong) |
+| `"tree"` | a canopy circle just past the segment's own top |
+| `"person"` | a stick figure whose height is the segment: a head past the top, arms and legs off the two ends |
+| `"building"` | a facade rectangle beside the segment with a grid of windows |
+
+`"side": -1` flips which side of the segment the hatching, the facade or the
+ladder's second rail falls on (default `1`); a person's or pole's own side is
+fixed by the segment's own direction. A picto is refused on a line or a ray
+-- it needs two actual ends.
+
+On a **point**: `"picto": "sun"` (a circle with eight rays) or `"picto":
+"boat"` (a small hull, mast and sail).
+
+None of this is new geometry. A pole's height is its segment's own length,
+computed once; a sun's ray and a sight line to a boat are ordinary
+`rotation` + `line` + `intersection` objects, exactly as any other
+construction is built, with the picto only drawing the icon at one end.
+Every pictogram mark is stroked, never filled, and is added to the same
+label placer as the rest of the drawing, so a length or angle label searches
+past it exactly as it does past any other line -- a label may sit beside a
+wall but never on a ladder's rails. Worked examples: `fixtures/construction/
+ladder-wall.json`, `pole-shadow.json`, `ramp.json`, `angle-of-depression.json`.
+
+A top-level `unit` (`"m"`, `"cm"`) is printed after every length, on the
+drawing and in the panel, and set on the frame, so `length-matches-its-label`
+compares the unit as well as the number.
+
+## Refusals
+
+Every construction that cannot be carried out is refused by name, never drawn
+approximately: an undefined object (with a "did you mean"), two parallel lines
+asked to meet, a line and a circle or two circles that do not meet, an
+ambiguous intersection with no `which`, a degenerate (collinear) triangle, a
+tangent from inside a circle, a focus on its own directrix, an ellipse whose
+2a does not exceed the focal distance (a hyperbola's that does), an
+equation asked of a turned conic, equal ticks on unequal segments, a length
+on a segment that is not drawn, and a label or name that types a coordinate
+or a number.
+
+## What it guarantees
+
+- Every point, line and circle is one vec.ts construction of the objects it
+  names; the conics satisfy their focal definitions (tested).
+- Lengths are stated in the plane's frame, so `length-matches-its-label`
+  measures each printed length against its run; angle arcs are sweeps whose
+  arms are the sides, so `sweep-matches-its-label` measures each printed angle.
+- Point names `annotatesPlace` their point (ADR 0028/0035); lengths, angles
+  and line names `annotates` their own ink. No label has a backing.
+- Points are drawn last, so a dot is never under a line through it.
+
+Examples: `fixtures/construction/`.
+
+### space
+
+Points, vectors, lines and planes in R³, the Geometria Analítica course's
+figures, drawn on three axes through a camera. Typed coordinates are the only
+input. Every other position is derived: a midpoint, the point where a line
+pierces a plane, the line where two planes meet, the foot of a perpendicular,
+a cross product or the common perpendicular of two skew lines. Every printed
+number is computed with `geometry/vec.ts` and written exact in pt-BR:
+`(12/7; 12/7; 10/7)`, `d(P, π) = 3√14/7`, `2x + 3y + 6z − 12 = 0`.
+
+Visibility is decided per object, by depth. A line, an axis or an edge is
+dashed exactly where a plane patch hides it and solid elsewhere, split at the
+point where it pierces the plane. See
+[ADR 0045](../../../docs/decisions/0045-space-and-projection.md).
+
+**Choose it when** the content is a configuration in space: a point and its
+coordinates, a plane and its intercepts, a line meeting a plane, two planes
+and their intersection, u, v and u × v, or two skew lines. It is not for
+vectors in the plane ([`vectors`](../../../src/presets/vectors/PRESET.md)). It is not for a
+school solid (a cylinder, cone, sphere or prism), which has silhouettes this
+preset does not draw.
+
+## Input
+
+```json
+{
+  "preset": "space",
+  "points": [
+    { "name": "A", "at": [2, 1, 0] },
+    { "name": "B", "at": [2, 3, 2] },
+    { "name": "I", "intersection": ["r", "π"] }
+  ],
+  "lines": [{ "name": "r", "through": ["A", "B"] }],
+  "planes": [{ "name": "π", "equation": "2x + y + 2z = 8" }],
+  "measures": [{ "angle": ["r", "π"] }, { "distance": ["A", "π"] }]
+}
+```
+
+Names are shared across `points`, `vectors`, `lines` and `planes`, and are
+resolved in any order. A name may refer to an object declared later, and a
+cycle is refused. `locale` (default `"pt-BR"`) and `title` sit at the top
+level.
+
+### Camera
+
+`"camera"` is optional. It takes one of these values:
+
+- **`"cavalier"`** (the default). This is the textbook oblique view: y points
+  right and z up, both at true scale, and x comes toward the reader, drawn at
+  45° down-left and halved. You can tune it with
+  `{ "kind": "cavalier", "angle": 45, "ratio": 0.5 }`.
+- **`"isometric"`**.
+- **`{ "kind": "orthographic", "azimuth": 30, "elevation": 20 }`**, a general
+  view given in degrees.
+
+### Axes and region
+
+- **`"axes"`** takes `{ "ticks": true }` for whole-number ticks with pt-BR
+  numbers. Add `"names": false` to hide the x, y and z names, and
+  `"origin": false` to hide the O.
+- **`"region"`** takes `{ "x": [lo, hi], "y": [...], "z": [...] }`. Lines
+  and plane patches are clipped to it. When it is left out, it is derived
+  from the figure's points: from 0, or one below the lowest negative
+  coordinate, to one past the highest. A plane's axis intercepts widen it
+  only when the figure is about them (an octant patch or `intercepts`) or
+  has no points of its own.
+
+### Points
+
+| shape | meaning |
+| --- | --- |
+| `{ "name": "P", "at": [2, 3, 4] }` | typed; add `"box": true` for the dashed parallelepiped to the coordinate planes, or `"box": "floor"` for P → (x, y, 0) → axes |
+| `{ "name": "M", "midpoint": ["A", "B"] }` | derived |
+| `{ "name": "I", "intersection": ["r", "π"] }` | a line with a plane, or two lines. Refused when they are parallel, contained, `paralelas`, `coincidentes` or `reversas` (this one names `commonPerpendicular` instead) |
+| `{ "name": "F", "foot": { "from": "P", "on": "π" } }` | the foot of the perpendicular on a plane or a line, drawn with a dashed guide from P (and a right-angle mark on a line) |
+
+A typed point's label shows its coordinates, `P(2; 3; 4)`. A derived point
+shows its name, and the panel below prints its derivation and coordinates.
+`"coords": true/false` overrides either default. When the figure hides the
+coordinates, it still prints them in the panel.
+
+### Vectors
+
+| shape | meaning |
+| --- | --- |
+| `{ "name": "u", "components": [2, 1, 0] }` | tail at the origin, or `"at"`: a point name or `[x, y, z]` |
+| `{ "name": "AB", "from": "A", "to": "B" }` | between two points |
+| `{ "name": "w", "cross": ["u", "v"] }` | the cross product; refused for parallel vectors (the zero vector) |
+| `{ "name": "s", "sum": ["u", "v"] }` | component-wise |
+
+A vector drawn from the origin takes `"box"` like a point. The panel prints
+`u = (2; 1; 0); |u| = √5`.
+
+### Lines
+
+| shape | meaning |
+| --- | --- |
+| `{ "name": "r", "through": ["A", "B"] }` | two points |
+| `{ "name": "r", "point": "A", "direction": "u" }` | a point (name or coordinates) and a direction (vector name or components) |
+| `{ "name": "r", "intersection": ["α", "β"] }` | two planes. Refused when parallel or coincident. Printed through its simplest point with whole-number direction: `(0; 0; 4) + t(1; 1; −2)` |
+| `{ "name": "n", "point": "P", "perpendicularTo": "π" }` | through P along π's normal |
+
+The panel prints each line's vector equation.
+
+### Planes
+
+| shape | meaning |
+| --- | --- |
+| `{ "name": "π", "equation": "2x + y − z = 4" }` | read with the typographic minus, a pt-BR comma and `1/2x` |
+| `{ "name": "π", "point": "A", "normal": [1, 2, 2] }` | a point and a normal |
+| `{ "name": "π", "through": ["A", "B", "C"] }` | three points; refused if collinear |
+
+Each plane takes three options:
+
+- **`"patch"`**: `"parallelogram"` is the default. It is the textbook
+  patch, with edges parallel to the two coordinate planes the normal leans
+  least on. It is centred on the figure's points and clipped to the region.
+  `"octant"` draws the piece in x, y, z ≥ 0, which for positive intercepts
+  is the intercept triangle.
+- **`"intercepts": true`** marks and numbers where the plane meets each
+  axis.
+- **`"traces": true`** draws its traces on the coordinate planes. An octant
+  patch's edges already are its traces.
+
+The panel prints the equação geral in canonical form: whole coefficients, no
+common factor, a positive leading coefficient, `= 0`.
+
+### Measures
+
+Measures go to the panel only.
+
+| shape | prints |
+| --- | --- |
+| `{ "distance": ["P", "π"] }` | the distance between points, lines and planes: point–point, point–line, point–plane, parallel or skew lines, parallel planes, and 0 when they meet |
+| `{ "angle": ["r", "π"] }` | the angle between two vectors, two lines, a line and a plane, or two planes. It prints `ângulo(r, π) = 45°` when the angle is a whole degree. Otherwise it prints the exact cosine (or sine, for a line and a plane) and the angle rounded, `≈ 27,66°` |
+| `{ "position": ["r", "s"] }` | `concorrentes`, `paralelas`, `coincidentes` or `reversas`, or a line or plane relative to a plane |
+| `{ "commonPerpendicular": ["r", "s"] }` | for `reversas` only. It draws the segment between the closest points, with right-angle marks, and prints its feet and d(r, s) |
+
+A `label` on any object may rename it. It is refused if it contains a
+digit, because a printed number is computed, never typed.
+
+## What is drawn
+
+The drawing has these parts:
+
+- **Axes.** Arrows at the positive ends.
+- **Plane patches.** Filled at about 10% of their colour, with outlines in
+  the same colour.
+- **Lines.** Clipped a little past the region, so they read as lines.
+- **Vectors.** A shaft and an arrowhead.
+- **Guides.** Grey dashes, always dashed.
+- **Points.** Dots, drawn last so that nothing is painted over a point.
+
+Hidden stretches keep their object's colour and are drawn dashed. A patch
+edge that lies on an axis is left to the axis. Labels have no backing.
+Point and tick labels name their place (`annotatesPlace`). Line, vector and
+plane names name the piece of ink they sit beside (`annotates`). A label is
+set only where it is at least 3 px clear of every line and every other label,
+and nearer what it names than anything else. A tick number with no such spot
+is left off, and its tick mark stays.
+
+## What is not covered
+
+- School solids (cylinders, cones, spheres, prisms). `geometry/projection.ts`
+  exports what they need: `projectCircle`, `sphereOutline`,
+  `tangentParamsParallelTo`, `tangentParamsFrom` and `depth`.
+- General hidden-line removal. A segment never hides a segment, and
+  translucent fills simply overlap.
+- Planes hidden by planes, beyond their edges. Where two patches overlap,
+  the fills mix and each outline is dashed where the other patch hides it.
+- Lengths on the drawing. A projected length is not the true length, so
+  every number goes to the panel, where it is exact.
+
+Fixtures: [`fixtures/space/`](../../../fixtures/space).
+
+### solid
+
+The school solids of geometria espacial, as ENEM and ensino médio draw them:
+cube, paralelepípedo, regular prisms and pyramids, the right circular
+cylinder and cone, and the sphere. You type the dimensions once. Every
+vertex, edge, rim ellipse and silhouette is computed from them. Every
+printed measure is computed from the same numbers and written exact:
+`D = 2√3`, `g = 2√5`, `V = 16π/3`, `A = 48 + 12√3`. See
+[ADR 0046](../../../docs/decisions/0046-school-solids.md).
+
+**Choose it when** the exercise is about a solid: its diagonal, height,
+slant height, radius, volume or area, or one solid inscribed in another. It
+is not for points, lines and planes on axes (use
+[`space`](../../../src/presets/space/PRESET.md)).
+
+## Input
+
+```json
+{
+  "preset": "solid",
+  "unit": "cm",
+  "solids": [
+    { "kind": "cone", "radius": 2, "height": 4, "labels": true,
+      "show": ["height", "radius", "slant"],
+      "readings": ["measures", "volume", "area"] }
+  ]
+}
+```
+
+| kind | dimensions |
+| --- | --- |
+| `cube` | `edge` |
+| `box` (paralelepípedo) | `width` (along y, page right), `depth` (along x, toward the reader), `height` |
+| `prism` | `sides` (3–12), `edge`, `height` |
+| `pyramid` | `sides` (default 4), `edge`, and `height` **or** `slant` (the apótema g) |
+| `cylinder` | `radius`, `height` |
+| `cone` | `radius`, and `height` **or** `slant` (the geratriz g) |
+| `sphere` | `radius` |
+
+- **`at`** is the centre of the base (for a sphere, its centre). It defaults
+  to the origin. Solids stand upright, with their axis along z.
+- A dimension that is zero or negative is refused. So is an impossible pair:
+  a slant no longer than the radius, or than the base apothem.
+- **Derived solids** type no dimensions at all:
+  - `{"kind": "sphere", "inscribedIn": "<cube or equilateral cylinder>"}`
+  - `{"kind": "sphere", "circumscribes": "<cube or box>"}`
+  - `{"kind": "cone", "inscribedIn": "<cylinder>"}`
+
+  Give the target a `name`.
+- **`labels`**: `true` gives the textbook letters. Base vertices are A, B,
+  C, … counter-clockwise from the front-left, top vertices follow, a
+  pyramid's apex is V. A cylinder's centres are O and O′, a cone's are V
+  and O, a sphere's is O. Pass an array instead to choose the names. A name
+  containing a digit is refused.
+- **`show`**: which construction lines to draw. Each is computed, and each
+  printed length is checked in true 3D length.
+
+  | kind | show |
+  | --- | --- |
+  | `cube` | `edge` (a), `spaceDiagonal` (D = a√3), `faceDiagonal` (d = a√2, with the right angle to D) |
+  | `box` | `dimensions` (the three edges at B), `spaceDiagonal`, `faceDiagonal` |
+  | `prism` | `edge` (ℓ), `height` (a lateral edge) |
+  | `pyramid` | `edge`, `height` (V to O, right angle at O), `baseApothem` (m), `slant` (g, on the right visible face) |
+  | `cylinder` | `radius` (on the top base), `height` (on the right silhouette) |
+  | `cone` | `height`, `radius` (right angle at O), `slant` (on the right silhouette) |
+  | `sphere` | `radius`, `equator` |
+- **`readings`**: `"volume"`, `"area"` (total area) and `"measures"` (the
+  derivation of each shown measure). Each is printed in the panel as
+  formula and value: `V = πr²h/3 = 16π/3`.
+- **`unit`** (top level) prints after every length, with ² for areas and
+  ³ for volumes.
+- **`camera`** is as in `space`. Leave it out to get the default:
+  - **cavalier** when the figure has only polyhedra;
+  - **orthographic, azimuth 0°, elevation 20°** when it has only round
+    solids;
+  - **orthographic, azimuth 30°, elevation 20°** when it mixes both.
+
+  An orthographic camera draws a sphere as a circle and a horizontal rim as
+  a level ellipse, as the textbook does.
+
+## What is drawn
+
+- **Hidden edges are dashed.** An edge is hidden when neither face that
+  meets there faces the reader. A rim point is hidden when neither its cap
+  nor the lateral surface there faces the reader. A cylinder's back half of
+  the bottom rim is dashed. A cone's base rim is dashed between the two
+  points where its silhouettes touch.
+- **Construction lines are dashed** where they run inside the solid or on a
+  face turned away: a height, a space diagonal, a base radius under a cone,
+  a sphere's radius. They are solid on a face the reader sees.
+- **Composites are transparent.** Each solid dashes only its own hidden
+  edges, and no solid hides another. A rim two solids share is drawn once,
+  by the solid listed first.
+- **When a label has no honest spot**, a printed length is shown as its
+  symbol alone (`g`) and its value moves to the panel. This happens when
+  the full label (`g = 13`) would sit nearer another line.

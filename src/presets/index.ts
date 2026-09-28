@@ -40,6 +40,12 @@ import { expandVectors, validateVectorsInput } from "./vectors/preset.ts";
 import type { VectorsInput } from "./vectors/preset.ts";
 import { expandUnitCircle, validateUnitCircleInput } from "./unit-circle/preset.ts";
 import type { UnitCircleInput } from "./unit-circle/preset.ts";
+import { expandConstruction, validateConstructionInput } from "./construction/preset.ts";
+import type { ConstructionInput } from "./construction/preset.ts";
+import { expandSpace, validateSpaceInput } from "./space/preset.ts";
+import type { SpaceInput } from "./space/preset.ts";
+import { expandSolid, validateSolidInput } from "./solid/preset.ts";
+import type { SolidInput } from "./solid/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -68,6 +74,9 @@ export type PresetInput = (
   | ({ preset: "number-line" } & NumberLineInput)
   | ({ preset: "vectors" } & VectorsInput)
   | ({ preset: "unit-circle" } & UnitCircleInput)
+  | ({ preset: "construction" } & ConstructionInput)
+  | ({ preset: "space" } & SpaceInput)
+  | ({ preset: "solid" } & SolidInput)
 ) &
   CommonPresetOptions;
 
@@ -111,6 +120,12 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandVectors(input);
     case "unit-circle":
       return expandUnitCircle(input);
+    case "construction":
+      return expandConstruction(input);
+    case "space":
+      return expandSpace(input);
+    case "solid":
+      return expandSolid(input);
   }
 }
 
@@ -153,6 +168,12 @@ export function validatePresetInput(input: PresetInput): void {
       return validateVectorsInput(raw);
     case "unit-circle":
       return validateUnitCircleInput(raw);
+    case "construction":
+      return validateConstructionInput(raw);
+    case "space":
+      return validateSpaceInput(raw);
+    case "solid":
+      return validateSolidInput(raw);
   }
 }
 
@@ -170,7 +191,10 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "value-table" ||
     preset === "number-line" ||
     preset === "vectors" ||
-    preset === "unit-circle"
+    preset === "unit-circle" ||
+    preset === "construction" ||
+    preset === "space" ||
+    preset === "solid"
   );
 }
 
@@ -186,6 +210,9 @@ export type {
   NumberLineInput,
   VectorsInput,
   UnitCircleInput,
+  ConstructionInput,
+  SpaceInput,
+  SolidInput,
 };
 export type { PresetId };
 

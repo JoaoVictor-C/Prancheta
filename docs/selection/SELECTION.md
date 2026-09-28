@@ -10,7 +10,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, or an angle.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, or a school solid.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -45,6 +45,12 @@ An interval is not a function and not a set (`S-interval-favours-number-line`). 
 A vector is not an edge (`S-vector-favours-vectors`, `S-vector-disqualifies-graph`). An edge joins two things and may be drawn any length; a force or a displacement has a length and a direction that must be drawn to scale, and what an exercise does with vectors — adds them, decomposes them, projects one onto another — is arithmetic the preset performs from the vectors themselves, with every printed length measured against the arrow it names.
 
 An angle on the trigonometric circle is its own question (`S-angle-favours-unit-circle`). *"Marque 5π/4 no ciclo e indique seu seno e cosseno"* asks where a rotation lands and what its projections are, not what curve sin traces over time — so it is the unit circle, where the point is (cos θ, sin θ) computed from the angle, the notable values print exactly (√2/2, not 0,707), and the arc beside the printed angle is checked against it.
+
+A construction is not a scene and not a graph (`S-construction-favours-construction`, `S-construction-disqualifies-graph`). A triangle with its circumcircle, an altitude with the lengths it cuts, an ellipse from its foci — each is a chain of definitions, and a figure drawn by hand beside the numbers it claims can disagree with them in every link. The `construction` preset carries the chain out: free points are the only typed coordinates; every intersection, foot, bisector, tangent and conic is computed; and the only numbers on the drawing, lengths and angles, are measured against the ink they label.
+
+A configuration in space is its own question (`S-space-favours-space`). *"Represente o plano 2x + 3y + 6z = 12 e a reta r que o fura em I"* is about which points, lines and planes there are, and which part of r a reader sees through π. The `vectors` preset has no third axis (`S-space-disqualifies-vectors`), and a graph has no coordinates at all (`S-space-disqualifies-graph`). The `space` preset draws it through the textbook's cavalier camera. Typed coordinates are the only input. Every intersection, foot, cross product and common perpendicular is computed. Every distance, angle and equation is printed exact in the panel, and a line is dashed exactly where a plane patch is nearer the reader.
+
+A school solid is its own question (`S-solid-favours-solid`). *"Um cone tem raio 2 e altura 4; calcule a geratriz e o volume"* is about a body and the numbers its dimensions fix, not about points on axes. The `space` preset draws lines and planes and has no rims or silhouettes (`S-solid-disqualifies-space`), and a graph has no geometry at all (`S-solid-disqualifies-graph`). The `solid` preset takes the dimensions once. Every vertex, rim ellipse and silhouette is computed from them. Hidden edges are dashed by which faces the reader sees. Diagonals, slant heights, volumes and areas are printed exact (`2√3`, `2√5`, `16π/3`), and each length on the drawing is measured in true 3D length. Composites (a sphere in a cube, a cone in a cylinder) are transparent: each solid dashes only its own hidden edges.
 
 ## Answer three questions, not two
 
