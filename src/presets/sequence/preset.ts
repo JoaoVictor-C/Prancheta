@@ -29,8 +29,9 @@
  * shows, where the y axis is named instead).
  *
  * Numbers use the pt-BR formatter from src/locale/format.ts. A limit's
- * value is printed exactly when it snaps to a rational, a root or a
- * multiple of π (`snapExact`/`writeExact`), and "≈ 2,718" otherwise.
+ * value is printed exactly when it snaps to a rational, a root, a
+ * multiple of π or a power of e (`snapExact`/`writeExact`: "= e" for
+ * (1 + 1/n)ⁿ), and with "≈" otherwise.
  */
 
 import type { Connector, FigureSpec, Frame, GridSpec, Point, Scene } from "../../ir/types.ts";

@@ -632,6 +632,11 @@ export function spellForExpression(value: number): string {
   } else if (e.form === "sqrt") {
     body = `sqrt(${e.n})`;
     atomic = true;
+  } else if (e.form === "e") {
+    const m = Math.abs(e.p);
+    const power = m === 0.5 ? "sqrt(e)" : m === 1 ? "e" : `e^${m}`;
+    body = e.p < 0 ? `1/${power}` : power;
+    atomic = e.p > 0;
   } else {
     const k = Math.abs(e.k);
     body = `${k === 1 ? "" : `${k}*`}pi${e.q === 1 ? "" : `/${e.q}`}`;

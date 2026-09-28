@@ -664,6 +664,41 @@ export const RULES: Rule[] = [
     statement:
       "A chart draws the values it is handed and has no limit to compute; a sequence's terms come from its formula.",
   },
+
+  // --- linear-map ------------------------------------------------------------
+  {
+    id: "S-linear-map-favours-linear-map",
+    axis: "structure",
+    when: "linear-map",
+    preset: "linear-map",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A linear map of the plane is drawn by the linear-map preset: the matrix computed from the map, the lattice, the basis and the unit square carried through it, |det A| measured against the parallelogram drawn, eigen-lines from the characteristic polynomial.",
+  },
+  {
+    id: "S-linear-map-disqualifies-vectors",
+    axis: "structure",
+    when: "linear-map",
+    preset: "vectors",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "The vectors preset adds and scales arrows; it cannot carry a lattice or a region through a matrix.",
+  },
+  {
+    id: "S-linear-map-disqualifies-graph",
+    axis: "structure",
+    when: "linear-map",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A graph has no coordinates; a transformation of the plane is nothing but coordinates.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

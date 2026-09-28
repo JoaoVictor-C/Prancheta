@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "rotação com ampliação: autovalores complexos",
+  "matrix": [[1, -1], [1, 1]],
+  "show": { "grid": true, "basis": true, "unitSquare": true, "eigen": true }
+}

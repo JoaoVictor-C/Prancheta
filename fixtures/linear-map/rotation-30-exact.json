@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "rotação de 30° e suas entradas exatas",
+  "named": { "rotation": "pi/6" },
+  "show": { "grid": true, "basis": true, "unitSquare": true }
+}

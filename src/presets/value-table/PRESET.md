@@ -88,8 +88,9 @@ the direction of approach: "x → 1⁻" / "x → 1⁺" for a finite `at`, "x →
 for an infinite one. Below the table, separated by a rule:
 
 - a finite limit: `"lim f(x) = 2"` (exact value, snapped the way `sign-chart` snaps a
-  root — 2, 1/2, √2 — when the numeric value is within tolerance of a simple exact
-  number) or `"lim f(x) = ≈ 2,718"` (a formatted decimal, otherwise);
+  root — 2, 1/2, √2, and here also π and e — when the numeric value is within
+  tolerance of a simple exact number: (1 + 1/x)ˣ at +∞ prints `"lim f(x) = e"`)
+  or `"lim f(x) ≈ 0,693"` (a formatted decimal, otherwise);
 - an infinite limit: `"lim f(x) = +∞"` or `"lim f(x) = −∞"`;
 - no limit (the one-sided results disagree, or one/both never settle): `"o limite não
   existe"`, with both one-sided verdicts printed beneath it — `"x → 0⁻: lim = −1"`.

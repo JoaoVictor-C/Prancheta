@@ -92,7 +92,7 @@ test("printed numbers are exact: rationals, simplified roots, rationalised roots
   assert.deepEqual(printExact(4 / Math.sqrt(14)), { text: "2√14/7", exact: true });
   assert.deepEqual(printExact(-Math.sqrt(2)), { text: "−√2", exact: true });
   assert.deepEqual(printExact(2.5), { text: "2,5", exact: true });
-  assert.equal(printExact(Math.E).exact, false);
+  assert.equal(printExact(Math.log(3)).exact, false);
   assert.equal(printTriple([1.5, -2, 0]).text, "(1,5; −2; 0)");
   assert.deepEqual(printDegrees(Math.PI / 3), { text: "60°", exact: true });
   assert.equal(printDegrees(1).exact, false);

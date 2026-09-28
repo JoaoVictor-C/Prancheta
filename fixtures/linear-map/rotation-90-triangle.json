@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "rotação de 90° do triângulo ABC em torno da origem",
+  "named": { "rotation": 90 },
+  "shapes": [{ "points": [[1, 1], [4, 1], [1, 3]], "label": "ABC" }]
+}

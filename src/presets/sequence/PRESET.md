@@ -49,7 +49,7 @@ Example: `"(-1)^n / n"` for the alternating harmonic series.
 - Each term aₙ is drawn as a filled dot at (n, aₙ). Dots are never joined by a line — a sequence is discrete.
 - When `show: "both"`, both series appear in different colours (blue for aₙ, rust for Sₙ), with a legend that **searches for free space** — never a fixed coordinate, never drawn over a dot or a line — using proper subscripts (aₙ, Sₙ), never an ASCII underscore.
 - When only one series shows, there is **no legend**; the y axis is named instead (aₙ, or Sₙ).
-- When `limit: true`, a dashed limit line is drawn **for every series shown that converges**, each at its own computed limit, in its own series' colour. Each line's label sits **beside** it (above or below, never on the line, never past the canvas edge), declaring `annotates` the line it names, and its value is printed exactly when it snaps to a rational, a root, or a multiple of π ("lim aₙ = 0"), and with "≈" otherwise ("lim aₙ ≈ 2,718").
+- When `limit: true`, a dashed limit line is drawn **for every series shown that converges**, each at its own computed limit, in its own series' colour. Each line's label sits **beside** it (above or below, never on the line, never past the canvas edge), declaring `annotates` the line it names, and its value is printed exactly when it snaps to a rational, a root, a multiple of π or a power of e ("lim aₙ = 0", "lim aₙ = e"), and with "≈" otherwise.
 - All numbers use the specified locale (pt-BR: decimal comma, fractions like 17/3, minus sign "−").
 
 ## Constraints

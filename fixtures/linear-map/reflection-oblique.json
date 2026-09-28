@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "reflexão em torno da reta y = x/2",
+  "named": { "reflection": { "line": "y = x/2" } },
+  "show": { "grid": false, "basis": true, "unitSquare": true, "eigen": true }
+}

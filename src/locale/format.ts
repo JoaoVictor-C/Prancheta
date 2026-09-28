@@ -199,12 +199,16 @@ export type Exact =
   | { value: number; exact: true; form: "rational" }
   | { value: number; exact: true; form: "sqrt"; n: number }
   | { value: number; exact: true; form: "pi"; k: number; q: number }
+  /** ±e^p for p in E_POWERS: the limits (1 + a/n)^n and their kin land here. */
+  | { value: number; exact: true; form: "e"; p: number }
   | { value: number; exact: false };
 
 /** Largest denominator a snapped fraction or multiple of π may have. */
 const SNAP_MAX_Q = 12;
 /** Largest n a snapped √n may have. */
 const SNAP_MAX_SQUARE = 400;
+/** The powers of e a snapped value may be: e, e², e³, their reciprocals, and √e, 1/√e. */
+const E_POWERS = [1, 2, 3, -1, -2, -3, 0.5, -0.5];
 
 function gcd(a: number, b: number): number {
   return b === 0 ? Math.abs(a) : gcd(b, a % b);
@@ -212,7 +216,8 @@ function gcd(a: number, b: number): number {
 
 /**
  * The exact value `r` is, if it is one of the numbers a Cálculo 1 text meets:
- * p/q with q ≤ 12, ±√n with n ≤ 400, or kπ/q with q ≤ 12. The nearest
+ * p/q with q ≤ 12, ±√n with n ≤ 400, kπ/q with q ≤ 12, or ±eᵖ for
+ * p = ±1, ±2, ±3, ±1/2. The nearest
  * candidate within `tolerance · max(1, |r|)` wins, rationals first on a tie.
  * `tolerance` is the caller's statement of how precise its number is: a
  * bisected root is good to ~1e-9, a central-difference slope to ~1e-6, a
@@ -240,6 +245,7 @@ export function snapExact(r: number, tolerance: number): Exact {
     const g = gcd(k, q);
     offer({ value: (k * Math.PI) / q, exact: true, form: "pi", k: k / g, q: q / g });
   }
+  if (r !== 0) for (const p of E_POWERS) offer({ value: Math.sign(r) * Math.exp(p), exact: true, form: "e", p });
   if (best.exact && Math.abs(best.value) < 1e-12) return { value: 0, exact: true, form: "rational" };
   return best;
 }
@@ -249,8 +255,16 @@ export function writeExact(e: Exact, locale: Locale = "pt-BR"): string {
   if (!e.exact || e.form === "rational") return formatNumber(e.value, locale);
   const sign = e.value < 0 ? MINUS : "";
   if (e.form === "sqrt") return `${sign}√${e.n}`;
+  if (e.form === "e") return sign + writeEPower(e.p);
   const k = Math.abs(e.k);
   return `${sign}${k === 1 ? "" : k}π${e.q === 1 ? "" : `/${e.q}`}`;
+}
+
+/** e, e², e³, √e and their reciprocals, as printed. */
+function writeEPower(p: number): string {
+  const m = Math.abs(p);
+  const body = m === 0.5 ? "√e" : m === 1 ? "e" : `e${m === 2 ? "²" : "³"}`;
+  return p < 0 ? `1/${body}` : body;
 }
 
 /** The same, as TeX source for KaTeX: `\frac{8}{3}`, `\sqrt{2}`, `\frac{3\pi}{2}`, `2{,}5`. */
@@ -258,6 +272,11 @@ export function writeExactTex(e: Exact, locale: Locale = "pt-BR"): string {
   if (!e.exact || e.form === "rational") return formatNumberTex(e.value, locale);
   const sign = e.value < 0 ? "-" : "";
   if (e.form === "sqrt") return `${sign}\\sqrt{${e.n}}`;
+  if (e.form === "e") {
+    const m = Math.abs(e.p);
+    const body = m === 0.5 ? "\\sqrt{e}" : m === 1 ? "e" : `e^{${m}}`;
+    return sign + (e.p < 0 ? `\\frac{1}{${body}}` : body);
+  }
   const k = Math.abs(e.k);
   const top = `${k === 1 ? "" : k}\\pi`;
   return sign + (e.q === 1 ? top : `\\frac{${top}}{${e.q}}`);

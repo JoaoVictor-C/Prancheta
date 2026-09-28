@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "T(x, y) = (2x + y, x − y): determinante negativo",
+  "matrix": [[2, 1], [1, -1]],
+  "show": { "grid": true, "basis": true, "unitSquare": true, "eigen": true }
+}
