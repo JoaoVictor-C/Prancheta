@@ -35,8 +35,32 @@
  * the ciclo trigonométrico and what they fix: cos and sin as projections,
  * tangent, the symmetric angles in the other quadrants. Not a "function":
  * the question is where an angle lands, not the curve sin traces over time.
+ *
+ * "construction" is a figure of plane geometry built from its own
+ * definitions -- points, lines, circles and conics each defined from the ones
+ * before it (a midpoint, an intersection, a perpendicular, a tangent, a
+ * circumcircle, an ellipse from its foci) -- with lengths and angles read off
+ * the construction. Not a "scene": a scene is drawn as it looks, a
+ * construction as the geometry that makes it. Not a "vector": nothing is
+ * added or scaled.
+ *
+ * "space" is a configuration in R³ -- points, vectors, lines and planes
+ * with their intersections, distances and angles, drawn on three axes
+ * through a camera. Not a "vector": a vector is in the plane and drawn to
+ * scale on a grid; in space nothing is to scale on the page, and what is
+ * drawn is which line goes behind which plane. Not a "construction": a
+ * construction is plane geometry.
+ *
+ * "solid" is a school solid of geometria espacial -- a cube, a
+ * paralelepípedo, a regular prism or pyramid, a right cylinder or cone, a
+ * sphere, or one inscribed in another -- with its heights, radii,
+ * diagonals, slant heights, volume and area computed from its dimensions.
+ * Not "space": space is points, lines and planes on three axes, and has no
+ * silhouettes; a solid is drawn as the body the exercise names, without
+ * axes. Not a "scene": a scene is drawn as it looks, a solid as the
+ * geometry its dimensions fix.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -75,7 +99,10 @@ export type PresetId =
   | "value-table"
   | "number-line"
   | "vectors"
-  | "unit-circle";
+  | "unit-circle"
+  | "construction"
+  | "space"
+  | "solid";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -132,6 +159,21 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "unit-circle",
     implemented: true,
     summary: "The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles.",
+  },
+  {
+    id: "construction",
+    implemented: true,
+    summary: "Plane and analytic geometry built from definitions: intersections, perpendiculars, bisectors, tangents, triangle centres and conics, with every length and angle computed.",
+  },
+  {
+    id: "space",
+    implemented: true,
+    summary: "Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed.",
+  },
+  {
+    id: "solid",
+    implemented: true,
+    summary: "School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact.",
   },
 ];
 

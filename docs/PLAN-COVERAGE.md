@@ -122,6 +122,12 @@ about rectangles, not projected faces).
 | slow divergence in `numeric.limit` (ln x at 0⁺ is −∞) | — | done 2026-09-27; slow CONVERGENCE (x·ln x → 0) still reads "none" |
 | seeded variants: domains, declarative predicates, bounded admission loop | [0041](decisions/0041-seeded-variants.md) | done 2026-09-27; its `derive` removed by 0042 (predicates now see `calc.evaluateParams`) |
 | variant sheets and a separate gabarito: `sheet --variants N [--seed S]`, `--answers separate`, manifest, shortfall fails the build | [0042](decisions/0042-variant-sheets-and-gabarito.md) | done 2026-09-27; Phase 2 complete |
+| one vector algebra for 2D and 3D (`src/geometry/vec.ts`) | [0043](decisions/0043-one-vector-algebra.md) | done 2026-09-28 |
+| constructive 2D kernel: `construction` preset (points, lines, circles, conics by definition) | [0044](decisions/0044-constructions.md) | done 2026-09-28 |
+| 3D camera and `space` preset (R³ points, vectors, lines, planes; dashed behind planes) | [0045](decisions/0045-space-and-projection.md) | done 2026-09-28 |
+| school solids: `solid` preset (polyhedra, cylinder, cone, sphere; true-3D measured lengths) | [0046](decisions/0046-school-solids.md) | done 2026-09-28 |
+| word-problem pictograms in `construction`, with a `unit` for lengths | [0047](decisions/0047-word-problem-pictograms.md) | done 2026-09-28 |
+| `length-matches-its-label` reads exact roots ("2√13") | — | done 2026-09-28 |
 | corpus coverage audit | — | not started |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each

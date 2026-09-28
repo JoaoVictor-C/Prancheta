@@ -1,0 +1,10 @@
+{
+  "preset": "construction",
+  "title": "Elipse de focos F₁ e F₂ e eixo maior 2a = 10",
+  "axes": true,
+  "objects": [
+    { "F1": [-4, 0], "label": "F₁" },
+    { "F2": [4, 0], "label": "F₂" },
+    { "name": "E", "ellipse": { "foci": ["F1", "F2"], "a": 5 }, "show": ["foci", "vertices", "equation"], "label": true }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "preset": "solid",
+  "title": "cone: geratriz a partir do raio e da altura",
+  "solids": [
+    { "kind": "cone", "radius": 2, "height": 4, "labels": true, "show": ["height", "radius", "slant"], "readings": ["measures", "volume", "area"] }
+  ]
+}

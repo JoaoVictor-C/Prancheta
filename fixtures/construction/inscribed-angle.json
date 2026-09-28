@@ -1,0 +1,19 @@
+{
+  "preset": "construction",
+  "title": "Ângulo inscrito e ângulo central sobre o mesmo arco AB",
+  "objects": [
+    { "O": [0, 0] },
+    { "name": "λ", "circle": { "center": "O", "radius": 3 } },
+    { "name": "A", "onCircle": { "circle": "λ", "angle": 200 } },
+    { "name": "B", "onCircle": { "circle": "λ", "angle": 320 } },
+    { "name": "C", "onCircle": { "circle": "λ", "angle": 95 } },
+    { "name": "CA", "segment": ["C", "A"] },
+    { "name": "CB", "segment": ["C", "B"] },
+    { "name": "OA", "segment": ["O", "A"], "dashed": true },
+    { "name": "OB", "segment": ["O", "B"], "dashed": true }
+  ],
+  "annotations": [
+    { "angle": ["A", "C", "B"] },
+    { "angle": ["A", "O", "B"] }
+  ]
+}

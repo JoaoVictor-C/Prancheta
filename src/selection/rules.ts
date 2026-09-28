@@ -435,6 +435,95 @@ export const RULES: Rule[] = [
     statement:
       "An angle on the trigonometric circle is drawn by unit-circle: its point, cos and sin computed from the angle, never placed by hand.",
   },
+
+  // --- construction ------------------------------------------------------
+  {
+    id: "S-construction-favours-construction",
+    axis: "structure",
+    when: "construction",
+    preset: "construction",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A geometric construction is drawn by the construction preset: every point, line and circle computed from its definition, every printed length and angle measured against the drawing.",
+  },
+  {
+    id: "S-construction-disqualifies-graph",
+    axis: "structure",
+    when: "construction",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement: "A construction is not a node-and-edge graph: its points have coordinates and its lines have directions that must be drawn to scale.",
+  },
+
+  // --- space ---------------------------------------------------------------
+  {
+    id: "S-space-favours-space",
+    axis: "structure",
+    when: "space",
+    preset: "space",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A configuration in R³ is drawn by the space preset: every derived point, line and plane computed with the vector algebra, what passes behind a plane dashed by depth.",
+  },
+  {
+    id: "S-space-disqualifies-vectors",
+    axis: "structure",
+    when: "space",
+    preset: "vectors",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement: "The vectors preset draws R² on a grid; a vector in space has a third component it cannot draw.",
+  },
+  {
+    id: "S-space-disqualifies-graph",
+    axis: "structure",
+    when: "space",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement: "Lines and planes in space are not nodes and edges: their positions are coordinates, projected.",
+  },
+
+  // --- solid ---------------------------------------------------------------
+  {
+    id: "S-solid-favours-solid",
+    axis: "structure",
+    when: "solid",
+    preset: "solid",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A school solid is drawn by the solid preset: every vertex, edge, rim and silhouette computed from its dimensions, hidden edges dashed by which faces the reader sees, every measure printed exact.",
+  },
+  {
+    id: "S-solid-disqualifies-space",
+    axis: "structure",
+    when: "solid",
+    preset: "space",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement: "The space preset draws points, lines and planes on axes; it has no faces, rims or silhouettes to draw a cylinder, cone or sphere.",
+  },
+  {
+    id: "S-solid-disqualifies-graph",
+    axis: "structure",
+    when: "solid",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement: "A solid's edges are not a graph's edges: their lengths and directions are the geometry, projected.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

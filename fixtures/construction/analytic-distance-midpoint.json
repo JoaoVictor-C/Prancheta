@@ -1,0 +1,16 @@
+{
+  "preset": "construction",
+  "title": "Distância entre dois pontos, ponto médio e a reta que passa por eles",
+  "axes": true,
+  "objects": [
+    { "A": [-2, 1], "coords": true },
+    { "B": [4, -3], "coords": true },
+    { "name": "r", "line": ["A", "B"], "label": true },
+    { "name": "AB", "segment": ["A", "B"] },
+    { "name": "M", "midpoint": ["A", "B"], "coords": true }
+  ],
+  "annotations": [
+    { "length": "AB", "name": "d" },
+    { "equation": "r" }
+  ]
+}

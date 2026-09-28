@@ -1,0 +1,5 @@
+{
+  "preset": "space",
+  "title": "O plano 2x + 3y + 6z = 12 e o triângulo dos seus interceptos",
+  "planes": [{ "name": "π", "equation": "2x + 3y + 6z = 12", "patch": "octant", "intercepts": true }]
+}

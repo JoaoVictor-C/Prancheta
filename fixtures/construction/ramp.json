@@ -1,0 +1,100 @@
+{
+  "preset": "construction",
+  "title": "Rampa de acesso",
+  "axes": false,
+  "objects": [
+    {
+      "name": "Base",
+      "at": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Foot2",
+      "at": [
+        8,
+        0
+      ],
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "Top",
+      "at": [
+        8,
+        6
+      ],
+      "label": false
+    },
+    {
+      "name": "run",
+      "segment": [
+        "Base",
+        "Foot2"
+      ],
+      "dashed": true
+    },
+    {
+      "name": "rise",
+      "segment": [
+        "Foot2",
+        "Top"
+      ],
+      "dashed": true
+    },
+    {
+      "name": "ramp",
+      "segment": [
+        "Base",
+        "Top"
+      ],
+      "picto": "ramp"
+    },
+    {
+      "name": "GroundLeft",
+      "at": [
+        -1,
+        0
+      ],
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "GroundRight",
+      "at": [
+        9,
+        0
+      ],
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "ground",
+      "segment": [
+        "GroundLeft",
+        "GroundRight"
+      ],
+      "picto": "ground"
+    }
+  ],
+  "annotations": [
+    {
+      "length": "run"
+    },
+    {
+      "length": "rise"
+    },
+    {
+      "length": "ramp"
+    },
+    {
+      "angle": [
+        "Base",
+        "Foot2",
+        "Top"
+      ]
+    }
+  ],
+  "unit": "m"
+}

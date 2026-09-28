@@ -1772,6 +1772,18 @@ function statedLength(text: string): StatedLength | null {
   let t = text.trim().replaceAll("−", "-").replaceAll(" ", " ");
   const equals = t.lastIndexOf("=");
   if (equals >= 0) t = t.slice(equals + 1).trim();
+  // An exact root -- "√13", "2√13", "3√2/2" -- is a stated length too, and
+  // the one a Brazilian exercise prints: reading only decimals left every
+  // exact length off the drawing, in a readings panel no check could reach.
+  // Exact, so no digit of resolution is forgiven; the caller's half pixel
+  // still is.
+  const root = /^(\d+)?\s*√\s*(\d+)(?:\s*\/\s*(\d+))?\s*([^\s\d.,=+\-/][^\s]*)?$/.exec(t);
+  if (root !== null) {
+    const value = (Number(root[1] ?? 1) * Math.sqrt(Number(root[2]))) / Number(root[3] ?? 1);
+    const unit = root[4] ?? null;
+    if (!Number.isFinite(value) || value === 0) return null;
+    return { value, resolution: 0, unit };
+  }
   const match = /^[+-]?(\d[\d.]*(?:,\d+)?)\s*([^\s\d.,=+\-][^\s]*)?$/.exec(t);
   if (match === null) return null;
   const token = match[1]!;

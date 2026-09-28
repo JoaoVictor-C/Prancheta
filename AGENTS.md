@@ -95,6 +95,9 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `number-line` | The real line with intervals and solution sets of inequalities; unions and intersections computed. | yes |
 | `vectors` | Vectors in the plane with sums, multiples, components, projections and angles derived from them. | yes |
 | `unit-circle` | The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles. | yes |
+| `construction` | Plane and analytic geometry built from definitions: intersections, perpendiculars, bisectors, tangents, triangle centres and conics, with every length and angle computed. | yes |
+| `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed. | yes |
+| `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
 
 ## Figure modules
 
@@ -218,6 +221,9 @@ resources:
 | `prancheta://preset/number-line` | number-line preset |
 | `prancheta://preset/vectors` | vectors preset |
 | `prancheta://preset/unit-circle` | unit-circle preset |
+| `prancheta://preset/construction` | construction preset |
+| `prancheta://preset/space` | space preset |
+| `prancheta://preset/solid` | solid preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

@@ -267,3 +267,75 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** favours (weight `4`)
 - **Priority:** 55
 - **Statement:** An angle on the trigonometric circle is drawn by unit-circle: its point, cos and sin computed from the angle, never placed by hand.
+
+## S-construction-favours-construction
+
+- **Axis:** structure
+- **When:** `construction`
+- **Preset:** `construction`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A geometric construction is drawn by the construction preset: every point, line and circle computed from its definition, every printed length and angle measured against the drawing.
+
+## S-construction-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `construction`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A construction is not a node-and-edge graph: its points have coordinates and its lines have directions that must be drawn to scale.
+
+## S-space-favours-space
+
+- **Axis:** structure
+- **When:** `space`
+- **Preset:** `space`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A configuration in R³ is drawn by the space preset: every derived point, line and plane computed with the vector algebra, what passes behind a plane dashed by depth.
+
+## S-space-disqualifies-vectors
+
+- **Axis:** structure
+- **When:** `space`
+- **Preset:** `vectors`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The vectors preset draws R² on a grid; a vector in space has a third component it cannot draw.
+
+## S-space-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `space`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** Lines and planes in space are not nodes and edges: their positions are coordinates, projected.
+
+## S-solid-favours-solid
+
+- **Axis:** structure
+- **When:** `solid`
+- **Preset:** `solid`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A school solid is drawn by the solid preset: every vertex, edge, rim and silhouette computed from its dimensions, hidden edges dashed by which faces the reader sees, every measure printed exact.
+
+## S-solid-disqualifies-space
+
+- **Axis:** structure
+- **When:** `solid`
+- **Preset:** `space`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The space preset draws points, lines and planes on axes; it has no faces, rims or silhouettes to draw a cylinder, cone or sphere.
+
+## S-solid-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `solid`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A solid's edges are not a graph's edges: their lengths and directions are the geometry, projected.

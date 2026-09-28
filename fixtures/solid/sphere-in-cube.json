@@ -1,0 +1,8 @@
+{
+  "preset": "solid",
+  "title": "esfera inscrita no cubo",
+  "solids": [
+    { "kind": "cube", "name": "Cubo", "edge": 4, "labels": true, "show": ["edge"], "readings": ["volume"] },
+    { "kind": "sphere", "name": "Esfera", "inscribedIn": "Cubo", "labels": true, "show": ["radius", "equator"], "readings": ["measures", "volume"] }
+  ]
+}

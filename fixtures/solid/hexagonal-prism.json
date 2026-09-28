@@ -1,0 +1,7 @@
+{
+  "preset": "solid",
+  "title": "prisma hexagonal regular",
+  "solids": [
+    { "kind": "prism", "sides": 6, "edge": 2, "height": 4, "labels": true, "show": ["edge", "height"], "readings": ["volume", "area"] }
+  ]
+}
