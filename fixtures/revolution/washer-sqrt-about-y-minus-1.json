@@ -1,0 +1,7 @@
+{
+  "preset": "revolution",
+  "title": "arruelas: y = √x em [0, 4] em torno da reta y = −1",
+  "region": { "of": "sqrt(x)", "from": 0, "to": 4 },
+  "axis": { "y": -1 },
+  "slice": { "at": 2.5 }
+}

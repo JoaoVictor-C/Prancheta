@@ -1,0 +1,23 @@
+{
+  "preset": "surface",
+  "title": "plano tangente ao paraboloide em P",
+  "expr": "x^2 + y^2",
+  "x": [
+    -2,
+    2
+  ],
+  "y": [
+    -2,
+    2
+  ],
+  "point": {
+    "name": "P",
+    "x": 1,
+    "y": 1,
+    "tangentPlane": true
+  },
+  "z": [
+    0,
+    5
+  ]
+}

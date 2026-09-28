@@ -59,8 +59,38 @@
  * silhouettes; a solid is drawn as the body the exercise names, without
  * axes. Not a "scene": a scene is drawn as it looks, a solid as the
  * geometry its dimensions fix.
+ *
+ * "surface" is the graph of a function of two variables, z = f(x, y) --
+ * a paraboloid, a saddle, a bump -- with its level curves, a point on it
+ * and its tangent plane, every height computed from the expression. Not a
+ * "function": a function has one variable and is drawn on a plane. Not
+ * "space": space draws points, lines and planes, and a surface is none of
+ * them. Not "solid": a solid is a body its dimensions fix, a surface is the
+ * graph its expression fixes.
+ *
+ * "revolution" is a solid of revolution -- a plane region bounded by
+ * y = f(x) (and possibly y = g(x)) swept about an axis -- with its disc,
+ * washer or shell and the volume integral that sums them. Not a "solid": a
+ * school solid is fixed by a few dimensions, a solid of revolution by the
+ * functions that bound its region. Not a "function": the question is the
+ * body the region sweeps and its volume, not the curve.
+ *
+ * "field" is a quantity attached to every point of a plane region -- a
+ * slope field dy/dx = f(x, y) with its solution curves, a vector field
+ * (P, Q) with its flow lines, or the level curves f(x, y) = c with the
+ * gradient across them. Not a "function": nothing is a curve y = f(x);
+ * the marks are sampled everywhere and every curve is integrated. Not a
+ * "vector": a vector is one arrow to scale, a field is a direction at
+ * every point.
+ *
+ * "sequence" is a list indexed by n = 1, 2, 3, ... -- the terms aₙ of a
+ * sequence or the partial sums Sₙ of a series -- and where it goes as n
+ * grows. Not a "function": nothing exists between n and n + 1, so the
+ * points are never joined. Not a "series" in this vocabulary's sense:
+ * that is data someone measured; a sequence's terms and its limit are
+ * computed from its formula.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -102,7 +132,11 @@ export type PresetId =
   | "unit-circle"
   | "construction"
   | "space"
-  | "solid";
+  | "solid"
+  | "surface"
+  | "revolution"
+  | "field"
+  | "sequence";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -174,6 +208,26 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "solid",
     implemented: true,
     summary: "School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact.",
+  },
+  {
+    id: "surface",
+    implemented: true,
+    summary: "Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact.",
+  },
+  {
+    id: "revolution",
+    implemented: true,
+    summary: "Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15).",
+  },
+  {
+    id: "field",
+    implemented: true,
+    summary: "Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed.",
+  },
+  {
+    id: "sequence",
+    implemented: true,
+    summary: "Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps.",
   },
 ];
 

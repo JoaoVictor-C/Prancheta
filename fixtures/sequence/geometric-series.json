@@ -1,0 +1,8 @@
+{
+  "preset": "sequence",
+  "title": "Geometric series: 1/2^n with partial sums",
+  "term": "1/2^n",
+  "n": [1, 10],
+  "show": "both",
+  "limit": true
+}

@@ -1,0 +1,28 @@
+{
+  "preset": "surface",
+  "title": "paraboloide z = x² + y² e suas curvas de nível",
+  "expr": "x^2 + y^2",
+  "x": [
+    -3.5,
+    3.5
+  ],
+  "y": [
+    -3.5,
+    3.5
+  ],
+  "z": [
+    0,
+    12
+  ],
+  "levels": [
+    1,
+    4,
+    9
+  ],
+  "levelsOn": "both",
+  "camera": {
+    "kind": "orthographic",
+    "azimuth": 30,
+    "elevation": 35
+  }
+}

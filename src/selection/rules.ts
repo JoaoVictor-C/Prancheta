@@ -524,6 +524,146 @@ export const RULES: Rule[] = [
     priority: 90,
     statement: "A solid's edges are not a graph's edges: their lengths and directions are the geometry, projected.",
   },
+
+  // --- surface ---------------------------------------------------------------
+  {
+    id: "S-surface-favours-surface",
+    axis: "structure",
+    when: "surface",
+    preset: "surface",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "The graph of z = f(x, y) is drawn by the surface preset: every mesh height is f, cells painted far to near, level curves found where f = c, the tangent plane from the partial derivatives.",
+  },
+  {
+    id: "S-surface-disqualifies-function-graph",
+    axis: "structure",
+    when: "surface",
+    preset: "function-graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "function-graph draws y = f(x) on a plane; a function of two variables needs a third axis.",
+  },
+  {
+    id: "S-surface-disqualifies-space",
+    axis: "structure",
+    when: "surface",
+    preset: "space",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "The space preset draws points, lines and planes; it has no curved surface and no hidden-surface order.",
+  },
+
+  // --- revolution ------------------------------------------------------------
+  {
+    id: "S-revolution-favours-revolution",
+    axis: "structure",
+    when: "revolution",
+    preset: "revolution",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A solid of revolution is drawn by the revolution preset: the region from its bounding functions, the silhouette and rims swept about the axis, the disc, washer or shell sampled from R(x) and r(x), and the volume integral evaluated and printed exact.",
+  },
+  {
+    id: "S-revolution-disqualifies-solid",
+    axis: "structure",
+    when: "revolution",
+    preset: "solid",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "The solid preset builds bodies from a few dimensions; it has no region, no bounding function and no volume integral.",
+  },
+  {
+    id: "S-revolution-disqualifies-space",
+    axis: "structure",
+    when: "revolution",
+    preset: "space",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "The space preset draws points, lines and planes; a swept region has a curved silhouette it cannot draw.",
+  },
+
+  // --- field -----------------------------------------------------------------
+  {
+    id: "S-field-favours-field",
+    axis: "structure",
+    when: "field",
+    preset: "field",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A slope field, a vector field or a family of level curves is drawn by the field preset: every mark evaluated at its lattice point, every solution or flow curve integrated by RK4, every level curve found where f = c.",
+  },
+  {
+    id: "S-field-disqualifies-function-graph",
+    axis: "structure",
+    when: "field",
+    preset: "function-graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "function-graph draws curves it is given; a field's curves are integrated from the field, and its marks cover the whole plane.",
+  },
+  {
+    id: "S-field-disqualifies-vectors",
+    axis: "structure",
+    when: "field",
+    preset: "vectors",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "The vectors preset draws a few arrows to scale; a field is a direction at every point, drawn on a lattice and never to one scale.",
+  },
+
+  // --- sequence --------------------------------------------------------------
+  {
+    id: "S-sequence-favours-sequence",
+    axis: "structure",
+    when: "sequence",
+    preset: "sequence",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A sequence or a series is drawn by the sequence preset: every term and partial sum evaluated at its n, never joined, and each limit computed by the numeric kit and drawn at its own height.",
+  },
+  {
+    id: "S-sequence-disqualifies-function-graph",
+    axis: "structure",
+    when: "sequence",
+    preset: "function-graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "function-graph joins its samples into a curve; a sequence has nothing between n and n + 1.",
+  },
+  {
+    id: "S-sequence-disqualifies-chart",
+    axis: "structure",
+    when: "sequence",
+    preset: "chart",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A chart draws the values it is handed and has no limit to compute; a sequence's terms come from its formula.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

@@ -1,0 +1,8 @@
+{
+  "preset": "sequence",
+  "title": "Alternating harmonic sequence: (-1)^n/n",
+  "term": "(-1)^n/n",
+  "n": [1, 10],
+  "show": "terms",
+  "limit": true
+}

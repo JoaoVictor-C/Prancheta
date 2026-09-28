@@ -1,0 +1,8 @@
+{
+  "preset": "sequence",
+  "title": "Sequence (1+1/n)^n approaching e",
+  "term": "(1+1/n)^n",
+  "n": [1, 15],
+  "show": "terms",
+  "limit": true
+}
