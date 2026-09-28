@@ -1,0 +1,8 @@
+{
+  "preset": "sequence",
+  "title": "Harmonic sequence: 1/n",
+  "term": "1/n",
+  "n": [1, 12],
+  "show": "terms",
+  "limit": true
+}

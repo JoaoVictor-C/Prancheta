@@ -57,6 +57,10 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `construction` | Plane and analytic geometry built from definitions: intersections, perpendiculars, bisectors, tangents, triangle centres and conics, with every length and angle computed. | yes |
 | `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed. | yes |
 | `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
+| `surface` | Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact. | yes |
+| `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
+| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed. | yes |
+| `sequence` | Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps. | yes |
 
 ## Figure modules
 
@@ -168,7 +172,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, or a school solid.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, or a sequence.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -209,6 +213,14 @@ A construction is not a scene and not a graph (`S-construction-favours-construct
 A configuration in space is its own question (`S-space-favours-space`). *"Represente o plano 2x + 3y + 6z = 12 e a reta r que o fura em I"* is about which points, lines and planes there are, and which part of r a reader sees through π. The `vectors` preset has no third axis (`S-space-disqualifies-vectors`), and a graph has no coordinates at all (`S-space-disqualifies-graph`). The `space` preset draws it through the textbook's cavalier camera. Typed coordinates are the only input. Every intersection, foot, cross product and common perpendicular is computed. Every distance, angle and equation is printed exact in the panel, and a line is dashed exactly where a plane patch is nearer the reader.
 
 A school solid is its own question (`S-solid-favours-solid`). *"Um cone tem raio 2 e altura 4; calcule a geratriz e o volume"* is about a body and the numbers its dimensions fix, not about points on axes. The `space` preset draws lines and planes and has no rims or silhouettes (`S-solid-disqualifies-space`), and a graph has no geometry at all (`S-solid-disqualifies-graph`). The `solid` preset takes the dimensions once. Every vertex, rim ellipse and silhouette is computed from them. Hidden edges are dashed by which faces the reader sees. Diagonals, slant heights, volumes and areas are printed exact (`2√3`, `2√5`, `16π/3`), and each length on the drawing is measured in true 3D length. Composites (a sphere in a cube, a cone in a cylinder) are transparent: each solid dashes only its own hidden edges.
+
+The graph of a function of two variables is its own question (`S-surface-favours-surface`). *"Esboce o gráfico de f(x, y) = x² + y² e suas curvas de nível"* is not a curve on a plane — `function-graph` has one variable (`S-surface-disqualifies-function-graph`) — and not a configuration of points, lines and planes (`S-surface-disqualifies-space`). The `surface` preset takes the expression and the domain. Every mesh height is f, cells are painted far to near, which is exact for a surface with one z per (x, y), and every line is drawn only where no nearer cell covers it. Level curves are found where f = c and drawn at their height and projected onto a floor; a point's height is computed, and its tangent plane is printed exact (`z = 2x + 2y − 2`). A sphere, a torus or a surface that crosses itself has more than one z per (x, y): that is the matplotlib module's figure, not this preset's. A flat contour map is the `field` preset's.
+
+A solid of revolution is not a school solid (`S-revolution-favours-revolution`, `S-revolution-disqualifies-solid`). *"Calcule o volume do sólido obtido girando a região entre y = x² e y = x em torno do eixo x"* names a region and an axis, and the body exists only as what the region sweeps; the `solid` preset has dimensions and no functions, and the `space` preset has no curved silhouette (`S-revolution-disqualifies-space`). The `revolution` preset takes the bounding functions, the interval and the axis. The region is sampled from the functions, the silhouette and rims are swept from it, and the far half is dashed. The slice the method names — disc, washer or shell — is drawn at a chosen x with R(x), r(x) and dx labelled on it, and the volume integral is evaluated numerically and printed exact when it snaps (`2π/15`), never typed.
+
+A field is not a function and not a vector (`S-field-favours-field`). *"Esboce o campo de direções de y′ = x − y e a solução com y(0) = 3"* asks for a direction at every point and the curve that follows them. `function-graph` draws curves it is handed (`S-field-disqualifies-function-graph`), and `vectors` draws a few arrows to scale (`S-field-disqualifies-vectors`). The `field` preset evaluates the slope or the vector (P, Q) on a lattice and integrates every solution or flow curve from its starting point by RK4, stopping and saying so at a singularity. Level curves of f(x, y) = c are found by marching squares, and the gradient drawn across them is computed by central differences.
+
+A sequence is not a function (`S-sequence-favours-sequence`, `S-sequence-disqualifies-function-graph`). *"Represente os cinco primeiros termos de aₙ = (−1)ⁿ/n e indique seu limite"* has nothing between n and n + 1, and a curve through its terms draws values that do not exist. It is not a chart either (`S-sequence-disqualifies-chart`): a chart plots the numbers it is handed, and here every term, every partial sum and each limit is computed from the formula. The `sequence` preset evaluates aₙ or Sₙ at each n and draws unjoined dots. It computes the limit of the terms and the limit of the partial sums separately, with the numeric kit. Each limit is drawn as its own dashed line at its own height, printed exact when it snaps (`= 1`) and approximate when it does not (`≈ 2,718`).
 
 ## Answer three questions, not two
 
@@ -1461,3 +1473,353 @@ is not for points, lines and planes on axes (use
 - **When a label has no honest spot**, a printed length is shown as its
   symbol alone (`g`) and its value moves to the panel. This happens when
   the full label (`g = 13`) would sit nearer another line.
+
+### surface
+
+The graph of a function of two variables, z = f(x, y), as Cálculo 2/3
+textbooks (Stewart, Guidorizzi) draw it: a shaded mesh on three axes, its
+level curves at their height and projected onto a floor, and a point on it
+with its tangent plane. The expression is the only geometry you type. Every
+mesh vertex is f at a grid point, every level-curve vertex satisfies
+f = c, the point's height is f(x0, y0), and the tangent plane's
+coefficients are its partial derivatives, printed exact
+(`z = 2x + 2y − 2`). See
+[ADR 0048](../../../docs/decisions/0048-surfaces.md).
+
+**Choose it when** the exercise is about a function of two variables: its
+graph, its curvas de nível, a point on it, its plano tangente. It is not for
+points, lines and planes in R³ (use [`space`](../../../src/presets/space/PRESET.md)), for
+school solids (use [`solid`](../../../src/presets/solid/PRESET.md)), or for a flat contour map
+(the `field` preset owns 2D level-curve maps).
+
+## Input
+
+```json
+{
+  "preset": "surface",
+  "expr": "x^2 + y^2",
+  "x": [-3.5, 3.5],
+  "y": [-3.5, 3.5],
+  "z": [0, 12],
+  "levels": [1, 4, 9],
+  "point": { "name": "P", "x": 1, "y": 1, "tangentPlane": true }
+}
+```
+
+| field | meaning |
+| --- | --- |
+| `expr` | f(x, y) in x and y: `"x^2 - y^2"`, `"e^(-(x^2 + y^2))"`, `"xy"`, `"sqrt(4 - x^2 - y^2)"`. Any other name is refused. |
+| `x`, `y` | the rectangle of the domain; a bound may be a constant expression (`"pi"`). |
+| `z` | the visible height range. The surface is cut where it leaves it, and the cut rim is drawn (it is the level curve at that height). Derived from f when omitted: the lowest value rounded down, the highest value. |
+| `zScale` | drawn length of one unit of z against one of x and y. Derived when omitted: a graph much taller or flatter than it is wide is scaled to read, and the panel says so (`eixo z desenhado na escala 0,53 : 1`). Tick numbers stay true values. |
+| `camera` | as in `space`. Default: orthographic, azimuth 30°, elevation 26° -- x toward the reader and left, y right, z up. It must look from above. |
+| `mesh` | cells per side of the shaded mesh (4–64, default 24). |
+| `lines` | grid lines per side along constant x and constant y (default 12); must divide `mesh`. |
+| `axes` | `{ "ticks": true }` numbers the axes; `{ "names": false }` drops x, y, z. |
+| `levels` | levels c of the curves f(x, y) = c. A level f never crosses on the domain is refused. |
+| `levelsOn` | `"both"` (default), `"surface"` or `"floor"`. |
+| `floor` | the height of the plane the level curves are projected onto; default the bottom of the z range, and never above it. |
+| `point` | `{ name, x, y, guide, tangentPlane }`: x and y typed, z computed; a typed `z` is refused. `guide` (default true) draws the dashed guides down to the xy-plane and across to the axes. |
+
+## What is drawn, and what is refused
+
+- **Hidden parts** are decided by painting cells far to near (exact for a
+  single-valued surface) and drawing every line only where no nearer cell
+  covers it. Nothing hidden is dashed: a surface is opaque.
+- **Holes.** Where f is undefined, jumps or blows up, no cell and no line
+  is drawn across; at the edge of f's domain (a hemisphere's rim) the mesh
+  runs to where f stops. The panel says so.
+- **Labels.** Level labels (`z = 4`) sit beside their floor curve when an
+  honest spot exists, else on a leader line in the curve's colour. The
+  point's name sits beside its dot or on a leader. Every label is off the
+  surface: a shaded cell is ink.
+- **The tangent plane** is refused where f has no tangent plane (one-sided
+  slopes differ), where the surface crosses its plane near the point (a
+  saddle), or where a silhouette crosses the plane's patch. The refusal
+  names the matplotlib module as the fallback.
+- **Refused outright:** a camera looking from below or straight down, a
+  floor above the z range, a point outside the domain, in a hole, outside
+  the z range or on a part of the surface the camera does not see.
+
+### revolution
+
+The Cálculo 2 figure "volume de sólido de revolução": a plane region turned
+about an axis. The solid, a highlighted slice, the plane region with its
+representative rectangle, and the volume. All of it is derived from the
+expressions and the axis. See
+[ADR 0049](../../../docs/decisions/0049-solids-of-revolution.md).
+
+**Choose it when** the exercise revolves a region under a curve, or between
+two curves, about the x axis, the y axis, or a line y = c or x = c, and asks
+for the volume by discs, washers or shells. It is not for school solids
+from their dimensions (use [`solid`](../../../src/presets/solid/PRESET.md)).
+
+## Input
+
+```json
+{
+  "preset": "revolution",
+  "region": { "of": "sqrt(x)", "from": 0, "to": 4 },
+  "axis": "x",
+  "slice": { "at": 2.5 }
+}
+```
+
+- **`region`** takes one of two forms:
+  - `{"of": f, "from": a, "to": b}` is the region between y = f(x) and the
+    x axis on [a, b].
+  - `{"between": [f, g], "from"?, "to"?}` is the region between two curves.
+    With no bounds, the bounds are the curves' first and last intersection
+    in [−20, 20].
+
+  Bounds may be numbers or constants (`"pi/2"`). Expressions are in x.
+- **`axis`** is `"x"`, `"y"`, `{"y": c}` or `{"x": c}`.
+- **`method`** is optional:
+  - about a horizontal line it is `discs`, or `washers` when the region
+    leaves a hole;
+  - about a vertical line it is `shells`.
+
+  Asking for the other method is refused: it would need the region
+  described as a function of y (see "Refused" below).
+- **`slice`**: `true` (the default) highlights one slice at 62% of the
+  interval, `{"at": x}` puts it there, and `false` shows none.
+- **`sections`**: how many cross-sections to draw on the outer surface,
+  0–6. The default is 3. Sections too close to the slice are skipped.
+- **`plane`**: the companion plane view. The default is `true`.
+- **`camera`** is as in `space`/`solid`. The default is orthographic:
+  - azimuth −22°, elevation 0 about a horizontal axis;
+  - azimuth 0, elevation 22° about a vertical one.
+
+## What is drawn
+
+- **The solid.**
+  - Its outline is the silhouette: where the surface normal is
+    perpendicular to the view. That is the envelope of the cross-section
+    ellipses, computed, not the meridian curve.
+  - The rims are the circles swept by the region's corners.
+  - The cross-sections are drawn on the outer surface.
+  - Anything the solid itself hides is dashed. This is decided by casting
+    the viewing ray against the solid's own membership test, so holes and
+    hidden inner surfaces come out right.
+  - The axis of revolution is blue, dashed inside the solid.
+- **The slice.** It is a disc, a washer or a cylindrical shell, in the
+  accent colour:
+  - disc or washer: its radius R (and r) runs on the front face;
+  - shell: its radius and height (h);
+  - its thickness is a `dx` dimension set clear of the solid, with
+    extension lines back to the slice.
+- **The plane view.** The region is in the solid's tint and the curves
+  are named (`y = √x`). The representative rectangle is in the accent
+  colour, with R and r (or the shell's r and h) as dimension segments
+  labelled from the expressions: `R(x) = √x + 1`, `h(x) = x − x²`.
+- **The panel.**
+  - line 1: the method and its integral, `Discos: V = π∫₀⁴ R(x)² dx, com
+    R(x) = √x`;
+  - line 2: the integral of these curves and its value, `V = π∫₀⁴ (√x)² dx
+    = 8π ≈ 25,133`.
+
+  The value is exact when it is a rational multiple of π. Otherwise it is
+  printed after `≈`.
+
+A measure label with no honest spot (nearer its own segment than anything
+else, clear of every line) is not printed there. Its segment is dropped
+from that view too, and the measure is left to the other view and the
+panel.
+
+## Refused
+
+- A region on both sides of its axis, or across a vertical axis. The
+  refusal names where it crosses.
+- A pole or an undefined point in the interval.
+- Two curves that cross inside the interval. Revolve each piece on its
+  own.
+- `shells` about a horizontal line, and `discs`/`washers` about a vertical
+  one.
+- A slice outside the interval.
+- A camera that looks along the axis, or sees the cross-sections edge-on.
+
+### field
+
+Slope fields, vector fields and level curves, for Cálculo 2/3 and Álgebra
+Linear: EDO's "campo de direções", a vector field's flow lines, and the 2D
+contour map of a function of two variables. Every mark on the plane —
+a slope segment's direction, a vector's length, a level curve's shape, a
+solution or flow curve's path, a gradient arrow — is **derived** from the
+stated expression, never typed. See `docs/decisions/0050-fields.md` for the
+reasoning behind the scaling rule and the drawing order.
+
+**Choose it when** the content is `dy/dx = f(x, y)` (a slope field), a planar
+vector field `(P(x, y), Q(x, y))`, or the level sets of `f(x, y) = c`. It is
+not for a single curve `y = f(x)` (`function-graph`) or a static vector
+computed from other vectors (`vectors`).
+
+## Input
+
+Three shapes, chosen by `kind`. All three share `x`/`y` (the plotted box, in
+world units), `title` and `locale`.
+
+### `kind: "slope"` — dy/dx = f(x, y)
+
+```json
+{
+  "preset": "field",
+  "kind": "slope",
+  "f": "x - y",
+  "x": [-4, 4],
+  "y": [-4, 4],
+  "solutions": [
+    { "at": [0, 3], "label": "y(0)=3" },
+    { "at": [0, -2] }
+  ]
+}
+```
+
+- **`f`** — the right-hand side of `dy/dx = f(x, y)`, an expression over `x`
+  and `y` (`src/math/expr.ts`).
+- **`solutions`** (optional) — initial points `{ "at": [x0, y0] }`, each
+  integrated by `rk4Scalar` in both directions until the curve leaves the
+  plotted box, `f` goes non-finite (a singularity), or it has run long
+  enough. `label`, if given, appears in the reading below the plot; there is
+  deliberately no text label ON the plot for a solution curve — the field's
+  own marks tile the whole box too densely for one to have honest room (ADR
+  0050).
+- A mark's direction is `(1, f(x, y))` at each grid point, drawn at a FIXED
+  length in page pixels (`SEGMENT_LEN_PX`) so no mark looks steeper than
+  another only because it is longer.
+
+### `kind: "vector"` — a planar field (P, Q)
+
+```json
+{
+  "preset": "field",
+  "kind": "vector",
+  "p": "-y",
+  "q": "x",
+  "x": [-3, 3],
+  "y": [-3, 3],
+  "flowLines": [{ "at": [1, 0], "label": "r=1" }]
+}
+```
+
+- **`p`**, **`q`** — the field's two components, expressions over `x` and
+  `y`.
+- **`flowLines`** (optional) — initial points, each integrated by
+  `rk4Planar` in both directions the same way a slope field's solutions are.
+- Arrow length is **proportional** to magnitude, one scale factor shared by
+  the whole figure (ADR 0050): the longest sampled arrow is set to about 42%
+  of the lattice spacing, which is also what keeps arrows from overlapping.
+  A magnitude of (numerically) zero draws a small dot instead of a
+  zero-length arrow, which has no direction to draw.
+
+### `kind: "levels"` — the level sets of f(x, y)
+
+```json
+{
+  "preset": "field",
+  "kind": "levels",
+  "f": "x^2 + y^2",
+  "x": [-4, 4],
+  "y": [-4, 4],
+  "levels": [1, 4, 9],
+  "gradientAt": [[1, 1], [2, 0]]
+}
+```
+
+- **`f`**, **`levels`** — the function and the level values to draw, found
+  by `src/math/contour.ts` (marching squares with bisected crossings, ADR
+  0029). Every branch of every level carries its own value, set into a gap
+  cut in the branch (the contour map's convention) — the ink under the
+  number is removed, never covered. A branch with no clear spot for the gap
+  keeps no label; its siblings carry the value.
+- **`gradientAt`** (optional) — points to draw `∇f` at, by central
+  differences. A gradient arrow is perpendicular to the level curve through
+  that point by construction — a level curve is where `f` does not change,
+  the gradient is where it changes fastest, and the two cannot fail to be
+  perpendicular for a differentiable `f` (checked numerically in
+  `tests/field.test.ts`, not merely asserted).
+
+## What is checked
+
+The same box-model checks every preset renders through (`text-clear-of-ink`,
+`backing-hides-no-ink`, `annotation-nearest-its-owner`, `contrast-sufficient`,
+…) hold a field figure to the same standard as any other: a label may not sit
+on a line, a curve's own value must be nearer that curve than anything else,
+a tick number keeps its pt-BR spelling and contrast. `tests/field.test.ts`
+additionally decodes the frame's own affine map back from canvas pixels to
+`(x, y)` and checks the DRAWN geometry against the stated expression: a
+slope mark's direction equals `f` there, a solution curve satisfies the ODE
+along its own points, a vector arrow points along `(P, Q)`, a level curve's
+points satisfy `f = c`, a gradient is perpendicular to its level curve.
+
+## What is refused
+
+- A solution curve or flow line whose initial point sits on a singularity of
+  the field (`f`, or `(P, Q)`, not finite there).
+- Levels that are attained nowhere inside the plotted box.
+- An `x`/`y` range that is not `[lo, hi]` with `lo < hi`.
+- A curve that would have to be drawn through a pole: `rk4Scalar`/`rk4Planar`
+  stop and report why (`"boundary"`, `"non-finite"`, `"max-length"`,
+  `"max-steps"`), and the curve is drawn only up to that point — never
+  through it with whatever number came out the other side.
+
+### sequence
+
+## What it is
+
+A sequence aₙ is drawn as filled dots on a gridded plane, one dot per term — a real `Frame` with a lattice, pt-BR ticks, and two arrowed axes: "n" horizontal, "aₙ" (or "Sₙ") vertical. Every point is **computed** from the expression, never typed.
+
+Partial sums Sₙ = a₁ + a₂ + ... + aₙ can be drawn as a separate series, and `limit: true` draws a dashed limit line for **every series shown that converges**, each at its **own** computed limit — the terms' limit and the series' (partial sums') limit are generally different numbers (1/2ⁿ's terms head to 0; its partial sums head to 1), and each line is labelled beside itself, in its own series' colour.
+
+## Input
+
+```json
+{
+  "preset": "sequence",
+  "term": "1/n",
+  "n": [1, 12],
+  "show": "terms",
+  "limit": false
+}
+```
+
+| field | type | default | what it does |
+| --- | --- | --- | --- |
+| `title` | string | "sequência" | figure title |
+| `locale` | "pt-BR" \| "en-US" | "pt-BR" | number formatting and axis labels |
+| `term` | string | (required) | the term expression, in variable "n" |
+| `n` | [number, number] | (required) | range [start, end], both inclusive integers ≥ 1 |
+| `show` | "terms" \| "partial-sums" \| "both" | "terms" | what series to plot |
+| `limit` | boolean | false | draw a dashed limit line for every convergent series shown |
+
+### Expressions
+
+The `term` field is compiled and evaluated with `n` as the free variable, using the same expression language as `function-graph` and `sign-chart`:
+
+- Arithmetic: `+`, `−`, `*`, `/`, `^` (power)
+- Functions: `sqrt`, `abs`, `sin`, `cos`, `tan`, `exp`, `ln`, `log`, `log10`, `floor`, `ceil`, `round`
+- Constants: `π`, `pi`, `e`
+- Special forms: `if(cond, then, else)`, `max(...)`, `min(...)`
+
+Example: `"(-1)^n / n"` for the alternating harmonic series.
+
+### The plane
+
+- A real gridded `Frame` (ADR 0034): a light lattice, integer ticks on n, pt-BR-formatted ticks on the value axis, and a heavier zero line where the value range actually contains zero.
+- Both axes are drawn as arrowed connectors and named: "n" for the horizontal axis; "aₙ", "Sₙ", or "aₙ, Sₙ" for the vertical one, depending on `show`.
+- x and y each get their own scale — a sequence plot is not a geometric figure whose angles must be preserved, and a wide n range paired with a narrow, nearly-converged value range is common.
+
+### Output
+
+- Each term aₙ is drawn as a filled dot at (n, aₙ). Dots are never joined by a line — a sequence is discrete.
+- When `show: "both"`, both series appear in different colours (blue for aₙ, rust for Sₙ), with a legend that **searches for free space** — never a fixed coordinate, never drawn over a dot or a line — using proper subscripts (aₙ, Sₙ), never an ASCII underscore.
+- When only one series shows, there is **no legend**; the y axis is named instead (aₙ, or Sₙ).
+- When `limit: true`, a dashed limit line is drawn **for every series shown that converges**, each at its own computed limit, in its own series' colour. Each line's label sits **beside** it (above or below, never on the line, never past the canvas edge), declaring `annotates` the line it names, and its value is printed exactly when it snaps to a rational, a root, or a multiple of π ("lim aₙ = 0"), and with "≈" otherwise ("lim aₙ ≈ 2,718").
+- All numbers use the specified locale (pt-BR: decimal comma, fractions like 17/3, minus sign "−").
+
+## Constraints
+
+- n must be integers in the range [1, ∞).
+- All term values must be finite (no ±∞, no NaN).
+- Maximum 60 terms (to keep rendering fast).
+- Empty or reversed ranges are refused.
+- A series' limit is computed only at integer n — the term expression is not assumed continuous (`(-1)^n/n` is not defined at a fractional n), so both the terms' limit and the partial sums' (series') limit are read off an integer-indexed approach to infinity, never a continuous one.

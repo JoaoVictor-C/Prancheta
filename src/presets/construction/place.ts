@@ -247,6 +247,24 @@ export class Placer {
   commit(r: Rect): void {
     this.boxes.push(r);
   }
+
+  /**
+   * Whether `r` is inside the bounds and meets no ink but `except`'s and no
+   * committed box, with MARGIN to spare -- the test for a label set INTO a
+   * gap cut in its own line, where the own ink is about to be removed.
+   */
+  clearOf(r: Rect, except: string): boolean {
+    const b = this.bounds;
+    if (r.x < b.x || r.y < b.y || r.x + r.width > b.x + b.width || r.y + r.height > b.y + b.height) return false;
+    const padded = { x: r.x - MARGIN, y: r.y - MARGIN, width: r.width + 2 * MARGIN, height: r.height + 2 * MARGIN };
+    for (const ink of this.ink) {
+      if (ink.id === except) continue;
+      if (ink.dot !== undefined && pointToRect(ink.dot.c, padded) <= ink.dot.r) return false;
+      for (let i = 0; i < ink.pts.length - 1; i += 1) if (segmentHitsRect(ink.pts[i]!, ink.pts[i + 1]!, padded)) return false;
+    }
+    for (const other of this.boxes) if (rectsMeet(r, other, MARGIN)) return false;
+    return true;
+  }
 }
 
 /**

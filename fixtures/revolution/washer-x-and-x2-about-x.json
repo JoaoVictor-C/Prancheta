@@ -1,0 +1,7 @@
+{
+  "preset": "revolution",
+  "title": "arruelas: entre y = x e y = x² em torno do eixo x",
+  "region": { "between": ["x", "x^2"] },
+  "axis": "x",
+  "slice": { "at": 0.6 }
+}

@@ -550,6 +550,304 @@ export interface PartialSumsResult {
  * partial-sum table returned is the same honesty this module keeps
  * elsewhere: the reader sees the numbers the verdict was read from.
  */
+// --- rk4 ---------------------------------------------------------------
+
+/**
+ * Why the trajectory stopped where it did -- always reported, never
+ * swallowed. `"completed"` is the only reason a caller should treat as
+ * "the curve was drawn as asked"; every other reason means the curve the
+ * caller wanted is shorter than the box it was asked to fill, and a preset
+ * drawing a solution curve or a flow line must draw only up to that point,
+ * not paper over the gap by continuing with whatever number came out of a
+ * division by (near) zero.
+ */
+export type RkStopReason = "completed" | "boundary" | "non-finite" | "max-steps" | "max-length";
+
+export interface RkResult {
+  /** The trajectory actually computed, first point always `(t0, y0)` (or `(x0, y0)`). */
+  points: { x: number; y: number }[];
+  stopped: RkStopReason;
+  /** Human-readable, names the actual value/place that ended the run. */
+  detail: string;
+}
+
+export interface RkOptions {
+  /**
+   * Fixed step size (magnitude; sign follows the direction of travel).
+   * Default: the span from t0 to t1 divided by 200, or (if t1 is infinite,
+   * as an autonomous flow line has no natural end) `0.05`. Ignored -- used
+   * only as the initial guess -- when `adaptive` is true.
+   */
+  step?: number;
+  /**
+   * Step-doubling adaptive control: each step is taken once at `h` and
+   * once as two steps of `h/2`; the difference between the two estimates
+   * is Richardson's own error signal for RK4 (fifth order local, so the
+   * step is rejected and halved whenever that difference exceeds
+   * `tolerance · (1 + |y|)`, and grown, capped at `maxStep`, when it is
+   * comfortably under it). Default false: a fixed step is what a textbook
+   * "campo de direções" or flow-line figure shows.
+   */
+  adaptive?: boolean;
+  /** Local error budget per accepted step, adaptive only. Default 1e-6. */
+  tolerance?: number;
+  minStep?: number;
+  maxStep?: number;
+  /** Safety net on the number of accepted steps. Default 4000. */
+  maxSteps?: number;
+  /**
+   * Total arc length (in the plotted (x, y) plane) the trajectory may
+   * cover before it is cut off -- what keeps a flow line spiralling into a
+   * centre, or a solution curve running nearly parallel to an asymptote,
+   * from being "completed" only because it exhausted `maxSteps` one
+   * enormous step at a time. Unset: no arc-length cap (only `bounds` and
+   * `maxSteps` bound the run).
+   */
+  maxLength?: number;
+  /**
+   * The trajectory is drawn only while `(x, y)` -- the point's own
+   * position, not the integration variable -- stays inside this box.
+   * Leaving it is found by bisecting the last step to the crossing (so the
+   * curve reaches the box's edge, not stops one step short of it) and
+   * reported as `"boundary"`, never silently clipped by whatever draws the
+   * figure afterwards.
+   */
+  bounds?: { x: [number, number]; y: [number, number] };
+}
+
+function rkVecStep(deriv: (t: number, y: readonly number[]) => number[], t: number, y: readonly number[], h: number): number[] {
+  const k1 = deriv(t, y);
+  const y2 = y.map((yi, i) => yi + (h / 2) * k1[i]!);
+  const k2 = deriv(t + h / 2, y2);
+  const y3 = y.map((yi, i) => yi + (h / 2) * k2[i]!);
+  const k3 = deriv(t + h / 2, y3);
+  const y4 = y.map((yi, i) => yi + h * k3[i]!);
+  const k4 = deriv(t + h, y4);
+  return y.map((yi, i) => yi + (h / 6) * (k1[i]! + 2 * k2[i]! + 2 * k3[i]! + k4[i]!));
+}
+
+const allFinite = (v: readonly number[]): boolean => v.every(Number.isFinite);
+
+/**
+ * The shared core: integrates the vector ODE `dy/dt = deriv(t, y)` from
+ * `t0` to `t1` (either may be infinite -- an autonomous flow line has no
+ * natural end and is bounded by `bounds`/`maxLength`/`maxSteps` instead),
+ * reporting `posOf(y)` -- the (x, y) PLOTTED position, which is `y` itself
+ * for a planar system but only `y[0]` for a scalar ODE whose first
+ * coordinate is really `t` -- so `bounds` and `maxLength` always reason
+ * about the drawn curve, not the integration state.
+ */
+function rkCore(
+  deriv: (t: number, y: readonly number[]) => number[],
+  t0: number,
+  y0: readonly number[],
+  t1: number,
+  posOf: (t: number, y: readonly number[]) => { x: number; y: number },
+  opts: RkOptions,
+): RkResult {
+  const dir: 1 | -1 = t1 >= t0 ? 1 : -1;
+  const span = Number.isFinite(t1) ? Math.abs(t1 - t0) : Infinity;
+  const maxSteps = opts.maxSteps ?? 4000;
+  const tol = opts.tolerance ?? 1e-6;
+  let h = opts.step !== undefined ? Math.abs(opts.step) : Number.isFinite(span) ? Math.max(span / 200, 1e-9) : 0.05;
+  const minStep = opts.minStep ?? h / 1e4;
+  const maxStep = opts.maxStep ?? (Number.isFinite(span) ? span : h * 50);
+  const bounds = opts.bounds;
+  const maxLength = opts.maxLength;
+
+  const inside = (p: { x: number; y: number }): boolean =>
+    bounds === undefined || (p.x >= bounds.x[0] && p.x <= bounds.x[1] && p.y >= bounds.y[0] && p.y <= bounds.y[1]);
+
+  const p0 = posOf(t0, y0);
+  const points: { x: number; y: number }[] = [p0];
+  if (!allFinite(y0) || !inside(p0)) {
+    return { points, stopped: !allFinite(y0) ? "non-finite" : "boundary", detail: `the starting point (${p0.x}, ${p0.y}) is not usable.` };
+  }
+
+  let t = t0;
+  let y: readonly number[] = y0;
+  let length = 0;
+  let steps = 0;
+
+  while (steps < maxSteps) {
+    if (span !== Infinity && Math.abs(t - t0) >= span - 1e-12) {
+      return { points, stopped: "completed", detail: `reached t = ${t1}.` };
+    }
+    steps += 1;
+    let step = dir * Math.min(h, Number.isFinite(span) ? span - Math.abs(t - t0) : h);
+    if (step === 0) return { points, stopped: "completed", detail: `reached t = ${t1}.` };
+
+    let yNext: number[] | undefined;
+    let accepted = false;
+    let attempts = 0;
+    while (!accepted && attempts < 30) {
+      attempts += 1;
+      if (opts.adaptive) {
+        const full = rkVecStep(deriv, t, y, step);
+        const half = step / 2;
+        const mid = rkVecStep(deriv, t, y, half);
+        const twoHalf = allFinite(mid) ? rkVecStep(deriv, t + half, mid, half) : mid;
+        if (!allFinite(full) || !allFinite(twoHalf)) {
+          if (Math.abs(step) <= minStep) {
+            return { points, stopped: "non-finite", detail: `the derivative is not finite near t = ${t + step} -- a pole or singularity.` };
+          }
+          step = (step / 2) as typeof step;
+          continue;
+        }
+        const err = Math.max(...full.map((v, i) => Math.abs(v - twoHalf[i]!)));
+        const scale = tol * (1 + Math.max(...twoHalf.map(Math.abs)));
+        if (err <= scale || Math.abs(step) <= minStep) {
+          yNext = twoHalf;
+          accepted = true;
+          const growth = err > 0 ? Math.min(2, 0.9 * Math.pow(scale / err, 0.2)) : 2;
+          h = Math.max(minStep, Math.min(maxStep, Math.abs(step) * growth));
+        } else {
+          const shrink = Math.max(0.2, 0.9 * Math.pow(scale / err, 0.2));
+          step = dir * Math.max(minStep, Math.abs(step) * shrink);
+        }
+      } else {
+        const full = rkVecStep(deriv, t, y, step);
+        if (!allFinite(full)) {
+          return { points, stopped: "non-finite", detail: `the derivative is not finite stepping from t = ${t} toward t = ${t + step} -- a pole or singularity.` };
+        }
+        yNext = full;
+        accepted = true;
+      }
+    }
+    if (!accepted || yNext === undefined) {
+      return { points, stopped: "non-finite", detail: `the step could not be shrunk to a finite result near t = ${t} -- a singularity.` };
+    }
+
+    const tNext = t + step;
+    const pNext = posOf(tNext, yNext);
+    if (!allFinite(yNext) || !Number.isFinite(pNext.x) || !Number.isFinite(pNext.y)) {
+      return { points, stopped: "non-finite", detail: `the trajectory left finite values near t = ${tNext}.` };
+    }
+
+    if (!inside(pNext)) {
+      // Bisect the last step so the drawn curve reaches the box's edge
+      // rather than stopping one whole step short of it.
+      const pPrev = posOf(t, y);
+      let lo = 0;
+      let hi = 1;
+      let boundaryPoint = pNext;
+      for (let n = 0; n < 40; n += 1) {
+        const mid = (lo + hi) / 2;
+        const yMid = rkVecStep(deriv, t, y, step * mid);
+        const pMid = posOf(t + step * mid, yMid);
+        if (inside(pMid)) {
+          lo = mid;
+        } else {
+          hi = mid;
+          boundaryPoint = pMid;
+        }
+      }
+      points.push(boundaryPoint);
+      return { points, stopped: "boundary", detail: `left the box near (${boundaryPoint.x}, ${boundaryPoint.y}).` };
+    }
+
+    length += Math.hypot(pNext.x - points[points.length - 1]!.x, pNext.y - points[points.length - 1]!.y);
+    points.push(pNext);
+    t = tNext;
+    y = yNext;
+
+    if (maxLength !== undefined && length >= maxLength) {
+      return { points, stopped: "max-length", detail: `reached the maximum arc length ${maxLength}.` };
+    }
+  }
+  return { points, stopped: "max-steps", detail: `did not finish within ${maxSteps} steps.` };
+}
+
+/**
+ * A scalar solution curve of `dy/dx = f(x, y)` from `(x0, y0)`, by classic
+ * 4th-order Runge–Kutta, to `x1` (which may be `Infinity`/`-Infinity` --
+ * bounded instead by `opts.bounds`/`opts.maxLength`/`opts.maxSteps`, the
+ * shape a slope field's solution curve actually needs: draw until the
+ * curve leaves the plotted box, not until some arbitrary x is reached).
+ *
+ * This is what draws the "campo de direções" solution curve of a Cálculo 2
+ * / EDO course: given the field `f`, an initial point, and the plotted
+ * box, the curve is walked in both directions from the point (call twice,
+ * once with `x1 = box.x[1]`, once with `x1 = box.x[0]`, and join the two
+ * point lists tail-to-tail) and stops -- reporting why -- at the box's
+ * edge, at a non-finite value (a vertical asymptote, a pole of `f`), or
+ * after `maxLength`/`maxSteps`. It never continues through a singularity
+ * with whatever NaN or Infinity came out the other side.
+ */
+export function rk4Scalar(f: (x: number, y: number) => number, x0: number, y0: number, x1: number, opts: RkOptions = {}): RkResult {
+  return rkCore(
+    (t, y) => [f(t, y[0]!)],
+    x0,
+    [y0],
+    x1,
+    (t, y) => ({ x: t, y: y[0]! }),
+    opts,
+  );
+}
+
+/**
+ * A trajectory of the planar autonomous system `(x', y') = (P(x, y),
+ * Q(x, y))` from `(x0, y0)`, by RK4, over the parameter `t` (arc-length-ish,
+ * never itself plotted) from `t0` to `t1`. `t1` is typically `Infinity`
+ * (or `-Infinity`, integrating backward) for a flow line, which has no
+ * natural stopping parameter and is bounded the same way `rk4Scalar` bounds
+ * an unbounded `x1`: by `opts.bounds` (the plotted box), `opts.maxLength`
+ * (arc length in the (x, y) plane) or `opts.maxSteps`.
+ *
+ * Used for the vector-field preset's flow lines and for a circle traced by
+ * `(-y, x)`: the derivative field never sees `t` (the system is
+ * autonomous), so `t` only paces the walk.
+ */
+export function rk4Planar(
+  system: (t: number, xy: readonly [number, number]) => readonly [number, number],
+  t0: number,
+  xy0: readonly [number, number],
+  t1: number,
+  opts: RkOptions = {},
+): RkResult {
+  return rkCore(
+    (t, y) => {
+      const [dx, dy] = system(t, [y[0]!, y[1]!]);
+      return [dx, dy];
+    },
+    t0,
+    xy0,
+    t1,
+    (_t, y) => ({ x: y[0]!, y: y[1]! }),
+    opts,
+  );
+}
+
+/**
+ * `rk4(f, t0, y0, t1, opts)` -- one name for both shapes of ODE this
+ * project draws, dispatching on whether `y0` is a number (scalar
+ * `dy/dx = f(x, y)`, `rk4Scalar`) or a pair (planar system
+ * `(x', y') = (P, Q)`, `rk4Planar`). Prefer calling `rk4Scalar`/`rk4Planar`
+ * directly in new code -- the overload exists so a caller that already
+ * has "an ODE and an initial condition" in hand, of either shape, can
+ * reach for one name.
+ */
+export function rk4(f: (x: number, y: number) => number, x0: number, y0: number, x1: number, opts?: RkOptions): RkResult;
+export function rk4(
+  f: (t: number, xy: readonly [number, number]) => readonly [number, number],
+  t0: number,
+  xy0: readonly [number, number],
+  t1: number,
+  opts?: RkOptions,
+): RkResult;
+export function rk4(
+  f: ((x: number, y: number) => number) | ((t: number, xy: readonly [number, number]) => readonly [number, number]),
+  t0: number,
+  y0: number | readonly [number, number],
+  t1: number,
+  opts: RkOptions = {},
+): RkResult {
+  if (typeof y0 === "number") {
+    return rk4Scalar(f as (x: number, y: number) => number, t0, y0, t1, opts);
+  }
+  return rk4Planar(f as (t: number, xy: readonly [number, number]) => readonly [number, number], t0, y0, t1, opts);
+}
+
 export function partialSums(term: (n: number) => number, n0: number, N: number): PartialSumsResult {
   if (!Number.isInteger(n0) || !Number.isInteger(N) || N < n0) {
     throw new NumericError(`partialSums: n0 and N must be integers with N >= n0, got n0=${n0}, N=${N}.`);

@@ -1,0 +1,31 @@
+{
+  "preset": "field",
+  "title": "campo vetorial (-y, x)",
+  "kind": "vector",
+  "p": "-y",
+  "q": "x",
+  "x": [
+    -3,
+    3
+  ],
+  "y": [
+    -3,
+    3
+  ],
+  "flowLines": [
+    {
+      "at": [
+        1,
+        0
+      ],
+      "label": "r = 1"
+    },
+    {
+      "at": [
+        2,
+        0
+      ],
+      "label": "r = 2"
+    }
+  ]
+}

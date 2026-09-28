@@ -98,6 +98,10 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `construction` | Plane and analytic geometry built from definitions: intersections, perpendiculars, bisectors, tangents, triangle centres and conics, with every length and angle computed. | yes |
 | `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed. | yes |
 | `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
+| `surface` | Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact. | yes |
+| `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
+| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed. | yes |
+| `sequence` | Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps. | yes |
 
 ## Figure modules
 
@@ -224,6 +228,10 @@ resources:
 | `prancheta://preset/construction` | construction preset |
 | `prancheta://preset/space` | space preset |
 | `prancheta://preset/solid` | solid preset |
+| `prancheta://preset/surface` | surface preset |
+| `prancheta://preset/revolution` | revolution preset |
+| `prancheta://preset/field` | field preset |
+| `prancheta://preset/sequence` | sequence preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

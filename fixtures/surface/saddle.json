@@ -1,0 +1,13 @@
+{
+  "preset": "surface",
+  "title": "sela z = x² − y²",
+  "expr": "x^2 - y^2",
+  "x": [
+    -2,
+    2
+  ],
+  "y": [
+    -2,
+    2
+  ]
+}

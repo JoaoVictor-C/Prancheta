@@ -46,6 +46,14 @@ import { expandSpace, validateSpaceInput } from "./space/preset.ts";
 import type { SpaceInput } from "./space/preset.ts";
 import { expandSolid, validateSolidInput } from "./solid/preset.ts";
 import type { SolidInput } from "./solid/preset.ts";
+import { expandSurface, validateSurfaceInput } from "./surface/preset.ts";
+import type { SurfaceInput } from "./surface/preset.ts";
+import { expandRevolution, validateRevolutionInput } from "./revolution/preset.ts";
+import type { RevolutionInput } from "./revolution/preset.ts";
+import { expandField, validateFieldInput } from "./field/preset.ts";
+import type { FieldInput } from "./field/preset.ts";
+import { expandSequence, validateSequenceInput } from "./sequence/preset.ts";
+import type { SequenceInput } from "./sequence/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -77,6 +85,10 @@ export type PresetInput = (
   | ({ preset: "construction" } & ConstructionInput)
   | ({ preset: "space" } & SpaceInput)
   | ({ preset: "solid" } & SolidInput)
+  | ({ preset: "surface" } & SurfaceInput)
+  | ({ preset: "revolution" } & RevolutionInput)
+  | ({ preset: "field" } & FieldInput)
+  | ({ preset: "sequence" } & SequenceInput)
 ) &
   CommonPresetOptions;
 
@@ -126,6 +138,14 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandSpace(input);
     case "solid":
       return expandSolid(input);
+    case "surface":
+      return expandSurface(input);
+    case "revolution":
+      return expandRevolution(input);
+    case "field":
+      return expandField(input);
+    case "sequence":
+      return expandSequence(input);
   }
 }
 
@@ -174,6 +194,14 @@ export function validatePresetInput(input: PresetInput): void {
       return validateSpaceInput(raw);
     case "solid":
       return validateSolidInput(raw);
+    case "surface":
+      return validateSurfaceInput(raw);
+    case "revolution":
+      return validateRevolutionInput(raw);
+    case "field":
+      return validateFieldInput(raw);
+    case "sequence":
+      return validateSequenceInput(raw);
   }
 }
 
@@ -194,7 +222,11 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "unit-circle" ||
     preset === "construction" ||
     preset === "space" ||
-    preset === "solid"
+    preset === "solid" ||
+    preset === "surface" ||
+    preset === "revolution" ||
+    preset === "field" ||
+    preset === "sequence"
   );
 }
 
@@ -213,6 +245,10 @@ export type {
   ConstructionInput,
   SpaceInput,
   SolidInput,
+  SurfaceInput,
+  RevolutionInput,
+  FieldInput,
+  SequenceInput,
 };
 export type { PresetId };
 

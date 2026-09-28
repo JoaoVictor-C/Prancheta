@@ -7,7 +7,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import { integrate, riemann, limit, partialSums, NumericError } from "../src/math/numeric.ts";
+import { integrate, riemann, limit, partialSums, NumericError, rk4, rk4Scalar, rk4Planar } from "../src/math/numeric.ts";
 
 // --- integrate ---------------------------------------------------------------
 
@@ -291,4 +291,85 @@ test("limit: a slow divergence is still infinite -- ln x at 0⁺ is −∞, thou
   assert.notEqual(limit((x) => 1 / Math.log(x), 0, "right").kind, "infinite");
   assert.equal(limit(Math.atan, Infinity, "right").kind, "finite");
   assert.equal(limit((x) => Math.sin(1 / x), 0, "right").kind === "finite", false);
+});
+
+// --- rk4 -----------------------------------------------------------------
+
+test("rk4Scalar: y' = y from y(0) = 1 gives e at x = 1, within tolerance", () => {
+  const r = rk4Scalar((_x, y) => y, 0, 1, 1);
+  assert.equal(r.stopped, "completed");
+  const last = r.points[r.points.length - 1]!;
+  assert.ok(Math.abs(last.x - 1) < 1e-9);
+  assert.ok(Math.abs(last.y - Math.E) < 1e-6, `got ${last.y}, expected ${Math.E}`);
+});
+
+test("rk4Scalar: adaptive stepping also reaches e at x = 1", () => {
+  const r = rk4Scalar((_x, y) => y, 0, 1, 1, { adaptive: true, tolerance: 1e-9 });
+  assert.equal(r.stopped, "completed");
+  const last = r.points[r.points.length - 1]!;
+  assert.ok(Math.abs(last.y - Math.E) < 1e-6, `got ${last.y}`);
+});
+
+test("rk4Scalar: y' = -y from y(0) = 1 decays to 1/e at x = 1", () => {
+  const r = rk4Scalar((_x, y) => -y, 0, 1, 1);
+  const last = r.points[r.points.length - 1]!;
+  assert.ok(Math.abs(last.y - 1 / Math.E) < 1e-6);
+});
+
+test("rk4Planar: (x', y') = (-y, x) traces a circle back to its start", () => {
+  const r = rk4Planar((_t, [x, y]) => [-y, x], 0, [1, 0], 2 * Math.PI, { step: 0.001, maxSteps: 10000 });
+  assert.equal(r.stopped, "completed");
+  const last = r.points[r.points.length - 1]!;
+  assert.ok(Math.abs(last.x - 1) < 1e-4, `x: got ${last.x}`);
+  assert.ok(Math.abs(last.y - 0) < 1e-4, `y: got ${last.y}`);
+  // Every point stays on the unit circle -- (x'=-y, y'=x) is a pure rotation.
+  for (const p of r.points) {
+    assert.ok(Math.abs(Math.hypot(p.x, p.y) - 1) < 1e-3, `(${p.x}, ${p.y}) left the unit circle`);
+  }
+});
+
+test("rk4Planar: adaptive stepping also closes the circle", () => {
+  const r = rk4Planar((_t, [x, y]) => [-y, x], 0, [1, 0], 2 * Math.PI, { adaptive: true, tolerance: 1e-8 });
+  assert.equal(r.stopped, "completed");
+  const last = r.points[r.points.length - 1]!;
+  assert.ok(Math.abs(last.x - 1) < 1e-4);
+  assert.ok(Math.abs(last.y - 0) < 1e-4);
+});
+
+test("rk4Scalar: stops at a pole rather than continuing through it", () => {
+  // y' = y^2, y(0) = 1 blows up at x = 1 (y = 1/(1-x)).
+  const r = rk4Scalar((_x, y) => y * y, 0, 1, 5, { step: 0.01 });
+  assert.notEqual(r.stopped, "completed");
+  assert.ok(r.stopped === "non-finite" || r.stopped === "max-steps");
+  const last = r.points[r.points.length - 1]!;
+  assert.ok(last.x < 1.5, `should have stopped near the pole at x=1, stopped at x=${last.x}`);
+  assert.ok(Number.isFinite(last.y), "the last reported point must still be a finite value");
+});
+
+test("rk4Scalar: stops at the box boundary and reports it, reaching the edge", () => {
+  const r = rk4Scalar((_x, _y) => 1, 0, 0, 100, { bounds: { x: [-10, 10], y: [-10, 10] } });
+  assert.equal(r.stopped, "boundary");
+  const last = r.points[r.points.length - 1]!;
+  assert.ok(Math.abs(last.x - 10) < 1e-3, `expected to reach x ~= 10, got ${last.x}`);
+});
+
+test("rk4Planar: stops at max length rather than spiralling forever", () => {
+  // A slowly expanding spiral: never leaves any reasonable box, never blows
+  // up, never reaches a t1 -- only maxLength or maxSteps end it.
+  const r = rk4Planar((_t, [x, y]) => [-y + 0.01 * x, x + 0.01 * y], 0, [1, 0], Infinity, { maxLength: 20, step: 0.05 });
+  assert.equal(r.stopped, "max-length");
+});
+
+test("rk4: dispatches on the shape of y0 -- number is scalar, pair is planar", () => {
+  const scalar = rk4((_x, y) => y, 0, 1, 1);
+  assert.ok(Math.abs(scalar.points[scalar.points.length - 1]!.y - Math.E) < 1e-6);
+  const planar = rk4((_t, [x, y]: readonly [number, number]) => [-y, x] as const, 0, [1, 0], Math.PI, { step: 0.001 });
+  const last = planar.points[planar.points.length - 1]!;
+  assert.ok(Math.abs(last.x + 1) < 1e-4 && Math.abs(last.y) < 1e-4);
+});
+
+test("rk4Scalar: refuses to start on a singularity, reporting non-finite immediately", () => {
+  const r = rk4Scalar((_x, y) => 1 / y, 0, 0, 1);
+  assert.equal(r.stopped, "non-finite");
+  assert.equal(r.points.length, 1);
 });

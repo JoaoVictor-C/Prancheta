@@ -339,3 +339,111 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 90
 - **Statement:** A solid's edges are not a graph's edges: their lengths and directions are the geometry, projected.
+
+## S-surface-favours-surface
+
+- **Axis:** structure
+- **When:** `surface`
+- **Preset:** `surface`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** The graph of z = f(x, y) is drawn by the surface preset: every mesh height is f, cells painted far to near, level curves found where f = c, the tangent plane from the partial derivatives.
+
+## S-surface-disqualifies-function-graph
+
+- **Axis:** structure
+- **When:** `surface`
+- **Preset:** `function-graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** function-graph draws y = f(x) on a plane; a function of two variables needs a third axis.
+
+## S-surface-disqualifies-space
+
+- **Axis:** structure
+- **When:** `surface`
+- **Preset:** `space`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The space preset draws points, lines and planes; it has no curved surface and no hidden-surface order.
+
+## S-revolution-favours-revolution
+
+- **Axis:** structure
+- **When:** `revolution`
+- **Preset:** `revolution`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A solid of revolution is drawn by the revolution preset: the region from its bounding functions, the silhouette and rims swept about the axis, the disc, washer or shell sampled from R(x) and r(x), and the volume integral evaluated and printed exact.
+
+## S-revolution-disqualifies-solid
+
+- **Axis:** structure
+- **When:** `revolution`
+- **Preset:** `solid`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The solid preset builds bodies from a few dimensions; it has no region, no bounding function and no volume integral.
+
+## S-revolution-disqualifies-space
+
+- **Axis:** structure
+- **When:** `revolution`
+- **Preset:** `space`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The space preset draws points, lines and planes; a swept region has a curved silhouette it cannot draw.
+
+## S-field-favours-field
+
+- **Axis:** structure
+- **When:** `field`
+- **Preset:** `field`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A slope field, a vector field or a family of level curves is drawn by the field preset: every mark evaluated at its lattice point, every solution or flow curve integrated by RK4, every level curve found where f = c.
+
+## S-field-disqualifies-function-graph
+
+- **Axis:** structure
+- **When:** `field`
+- **Preset:** `function-graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** function-graph draws curves it is given; a field's curves are integrated from the field, and its marks cover the whole plane.
+
+## S-field-disqualifies-vectors
+
+- **Axis:** structure
+- **When:** `field`
+- **Preset:** `vectors`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The vectors preset draws a few arrows to scale; a field is a direction at every point, drawn on a lattice and never to one scale.
+
+## S-sequence-favours-sequence
+
+- **Axis:** structure
+- **When:** `sequence`
+- **Preset:** `sequence`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A sequence or a series is drawn by the sequence preset: every term and partial sum evaluated at its n, never joined, and each limit computed by the numeric kit and drawn at its own height.
+
+## S-sequence-disqualifies-function-graph
+
+- **Axis:** structure
+- **When:** `sequence`
+- **Preset:** `function-graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** function-graph joins its samples into a curve; a sequence has nothing between n and n + 1.
+
+## S-sequence-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `sequence`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A chart draws the values it is handed and has no limit to compute; a sequence's terms come from its formula.

@@ -1,0 +1,7 @@
+{
+  "preset": "revolution",
+  "title": "cascas: y = x − x² em [0, 1] em torno do eixo y",
+  "region": { "of": "x - x^2", "from": 0, "to": 1 },
+  "axis": "y",
+  "slice": { "at": 0.6 }
+}

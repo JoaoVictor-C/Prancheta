@@ -1,0 +1,9 @@
+{
+  "preset": "surface",
+  "title": "z = e^(−(x² + y²))",
+  "expr": "e^(-(x^2 + y^2))",
+  "x": [-2, 2],
+  "y": [-2, 2],
+  "levels": [0.25, 0.5, 0.75],
+  "levelsOn": "surface"
+}
