@@ -1,0 +1,130 @@
+{
+  "preset": "construction",
+  "title": "Sombra do poste",
+  "axes": false,
+  "objects": [
+    {
+      "name": "F",
+      "at": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "P",
+      "at": [
+        0,
+        6
+      ],
+      "label": false
+    },
+    {
+      "name": "pole",
+      "segment": [
+        "F",
+        "P"
+      ],
+      "picto": "pole"
+    },
+    {
+      "name": "G",
+      "at": [
+        12,
+        0
+      ],
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "ground",
+      "segment": [
+        "F",
+        "G"
+      ],
+      "picto": "ground"
+    },
+    {
+      "name": "horizAtP",
+      "perpendicular": {
+        "through": "P",
+        "to": "pole"
+      },
+      "hidden": true
+    },
+    {
+      "name": "Ref",
+      "foot": {
+        "of": "G",
+        "on": "horizAtP"
+      },
+      "hidden": true
+    },
+    {
+      "name": "RayPt",
+      "rotation": {
+        "of": "Ref",
+        "about": "P",
+        "angle": -30
+      },
+      "hidden": true
+    },
+    {
+      "name": "ray",
+      "line": [
+        "P",
+        "RayPt"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "S",
+      "intersection": [
+        "ray",
+        "ground"
+      ],
+      "label": false
+    },
+    {
+      "name": "raySeg",
+      "segment": [
+        "P",
+        "S"
+      ],
+      "dashed": true
+    },
+    {
+      "name": "shadowSeg",
+      "segment": [
+        "F",
+        "S"
+      ]
+    },
+    {
+      "name": "Sun",
+      "at": [
+        -2.6,
+        7.5
+      ],
+      "picto": "sun",
+      "dot": false,
+      "label": false
+    }
+  ],
+  "annotations": [
+    {
+      "length": "pole"
+    },
+    {
+      "length": "shadowSeg",
+      "name": "sombra"
+    },
+    {
+      "angle": [
+        "P",
+        "S",
+        "F"
+      ]
+    }
+  ],
+  "unit": "m"
+}

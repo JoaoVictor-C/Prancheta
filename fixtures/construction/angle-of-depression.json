@@ -1,0 +1,130 @@
+{
+  "preset": "construction",
+  "title": "Ângulo de depressão até o barco",
+  "axes": false,
+  "objects": [
+    {
+      "name": "Base",
+      "at": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "Top",
+      "at": [
+        0,
+        20
+      ],
+      "label": false
+    },
+    {
+      "name": "building",
+      "segment": [
+        "Base",
+        "Top"
+      ],
+      "picto": "building",
+      "side": -1
+    },
+    {
+      "name": "Far",
+      "at": [
+        32,
+        0
+      ],
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "ground",
+      "segment": [
+        "Base",
+        "Far"
+      ],
+      "picto": "ground"
+    },
+    {
+      "name": "horizAtTop",
+      "perpendicular": {
+        "through": "Top",
+        "to": "building"
+      },
+      "hidden": true
+    },
+    {
+      "name": "EyeRef",
+      "foot": {
+        "of": "Far",
+        "on": "horizAtTop"
+      },
+      "hidden": true
+    },
+    {
+      "name": "eyeLine",
+      "segment": [
+        "Top",
+        "EyeRef"
+      ],
+      "dashed": true
+    },
+    {
+      "name": "D",
+      "rotation": {
+        "of": "EyeRef",
+        "about": "Top",
+        "angle": -35
+      },
+      "hidden": true
+    },
+    {
+      "name": "sight",
+      "line": [
+        "Top",
+        "D"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "Boat",
+      "intersection": [
+        "sight",
+        "ground"
+      ],
+      "picto": "boat",
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "sightSeg",
+      "segment": [
+        "Top",
+        "Boat"
+      ],
+      "dashed": true
+    },
+    {
+      "name": "distSeg",
+      "segment": [
+        "Base",
+        "Boat"
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "length": "building"
+    },
+    {
+      "length": "distSeg"
+    },
+    {
+      "angle": [
+        "EyeRef",
+        "Top",
+        "Boat"
+      ]
+    }
+  ],
+  "unit": "m"
+}

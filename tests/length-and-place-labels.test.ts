@@ -114,6 +114,28 @@ test("a dimension line as long as its label passes, however the unit is spaced",
   }
 });
 
+test("an exact root is a stated length: 2√13 and d = √52 pass a run of √52, 2√3 fails it", () => {
+  // metres is 4px per unit (see above); √52 units long along x.
+  const px = 4 * Math.sqrt(52);
+  for (const printed of ["2√13", "d = √52", "2√13 m"]) {
+    const [result] = checks("length-matches-its-label", [
+      line("dim", { x: 100, y: 200 }, { x: 100 + px, y: 200 }, metres),
+      ...label("tag", printed, "dim", 120, 180),
+    ]);
+    assert.equal(result?.status, "pass", `"${printed}": ${result?.detail}`);
+  }
+  const [wrong] = checks("length-matches-its-label", [
+    line("dim", { x: 100, y: 200 }, { x: 100 + px, y: 200 }, metres),
+    ...label("tag", "2√3", "dim", 120, 180),
+  ]);
+  assert.equal(wrong?.status, "fail");
+  const [half] = checks("length-matches-its-label", [
+    line("dim", { x: 100, y: 200 }, { x: 100 + 4 * (3 * Math.sqrt(2)) / 2, y: 200 }, metres),
+    ...label("tag", "3√2/2", "dim", 120, 180),
+  ]);
+  assert.equal(half?.status, "pass", half?.detail);
+});
+
 test("a dimension line drawn at one length beside a label reading another is reported", () => {
   // The two exam figures' defect: "50m" typed, 42 drawn.
   const [result] = checks("length-matches-its-label", [

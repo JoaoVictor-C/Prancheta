@@ -1,0 +1,23 @@
+{
+  "preset": "construction",
+  "title": "Circuncentro: as mediatrizes de um triângulo se encontram no centro da circunferência circunscrita",
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [6, 0] },
+    { "C": [2, 4] },
+    { "name": "ABC", "polygon": ["A", "B", "C"] },
+    { "name": "M1", "midpoint": ["A", "B"], "hidden": true },
+    { "name": "M2", "midpoint": ["B", "C"], "hidden": true },
+    { "name": "M3", "midpoint": ["C", "A"], "hidden": true },
+    { "name": "mAB", "perpendicularBisector": ["A", "B"], "dashed": true },
+    { "name": "mBC", "perpendicularBisector": ["B", "C"], "dashed": true },
+    { "name": "mCA", "perpendicularBisector": ["C", "A"], "dashed": true },
+    { "name": "O", "intersection": ["mAB", "mBC"] },
+    { "name": "λ", "circle": { "center": "O", "through": "A" }, "label": true }
+  ],
+  "annotations": [
+    { "angle": ["B", "M1", "O"] },
+    { "angle": ["C", "M2", "O"] },
+    { "angle": ["A", "M3", "O"] }
+  ]
+}

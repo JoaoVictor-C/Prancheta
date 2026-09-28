@@ -1,0 +1,115 @@
+{
+  "preset": "construction",
+  "title": "Escada apoiada no muro",
+  "axes": false,
+  "objects": [
+    {
+      "name": "WallBase",
+      "at": [
+        0,
+        0
+      ],
+      "label": false
+    },
+    {
+      "name": "Far",
+      "at": [
+        0,
+        5
+      ],
+      "hidden": true
+    },
+    {
+      "name": "Foot",
+      "at": [
+        3,
+        0
+      ],
+      "label": false
+    },
+    {
+      "name": "wallLine",
+      "line": [
+        "WallBase",
+        "Far"
+      ],
+      "hidden": true
+    },
+    {
+      "name": "c",
+      "circle": {
+        "center": "Foot",
+        "radius": 5
+      },
+      "hidden": true
+    },
+    {
+      "name": "Top",
+      "intersection": [
+        "wallLine",
+        "c"
+      ],
+      "which": 1,
+      "label": false
+    },
+    {
+      "name": "wall",
+      "segment": [
+        "WallBase",
+        "Top"
+      ],
+      "picto": "wall",
+      "side": -1
+    },
+    {
+      "name": "ladder",
+      "segment": [
+        "Foot",
+        "Top"
+      ],
+      "picto": "ladder"
+    },
+    {
+      "name": "GroundLeft",
+      "at": [
+        -1,
+        0
+      ],
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "GroundRight",
+      "at": [
+        4.5,
+        0
+      ],
+      "dot": false,
+      "label": false
+    },
+    {
+      "name": "ground",
+      "segment": [
+        "GroundLeft",
+        "GroundRight"
+      ],
+      "picto": "ground"
+    }
+  ],
+  "annotations": [
+    {
+      "length": "ladder"
+    },
+    {
+      "length": "wall"
+    },
+    {
+      "angle": [
+        "Top",
+        "WallBase",
+        "GroundRight"
+      ]
+    }
+  ],
+  "unit": "m"
+}

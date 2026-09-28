@@ -1,0 +1,10 @@
+{
+  "preset": "construction",
+  "title": "Hipérbole de focos F₁ e F₂, 2a = 6, com as assíntotas",
+  "axes": true,
+  "objects": [
+    { "F1": [-3, 1], "label": "F₁" },
+    { "F2": [7, 1], "label": "F₂" },
+    { "name": "H", "hyperbola": { "foci": ["F1", "F2"], "a": 3 }, "show": ["vertices", "asymptotes", "equation"], "label": true }
+  ]
+}

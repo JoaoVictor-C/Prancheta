@@ -1,0 +1,101 @@
+{
+  "preset": "construction",
+  "title": "Incentro: as bissetrizes se encontram no centro da circunferência inscrita",
+  "objects": [
+    {
+      "A": [
+        0,
+        0
+      ]
+    },
+    {
+      "B": [
+        7,
+        0
+      ]
+    },
+    {
+      "C": [
+        2,
+        5
+      ]
+    },
+    {
+      "name": "ABC",
+      "polygon": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "name": "bA",
+      "angleBisector": [
+        "B",
+        "A",
+        "C"
+      ],
+      "draw": "segment",
+      "dashed": true
+    },
+    {
+      "name": "bB",
+      "angleBisector": [
+        "C",
+        "B",
+        "A"
+      ],
+      "draw": "segment",
+      "dashed": true
+    },
+    {
+      "name": "bC",
+      "angleBisector": [
+        "A",
+        "C",
+        "B"
+      ],
+      "draw": "segment",
+      "dashed": true
+    },
+    {
+      "name": "I",
+      "intersection": [
+        "bA",
+        "bB"
+      ]
+    },
+    {
+      "name": "ω",
+      "incircle": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "name": "T",
+      "foot": {
+        "of": "I",
+        "on": "BC"
+      }
+    },
+    {
+      "name": "r",
+      "perpendicular": {
+        "through": "I",
+        "to": "BC"
+      },
+      "draw": "segment"
+    }
+  ],
+  "annotations": [
+    {
+      "angle": [
+        "B",
+        "T",
+        "I"
+      ]
+    }
+  ]
+}

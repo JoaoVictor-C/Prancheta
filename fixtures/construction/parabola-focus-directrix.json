@@ -1,0 +1,13 @@
+{
+  "preset": "construction",
+  "title": "Parábola de foco F e diretriz d",
+  "axes": true,
+  "objects": [
+    { "F": [0, 2] },
+    { "D1": [-1, -2], "hidden": true },
+    { "D2": [1, -2], "hidden": true },
+    { "name": "d", "line": ["D1", "D2"], "dashed": true, "label": true },
+    { "name": "P", "parabola": { "focus": "F", "directrix": "d" }, "show": ["vertex", "equation"] }
+  ],
+  "annotations": [{ "equation": "d" }]
+}

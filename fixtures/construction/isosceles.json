@@ -1,0 +1,20 @@
+{
+  "preset": "construction",
+  "title": "Triângulo isósceles: encontre o ângulo x",
+  "equalTicks": true,
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [6, 0] },
+    { "name": "B'", "rotation": { "of": "B", "about": "A", "angle": 52 }, "hidden": true },
+    { "name": "A'", "rotation": { "of": "A", "about": "B", "angle": -52 }, "hidden": true },
+    { "name": "C", "intersection": ["AB'", "BA'"] },
+    { "name": "ABC", "polygon": ["A", "B", "C"] },
+    { "name": "H", "foot": { "of": "C", "on": "AB" } },
+    { "name": "CH", "perpendicular": { "through": "C", "to": "AB" }, "draw": "segment", "dashed": true }
+  ],
+  "annotations": [
+    { "angle": ["B", "A", "C"] },
+    { "angle": ["A", "C", "B"], "name": "x" },
+    { "angle": ["C", "H", "B"] }
+  ]
+}
