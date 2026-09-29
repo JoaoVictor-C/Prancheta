@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "matriz quase singular [[1, 1], [1, 1,05]]",
+  "matrix": [[1, 1], [1, 1.05]],
+  "show": { "grid": true, "basis": false, "unitSquare": true, "eigen": true }
+}

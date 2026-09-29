@@ -54,6 +54,8 @@ import { expandField, validateFieldInput } from "./field/preset.ts";
 import type { FieldInput } from "./field/preset.ts";
 import { expandSequence, validateSequenceInput } from "./sequence/preset.ts";
 import type { SequenceInput } from "./sequence/preset.ts";
+import { expandLinearMap, validateLinearMapInput } from "./linear-map/preset.ts";
+import type { LinearMapInput } from "./linear-map/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -89,6 +91,7 @@ export type PresetInput = (
   | ({ preset: "revolution" } & RevolutionInput)
   | ({ preset: "field" } & FieldInput)
   | ({ preset: "sequence" } & SequenceInput)
+  | ({ preset: "linear-map" } & LinearMapInput)
 ) &
   CommonPresetOptions;
 
@@ -146,6 +149,8 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandField(input);
     case "sequence":
       return expandSequence(input);
+    case "linear-map":
+      return expandLinearMap(input);
   }
 }
 
@@ -202,6 +207,8 @@ export function validatePresetInput(input: PresetInput): void {
       return validateFieldInput(raw);
     case "sequence":
       return validateSequenceInput(raw);
+    case "linear-map":
+      return validateLinearMapInput(raw);
   }
 }
 
@@ -226,7 +233,8 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "surface" ||
     preset === "revolution" ||
     preset === "field" ||
-    preset === "sequence"
+    preset === "sequence" ||
+    preset === "linear-map"
   );
 }
 
@@ -249,6 +257,7 @@ export type {
   RevolutionInput,
   FieldInput,
   SequenceInput,
+  LinearMapInput,
 };
 export type { PresetId };
 

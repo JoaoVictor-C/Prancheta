@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "autovetores de [[2, 1], [1, 2]]",
+  "matrix": [[2, 1], [1, 2]],
+  "show": { "grid": true, "basis": true, "unitSquare": true, "eigen": true }
+}

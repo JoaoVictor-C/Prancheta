@@ -131,6 +131,20 @@ test("one snapping helper: fractions, √n, kπ/q, at the caller's tolerance", (
   assert.equal(writeExactTex(snapExact(2 * Math.PI, 1e-9)), "2\\pi");
 });
 
+test("powers of e snap: e, e², 1/e, √e, −e -- and a value merely near e does not", () => {
+  assert.equal(writeExact(snapExact(Math.E + 2e-7, 1e-5)), "e");
+  assert.equal(writeExact(snapExact(Math.exp(2), 1e-9)), "e²");
+  assert.equal(writeExact(snapExact(1 / Math.E, 1e-9)), "1/e");
+  assert.equal(writeExact(snapExact(Math.sqrt(Math.E), 1e-9)), "√e");
+  assert.equal(writeExact(snapExact(-Math.E, 1e-9)), "−e");
+  assert.equal(writeExact(snapExact(2.718, 1e-7)), "2,718");
+  assert.equal(writeExactTex(snapExact(Math.exp(-2), 1e-9)), "\\frac{1}{e^{2}}");
+  assert.equal(writeExactTex(snapExact(Math.sqrt(Math.E), 1e-9)), "\\sqrt{e}");
+  assert.equal(spellForExpression(Math.exp(2)), "e^2");
+  assert.equal(spellForExpression(1 / Math.E), "(1/e)");
+  assert.equal(formatCalc(evaluateCalc("lim((1 + 1/x)^x, x, inf)"), "pt-BR", false), "e");
+});
+
 // ---- figures ---------------------------------------------------------------------------------
 
 test("figure substitution: structural, exact spellings, leftovers refused, untouched without {{", () => {

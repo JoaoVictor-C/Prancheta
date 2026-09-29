@@ -1,0 +1,7 @@
+{
+  "preset": "linear-map",
+  "title": "projeção ortogonal sobre a reta y = x",
+  "named": { "projection": { "onto": "y = x" } },
+  "show": { "grid": true, "basis": false, "unitSquare": true, "eigen": true },
+  "points": [{ "name": "P", "at": [3, 1] }]
+}

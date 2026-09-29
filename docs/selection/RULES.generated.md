@@ -447,3 +447,30 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 90
 - **Statement:** A chart draws the values it is handed and has no limit to compute; a sequence's terms come from its formula.
+
+## S-linear-map-favours-linear-map
+
+- **Axis:** structure
+- **When:** `linear-map`
+- **Preset:** `linear-map`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A linear map of the plane is drawn by the linear-map preset: the matrix computed from the map, the lattice, the basis and the unit square carried through it, |det A| measured against the parallelogram drawn, eigen-lines from the characteristic polynomial.
+
+## S-linear-map-disqualifies-vectors
+
+- **Axis:** structure
+- **When:** `linear-map`
+- **Preset:** `vectors`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The vectors preset adds and scales arrows; it cannot carry a lattice or a region through a matrix.
+
+## S-linear-map-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `linear-map`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A graph has no coordinates; a transformation of the plane is nothing but coordinates.

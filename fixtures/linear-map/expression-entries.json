@@ -1,0 +1,7 @@
+{
+  "preset": "linear-map",
+  "title": "entradas dadas como expressões",
+  "matrix": [["sqrt(3)/2", "-1/2"], ["1/2", "cos(pi/6)"]],
+  "show": { "grid": true, "basis": true, "unitSquare": true },
+  "shapes": [{ "points": [[1, 0.5], [2, 0.5], [2, 1.5]], "label": "PQR" }]
+}

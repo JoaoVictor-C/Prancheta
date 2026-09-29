@@ -172,7 +172,7 @@ test("limit line: its label declares annotates, not freeStanding, and names its 
   assert.notStrictEqual(label!.freeStanding, true);
 });
 
-test("limit line: exact values print exactly (0, 1), inexact values print with ≈", () => {
+test("limit line: exact values print exactly (0, 1, e), inexact values print with ≈", () => {
   const exact = expandSequence({ term: "1/2^n", n: [1, 10], show: "both", limit: true });
   const exactScene = exact.root as Scene;
   const termsLabel = exactScene.children.find((c): c is Block => "label" in c && c.label!.startsWith("lim aₙ"));
@@ -183,7 +183,11 @@ test("limit line: exact values print exactly (0, 1), inexact values print with �
   const inexact = expandSequence({ term: "(1+1/n)^n", n: [1, 15], show: "terms", limit: true });
   const inexactScene = inexact.root as Scene;
   const label = inexactScene.children.find((c): c is Block => "label" in c && c.label!.startsWith("lim aₙ"));
-  assert.match(label!.label!, /≈/, "e is not one of the exact forms (rational, root, multiple of π)");
+  assert.strictEqual(label!.label, "lim aₙ = e", "(1 + 1/n)ⁿ → e, and e is one of the exact forms");
+
+  const rough = expandSequence({ term: "1 + 1/n + sin(n)/n^2 + 0.123456", n: [1, 15], show: "terms", limit: true });
+  const roughLabel = (rough.root as Scene).children.find((c): c is Block => "label" in c && c.label!.startsWith("lim aₙ"));
+  assert.match(roughLabel!.label!, /≈/, "1,123456 snaps to nothing and is printed approximately");
 });
 
 // ---- legend: only when both series share the plane; absent for one series,

@@ -132,15 +132,17 @@ about rectangles, not projected faces).
 | solids of revolution: `revolution` preset (discs, washers, shells; volume integral exact) | [0049](decisions/0049-solids-of-revolution.md) | done 2026-09-28 |
 | RK4 in the numeric kit (`rk4`, `rk4Scalar`, `rk4Planar`) | [0050](decisions/0050-fields.md) | done 2026-09-28 |
 | slope fields, vector fields, level curves: `field` preset (inline contour labels) | [0050](decisions/0050-fields.md) | done 2026-09-28 |
-| sequences and series: `sequence` preset (unjoined terms, independent limits) | [0051](decisions/0051-sequences.md) | done 2026-09-28; Phase 4 complete except linear maps |
+| sequences and series: `sequence` preset (unjoined terms, independent limits) | [0051](decisions/0051-sequences.md) | done 2026-09-28 |
+| linear maps: `linear-map` preset (matrix or named map, image lattice, \|det A\| measured, eigen-lines) | [0052](decisions/0052-linear-maps.md) | done 2026-09-28; Phase 4 complete |
+| powers of e in the exact snapper (`= e` for (1 + 1/n)ⁿ) | — | done 2026-09-28 |
 | corpus coverage audit | — | not started |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each
 with its rules and a paragraph in SELECTION.md; value-table is offered at the
 floor for a function, beside the sign table.
 
-Phase 3 and 4 added seven more — `construction`, `space`, `solid`, `surface`,
-`revolution`, `field`, `sequence` — each with a favour rule, the refusals
+Phase 3 and 4 added eight more — `construction`, `space`, `solid`, `surface`,
+`revolution`, `field`, `sequence`, `linear-map` — each with a favour rule, the refusals
 that keep a neighbouring preset from drawing it, and a paragraph in
 SELECTION.md.
 

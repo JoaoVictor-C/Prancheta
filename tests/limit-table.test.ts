@@ -70,10 +70,10 @@ test("limit table: 1/x at x=0 has one-sided ±infinity and the limit does not ex
   assert.ok(text.some((t) => t.includes(`−∞`)), JSON.stringify(text)); // −∞
 });
 
-test("limit table: (1+1/x)^x at +infinity is ≈ 2,718 (e)", () => {
+test("limit table: (1+1/x)^x at +infinity is e, printed exact", () => {
   const input: ValueTableInput = { limit: { expr: "(1 + 1/x)^x", at: "inf", count: 4 } };
   const text = labels(input);
-  assert.ok(text.includes("x → +∞: lim f(x) ≈ 2,718"), JSON.stringify(text)); // "≈", never "= ≈"
+  assert.ok(text.includes("x → +∞: lim f(x) = e"), JSON.stringify(text));
 });
 
 test("limit table: a sample is printed to as many places as its x step, so the approach is visible", () => {

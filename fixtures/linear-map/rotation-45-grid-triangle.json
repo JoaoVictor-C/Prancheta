@@ -1,0 +1,7 @@
+{
+  "preset": "linear-map",
+  "title": "rotação de 45° do triângulo ABC sobre a grade",
+  "named": { "rotation": 45 },
+  "show": { "grid": true, "basis": false, "unitSquare": false },
+  "shapes": [{ "points": [[1, 0], [3, 0], [1, 2]], "label": "ABC" }]
+}

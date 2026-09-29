@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "cisalhamento horizontal T(x, y) = (x + y, y)",
+  "named": { "shear": { "x": 1 } },
+  "show": { "grid": true, "basis": true, "unitSquare": true }
+}

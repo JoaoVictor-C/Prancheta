@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "cisalhamento: autovalor duplo, um único autovetor",
+  "matrix": [[1, 1], [0, 1]],
+  "show": { "grid": true, "basis": true, "unitSquare": true, "eigen": true }
+}

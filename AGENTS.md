@@ -102,6 +102,7 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
 | `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed. | yes |
 | `sequence` | Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps. | yes |
+| `linear-map` | Linear maps of the plane from a matrix or a named rotation, reflection, shear, scale or projection: the image lattice, T(e₁) and T(e₂), the unit square with |det A| measured, eigen-lines, and shapes mapped to primed vertices. | yes |
 
 ## Figure modules
 
@@ -232,6 +233,7 @@ resources:
 | `prancheta://preset/revolution` | revolution preset |
 | `prancheta://preset/field` | field preset |
 | `prancheta://preset/sequence` | sequence preset |
+| `prancheta://preset/linear-map` | linear-map preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

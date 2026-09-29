@@ -89,8 +89,15 @@
  * points are never joined. Not a "series" in this vocabulary's sense:
  * that is data someone measured; a sequence's terms and its limit are
  * computed from its formula.
+ *
+ * "linear-map" is a linear map of the plane, T(v) = Av -- given by its
+ * 2×2 matrix or as a rotation, reflection, shear, scale or projection --
+ * and what it does: to the lattice, to the unit square (the area factor
+ * |det A|), to a shape or a point, which lines it keeps (eigen-lines) and
+ * which line it collapses the plane onto. Not a "vector": vectors are
+ * added and scaled; here one matrix carries the whole plane.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -136,7 +143,8 @@ export type PresetId =
   | "surface"
   | "revolution"
   | "field"
-  | "sequence";
+  | "sequence"
+  | "linear-map";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -228,6 +236,11 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "sequence",
     implemented: true,
     summary: "Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps.",
+  },
+  {
+    id: "linear-map",
+    implemented: true,
+    summary: "Linear maps of the plane from a matrix or a named rotation, reflection, shear, scale or projection: the image lattice, T(e₁) and T(e₂), the unit square with |det A| measured, eigen-lines, and shapes mapped to primed vertices.",
   },
 ];
 

@@ -1,0 +1,7 @@
+{
+  "preset": "linear-map",
+  "title": "reflexão do triângulo ABC em torno da reta y = x",
+  "named": { "reflection": { "line": "y = x" } },
+  "show": { "eigen": true },
+  "shapes": [{ "points": [[2, 0], [4, 1], [2, 3]], "label": "ABC" }]
+}
