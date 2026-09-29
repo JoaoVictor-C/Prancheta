@@ -51,7 +51,7 @@ import type { BoxStats, ClassScheme, FrequencyRow, QuartileMethod, VarianceKind 
 import { distanceToPolyline, rectAt } from "../../geometry/hit.ts";
 import { niceStep } from "../shared/scale.ts";
 import { packItems } from "../shared/text.ts";
-import { estimateRunsWidth, layoutPanel } from "../shared/panel.ts";
+import { runsWidth, layoutPanel } from "../shared/panel.ts";
 import type { PanelLineInput } from "../shared/panel.ts";
 import { tidy } from "../../math/numeric.ts";
 
@@ -240,7 +240,9 @@ type TableSpec = { id: string; head: string[]; rows: string[][]; foot?: string[]
 
 function tableMeasure(board: Board, t: TableSpec): { colW: number[]; w: number; h: number } {
   const all = [t.head, ...t.rows, ...(t.foot === undefined ? [] : [t.foot])];
-  const colW = t.head.map((_, c) => Math.max(46, ...all.map((r, ri) => board.measure(r[c] ?? "", LABEL_SIZE) + (ri === 0 ? 26 : 22))));
+  // Head and foot are set bold, the body at 500: each measured at its own weight.
+  const weightOf = (ri: number): number => (ri === 0 || (t.foot !== undefined && ri === all.length - 1) ? 700 : 500);
+  const colW = t.head.map((_, c) => Math.max(46, ...all.map((r, ri) => board.measure(r[c] ?? "", LABEL_SIZE, 0.1, weightOf(ri)) + (ri === 0 ? 26 : 22))));
   return { colW, w: colW.reduce((s, x) => s + x, 0), h: TABLE_HEAD + (t.rows.length + (t.foot === undefined ? 0 : 1)) * TABLE_ROW };
 }
 
@@ -832,7 +834,7 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
   const textLines: PanelLineInput[] = [];
   if (m.showStats && m.answers) {
     for (const g of panelGroups(m)) {
-      for (const l of packItems(g.items, "   ·   ", maxLine, (t) => estimateRunsWidth([{ text: t }], LABEL_SIZE))) textLines.push({ text: [{ text: l }], wrap: false });
+      for (const l of packItems(g.items, "   ·   ", maxLine, (t) => runsWidth([{ text: t }], LABEL_SIZE))) textLines.push({ text: [{ text: l }], wrap: false });
     }
   }
   for (const s of noteSentences(m, hist === undefined ? undefined : xs)) textLines.push({ text: [{ text: s }], emphasis: "soft" });

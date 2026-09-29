@@ -10,7 +10,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import type { Block, FigureSpec, Scene } from "../src/ir/types.ts";
 import { ANSWER_AWARE, parseFigureInput } from "../src/presets/index.ts";
 import { Board } from "../src/presets/function-graph/board.ts";
-import { layoutPanel, liftReadings, rich, wrapRuns, estimateRunsWidth } from "../src/presets/shared/panel.ts";
+import { layoutPanel, liftReadings, rich, wrapRuns, runsWidth } from "../src/presets/shared/panel.ts";
 import { render } from "../src/pipeline.ts";
 import { readingsHtml, renderSheetFigure, resolveSheet } from "../src/sheet/sheet.ts";
 
@@ -32,7 +32,7 @@ test("rich() reads _{…} and ^{…}, merges plain pieces, and leaves a bare _ o
 
 test("wrapRuns breaks between words only, and never parts a script from its word", () => {
   const runs = rich("P_{R1} = 11,52 W; P_{R2} = 0,72 W; P_{E2} = 3,6 W (recebida); V_{A} = 12 V");
-  const lines = wrapRuns(runs, 130, (r) => estimateRunsWidth(r, 13));
+  const lines = wrapRuns(runs, 130, (r) => runsWidth(r, 13));
   assert.ok(lines.length > 1);
   assert.equal(lines.map((l) => l.map((r) => r.text).join("")).join(" "), "PR1 = 11,52 W; PR2 = 0,72 W; PE2 = 3,6 W (recebida); VA = 12 V");
   for (const l of lines) {

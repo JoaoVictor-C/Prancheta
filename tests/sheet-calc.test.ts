@@ -241,7 +241,10 @@ test("the example list with params resolves with no raw placeholder", () => {
 test("the Cálculo 1 list's HTML is byte-for-byte what it was before computed text", () => {
   // sha256 of calculo1.html as built by the sheet command BEFORE ADR 0040
   // (default KaTeX URL). Change it only for a deliberate edit of the list.
-  const BEFORE = "2f439e18358f1b579a51cc19056b23f405b010b57220990de8f092cd41dc6240";
+  // Changed once, by ADR 0063: the page's style gained the bundled face's
+  // @font-face and its body family became the bundled stack -- verified to
+  // be the ONLY difference (undoing those two edits gives back 2f439e18...).
+  const BEFORE = "314eaa3f68b38ef73a7a15e95801b50987b8a782bdef3ea2fe6135668ba5e784";
   const { sheet, texts, figures } = resolveSheet(JSON.parse(readFileSync(LISTA, "utf8")));
   const map = new Map(
     figures.map((f) => [f.key, { src: `figures/${f.key}.svg`, caption: texts.get(f.captionKey), wide: f.figure.wide }] as const),

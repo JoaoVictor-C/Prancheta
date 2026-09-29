@@ -12,6 +12,8 @@
  * additive: `resolveTheme()` and `THEMES` are the only new surface.
  */
 
+import { BUNDLED_FONT_STACK } from "./export/fonts.ts";
+
 export const theme = {
   canvas: {
     background: "#0F1115",
@@ -29,11 +31,11 @@ export const theme = {
   text: {
     /**
      * Named identically in the HTML mirror and in the exported SVG, so the
-     * measured font is the drawn font. A renderer without these faces falls
-     * back and metrics shift — that is a known M0 limitation, recorded in the
-     * manifest rather than hidden.
+     * measured font is the drawn font. It starts with the bundled face
+     * (ADR 0063), which the mirror always loads and `embed` carries with the
+     * SVG; the host faces after it draw only what the bundled face lacks.
      */
-    family: '"Segoe UI", "Noto Sans", system-ui, sans-serif',
+    family: BUNDLED_FONT_STACK,
     size: 15,
     /** Unitless, so it scales with font-size. */
     lineHeight: 1.45,

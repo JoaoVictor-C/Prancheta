@@ -135,7 +135,7 @@ function expandValuesTable(input: ValuesTableInput): FigureSpec {
   // Geometry: measure text to determine column widths.
   const probe = new Board(10, 10, PAPER);
   const functionLabels = compiled.map((f) => `${f.name}(${variable})`);
-  const labelW = Math.max(...functionLabels.map((label) => probe.measure(label, 14)), probe.measure(variable, 15)) + 20;
+  const labelW = Math.max(...functionLabels.map((label) => probe.measure(label, 14, 0.1, 600)), probe.measure(variable, 15, 0.1, 600)) + 20;
 
   // Every cell's text, computed before any width is chosen: a column is as
   // wide as the widest thing in it, header or value. Sizing from the header
@@ -148,7 +148,7 @@ function expandValuesTable(input: ValuesTableInput): FigureSpec {
     }),
   );
   const critW = xLabels.map((h, i) =>
-    Math.max(40, ...[h, ...cells.map((row) => row[i]!)].map((text) => probe.measure(text, 14) + 24)),
+    Math.max(40, ...[h, ...cells.map((row) => row[i]!)].map((text) => probe.measure(text, 14, 0.1, 600) + 24)),
   );
 
   const tableX = M + labelW;
@@ -399,10 +399,10 @@ function expandLimitTable(input: ValueTableInput, li: ValueTableLimitInput, answ
   // ---- geometry ------------------------------------------------------------
 
   const probe = new Board(10, 10, PAPER);
-  const labelW = Math.max(probe.measure(`${name}(${variable})`, 14), probe.measure(variable, 15)) + 20;
+  const labelW = Math.max(probe.measure(`${name}(${variable})`, 14, 0.1, 600), probe.measure(variable, 15, 0.1, 600)) + 20;
   const tableX = M + labelW;
 
-  const critW = columns.map((c) => Math.max(40, probe.measure(c.xText, 14) + 24, probe.measure(c.valueText, 14) + 24));
+  const critW = columns.map((c) => Math.max(40, probe.measure(c.xText, 14, 0.1, 600) + 24, probe.measure(c.valueText, 14, 0.1, 600) + 24));
 
   const xvals: number[] = [];
   let cursor = tableX + EDGE;

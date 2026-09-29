@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { estimateWidth, packItems, wrapText } from "../src/presets/shared/text.ts";
+import { LABEL_SLACK, labelWidth, packItems, wrapText } from "../src/presets/shared/text.ts";
+import { measureText } from "../src/layout/text-metrics.ts";
 import type { WrapRules } from "../src/presets/shared/text.ts";
 import { gcd, gcdBig, splitSquare } from "../src/math/integer.ts";
 
@@ -40,13 +41,13 @@ test("packItems joins with the separator and packs to the limit", () => {
   assert.deepEqual(packItems(["wide-item", "x"], " ", 3, chars), ["wide-item", "x"]);
 });
 
-test("estimateWidth: a narrow no-break space costs a third of a character", () => {
-  const plain = estimateWidth("12x000", 13);
-  const grouped = estimateWidth("12 000", 13);
-  assert.ok(grouped < plain, `${grouped} vs ${plain}`);
-  // and nothing else changed: the estimate is the longest line by the old formula
-  assert.equal(estimateWidth("abcde", 13), Math.ceil(5 * (13 * 0.56 + 0.1) + 10));
-  assert.equal(estimateWidth("ab\nabcde", 13), estimateWidth("abcde", 13));
+test("labelWidth: the bundled face's measured width plus the slack, widest line of several", () => {
+  // A narrow no-break space (the digit-group mark) is narrow in the face itself.
+  assert.ok(labelWidth("12\u202f000", 13) < labelWidth("12x000", 13));
+  assert.equal(labelWidth("abcde", 13), Math.ceil(measureText("abcde", { size: 13, tracking: 0.1 }) + LABEL_SLACK));
+  assert.equal(labelWidth("ab\nabcde", 13), labelWidth("abcde", 13));
+  // Bold is wider: a weight is measured, not guessed.
+  assert.ok(labelWidth("Variação média", 13, 0.1, 700) > labelWidth("Variação média", 13, 0.1, 400));
 });
 
 test("gcd, gcdBig and splitSquare", () => {

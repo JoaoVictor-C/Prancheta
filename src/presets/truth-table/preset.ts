@@ -271,8 +271,9 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
   const colW = columns.map((c) =>
     Math.max(
       50,
-      ...c.head.map((h) => probe.measure(h, HEAD_SIZE) + 26),
-      ...(c.cells.every((t) => t === "") ? [probe.measure(sym.t, CELL_SIZE) + 26] : c.cells.map((t) => probe.measure(t, CELL_SIZE) + 26)),
+      // Heads are set at 600-700 and cells at up to 700: measured bold, the widest they can be.
+      ...c.head.map((h) => probe.measure(h, HEAD_SIZE, 0.1, 700) + 26),
+      ...(c.cells.every((t) => t === "") ? [probe.measure(sym.t, CELL_SIZE, 0.1, 700) + 26] : c.cells.map((t) => probe.measure(t, CELL_SIZE, 0.1, 700) + 26)),
     ),
   );
   const tableW = colW.reduce((s, w) => s + w, 0);

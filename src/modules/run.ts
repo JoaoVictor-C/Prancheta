@@ -33,7 +33,7 @@ export type RunModuleOptions = {
  * it -- the export layer has a real reason to, and nothing else does.
  */
 export const MODULE_FONT_STACK = attributeSafeFontStack(
-  `${BUNDLED_FONT_FAMILY}, ${theme.text.family}`,
+  theme.text.family.includes(BUNDLED_FONT_FAMILY) ? theme.text.family : `${BUNDLED_FONT_FAMILY}, ${theme.text.family}`,
 );
 
 /**

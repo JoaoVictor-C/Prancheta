@@ -38,6 +38,7 @@ import { ANSWER_AWARE, parseFigureInput } from "../presets/index.ts";
 import { functionGraphPoints } from "../presets/function-graph/preset.ts";
 import type { FunctionGraphInput } from "../presets/function-graph/preset.ts";
 import { render } from "../pipeline.ts";
+import { BUNDLED_FONT_STACK, bundledFontFaceCssSync } from "../export/fonts.ts";
 import * as v from "../presets/validate.ts";
 import { EMPTY_ENV, calcPlaceholder, evaluateParams, substituteFigure, validateParams } from "./calc.ts";
 import type { ParamEnv, ParamSpec } from "./calc.ts";
@@ -353,14 +354,20 @@ function placeholder(body: string, points: Points, locale: Locale, math: boolean
 const escape = (text: string): string =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+// The page's own text is set in the bundled face too (ADR 0063): the same
+// face as the figures and the readings lifted out of them, and pagination
+// that does not depend on which sans the printing machine has. Inlined, not
+// linked: Chromium refuses a font from a file:// URL as a cross-origin load.
+// The headings keep their serif -- page design, not measured figure text.
 const STYLE = `
+  ${bundledFontFaceCssSync()}
   @page { size: A4; margin: 18mm 17mm 20mm 17mm; }
   :root {
     --ink: #1b1f27; --soft: #4e5763; --rule: #d5dae1; --key: #1d4e89;
     --easy: #0f7360; --mid: #9a6200; --hard: #b3400c; --paper: #fcfbf7;
   }
   html { background: white; }
-  body { font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif; color: var(--ink);
+  body { font-family: ${BUNDLED_FONT_STACK}; color: var(--ink);
          font-size: 10.6pt; line-height: 1.5; margin: 0; }
   h1 { font-family: Georgia, "Palatino Linotype", serif; font-size: 27pt; margin: 0 0 4pt; color: var(--key); }
   h2 { font-family: Georgia, "Palatino Linotype", serif; font-size: 17pt; color: var(--key);

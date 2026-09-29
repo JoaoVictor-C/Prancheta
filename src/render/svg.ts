@@ -51,11 +51,12 @@ import { parseColour } from "../colour/contrast.ts";
 import { DefsRegistry } from "../effects/filters.ts";
 import { NO_BLEED, unionRects } from "../effects/bleed.ts";
 import type { ResolvedEffect } from "../effects/types.ts";
+import { DEFAULT_FONT_EMBED } from "../layout/html.ts";
 import type { FontEmbedMode } from "../layout/html.ts";
+import { trackingApplies } from "../layout/text-metrics.ts";
 import { hexagonVertices, stadiumRadius, shapeVertices } from "../geometry/shapes.ts";
 import type { ShapeKind } from "../geometry/shapes.ts";
 import {
-  BUNDLED_FONT_FAMILY,
   bundledFontFaceCssSync,
   lineNeedsTextFallback,
   loadOutlineFont,
@@ -68,7 +69,7 @@ export type ToSvgOptions = {
 
 export function toSvg(figure: LaidOutFigure, title?: string, options: ToSvgOptions = {}): string {
   const defs = new DefsRegistry();
-  const fontEmbed = options.fontEmbed ?? "none";
+  const fontEmbed = options.fontEmbed ?? DEFAULT_FONT_EMBED;
 
   // Built once, up front: a box's accessible name comes from the label(s)
   // that own it, and a label is a *separate* top-level element from its box
@@ -122,12 +123,17 @@ export function toSvg(figure: LaidOutFigure, title?: string, options: ToSvgOptio
     )}" viewBox="0 0 ${num(figure.width)} ${num(figure.height)}">`,
   );
   if (title !== undefined && title !== "") parts.push(`<title>${escapeText(title)}</title>`);
-  // "embed" is the only mode needing this: "outline" carries the glyph
-  // shapes as plain paths and depends on no font at all, and "none" behaves
-  // exactly as this file did before decision 0008.
-  if (fontEmbed === "embed") {
-    parts.push(`<style>${bundledFontFaceCssSync()}</style>`);
-  }
+  // "embed" carries the face; "outline" carries the glyph shapes as plain
+  // paths and depends on no font at all; "none" names the face and hopes.
+  // Wherever <text> is left for the viewer to shape, kerning is off, as it
+  // was in the mirror that measured it (ADR 0063): a viewer that kerned "AV"
+  // or "P(" would set a line narrower than the one that was checked, and a
+  // rich line's absolutely placed runs would drift apart.
+  const styles = [
+    ...(fontEmbed === "embed" ? [bundledFontFaceCssSync()] : []),
+    ...(textOut.length > 0 ? ["text { font-kerning: none; }"] : []),
+  ];
+  if (styles.length > 0) parts.push(`<style>${styles.join("\n")}</style>`);
   const definitions = defs.toSvg();
   if (definitions !== "") parts.push(definitions);
   parts.push(
@@ -801,7 +807,7 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
         if (!lineNeedsTextFallback(outlineFont, line.text)) {
           return line.runs === undefined
             ? outlineLineToSvg(text, line, anchor, outlineFont)
-            : line.runs.map((run) => outlineRunToSvg(text, run, outlineFont)).join("\n");
+            : line.runs.map((run) => outlineRunToSvg(text, run, line.text, outlineFont)).join("\n");
         }
         // Falls through to the ordinary <text> branch below: a character the
         // bundled font does not cover (see export/fonts.ts) is drawn with the
@@ -876,8 +882,9 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
  * is derived here from the anchor and the summed advance of every character,
  * and each glyph is placed by walking that sum left to right. The summed
  * advances are exactly what Chromium measured too: html.ts turns off CSS
- * kerning in outline mode for precisely this reason, so no character pair
- * this project draws is ever kerned differently from how it was measured.
+ * kerning (in every mode, since ADR 0063) for precisely this reason, so no
+ * character pair this project draws is ever kerned differently from how it
+ * was measured.
  */
 function outlineLineToSvg(
   text: PlacedText,
@@ -886,8 +893,12 @@ function outlineLineToSvg(
   outlineFont: ReturnType<typeof loadOutlineFont>,
 ): string {
   const chars = [...line.text];
+  const weight = text.fontWeight ?? 400;
+  // The pen moves as the mirror's did (ADR 0063): each glyph's advance AT ITS
+  // WEIGHT, plus the tracking Chromium adds after every character.
+  const tracking = trackingFor(text, line.text);
   const advances = chars.map(
-    (char) => outlineForChar(outlineFont, char, 0, 0, text.fontSize).advance,
+    (char) => outlineForChar(outlineFont, char, 0, 0, text.fontSize, weight).advance + tracking,
   );
   const totalWidth = advances.reduce((sum, advance) => sum + advance, 0);
   const leftStart = anchor === "middle" ? line.x - totalWidth / 2 : anchor === "end" ? line.x - totalWidth : line.x;
@@ -895,11 +906,11 @@ function outlineLineToSvg(
   const glyphs: string[] = [];
   let cursor = leftStart;
   for (let i = 0; i < chars.length; i += 1) {
-    const outline = outlineForChar(outlineFont, chars[i]!, cursor, line.y, text.fontSize);
+    const outline = outlineForChar(outlineFont, chars[i]!, cursor, line.y, text.fontSize, weight);
     if (outline.d !== "") {
       glyphs.push(`<path data-pr-id="${attr(text.id)}" d="${outline.d}" fill="${attr(text.fill)}"/>`);
     }
-    cursor += outline.advance;
+    cursor += advances[i]!;
   }
   return glyphs.join("\n");
 }
@@ -908,18 +919,31 @@ function outlineLineToSvg(
 function outlineRunToSvg(
   text: PlacedText,
   run: NonNullable<PlacedText["lines"][number]["runs"]>[number],
+  lineText: string,
   outlineFont: ReturnType<typeof loadOutlineFont>,
 ): string {
   const glyphs: string[] = [];
+  const weight = text.fontWeight ?? 400;
+  const tracking = trackingFor(text, lineText);
   let cursor = run.x;
   for (const char of [...run.text]) {
-    const outline = outlineForChar(outlineFont, char, cursor, run.y, run.fontSize);
+    const outline = outlineForChar(outlineFont, char, cursor, run.y, run.fontSize, weight);
     if (outline.d !== "") {
       glyphs.push(`<path data-pr-id="${attr(text.id)}" d="${outline.d}" fill="${attr(text.fill)}"/>`);
     }
-    cursor += outline.advance + (text.letterSpacing ?? 0);
+    cursor += outline.advance + tracking;
   }
   return glyphs.join("\n");
+}
+
+/**
+ * The tracking Chromium applied to a line: the element's letter spacing, or
+ * none for a line it itemised as Mongolian -- a digit group with no letter,
+ * "12 000" (see layout/text-metrics.ts).
+ */
+function trackingFor(text: PlacedText, line: string): number {
+  const tracking = text.letterSpacing ?? 0;
+  return tracking !== 0 && !trackingApplies(line) ? 0 : tracking;
 }
 
 /**

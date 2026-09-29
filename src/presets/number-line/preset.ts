@@ -346,7 +346,7 @@ export function expandNumberLine(input: NumberLineInput): FigureSpec {
   const plotHi = domainHi + span * 0.2 + 0.5;
 
   const probe = new Board(10, 10, PAPER);
-  const labelW = labelled ? Math.max(...rows.map((r) => probe.measure(r.label, 14)), 10) + 18 : 0;
+  const labelW = labelled ? Math.max(...rows.map((r) => probe.measure(r.label, 14, 0.1, 600)), 10) + 18 : 0;
 
   const naiveX = (value: number): number => (value - plotLo) / (plotHi - plotLo) * (crits.length * PLOT_UNIT + PLOT_UNIT);
   const critLabels = crits.map((c) => exactLabel(c));

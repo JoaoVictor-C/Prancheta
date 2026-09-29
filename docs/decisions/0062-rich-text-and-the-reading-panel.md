@@ -2,7 +2,8 @@
 
 ## Status
 
-Accepted.
+Accepted. Amended by [0063](0063-one-font-measured-before-and-after.md): the
+panel's widths are no longer estimates.
 
 ## The defect
 

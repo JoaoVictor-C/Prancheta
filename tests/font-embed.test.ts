@@ -31,7 +31,7 @@ function specWith(label: string): FigureSpec {
 
 // --- pure glyph functions (fast) --------------------------------------------
 
-test("loadOutlineFont parses the bundled TTF and covers ordinary Latin", () => {
+test("loadOutlineFont parses the bundled WOFF and covers ordinary Latin", () => {
   const font = loadOutlineFont();
   assert.ok(font.unitsPerEm > 0);
   assert.equal(lineNeedsTextFallback(font, "Hello, world!"), false);
@@ -71,12 +71,16 @@ test("outlineForChar returns empty path data but real advance for a space", () =
 // --- end-to-end (slow: real Chromium) ---------------------------------------
 
 test(
-  "fontEmbed: \"none\" is the default, and still ships no font bytes",
+  "fontEmbed: \"embed\" is the default (ADR 0063); \"none\" ships no font bytes but still names the face",
   { timeout: 60000 },
   async () => {
     const withoutOption = await render(specWith("Plain text"));
+    const withEmbed = await render(specWith("Plain text"), { fontEmbed: "embed" });
     const withNone = await render(specWith("Plain text"), { fontEmbed: "none" });
-    assert.equal(withoutOption.svg, withNone.svg);
+    // The default carries the face: an SVG that only names it is a different
+    // figure on every machine that lacks it.
+    assert.equal(withoutOption.svg, withEmbed.svg);
+    assert.ok(withoutOption.svg.includes("data:font/woff;base64,"));
 
     // What "none" means is that no font is INLINED, not that the bundled face
     // went unused. This assertion used to read `!includes(BUNDLED_FONT_FAMILY)`
@@ -86,11 +90,13 @@ test(
     // different figure on a different machine, which CI found the first time it
     // ran on Linux. Every mode now measures against the bundled font, so every
     // mode names it, and only the export payload differs.
-    assert.ok(!withoutOption.svg.includes("data:font/woff2;base64,"));
+    assert.ok(!withNone.svg.includes("data:font/woff;base64,"));
     assert.ok(
-      withoutOption.svg.includes(BUNDLED_FONT_FAMILY),
-      "the exported svg must name the face it was measured against",
+      withNone.svg.includes(`font-family="&quot;${BUNDLED_FONT_FAMILY}&quot;`),
+      "the exported svg must name the face it was measured against, FIRST",
     );
+    // and the viewer is told not to kern, as the mirror did not
+    assert.match(withNone.svg, /text \{ font-kerning: none; \}/);
   },
 );
 
@@ -100,7 +106,9 @@ test(
   async () => {
     const result = await render(specWith("Embedded font test"), { fontEmbed: "embed" });
     assert.match(result.svg, /<style>@font-face/);
-    assert.match(result.svg, /data:font\/woff2;base64,/);
+    assert.match(result.svg, /data:font\/woff;base64,/);
+    // the weight axis is declared, so a bold label is drawn at wght 700, not synthesised
+    assert.match(result.svg, /font-weight: 400 700;/);
     assert.equal(result.manifest.ok, true);
   },
 );
@@ -184,13 +192,26 @@ test(
   },
 );
 
-test("the bundled font files actually exist and are the formats each mode needs", () => {
-  const woff2 = readFileSync(
-    new URL("../assets/fonts/Inter-Regular.woff2", import.meta.url),
-  );
-  assert.equal(woff2.subarray(0, 4).toString("ascii"), "wOF2");
+test("the bundled font file exists, is the WOFF every mode reads, and carries the weight axis", () => {
+  const woff = readFileSync(new URL("../assets/fonts/Inter-Text-Variable.woff", import.meta.url));
+  assert.equal(woff.subarray(0, 4).toString("ascii"), "wOFF");
+  const font = loadOutlineFont();
+  const axes = (font.tables as { fvar?: { axes: { tag: string; minValue: number; maxValue: number }[] } }).fvar?.axes ?? [];
+  // opsz is pinned out (ADR 0063): only weight varies, 400-700.
+  assert.deepEqual(axes.map((a) => [a.tag, a.minValue, a.maxValue]), [["wght", 400, 700]]);
 
+  // The upstream source it is derived from (scripts/make-font-instance.py).
   const ttf = readFileSync(new URL("../assets/fonts/Inter-Variable.ttf", import.meta.url));
   // sfnt version tag for TrueType-flavoured OpenType: 0x00010000.
   assert.deepEqual([...ttf.subarray(0, 4)], [0, 1, 0, 0]);
+});
+
+test("outlineForChar draws and advances a bold glyph at its weight", () => {
+  const font = loadOutlineFont();
+  const regular = outlineForChar(font, "W", 0, 0, 24, 400);
+  const bold = outlineForChar(font, "W", 0, 0, 24, 700);
+  assert.ok(bold.advance > regular.advance, `${bold.advance} > ${regular.advance}`);
+  assert.notEqual(bold.d, regular.d);
+  // and outlining at 700 does not leak 700's advance into a later 400 lookup
+  assert.equal(outlineForChar(font, "W", 0, 0, 24, 400).advance, regular.advance);
 });

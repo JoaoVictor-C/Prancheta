@@ -1,8 +1,8 @@
 /**
  * Which font actually drew the glyphs?
  *
- * The HTML mirror declares a family *stack* (`"Segoe UI", "Noto Sans",
- * system-ui, sans-serif`). Chromium resolves that stack per glyph run, so a
+ * The HTML mirror declares a family *stack* (`"Prancheta Sans", "Segoe UI",
+ * "Noto Sans", system-ui, sans-serif`). Chromium resolves that stack per glyph run, so a
  * CJK label is drawn by a fallback face nobody named. Exporting the stack
  * verbatim means another renderer — Inkscape, resvg, Illustrator — is free to
  * resolve it differently, and every advance width we measured silently stops
@@ -15,6 +15,7 @@
  */
 
 import type { Page } from "playwright";
+import { BUNDLED_FONT_FAMILY } from "../export/fonts.ts";
 
 export type ResolvedFont = {
   /** The face Chromium actually used for most glyphs, e.g. "Segoe UI". */
@@ -23,7 +24,17 @@ export type ResolvedFont = {
   alsoUsed: string[];
 };
 
-type PlatformFont = { familyName: string; glyphCount: number };
+type PlatformFont = { familyName: string; glyphCount: number; isCustomFont?: boolean };
+
+/**
+ * A web font reports the family name inside its own file -- the bundled face
+ * says "Inter" -- not the `@font-face` name the mirror loaded it under. The
+ * mirror loads exactly one web font, so a custom face IS the bundled one, and
+ * the exported SVG must name it as the SVG can find it: "Prancheta Sans",
+ * which `embed` defines. Naming "Inter" first asked the viewer's host for a
+ * font it usually lacks, and it drew Segoe UI instead (ADR 0063).
+ */
+const familyOf = (font: PlatformFont): string => (font.isCustomFont === true ? BUNDLED_FONT_FAMILY : font.familyName);
 
 export async function resolvePlatformFonts(
   page: Page,
@@ -56,8 +67,8 @@ export async function resolvePlatformFonts(
       if (fonts.length === 0) continue;
 
       resolved.set(ownerId, {
-        family: fonts[0]!.familyName,
-        alsoUsed: fonts.slice(1).map((font) => font.familyName),
+        family: familyOf(fonts[0]!),
+        alsoUsed: fonts.slice(1).map(familyOf),
       });
     }
   } catch {

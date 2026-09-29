@@ -231,6 +231,16 @@ export function aroundPoint(at: Point, w: number, h: number, incident: number[],
       const reach = Math.abs(u.x) * (w / 2) + Math.abs(u.y) * (h / 2);
       out.push({ x: at.x + u.x * (gap + reach), y: at.y + u.y * (gap + reach) });
     }
+    // Then each diagonal again with the box's CORNER at `gap` from the point.
+    // Pushed out along the diagonal by its reach, a wide label's near corner
+    // ends up much further than `gap` away, and in a crowded vertex (a
+    // building's windows on one side, the ground's hatching on the other)
+    // something else is then nearer the label than the point it names.
+    for (const d of dirs) {
+      const u = { x: Math.cos(d.a), y: Math.sin(d.a) };
+      if (Math.abs(u.x) < 0.3 || Math.abs(u.y) < 0.3) continue;
+      out.push({ x: at.x + Math.sign(u.x) * (w / 2 + Math.abs(u.x) * gap), y: at.y + Math.sign(u.y) * (h / 2 + Math.abs(u.y) * gap) });
+    }
   }
   return out;
 }

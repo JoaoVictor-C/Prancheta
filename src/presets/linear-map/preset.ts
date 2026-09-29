@@ -41,7 +41,7 @@ import { denominatorOf, sqrtLabel } from "../../locale/write.ts";
 import type { Rect } from "../../ir/types.ts";
 import { distanceToPolyline, rectAt, segmentHitsRect } from "../../geometry/hit.ts";
 import { gcd, splitSquare } from "../../math/integer.ts";
-import { estimateWidth, packItems } from "../shared/text.ts";
+import { labelWidth, packItems } from "../shared/text.ts";
 import { layoutPanel as layoutReadings } from "../shared/panel.ts";
 import type { Panel } from "../shared/panel.ts";
 import type { WrapRules } from "../shared/text.ts";
@@ -1260,8 +1260,8 @@ const EQUATION_RULES: WrapRules = {
   joinsNext: (w) => w === "=" || w === "≈" || w.endsWith("det"),
 };
 
-/** The panel text's width as the checks will see it, estimated per character. */
-const panelWidth = (s: string): number => estimateWidth(s, PANEL_FONT);
+/** The panel text's width as the checks will see it, measured in the bundled face. */
+const panelWidth = (s: string): number => labelWidth(s, PANEL_FONT);
 
 /**
  * The matrix block (A =, its entries, its brackets and the lines beside it)

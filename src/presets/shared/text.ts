@@ -11,6 +11,8 @@
  * as a callback and knows nothing about fonts.
  */
 
+import { measureText } from "../../layout/text-metrics.ts";
+
 /** The width, in pixels, a piece of text will occupy. */
 export type Measure = (text: string) => number;
 
@@ -83,22 +85,22 @@ function breakBeforeOperators(piece: string, maxPx: number, measure: Measure, ru
   return rows;
 }
 
-/** Width of a narrow no-break space (U+202F, the digit-group mark) as a share of a normal character's advance in an estimate: about 0.2em against 0.56em. */
-const NARROW_SHARE = 0.2 / 0.56;
+/**
+ * Room a label's box keeps beyond its measured text, in px: 5px a side.
+ *
+ * It used to be the hedge on a 0.56em-a-character guess. The width is now
+ * the bundled face's own (ADR 0063), so this is only margin -- and the
+ * presets' own arithmetic (a tick number's box is `measure - 8`, a line box
+ * two pixels wider than its glyphs) was written against it, which is why it
+ * keeps its old value.
+ */
+export const LABEL_SLACK = 10;
 
 /**
- * A generous width, in pixels, for the longest line of `text` set at `size`:
- * every character is `size * 0.56 + tracking` wide, except the narrow spaces
- * that group digits ("12 000"), which are about a third of that. Every panel
- * estimate goes through here so a grouped number is not budgeted a full
- * character per gap and does not push a label past the box drawn for it.
+ * The box width for the longest line of `text` set at `size` in the bundled
+ * face: its measured width plus `LABEL_SLACK`, rounded up. Every label and
+ * panel width goes through here or `measureText`.
  */
-export function estimateWidth(text: string, size: number, tracking = 0.1): number {
-  let longest = 0;
-  for (const line of text.split("\n")) {
-    let units = 0;
-    for (const ch of line) units += ch === "\u202f" ? NARROW_SHARE : 1;
-    longest = Math.max(longest, units);
-  }
-  return Math.ceil(longest * (size * 0.56 + tracking) + 10);
+export function labelWidth(text: string, size: number, tracking = 0.1, weight = 400): number {
+  return Math.ceil(measureText(text, { size, weight, tracking }) + LABEL_SLACK);
 }

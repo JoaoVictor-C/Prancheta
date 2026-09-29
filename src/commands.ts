@@ -107,9 +107,10 @@ const renderCommand: Command = {
       name: "fontEmbed",
       type: "string",
       description:
-        "\"embed\" inlines the bundled font as a base64 @font-face; \"outline\" converts " +
-        "every glyph to a filled path with zero runtime font dependency. Default \"none\".",
-      default: "none",
+        "\"embed\" (the default) inlines the bundled font as a base64 @font-face, so the SVG draws " +
+        "what was measured anywhere; \"outline\" converts every glyph to a filled path with zero " +
+        "runtime font dependency; \"none\" only names the font (smaller, host-dependent).",
+      default: "embed",
     },
     {
       name: "pdf",
@@ -131,7 +132,7 @@ const renderCommand: Command = {
     const parsed: unknown = JSON.parse(await readFile(specPath, "utf8"));
     const spec = parseFigureInput(parsed);
 
-    const fontEmbed = String(args.fontEmbed ?? "none");
+    const fontEmbed = String(args.fontEmbed ?? "embed");
     if (fontEmbed !== "none" && fontEmbed !== "embed" && fontEmbed !== "outline") {
       throw new Error(`--fontEmbed must be "none", "embed" or "outline", got "${fontEmbed}"`);
     }

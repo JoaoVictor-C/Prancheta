@@ -718,7 +718,9 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       size: 13,
       weight: 700,
       colour: INK,
-      steps: 2,
+      // Three 6px steps: a bold capital in the bundled face is ~9px wide, so its
+      // box clears a vertical shaft only from the third (ADR 0063).
+      steps: 3,
     });
     block.annotatesPlace = framed(p);
     placer.reserve({ x: block.x!, y: block.y!, width: block.width!, height: block.height! }, true);

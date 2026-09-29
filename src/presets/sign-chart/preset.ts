@@ -271,9 +271,9 @@ export function expandSignChart(input: SignChartInput): FigureSpec {
 
   // Geometry.
   const probe = new Board(10, 10, PAPER);
-  const labelW = Math.max(...rows.map((r) => probe.measure(r.label, 14)), probe.measure(variable, 15)) + 20;
+  const labelW = Math.max(...rows.map((r) => probe.measure(r.label, 14, 0.1, 600)), probe.measure(variable, 15, 0.1, 600)) + 20;
   const headers = xs.map((c) => exactLabel(c.x, locale));
-  const critW = headers.map((h) => Math.max(40, probe.measure(h, 14) + 10));
+  const critW = headers.map((h) => Math.max(40, probe.measure(h, 14, 0.1, 600) + 10));
   const tableX = M + labelW;
   // Column centres: left edge, then interval, critical, interval, ..., right edge.
   const centres: { intervals: number[]; crit: number[]; left: number; right: number } = {

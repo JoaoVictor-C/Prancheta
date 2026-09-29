@@ -20,7 +20,8 @@ import type { Block, FigureSpec, ReadingEmphasis, ReadingLine, Readings, Scene, 
 import { runsText } from "../../ir/types.ts";
 import type { Board } from "../function-graph/board.ts";
 import { lineBox } from "../function-graph/board.ts";
-import { wrapText } from "./text.ts";
+import { LABEL_SLACK, wrapText } from "./text.ts";
+import { measureText } from "../../layout/text-metrics.ts";
 import type { WrapRules } from "./text.ts";
 
 export const PANEL_INK = "#181B21";
@@ -100,17 +101,17 @@ const asRuns = (text: string | TextRun[]): TextRun[] => (typeof text === "string
 export const hasScripts = (runs: readonly TextRun[]): boolean => runs.some((r) => r.script !== undefined);
 
 /**
- * A generous width for runs at `size`, in the same estimate every panel uses
- * (shared/text.ts's estimateWidth): 0.56em a character, a narrow space a
- * third of that, a script at 0.7 of the size; bold about 8% wider.
+ * The width of runs at `size` in the bundled face (ADR 0063): each run
+ * measured at its own size -- a script at 0.7 of the line's, as the mirror
+ * sets it -- plus the same `LABEL_SLACK` a label keeps.
  */
-export function estimateRunsWidth(runs: readonly TextRun[], size: number, weight = 400, tracking = 0.1): number {
+export function runsWidth(runs: readonly TextRun[], size: number, weight = 400, tracking = 0.1): number {
   let px = 0;
   for (const run of runs) {
     const s = run.script === undefined ? size : size * SCRIPT_SCALE;
-    for (const ch of run.text) px += (ch === " " ? (0.2 / 0.56) * s * 0.56 : s * 0.56) + tracking;
+    px += measureText(run.text, { size: s, weight, tracking });
   }
-  return Math.ceil(px * (weight >= 600 ? 1.08 : 1) + 10);
+  return Math.ceil(px + LABEL_SLACK);
 }
 
 // Scripts ride through wrapText (which speaks plain strings split at spaces)
@@ -260,7 +261,7 @@ export function layoutPanel(input: readonly PanelLineInput[], o: PanelOptions): 
   const size = o.size ?? 13;
   const lineHeight = o.lineHeight ?? Math.round(size * 1.75);
   const indent = input.some((l) => l.swatch !== undefined) ? SWATCH_W + SWATCH_GAP : 0;
-  const leads = input.filter((l) => l.lead !== undefined).map((l) => estimateRunsWidth(asRuns(l.lead!), size, LEAD_WEIGHT));
+  const leads = input.filter((l) => l.lead !== undefined).map((l) => runsWidth(asRuns(l.lead!), size, LEAD_WEIGHT));
   const leadColumn = leads.length === 0 ? 0 : Math.max(...leads) + LEAD_GAP;
   const out: PanelLine[] = [];
   const source: ReadingLine[] = [];
@@ -268,7 +269,7 @@ export function layoutPanel(input: readonly PanelLineInput[], o: PanelOptions): 
     const emphasis = line.emphasis ?? o.emphasis ?? "normal";
     if (emphasis === "accent" && line.colour === undefined) throw new Error("panel: an accent line needs a colour");
     const weight = EMPHASIS_STYLE[emphasis].weight;
-    const measure = (runs: TextRun[]): number => estimateRunsWidth(runs, size, weight);
+    const measure = (runs: TextRun[]): number => runsWidth(runs, size, weight);
     const runs = asRuns(line.text);
     const lead = line.lead === undefined ? undefined : asRuns(line.lead);
     const hangs = lead !== undefined;

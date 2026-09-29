@@ -8,10 +8,15 @@ and they are recorded here so a redistributor does not have to guess.
 
 ### Inter
 
-- **Files:** `fonts/Inter-Variable.ttf`, `fonts/Inter-Regular.woff2`
+- **Files:** `fonts/Inter-Text-Variable.woff` (what Prancheta loads), derived by
+  [`scripts/make-font-instance.py`](../scripts/make-font-instance.py) from the
+  upstream `fonts/Inter-Variable.ttf`: optical size pinned at 14 ("Text"),
+  weight axis kept from 400 to 700, WOFF so opentype.js can read it (ADR 0063).
+  The OFL permits modified versions; Inter declares no Reserved Font Name.
 - **Source:** [The Inter Project](https://github.com/rsms/inter) by Rasmus Andersson
 - **Licence:** SIL Open Font License 1.1 — full text in [fonts/LICENSE.txt](fonts/LICENSE.txt)
-- **Why it ships:** Inter is the one face that *travels*. `--fontEmbed embed`
+- **Why it ships:** Inter is the one face that *travels*, and every figure is
+  set and measured in it. `--fontEmbed embed` (the default)
   inlines it as a `@font-face` data URI and `--fontEmbed outline` converts its
   glyphs to filled paths, both verified against resvg with no system fonts
   available at all. A figure that depended on a font the recipient must already

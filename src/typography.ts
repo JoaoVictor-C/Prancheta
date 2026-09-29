@@ -34,6 +34,8 @@
  * renders identically.
  */
 
+import { BUNDLED_FONT_FAMILY, BUNDLED_FONT_STACK } from "./export/fonts.ts";
+
 /** How loud a piece of text is. Independent of what it MEANS (`role`). */
 export type TypeLevel =
   | "display"
@@ -88,12 +90,14 @@ export type TypePack = {
 
 /**
  * The faces this repository actually ships (assets/fonts). Inter only, under
- * the OFL. Everything else named below is a PREFERENCE inside a stack, never a
+ * the OFL, named "Prancheta Sans" wherever it is loaded (ADR 0063) -- a stack
+ * that names "Inter" asks the HOST for Inter, which is a different claim.
+ * Everything else named below is a PREFERENCE inside a stack, never a
  * promise -- which is why `selfContained` is derived from this list rather than
  * asserted per pack. Asserting it by hand is how a pack ends up claiming to be
  * portable because most of its levels are.
  */
-export const BUNDLED_FAMILIES: readonly string[] = ["Inter"];
+export const BUNDLED_FAMILIES: readonly string[] = [BUNDLED_FONT_FAMILY];
 
 /** First family in a CSS stack, unquoted. */
 function firstFamily(stack: string): string {
@@ -119,10 +123,13 @@ export function hostDependentLevels(pack: TypePack): TypeLevel[] {
   );
 }
 
-// The one face this repository actually ships (assets/fonts, OFL). Anything
-// else is named as a preference inside a stack, never as a promise.
-const INTER = '"Inter", "Segoe UI", "Noto Sans", system-ui, sans-serif';
-const SANS = '"Segoe UI", "Noto Sans", system-ui, sans-serif';
+// The one face this repository actually ships (assets/fonts, OFL), which the
+// mirror always loads and `embed` carries. Anything else is named as a
+// preference inside a stack, never as a promise. The sans levels used to name
+// "Inter" (a host face the mirror never loaded, so a machine without it drew
+// Segoe UI) and "Segoe UI"; both are the bundled face now (ADR 0063).
+const INTER = BUNDLED_FONT_STACK;
+const SANS = BUNDLED_FONT_STACK;
 const SERIF = '"Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif';
 const DIDONE = '"Didot", "Bodoni MT", "Playfair Display", Georgia, serif';
 const MONO = '"JetBrains Mono", "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace';

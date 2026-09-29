@@ -33,6 +33,16 @@ export type IdAssignment = {
 
 export type FontEmbedMode = "none" | "embed" | "outline";
 
+/**
+ * What an exported SVG does about its font when nobody says (ADR 0063):
+ * carry it. A figure is measured in the bundled face, so an SVG that only
+ * NAMES that face is a different figure on every machine that lacks it --
+ * which is every machine but this one. `embed` costs about 330 KB of base64
+ * per file and makes the SVG draw what was measured wherever it is opened;
+ * "none" remains for a caller that knows its viewer has the face.
+ */
+export const DEFAULT_FONT_EMBED: FontEmbedMode = "embed";
+
 export type HtmlOptions = {
   /**
    * Where a scene's children go, by block id. Absent means this is the
@@ -89,11 +99,10 @@ export function buildHtml(spec: FigureSpec, options: HtmlOptions = {}): IdAssign
   const padding = spec.canvas?.padding ?? active.canvas.padding;
   const background = spec.canvas?.background ?? active.canvas.background;
 
-  const fontEmbed = options.fontEmbed ?? "none";
   // EVERY mode measures against the bundled font, including "none", and that
   // is a correctness property rather than a convenience.
   //
-  // The theme's stack starts with "Segoe UI", which is a proprietary Microsoft
+  // The theme's stack used to start with "Segoe UI", a proprietary Microsoft
   // face. On a machine without it Chromium resolves the stack to something
   // else with different advance widths and different line height, so the same
   // spec measures differently -- and since every check here is a measurement,
@@ -107,18 +116,23 @@ export function buildHtml(spec: FigureSpec, options: HtmlOptions = {}): IdAssign
   // a Linux runner -- so the fix is not to match one machine but to depend on
   // none of them. The bundled font travels with the repository.
   //
-  // Prepended, not replacing: a character the bundled font does not cover (see
-  // export/fonts.ts) still falls back to a real installed face rather than
-  // measuring against nothing. `fontEmbed` continues to decide what happens to
-  // the EXPORTED svg, which is a separate question from what was measured.
-  const bodyFontFamily = `"${BUNDLED_FONT_FAMILY}", ${active.text.family}`;
+  // The theme's stack already starts with the bundled face (ADR 0063); it is
+  // prepended here only for a theme that names something else, so a spec's
+  // own stack cannot opt the MIRROR out of measuring against it. A character
+  // the bundled font does not cover (see export/fonts.ts) still falls back to
+  // a real installed face rather than measuring against nothing. `fontEmbed`
+  // decides what happens to the EXPORTED svg, which is a separate question
+  // from what was measured.
+  const bodyFontFamily = active.text.family.includes(`"${BUNDLED_FONT_FAMILY}"`)
+    ? active.text.family
+    : `"${BUNDLED_FONT_FAMILY}", ${active.text.family}`;
   const bundledFontFace = `${bundledFontFaceCssSync()}\n  `;
-  // outline mode sums each glyph's own advance width to position the next
-  // one (render/svg.ts); Chromium's kerning would then measure narrower or
-  // wider than that sum for character pairs a font kerns, so kerning is
-  // switched off here to keep the two in agreement. embed mode draws real
-  // <text> and never sums anything by hand, so kerning stays on for it.
-  const kerning = fontEmbed === "outline" ? "font-kerning: none;" : "";
+  // Kerning is off in EVERY mode (ADR 0063). A glyph's position is then the
+  // sum of the advances before it -- which is what outline mode draws, what
+  // the exported <text> is told to do (svg.ts), and what planning-time
+  // measurement (text-metrics.ts) computes before any browser exists. With
+  // kerning on, Chromium set "AV" or "P(" tighter than any of the three.
+  const kerning = "font-kerning: none;";
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"><style>
