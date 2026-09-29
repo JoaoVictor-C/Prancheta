@@ -1,0 +1,6 @@
+{
+  "preset": "venn",
+  "title": "complementar de A: o universo fora de A",
+  "sets": ["A", "B"],
+  "shade": "A'"
+}

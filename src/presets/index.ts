@@ -66,6 +66,14 @@ import { expandTruthTable, validateTruthTableInput } from "./truth-table/preset.
 import type { TruthTableInput } from "./truth-table/preset.ts";
 import { expandLogicCircuit, validateLogicCircuitInput } from "./logic-circuit/preset.ts";
 import type { LogicCircuitInput } from "./logic-circuit/preset.ts";
+import { expandStatistics, validateStatisticsInput } from "./statistics/preset.ts";
+import type { StatisticsInput } from "./statistics/preset.ts";
+import { expandDistribution, validateDistributionInput } from "./distribution/preset.ts";
+import type { DistributionInput } from "./distribution/preset.ts";
+import { expandProbabilityTree, validateProbabilityTreeInput } from "./probability-tree/preset.ts";
+import type { ProbabilityTreeInput } from "./probability-tree/preset.ts";
+import { expandVenn, validateVennInput } from "./venn/preset.ts";
+import type { VennInput } from "./venn/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -107,6 +115,10 @@ export type PresetInput = (
   | ({ preset: "automaton" } & AutomatonInput)
   | ({ preset: "truth-table" } & TruthTableInput)
   | ({ preset: "logic-circuit" } & LogicCircuitInput)
+  | ({ preset: "statistics" } & StatisticsInput)
+  | ({ preset: "distribution" } & DistributionInput)
+  | ({ preset: "probability-tree" } & ProbabilityTreeInput)
+  | ({ preset: "venn" } & VennInput)
 ) &
   CommonPresetOptions;
 
@@ -176,6 +188,14 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandTruthTable(input);
     case "logic-circuit":
       return expandLogicCircuit(input);
+    case "statistics":
+      return expandStatistics(input);
+    case "distribution":
+      return expandDistribution(input);
+    case "probability-tree":
+      return expandProbabilityTree(input);
+    case "venn":
+      return expandVenn(input);
   }
 }
 
@@ -244,6 +264,14 @@ export function validatePresetInput(input: PresetInput): void {
       return validateTruthTableInput(raw);
     case "logic-circuit":
       return validateLogicCircuitInput(raw);
+    case "statistics":
+      return validateStatisticsInput(raw);
+    case "distribution":
+      return validateDistributionInput(raw);
+    case "probability-tree":
+      return validateProbabilityTreeInput(raw);
+    case "venn":
+      return validateVennInput(raw);
   }
 }
 
@@ -274,7 +302,11 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "optics" ||
     preset === "automaton" ||
     preset === "truth-table" ||
-    preset === "logic-circuit"
+    preset === "logic-circuit" ||
+    preset === "statistics" ||
+    preset === "distribution" ||
+    preset === "probability-tree" ||
+    preset === "venn"
   );
 }
 
@@ -303,6 +335,10 @@ export type {
   AutomatonInput,
   TruthTableInput,
   LogicCircuitInput,
+  StatisticsInput,
+  DistributionInput,
+  ProbabilityTreeInput,
+  VennInput,
 };
 export type { PresetId };
 

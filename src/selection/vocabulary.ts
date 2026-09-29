@@ -125,8 +125,29 @@
  * AND, OR, NOT, NAND, NOR, XOR symbols, simplified or simulated. The tell
  * is the verb: tabular, classificar, provar equivalência vs. desenhar o
  * circuito, implementar com portas, simular.
+ *
+ * "data" is a list of raw observations -- heights, grades, waiting times --
+ * whose distribution must be summarised: grouped into classes, split at
+ * quartiles, reduced to a mean and a spread. Not a "series": a series is
+ * values to plot as given; here nothing to plot is given, it is computed.
+ *
+ * "distribution" is a probability law -- normal, binomial, Poisson -- with an
+ * event on it whose probability is the answer: an area under the bell, the
+ * mass of some bars, two critical tails. Not a "function": the density is
+ * named, not typed, and the answer is the region's measure.
+ *
+ * "probability-tree" is a sequence of random stages whose outcomes multiply
+ * along a path -- urn draws, coin tosses, a diagnostic test. The content is
+ * the arithmetic on the tree: branches summing to 1, path products, events
+ * as sums of paths, conditionals. Not a "hierarchy": a hierarchy's tree is
+ * its meaning; here the tree only carries the numbers.
+ *
+ * "set-relations" is how several sets overlap -- union, intersection,
+ * difference, complement, head-counts by region -- drawn as circles in a
+ * universe. Not a "set": that is an unordered bag of items with no relation
+ * among its members. Not an "interval": a subset of the real line.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -178,7 +199,11 @@ export type PresetId =
   | "optics"
   | "automaton"
   | "truth-table"
-  | "logic-circuit";
+  | "logic-circuit"
+  | "statistics"
+  | "distribution"
+  | "probability-tree"
+  | "venn";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -300,6 +325,26 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "logic-circuit",
     implemented: true,
     summary: "Gate diagrams built from a boolean expression in distinctive-shape symbols, with fan-out dots, optional Quine–McCluskey simplification and a simulation printing every wire's value.",
+  },
+  {
+    id: "statistics",
+    implemented: true,
+    summary: "Histograms (Sturges or given classes, frequency table, polygon) and boxplots (quartiles by a stated method, 1,5·IQR whiskers, outliers, groups side by side) of raw data, with n, mean, median, mode, variance, standard deviation and IQR computed.",
+  },
+  {
+    id: "distribution",
+    implemented: true,
+    summary: "Normal, binomial and Poisson laws with an event shaded: the region's area is the printed probability (measured), boundaries with x and z, two-sided tails with α/2, the normal approximation with continuity correction, and the standardisation and arithmetic computed.",
+  },
+  {
+    id: "probability-tree",
+    implemented: true,
+    summary: "Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves.",
+  },
+  {
+    id: "venn",
+    implemented: true,
+    summary: "Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong.",
   },
 ];
 

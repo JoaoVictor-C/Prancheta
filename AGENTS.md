@@ -108,6 +108,10 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `automaton` | Finite automata (DFA, NFA with ε) in Sipser style, with each listed word run through the automaton: its path or state sets and aceita/rejeita computed. | yes |
 | `truth-table` | Truth tables of boolean expressions, every cell computed, with subexpression columns, tautology/contradiction/contingency, equivalence, and minterms with a Quine–McCluskey minimal form. | yes |
 | `logic-circuit` | Gate diagrams built from a boolean expression in distinctive-shape symbols, with fan-out dots, optional Quine–McCluskey simplification and a simulation printing every wire's value. | yes |
+| `statistics` | Histograms (Sturges or given classes, frequency table, polygon) and boxplots (quartiles by a stated method, 1,5·IQR whiskers, outliers, groups side by side) of raw data, with n, mean, median, mode, variance, standard deviation and IQR computed. | yes |
+| `distribution` | Normal, binomial and Poisson laws with an event shaded: the region's area is the printed probability (measured), boundaries with x and z, two-sided tails with α/2, the normal approximation with continuity correction, and the standardisation and arithmetic computed. | yes |
+| `probability-tree` | Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves. | yes |
+| `venn` | Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong. | yes |
 
 ## Figure modules
 
@@ -244,6 +248,10 @@ resources:
 | `prancheta://preset/automaton` | automaton preset |
 | `prancheta://preset/truth-table` | truth-table preset |
 | `prancheta://preset/logic-circuit` | logic-circuit preset |
+| `prancheta://preset/statistics` | statistics preset |
+| `prancheta://preset/distribution` | distribution preset |
+| `prancheta://preset/probability-tree` | probability-tree preset |
+| `prancheta://preset/venn` | venn preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

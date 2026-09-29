@@ -67,6 +67,10 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `automaton` | Finite automata (DFA, NFA with ε) in Sipser style, with each listed word run through the automaton: its path or state sets and aceita/rejeita computed. | yes |
 | `truth-table` | Truth tables of boolean expressions, every cell computed, with subexpression columns, tautology/contradiction/contingency, equivalence, and minterms with a Quine–McCluskey minimal form. | yes |
 | `logic-circuit` | Gate diagrams built from a boolean expression in distinctive-shape symbols, with fan-out dots, optional Quine–McCluskey simplification and a simulation printing every wire's value. | yes |
+| `statistics` | Histograms (Sturges or given classes, frequency table, polygon) and boxplots (quartiles by a stated method, 1,5·IQR whiskers, outliers, groups side by side) of raw data, with n, mean, median, mode, variance, standard deviation and IQR computed. | yes |
+| `distribution` | Normal, binomial and Poisson laws with an event shaded: the region's area is the printed probability (measured), boundaries with x and z, two-sided tails with α/2, the normal approximation with continuity correction, and the standardisation and arithmetic computed. | yes |
+| `probability-tree` | Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves. | yes |
+| `venn` | Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong. | yes |
 
 ## Figure modules
 
@@ -178,7 +182,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, or a boolean function.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, a boolean function, raw data to summarise, a probability law, a probability tree, or overlapping sets.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -239,6 +243,14 @@ A ray diagram is its own question (`S-optics-favours-optics`). *"Construa a imag
 An automaton is a graph whose meaning is its runs (`S-automaton-favours-automaton`, `S-automaton-disqualifies-graph`, `S-automaton-disqualifies-labelled-blocks`). *"Desenhe o AFD que reconhece as palavras terminadas em ab e mostre a execução de aab e ba"* needs a start arrow, double circles for accepting states, and each word run through the machine. The `automaton` preset draws it in Sipser's style and prints, for each word, the path of states (or, for an NFA, the sets of states with ε-closure) and "aceita" or "rejeita", computed and never typed.
 
 A boolean function has two honest pictures, and the verb chooses. *"Mostre que ¬(p ∨ q) é equivalente a ¬p ∧ ¬q"* asks for its values: a `truth-table` (`S-boolean-favours-truth-table`), one row per assignment, a column per subexpression, and a line saying which columns agree — not a `value-table`, which evaluates real functions (`S-boolean-disqualifies-value-table`). *"Desenhe o circuito de S = A′B + AB′ só com portas AND, OR e NOT"* asks for gates: a `logic-circuit` (`S-logic-circuit-favours-logic-circuit`), laid out from the expression tree, never a graph (`S-logic-circuit-disqualifies-graph`). Both parse the same expression; asked to simplify, the circuit draws the Quine–McCluskey minimal form, and given the inputs, it prints every wire's value.
+
+Raw observations are summarised, not plotted (`S-data-favours-statistics`, `S-data-disqualifies-chart`). *"Construa o histograma das alturas dos 40 alunos e calcule a média e o desvio padrão"* or *"desenhe o boxplot das notas das turmas A e B e identifique os outliers"* give a list of numbers, and every bar height, quartile and spread is a consequence of it. A chart plots values it is handed, one separated bar per category; a histogram's bars touch over consecutive classes [a; b), and each height is a count. The `statistics` preset chooses the classes by Sturges' rule (or uses yours), computes the quartiles by one stated method, draws the whiskers to the last value within 1,5·IQR and the outliers beyond, and prints n, x̄, Md, Mo, s and IQR from the same data.
+
+A probability law with an event is its own question (`S-distribution-favours-distribution`). *"Sombreie a área sob N(70; 5²) entre 60 e 75 e calcule a probabilidade"*, *"encontre os valores críticos de um teste bilateral com α = 5%"* or *"binomial n = 10, p = 0,3: P(X = 3)"* take the law's parameters and the event. A density typed into `function-graph` leaves the curve, the bounds and the number free to disagree (`S-distribution-disqualifies-function-graph`), and a chart draws data, not a law (`S-distribution-disqualifies-chart`). The `distribution` preset shades the region, measures its printed probability against the area drawn, labels the boundaries with x and z, and prints the standardisation and the Φ arithmetic — arithmetic that holds on the page to its last digit.
+
+Random stages that multiply along a path are a probability tree (`S-probability-tree-favours-probability-tree`). *"Uma urna tem 3 bolas vermelhas e 2 azuis; retiram-se duas sem reposição; qual a probabilidade de cores diferentes?"* is arithmetic on a tree: each branch carries its probability, each leaf the product of its path, the event is the sum of the highlighted paths. A mindmap or a graph would draw the tree and none of that (`S-probability-tree-disqualifies-mindmap`, `S-probability-tree-disqualifies-graph`). The `probability-tree` preset builds the tree from the urn or from typed branches, refuses a node whose branches do not sum to 1, and computes path products, event sums and Bayes conditionals in exact fractions.
+
+How sets overlap is a Venn diagram (`S-set-relations-favours-venn`). *"Sombreie (A ∪ B) − C"* or *"numa pesquisa com 100 pessoas, 45 leem o jornal A, 30 o B, 12 ambos: quantas não leem nenhum?"* is about regions: which ones an expression covers, how many people each holds. Blocks cannot show shared members (`S-set-relations-disqualifies-blocks`), and overlapping sets are not intervals (`S-set-relations-disqualifies-number-line`). The `venn` preset traces every region from the circle geometry, shades an expression by evaluating it on each region, solves survey data by inclusion–exclusion — refusing data that would leave a region negative — and prints each count inside its own region, the outside included. The older "set" structure, an unordered bag of items, stays a stack of blocks.
 
 ## Answer three questions, not two
 
@@ -2610,3 +2622,377 @@ Flip-flops and sequential logic, buses, multi-letter signal names (`Cin`),
 tri-state gates, and hop arcs at crossings (a crossing is a plain crossing).
 
 Fixtures: [`fixtures/logic-circuit/`](../../../fixtures/logic-circuit/and-or-not.json).
+
+### statistics
+
+Descriptive statistics of RAW DATA, for Estatística and ENEM: "construa o
+histograma", "desenhe o boxplot e identifique os outliers". The observations are
+the only typed numbers; classes, frequencies, quartiles, fences, whiskers,
+outliers, mean, variance and every printed label are **computed** by
+`src/math/statistics.ts`. See
+[`docs/decisions/0058-descriptive-statistics.md`](../../../docs/decisions/0058-descriptive-statistics.md).
+
+**Choose it when** the content is data that must be summarised. It is not
+`chart`, which plots values it is handed as separate bars with gaps; a
+histogram's bars touch because the classes are consecutive intervals.
+
+## Input
+
+```json
+{ "preset": "statistics", "kind": "both", "data": [150, 152, 153, "..."], "unit": "cm", "variable": "Altura" }
+```
+
+| field | meaning |
+| --- | --- |
+| `kind` | required: `histogram`, `boxplot` or `both` (boxplot aligned under the histogram on one scale) |
+| `data` | `number[]`, or `{ values, label? }[]` (up to 4 groups, boxplot only) |
+| `classes` | `"sturges"` (default: k = 1 + 3,3·log n rounded; width R/k rounded up to a round number and to the data's precision; first edge rounded down), `{ start, width }`, or explicit edges |
+| `frequency` | `absolute` (default), `relative`, `percent`, `density` (required when class widths differ) |
+| `polygon` | frequency polygon: midpoints joined, closed to the axis at the empty neighbouring classes |
+| `showTable` | table classe, fᵢ, frᵢ, Fᵢ, xᵢ (and dᵢ for density) with a Σ row |
+| `showStats` | reading panel (default true): n, x̄, Md, Mo, classe modal, s²/s, A, Q₁, Q₃, IQR, fences, outliers; several groups get a summary table |
+| `quartileMethod` | `halves` (default: median of each half, the median left out when n is odd; Ensino Médio and ENEM), `tukey` (median kept in both halves), `linear` (interpolation, Excel QUARTIL.INC / R type 7) |
+| `variance` | `sample` (default: s², divisor n − 1) or `population` (σ², divisor n); always stated in the figure |
+| `unit`, `variable`, `title`, `locale` | as usual |
+
+Classes are [a; b), closed on the left and open on the right; the last class is
+closed on both ends. The figure states this. A class scheme that would drop an
+observation is refused.
+
+## What is drawn
+
+Histogram: touching bars, numbered frequency gridlines (the frame's own furniture),
+x numbers at the class edges (thinned if they would touch), frequency above each bar
+or inside it where clear of ink (omitted when no clear spot exists; the table and
+axis still carry it). Boxplot: box Q₁–Q₃, median bar, whiskers to the most extreme
+observation within 1,5·IQR of the box, outliers as open circles, labels `Q₁ = 12`,
+`Md = 15`, `Q₃ = 18` placed above or below to stay clear; groups on one numbered
+axis with dotted row guides. Horizontal only.
+
+Limits: horizontal boxplots only; at most 4 groups; the numbers in the panel are
+rounded to three decimals with "≈" when not exact (√n shown as `√5 ≈ 2,236`).
+
+### distribution
+
+A probability distribution with an event shaded and its probability computed,
+for Probabilidade e Estatística: "P(60 < X < 75) com X ~ N(70; 5²)", "sombreie
+a área e calcule", "P(Z > 1,96)", "binomial P(X = 3) com n = 10, p = 0,3",
+"os valores críticos de um teste bilateral com α = 5%". The law's parameters and
+the event are the only typed numbers. The curve, the bars, the shaded region,
+the boundaries, the z axis, every number printed in the figure and every step
+of the arithmetic in the panel are **computed** by `src/math/probability.ts`.
+See [`docs/decisions/0059-probability-distributions.md`](../../../docs/decisions/0059-probability-distributions.md)
+for what was refused and why.
+
+**Choose it when** the content is one law (normal, binomial or Poisson) and one
+event on it: an area under a bell curve, the mass of some bars, the two tails of
+a significance test, a binomial checked against its normal approximation. It is
+not for a curve you write as y = f(x) with tangents and integrals
+(`function-graph` shades areas under any expression; this preset knows the
+laws), nor for a sample's histogram or a table of frequencies (`chart`).
+
+## Input
+
+```json
+{
+  "preset": "distribution",
+  "kind": "normal",
+  "mean": 70,
+  "sd": 5,
+  "event": { "between": [60, 75] },
+  "showZ": true
+}
+```
+
+| field | what it does |
+| --- | --- |
+| `kind` | `"normal"`, `"binomial"` or `"poisson"`. |
+| `mean`, `sd` | Normal only. Defaults 0 and 1: the standard Z. `sd` must be > 0. |
+| `n`, `p` | Binomial only: `n` a whole number 1 to 5000, `p` strictly between 0 and 1. |
+| `lambda` | Poisson only: λ > 0. |
+| `event` | Exactly one of the forms below. |
+| `showZ` | Normal (or a discrete law with `approximation`): a second row beneath the axis, z = (x − μ)/σ, with the boundaries' z in bold. Ignored for the standard normal, where x already is z. |
+| `approximation` | `"normal"`, for a binomial or a Poisson: the normal curve N(np; npq) or N(λ; λ) dashed over the bars, the continuity edges (±0,5) as dashed verticals, and the panel's comparison. |
+| `decimals` | 1 to 6, default 4: how many decimals every printed probability has. Also decides how far an open-ended normal event is drawn (see below). |
+| `tickLabels` | `false` leaves the axis numberless: the ticks are still drawn. |
+| `title`, `locale` | As every preset. |
+
+The event:
+
+| form | means | drawn |
+| --- | --- | --- |
+| `{ "between": [a, b] }` | normal: P(a < X < b). Discrete: P(a ≤ X ≤ b), both ends included. | the region between the two bounds |
+| `{ "below": b }` | normal: P(X < b). Discrete: P(X ≤ b); `"strict": true` makes it P(X < b). | from the left edge to b |
+| `{ "above": a }` | normal: P(X > a). Discrete: P(X ≥ a); `"strict": true` makes it P(X > a). | from a to the right edge |
+| `{ "equals": k }` | a discrete law only: P(X = k). A normal refuses it: P(X = k) = 0. | the one bar |
+| `{ "tails": z }` or `{ "tails": { "alpha": 0.05 } }` | normal only, two-sided |Z| > z. Given α, z = Φ⁻¹(1 − α/2) is computed: 1,96 for 5%, 2,576 for 1%. | both tails, α/2 each, ±z marked |
+
+## What is drawn
+
+**A normal**: the density over μ ± 4σ (wider when the event asks: see below), the
+event's region a closed mark filled with a tint and outlined, the curve where it
+is not shaded, and beneath the axis ticks at μ + kσ numbered with their values.
+The boundaries are bold, in place of the ticks under them, and hang a short
+line from the axis to their number. `P = 0,8186` is printed **inside the
+shaded region** where its box fits, otherwise beside it, above the curve. With
+`showZ`, the z row numbers the same places, and the boundaries' z are bold.
+
+**A discrete law**: bars of width 1 centred on each k, as tall as the mass (so
+a bar's area IS its probability), separated by a thin paper line. The event's
+bars are filled and merged into one outline, and `P = 0,2668` sits above it.
+The bars drawn are those that hold all but a tenth of the last printed digit of
+the mass, always including the event; a small binomial (n ≤ 20) shows every k
+from 0 to n. Numbers under the axis are the integers, thinned to stay 30px
+apart, and the event's ends in bold.
+
+**With `approximation`**: the normal curve dashed in rust, labelled `N(20; 12)`
+(variance, the textbook's way), and the corrected edges 17,5 and 24,5 dashed and
+labelled in place of the bar numbers. The bars stay the exact answer. Two
+edges too close for their labels (`equals` with the correction) are set in two
+rows.
+
+## The reading panel
+
+Below the figure, every line computed:
+
+- **Standardisation** (a non-standard normal): `z₁ = (60 − 70)/5 = −2; z₂ = (75 − 70)/5 = 1`. A z that is not exact
+  is written to three decimals with `≈`.
+- **The chain**: `P(60 < X < 75) = P(−2 < Z < 1) = Φ(1) − Φ(−2) = 0,84134 − 0,02275 = 0,8186 ≈ 81,86%`.
+  The operands are printed with as many decimals as the subtraction on the page
+  needs to be right: the four-decimal `0,8413 − 0,0228` would read 0,8185, so
+  they get a fifth digit. Above: `1 − Φ(1,96) = 1 − 0,9750 = 0,0250`.
+- **Tails**: `α = 0,05: z = Φ⁻¹(1 − α/2) = Φ⁻¹(0,975) ≈ 1,96`, `P(|Z| > 1,96) = 2 · [1 − Φ(1,96)] = 2 · 0,0250 = 0,0500`,
+  the critical values ±z, each tail's α/2, 1 − α, and for a non-standard normal
+  the x values μ ± zσ.
+- **A binomial**: `P(X = 3) = C(10, 3) · 0,3³ · 0,7⁷ = 0,2668`, then `C(10, 3) = 120`. A range of up
+  to six values is written term by term and summed as printed; a Poisson or binomial tail
+  with a short complement is written `1 − P(X ≤ 0)`; longer ranges give `Σ P(X = k)`.
+- **A Poisson**: `P(X = 2) = e⁻³ · 3² / 2! = 0,2240`.
+- **The approximation**: μ, σ, the continuity correction, z at the corrected edges,
+  `Φ(z₂) − Φ(z₁)`, the exact value and how far the approximation is (and a warning
+  when np or nq is below 5).
+
+## What is checked
+
+Every fixture renders with every check passing: `text-clear-of-ink`,
+`backing-hides-no-ink`, `annotation-nearest-its-owner`, `label-declares-what-it-names`,
+`contrast-sufficient`, and `area-matches-its-label` (ADR 0037) reading the shaded
+polygon against the printed probability. The polygon's vertices are stated in
+a frame whose unit is one x unit by one unit of density, so its area in that
+frame **is** a probability, and a wrong number in the label fails the check;
+`tests/distribution.test.ts` shows it by editing one. Each tail of a two-sided
+event is its own region with its own label, so each is measured.
+
+## What is refused
+
+Naming the path: an unknown `kind` or field; a parameter that belongs to another
+kind; `sd ≤ 0`; `p` outside (0, 1); `n` not a whole number; a non-integer or
+out-of-support bound for a discrete law; `between` with a ≥ b; more than one
+event form; `equals` on a normal; `tails` on a discrete law; `strict` anywhere
+but `below` or `above`; `showZ` on a discrete law without `approximation`;
+`approximation` on a normal.
+
+## What is not covered
+
+Other laws (exponential, t, χ²: the shape is a different function and a
+different table); two events at once (P(A ∪ B)); a leader line from a label to a
+region that is too small for it (the label is set beside the region, nearer to
+it than to anything else, which is what a leader would say; a leader would be a
+second mark for the label to be nearer than); a boundary label that would land
+on a tick number replaces that tick's number rather than sharing its row, so
+1050 can go missing beside a bold 1000.
+
+### probability-tree
+
+A tree diagram of successive random stages, for Probabilidade and ENEM: "uma
+urna tem 3 bolas vermelhas e 2 azuis; retiram-se duas sem reposição", "um teste
+tem 95% de sensibilidade... qual a probabilidade de estar doente dado que o
+teste deu positivo?". Every probability printed — a path's product, an event's
+sum, a Bayes quotient — is exact rational arithmetic on the numbers typed (or
+counted from the urn). See
+[`docs/decisions/0060-probability-trees.md`](../../../docs/decisions/0060-probability-trees.md).
+
+**Choose it when** the content is a sequence of random stages whose outcomes
+multiply along a path. It is not `mindmap` or `graph` (a tree layout without the
+arithmetic), nor `chart` (a distribution as bars).
+
+## Input
+
+Exactly one of two forms.
+
+```json
+{ "preset": "probability-tree", "urn": { "V": 3, "A": 2 }, "draws": 2, "replacement": false,
+  "events": [{ "name": "cores diferentes", "paths": [["V", "A"], ["A", "V"]] }] }
+```
+
+```json
+{ "preset": "probability-tree",
+  "stages": ["condição", "resultado do teste"],
+  "root": { "children": [
+    { "label": "D", "p": "1%",  "children": [{ "label": "+", "p": "95%" }, { "label": "−", "p": "5%" }] },
+    { "label": "S", "p": "99%", "children": [{ "label": "+", "p": "10%" }, { "label": "−", "p": "90%" }] } ] },
+  "events": [{ "name": "D", "paths": [["D"]] }, { "name": "+", "paths": [["*", "+"]] }],
+  "given": { "event": "D", "given": "+" } }
+```
+
+- **`urn`** `{ colour: count }`, **`draws`** 1–6, **`replacement`** (default
+  false): the tree is built; each branch is n/N from the balls left. A colour
+  used up has no branch.
+- **`root.children`**: `{ label, p, children? }`. `p` is a number (`0.6`), or a
+  string: `"3/5"`, `"0,6"`, `"60%"`. At most one sibling may omit `p`; it is 1
+  minus the others. Sibling labels must differ. Leaves may sit at different
+  depths.
+- **`stages`**: a heading over each level (urns get "1ª retirada", ...).
+- **`events`** (at most 3, each its own colour): `paths` — a list of outcome
+  paths; a shorter path takes every leaf beneath it and `"*"` matches any
+  outcome — or `count: { of, is | atLeast | atMost }`. Their branches are drawn
+  in the event's colour and `P(E)` is printed as the sum of the leaf products.
+- **`given`** `{ event, given }` (or a list): `P(A ∩ B)` and
+  `P(A | B) = P(A ∩ B) / P(B)` are computed from leaves and printed with the
+  quotient (a percent too, when the notation is fractions).
+- **`notation`** `fraction | decimal | percent`: default is what the input used
+  (all percents → percents, all decimals → decimals, else fractions).
+  **`also`** `percent | decimal` appends that spelling to every result.
+- **`title`**, **`locale`** as every preset.
+
+## Refusals
+
+The children of every node must sum to exactly 1 (rational arithmetic; the
+message names the node and the sum it has). Also: a probability outside [0, 1],
+a duplicate sibling label, more than 32 leaves or 6 levels, an event matching no
+leaf, a `given` naming an undeclared event or one of probability 0.
+
+## What is drawn
+
+Root on the left, levels evenly spaced, leaves evenly spaced, straight
+branches. The probability is beside the branch's middle — above an upward or
+level branch, below a downward one — never on the line; the outcome is bold text
+at the branch end; one aligned column at the right holds `P(V ∩ A) = 3/5 · 2/4 =
+3/10`. A branch prints its probability as written (an urn's `2/4` stays `2/4`);
+every computed value is reduced. Decimals and percents are exact when they
+terminate within six places, otherwise rounded and marked `≈`.
+
+## Limits
+
+Up to 32 leaves and 6 levels; the canvas grows rather than crams. No
+tree editing beyond typed input; no continuous distributions; events are sets
+of leaves, so an event not expressible as paths or a count is written as paths.
+
+### venn
+
+Venn diagrams of two or three sets in a named rectangular universe, for
+Conjuntos, Probabilidade and ENEM: "sombreie (A ∪ B) − C", "numa pesquisa com
+100 pessoas, 45 leem o jornal A, 30 o B, 12 ambos: quantas não leem nenhum?",
+"liste os elementos de cada região". What is typed is the sets' names and,
+optionally, an expression, survey data or elements. Every region drawn, every
+region shaded and every number printed is **computed**. See
+[`docs/decisions/0061-venn-diagrams.md`](../../../docs/decisions/0061-venn-diagrams.md).
+
+**Choose it when** the content is sets and how they overlap: membership,
+unions, intersections, differences, complements, or a head-count solved by
+inclusion–exclusion. It is not for a subset of the real line (`number-line`
+draws intervals and solution sets of inequalities), nor for the truth values of
+a proposition (`truth-table`), nor for a stack of unrelated items
+(`labelled-blocks`).
+
+## Input
+
+```json
+{
+  "preset": "venn",
+  "sets": ["A", "B", "C"],
+  "shade": "(A ∪ B) − C"
+}
+```
+
+| field | what it does |
+| --- | --- |
+| `sets` | Two or three names of letters and digits (`"A"`, `"Jornal"`). Not `U`, the universe's name, or an operator word. |
+| `universe` | The name drawn in the rectangle's corner. Default `"U"`. |
+| `shade` | A set expression, evaluated on every region (below). |
+| `counts` | Numbers: the textbook data or per-region counts (below). |
+| `elements` | `{ "U": [...], "A": [...], "B": [...] }` — listed in the region each belongs to. |
+| `title`, `locale` | As every preset. |
+
+`counts` and `elements` are exclusive: a region prints one or the other.
+
+### `shade` — the expression language
+
+`∪` union, `∩` intersection, `−` difference, a postfix `′` for the complement,
+`U` for the universe, `∅`, and brackets. `∩` binds tighter than `∪` and `−`,
+which share a level and associate left, so `A ∪ B − C` is `(A ∪ B) − C`; the
+caption always brackets that mix.
+
+Every spelling is accepted: `union | +`, `inter intersect &`, `- – \ minus`,
+complement as `'`, `′`, `ᶜ`, `^c`, `^{c}`, `~A`, `¬A`, `not A`. There is no
+`eval`; a name that is not a set is refused with the sets that were expected.
+
+The expression is evaluated on each region's membership vector — 4 regions for
+two sets, 8 for three, the outside of every circle included — and the regions
+where it holds are filled. `A′` therefore shades the universe outside A **and**
+B∖A; nothing is picked by hand.
+
+### `counts`
+
+Textbook data — cardinalities, solved by inclusion–exclusion for every region:
+
+```json
+{ "total": 100, "A": 45, "B": 30, "A∩B": 12 }
+```
+
+Two sets need `A`, `B` and `A∩B`; three need the three sets, the three pairs and
+`A∩B∩C`. `A∪B` (or `A∪B∪C`) may stand in for the last intersection. Keys also
+read as `n(A)`, `|A|`, `A&B`. `total` is optional; without it nothing is printed
+outside the circles.
+
+Or the exclusive count of each region, keyed by the sets it is in: `"A"` is
+only A, `"A∩B"` is in A and B and in no other set (with three sets, not in C),
+`"A∩B∩C"` all three. Note the difference from the data form above, where
+`"A∩B"` is the whole intersection, C included:
+
+```json
+{ "regions": { "A": 33, "B": 18, "A∩B": 12 }, "total": 100 }
+```
+
+Every inner region must be given (0 where it is empty); `none` or `total`
+gives the outside.
+
+Each count is printed at the point of **its region** furthest from every
+outline, tested so that the label's whole box crosses no line. With `shade`
+and `counts`, the caption adds the shaded regions' sum: `n((A ∪ B)′) = 37`.
+
+### `elements`
+
+Each element goes in the region its membership says. A universe list, when
+given, puts what belongs to no set outside; an element in a set but not in the
+universe is refused. Long lists wrap onto lines and shrink to 11 px before the
+figure gives up: an impossible list is refused, never drawn across an outline.
+With `shade`, the caption lists the shaded elements: `A − B = {a, b}`.
+
+## What is drawn
+
+- **Equal circles**, symmetric: two overlapping (centres one radius apart), or
+  three on an equilateral triangle of side r, A upper left, B upper right, C
+  below. Area-proportional (Euler) diagrams are **out of scope**: a region's
+  size means nothing about its count.
+- **Regions** are traced from the circle geometry as arcs between intersection
+  points, chained into closed outlines — exact, with no polygon approximation.
+  The fills come first with no stroke, and the circle outlines, cut at the same
+  points, go on top, so a shaded union reads as one smooth area.
+- The set names sit beside their circles, outside the overlap; `U` in the
+  rectangle's corner.
+
+## What is refused
+
+- Fewer than two or more than three sets; repeated or reserved names.
+- Data that gives a negative region — `region "only A" comes out as −2` — or
+  that disagrees with its own total or union; a non-integer count.
+- A `shade` that names something that is not a set, or has a stray bracket or
+  a missing operator, with the position.
+- `counts` together with `elements`; an unknown field (`shading`).
+- An element list that does not fit its region.
+
+## What is not covered
+
+Four or more sets (a circle diagram does not give all the regions), area-
+proportional diagrams, and shading by hatching (fills are one tint).

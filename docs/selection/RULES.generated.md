@@ -618,3 +618,102 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 90
 - **Statement:** Gates are not nodes: each has a shape that is its function, and wires run orthogonally to named pins.
+
+## S-data-favours-statistics
+
+- **Axis:** structure
+- **When:** `data`
+- **Preset:** `statistics`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Raw observations to group into classes or split at quartiles are summarised by the statistics preset: every frequency, quartile, mean and spread computed from the data.
+
+## S-data-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `data`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A chart plots values it is handed as separated bars; a histogram's touching bars are counts computed from the data.
+
+## S-distribution-favours-distribution
+
+- **Axis:** structure
+- **When:** `distribution`
+- **Preset:** `distribution`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A probability law with an event is drawn by the distribution preset: the region shaded, its probability computed and measured against the area drawn, and the standardisation printed.
+
+## S-distribution-disqualifies-function-graph
+
+- **Axis:** structure
+- **When:** `distribution`
+- **Preset:** `function-graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A density typed into function-graph leaves the bounds, the curve and the number free to disagree, and nothing does the standardisation.
+
+## S-distribution-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `distribution`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A chart draws data; the mass function of a named law with an event highlighted is computed from the law.
+
+## S-probability-tree-favours-probability-tree
+
+- **Axis:** structure
+- **When:** `probability-tree`
+- **Preset:** `probability-tree`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A sequence of random stages is drawn by the probability-tree preset, which checks that each node's branches sum to 1 and computes the path products, event sums and conditionals.
+
+## S-probability-tree-disqualifies-mindmap
+
+- **Axis:** structure
+- **When:** `probability-tree`
+- **Preset:** `mindmap`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A mindmap lays out a tree but does no arithmetic on it.
+
+## S-probability-tree-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `probability-tree`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A graph gives a tree layout without the arithmetic; the branch probabilities and path products are the whole point.
+
+## S-set-relations-favours-venn
+
+- **Axis:** structure
+- **When:** `set-relations`
+- **Preset:** `venn`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Overlapping sets, their unions, intersections, differences and head-counts by region are a Venn diagram, every region shaded or counted by computation.
+
+## S-set-relations-disqualifies-blocks
+
+- **Axis:** structure
+- **When:** `set-relations`
+- **Preset:** `labelled-blocks`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A stack of blocks cannot show that two sets share members.
+
+## S-set-relations-disqualifies-number-line
+
+- **Axis:** structure
+- **When:** `set-relations`
+- **Preset:** `number-line`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** Overlapping sets are not a subset of the real line; intervals are drawn by number-line.

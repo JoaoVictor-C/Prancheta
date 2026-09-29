@@ -1,0 +1,16 @@
+{
+  "preset": "probability-tree",
+  "title": "teste de uma doença: prevalência 1%, sensibilidade 95%, especificidade 90%",
+  "stages": ["condição", "resultado do teste"],
+  "root": {
+    "children": [
+      { "label": "D", "p": "1%", "children": [{ "label": "+", "p": "95%" }, { "label": "−", "p": "5%" }] },
+      { "label": "S", "p": "99%", "children": [{ "label": "+", "p": "10%" }, { "label": "−", "p": "90%" }] }
+    ]
+  },
+  "events": [
+    { "name": "D", "paths": [["D"]] },
+    { "name": "+", "paths": [["*", "+"]] }
+  ],
+  "given": { "event": "D", "given": "+" }
+}

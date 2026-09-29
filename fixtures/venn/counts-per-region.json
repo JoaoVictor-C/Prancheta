@@ -1,0 +1,6 @@
+{
+  "preset": "venn",
+  "title": "contagens por região",
+  "sets": ["A", "B"],
+  "counts": { "regions": { "A": 33, "A∩B": 12, "B": 18 }, "total": 100 }
+}

@@ -1,0 +1,17 @@
+{
+  "preset": "probability-tree",
+  "title": "três máquinas produzem 50%, 30% e 20% das peças, com 1%, 3% e 4% de defeituosas",
+  "stages": ["máquina", "peça"],
+  "root": {
+    "children": [
+      { "label": "M₁", "p": "50%", "children": [{ "label": "def", "p": "1%" }, { "label": "ok", "p": "99%" }] },
+      { "label": "M₂", "p": "30%", "children": [{ "label": "def", "p": "3%" }, { "label": "ok", "p": "97%" }] },
+      { "label": "M₃", "children": [{ "label": "def", "p": "4%" }, { "label": "ok" }] }
+    ]
+  },
+  "events": [
+    { "name": "defeituosa", "paths": [["*", "def"]] },
+    { "name": "M₃", "paths": [["M₃"]] }
+  ],
+  "given": { "event": "M₃", "given": "defeituosa" }
+}

@@ -1,0 +1,7 @@
+{
+  "preset": "venn",
+  "title": "A = {a, b, c, d}, B = {c, d, e}",
+  "sets": ["A", "B"],
+  "elements": { "U": ["a", "b", "c", "d", "e", "f", "g"], "A": ["a", "b", "c", "d"], "B": ["c", "d", "e"] },
+  "shade": "A − B"
+}

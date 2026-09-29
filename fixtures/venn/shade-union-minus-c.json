@@ -1,0 +1,6 @@
+{
+  "preset": "venn",
+  "title": "(A ∪ B) − C sombreada",
+  "sets": ["A", "B", "C"],
+  "shade": "(A ∪ B) − C"
+}

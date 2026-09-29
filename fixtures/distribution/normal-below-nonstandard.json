@@ -1,0 +1,7 @@
+{
+  "preset": "distribution",
+  "kind": "normal",
+  "mean": 1200,
+  "sd": 150,
+  "event": { "below": 1000 }
+}

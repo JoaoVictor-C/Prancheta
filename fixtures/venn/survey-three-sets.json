@@ -1,0 +1,7 @@
+{
+  "preset": "venn",
+  "title": "pesquisa com 130 pessoas: três canais",
+  "sets": ["A", "B", "C"],
+  "counts": { "total": 130, "A": 60, "B": 50, "C": 40, "A∩B": 20, "A∩C": 15, "B∩C": 10, "A∩B∩C": 5 },
+  "shade": "C'"
+}
