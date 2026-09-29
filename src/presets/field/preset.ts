@@ -53,8 +53,9 @@ import { compileIn } from "../../math/expr.ts";
 import { contour } from "../../math/contour.ts";
 import { rk4Scalar, rk4Planar } from "../../math/numeric.ts";
 import { fitUnits, niceStep, ticksIn } from "../shared/scale.ts";
-import { Placer, aroundPoint, besidePolyline, rectAt, rectToPolyline, segmentHitsRect } from "../construction/place.ts";
-import type { Rect } from "../construction/place.ts";
+import { Placer, aroundPoint, besidePolyline } from "../construction/place.ts";
+import type { Rect } from "../../ir/types.ts";
+import { distanceToPolyline, pointToRect, rectAt, rectToPolyline, segmentHitsRect } from "../../geometry/hit.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -140,10 +141,6 @@ export function gradient(f: (x: number, y: number) => number, x: number, y: numb
   const fx = (f(x + h, y) - f(x - h, y)) / (2 * h);
   const fy = (f(x, y + h) - f(x, y - h)) / (2 * h);
   return [fx, fy];
-}
-
-function magnitude(dx: number, dy: number): number {
-  return Math.hypot(dx, dy);
 }
 
 /**
@@ -447,7 +444,7 @@ function expandVector(input: FieldInputVector & WithAnswers, locale: Locale, tit
       const dx = p(x, y);
       const dy = q(x, y);
       if (!Number.isFinite(dx) || !Number.isFinite(dy)) continue;
-      samples.push({ x, y, dx, dy, mag: magnitude(dx, dy) });
+      samples.push({ x, y, dx, dy, mag: Math.hypot(dx, dy) });
     }
   }
   if (samples.length === 0) throw new SpecError(`field(vector): (P, Q) is not finite at any of the ${xs.length * ys.length} grid points -- nothing to draw`);
@@ -578,7 +575,7 @@ function expandLevels(input: FieldInputLevels & WithAnswers, locale: Locale, tit
   gradPoints.forEach(([x, y], i) => {
     if (!answers) return;
     const [gx, gy] = gradient(f, x, y, h);
-    const mag = magnitude(gx, gy);
+    const mag = Math.hypot(gx, gy);
     if (!Number.isFinite(mag) || mag <= 1e-9) return; // a critical point has no direction to draw
     const c = at([x, y]);
     const ux = gx / mag;
@@ -593,7 +590,7 @@ function expandLevels(input: FieldInputLevels & WithAnswers, locale: Locale, tit
   // Points: the gradient's own foot, last.
   gradPoints.forEach(([x, y], i) => {
     const [gx, gy] = gradient(f, x, y, h);
-    if (!Number.isFinite(magnitude(gx, gy)) || (answers && magnitude(gx, gy) <= 1e-9)) return;
+    if (!Number.isFinite(Math.hypot(gx, gy)) || (answers && Math.hypot(gx, gy) <= 1e-9)) return;
     drawPoint(board, placer, `grad-${i}-foot`, at([x, y]), undefined, GRADIENT);
   });
 
@@ -709,20 +706,6 @@ function drawContours(board: Board, placer: Placer, locale: Locale, curves: Cont
 
 /** Where along a branch an inline label is tried, as fractions of its arc length. */
 const INLINE_TS = [0.3, 0.7, 0.4, 0.6, 0.2, 0.8, 0.5, 0.25, 0.75, 0.15, 0.85, 0.35, 0.65, 0.45, 0.55];
-
-function distanceToPolyline(p: Point, pts: Point[]): number {
-  let best = Infinity;
-  for (let i = 1; i < pts.length; i += 1) {
-    const a = pts[i - 1]!;
-    const b = pts[i]!;
-    const dx = b.x - a.x;
-    const dy = b.y - a.y;
-    const len2 = dx * dx + dy * dy;
-    const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
-    best = Math.min(best, Math.hypot(p.x - (a.x + dx * t), p.y - (a.y + dy * t)));
-  }
-  return best;
-}
 
 /** The point at fraction `t` of a polyline's arc length. */
 function pointAlong(pts: Point[], t: number): Point {
@@ -1145,7 +1128,7 @@ function expandCharges(input: FieldInputCharges & WithAnswers, locale: Locale, t
       for (const ar of arrows) if (rectToPolyline(rect, [...ar.ring, ar.ring[0]!]) < own + 1) return true;
       for (const cv of curves) if (rectToPolyline(rect, cv.canvasPts) < own + 1) return true;
       for (let j = 0; j < charges.length; j += 1) {
-        if (j !== i && pointToRectDistance(at(charges[j]!.at), rect) - rd < own + 1) return true;
+        if (j !== i && pointToRect(at(charges[j]!.at), rect) - rd < own + 1) return true;
       }
       return false;
     };
@@ -1153,7 +1136,7 @@ function expandCharges(input: FieldInputCharges & WithAnswers, locale: Locale, t
     for (const spot of spots) {
       const rect = rectAt(spot.centre, w, h);
       if (!placer.clearOf(rect, "")) continue;
-      const near = pointToRectDistance(centre, rect);
+      const near = pointToRect(centre, rect);
       if (near <= reach - 1) {
         if (rivalsOf(rect, near)) continue;
         chosen = { at: spot.centre };
@@ -1220,12 +1203,6 @@ function aroundDisc(c: Point, r: number, w: number, h: number, incident: number[
     }
   }
   return out;
-}
-
-function pointToRectDistance(p: Point, r: Rect): number {
-  const dx = Math.max(r.x - p.x, 0, p.x - (r.x + r.width));
-  const dy = Math.max(r.y - p.y, 0, p.y - (r.y + r.height));
-  return Math.hypot(dx, dy);
 }
 
 // ---- entry point -------------------------------------------------------------

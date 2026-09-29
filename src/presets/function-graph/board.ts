@@ -17,6 +17,7 @@
 
 import type { Block, FigureSpec, Frame, LineStyle, Mark, Point } from "../../ir/types.ts";
 import { resolveInFrame } from "../../ir/frames.ts";
+import { estimateWidth } from "../shared/text.ts";
 
 export type Box = { x: number; y: number; hw: number; hh: number };
 
@@ -263,8 +264,7 @@ export class Board {
 
   /** A generous guess at a set line, so a declared box is never too narrow. */
   measure(text: string, fs: number, tracking = 0.1): number {
-    const longest = Math.max(...text.split("\n").map((l) => [...l].length));
-    return Math.ceil(longest * (fs * 0.56 + tracking) + 10);
+    return estimateWidth(text, fs, tracking);
   }
 
   /** The box a label of this text and size would occupy. */

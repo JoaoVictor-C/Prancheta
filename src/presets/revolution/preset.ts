@@ -40,6 +40,8 @@ import { SpacePlacer, aroundPlace } from "../space/placer.ts";
 import { convexHull, splitCircle } from "../solid/geometry.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
 import * as G from "./geometry.ts";
+import { writeSnapped } from "../../locale/write.ts";
+import type { Printed } from "../../locale/write.ts";
 
 // ---- input ------------------------------------------------------------------------
 
@@ -167,7 +169,8 @@ function squared(text: string): string {
  * and the volume prints rounded after "≈".
  */
 export function exactVolume(V: number, locale: Locale = "pt-BR"): string | null {
-  const snapped = snapExact(V, 1e-8);
+  // snapExact's slack is absolute below 1, so a volume of 2e-9 would snap to an exact 0; scale it to the volume.
+  const snapped = snapExact(V, 1e-8 * Math.min(1, Math.abs(V)));
   if (snapped.exact) return writeExact(snapped, locale);
   const I = V / Math.PI;
   for (let q = 1; q <= 64; q += 1) {
@@ -182,7 +185,7 @@ export function exactVolume(V: number, locale: Locale = "pt-BR"): string | null 
 }
 
 /** A volume as the panel prints it: "= 8π ≈ 25,133", or "≈ 7,137" when it is not exact. */
-export function volumeText(V: number, locale: Locale = "pt-BR"): { text: string; exact: boolean } {
+export function volumeText(V: number, locale: Locale = "pt-BR"): Printed {
   const exact = exactVolume(V, locale);
   const approx = formatNumber(V, locale, { decimals: 3 });
   return exact === null ? { text: `≈ ${approx}`, exact: false } : { text: `= ${exact} ≈ ${approx}`, exact: true };
@@ -262,7 +265,7 @@ export function resolveRevolution(input: RevolutionInput): Resolved {
   if (parts.some((p) => p.sign !== parts[0]!.sign)) {
     const where = parts[1]!.from;
     throw new SpecError(
-      `revolution.region: ${g === null ? `"${f.src}" crosses the x axis` : `"${f.src}" and "${g.src}" cross`} at x = ${writeExact(snapExact(where, 1e-9), locale)} -- ` +
+      `revolution.region: ${g === null ? `"${f.src}" crosses the x axis` : `"${f.src}" and "${g.src}" cross`} at x = ${writeSnapped(where, 1e-9, locale)} -- ` +
         `the region is two pieces there; revolve each piece on its own`,
     );
   }
@@ -299,7 +302,7 @@ export function resolveRevolution(input: RevolutionInput): Resolved {
       if (ps.length > 1 && ps.some((p) => p.sign !== ps[0]!.sign)) {
         const at = ps.find((p) => p.sign !== ps[0]!.sign)!.from;
         throw new SpecError(
-          `revolution.region crosses the axis of revolution ${lineName} at x = ${writeExact(snapExact(at, 1e-9), locale)} -- ` +
+          `revolution.region crosses the axis of revolution ${lineName} at x = ${writeSnapped(at, 1e-9, locale)} -- ` +
             `a solid of revolution is swept by a region on ONE side of its axis; split the region there`,
         );
       }
@@ -385,8 +388,8 @@ export function resolveRevolution(input: RevolutionInput): Resolved {
   }
 
   const volume = numeric("revolution: the volume", () => G.volumeInX(model));
-  const aText = writeExact(snapExact(a, 1e-9), locale);
-  const bText = writeExact(snapExact(b, 1e-9), locale);
+  const aText = writeSnapped(a, 1e-9, locale);
+  const bText = writeSnapped(b, 1e-9, locale);
   return { model, method, upper, lower, a, b, aText, bText, sliceAt, sections, axisName, texts, volume };
 }
 

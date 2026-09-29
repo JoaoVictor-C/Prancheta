@@ -1767,6 +1767,15 @@ function placesOf(figure: LaidOutFigure): Map<string, Point> {
 type StatedLength = { value: number; resolution: number; unit: string | null };
 
 /**
+ * A label as the drawing sets it, minus the narrow no-break spaces that group
+ * digits ("12 000"): `\s` matches them, so a grouped number would otherwise
+ * read as a number followed by a unit and the label would never be checked.
+ */
+function ungrouped(text: string): string {
+  return text.replace(/(\d)\u202f(?=\d{3}(?!\d))/g, "$1");
+}
+
+/**
  * The length a label states, or null when it states none.
  *
  * Read as the project's own formatter writes numbers (ADR 0023): pt-BR, so a
@@ -1790,7 +1799,7 @@ type StatedLength = { value: number; resolution: number; unit: string | null };
  * the way its sign says is a different claim this check does not make.
  */
 function statedLength(text: string): StatedLength | null {
-  let t = text.trim().replaceAll("−", "-").replaceAll(" ", " ");
+  let t = ungrouped(text).trim().replaceAll("−", "-").replaceAll(" ", " ");
   const equals = t.lastIndexOf("=");
   if (equals >= 0) t = t.slice(equals + 1).trim();
   // An exact root -- "√13", "2√13", "3√2/2" -- is a stated length too, and
@@ -2008,7 +2017,7 @@ type StatedArea = { value: number; resolution: number; exact: boolean };
  * to read, exactly as in the length check, so it is refused here too.
  */
 function statedArea(text: string): StatedArea | null {
-  let t = text.trim().replaceAll("−", "-");
+  let t = ungrouped(text).trim().replaceAll("−", "-");
   const equals = t.lastIndexOf("=");
   if (equals >= 0) {
     t = t.slice(equals + 1).trim();

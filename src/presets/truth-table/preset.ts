@@ -46,6 +46,7 @@ import {
 import type { BoolExpr, Notation } from "../../math/boolean.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { wrapText } from "../shared/text.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -122,22 +123,6 @@ function parseExpression(raw: TruthTableExpression, i: number, notation: Notatio
 }
 
 const symbolsOf = (notation: Notation): { t: string; f: string } => (notation === "logic" ? { t: "V", f: "F" } : { t: "1", f: "0" });
-
-/** Break `text` at spaces so no line is wider than `maxWidth` by the board's own measure. */
-function wrap(board: Board, text: string, size: number, maxWidth: number): string[] {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let line = "";
-  for (const word of words) {
-    const candidate = line === "" ? word : `${line} ${word}`;
-    if (line !== "" && board.measure(candidate, size) > maxWidth) {
-      lines.push(line);
-      line = word;
-    } else line = candidate;
-  }
-  if (line !== "") lines.push(line);
-  return lines;
-}
 
 // ---- the build ---------------------------------------------------------------
 
@@ -293,7 +278,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
   const tableH = headH + rowCount * ROW;
 
   const panelMax = Math.max(tableW, 560);
-  const panelLines = panel.flatMap((p) => wrap(probe, p.text, PANEL_SIZE, panelMax).map((text) => ({ ...p, text })));
+  const panelLines = panel.flatMap((p) => wrapText(p.text, panelMax, (t) => probe.measure(t, PANEL_SIZE)).map((text) => ({ ...p, text })));
   const panelW = panelLines.length === 0 ? 0 : Math.max(...panelLines.map((l) => probe.measure(l.text, PANEL_SIZE)));
   const width = Math.ceil(Math.max(tableW, panelW) + 2 * M);
   const panelTop = M + tableH + (panelLines.length === 0 ? 0 : 22);

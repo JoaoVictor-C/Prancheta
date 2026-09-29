@@ -43,11 +43,12 @@ import { LOCALES, formatNumber, snapExact } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
-import { MARGIN as PLACE_MARGIN, Placer, aroundPoint, rectAt } from "../construction/place.ts";
+import { MARGIN as PLACE_MARGIN, Placer, aroundPoint } from "../construction/place.ts";
 import { CircuitError, solveMna } from "./mna.ts";
 import type { MnaElement, MnaKind, MnaSolution } from "./mna.ts";
 import { TERMINAL_R, halfLength, halfWidth, samplePath, switchTerminals, symbolPaths } from "./symbols.ts";
 import type { Op, SymbolKind } from "./symbols.ts";
+import { rectAt } from "../../geometry/hit.ts";
 
 // ---- input ------------------------------------------------------------------------
 
@@ -342,7 +343,8 @@ type Run = { text: string; sub?: boolean };
 function runWidth(text: string, size: number): number {
   let em = 0;
   for (const ch of text) {
-    if (ch === " " || ch === "\u00a0") em += 0.3;
+    if (ch === "\u202f") em += 0.2;
+    else if (ch === " " || ch === "\u00a0") em += 0.3;
     else if (/[0-9]/.test(ch)) em += 0.58;
     else if (/[A-Z]/.test(ch)) em += 0.7;
     else if (/[a-z]/.test(ch)) em += 0.56;

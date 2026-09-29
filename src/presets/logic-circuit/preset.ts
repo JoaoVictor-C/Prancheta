@@ -49,7 +49,9 @@ import {
 } from "../../math/boolean.ts";
 import type { BoolExpr, Notation } from "../../math/boolean.ts";
 import * as v from "../validate.ts";
+import { distanceToSegmentXY } from "../../geometry/hit.ts";
 import { Board } from "../function-graph/board.ts";
+import { wrapText } from "../shared/text.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -743,20 +745,12 @@ function decompose(netId: number, segs: [Pt, Pt][], start: Pt): { chains: Chain[
 
 // ---- label placement ------------------------------------------------------------------
 
-function distanceToSegment(px: number, py: number, s: { ax: number; ay: number; bx: number; by: number }): number {
-  const vx = s.bx - s.ax;
-  const vy = s.by - s.ay;
-  const len2 = vx * vx + vy * vy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((px - s.ax) * vx + (py - s.ay) * vy) / len2));
-  return Math.hypot(px - (s.ax + t * vx), py - (s.ay + t * vy));
-}
-
 /** Distance from a point to each owner's ink, the least per owner. */
 function nearestByOwner(board: Board, px: number, py: number): Map<string, number> {
   const best = new Map<string, number>();
   for (const s of board.ink) {
     if (s.owner === undefined) continue;
-    const d = distanceToSegment(px, py, s);
+    const d = distanceToSegmentXY(px, py, s.ax, s.ay, s.bx, s.by);
     if (d < (best.get(s.owner) ?? Infinity)) best.set(s.owner, d);
   }
   return best;
@@ -823,21 +817,6 @@ function parseOrThrow(source: string, path: string): BoolExpr {
     if (error instanceof BoolParseError) throw new SpecError(`${path}: ${error.message}\n${error.excerpt()}`);
     throw error;
   }
-}
-
-function wrap(board: Board, text: string, size: number, maxWidth: number): string[] {
-  const words = text.split(" ");
-  const lines: string[] = [];
-  let line = "";
-  for (const word of words) {
-    const candidate = line === "" ? word : `${line} ${word}`;
-    if (line !== "" && board.measure(candidate, size) > maxWidth) {
-      lines.push(line);
-      line = word;
-    } else line = candidate;
-  }
-  if (line !== "") lines.push(line);
-  return lines;
 }
 
 export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
@@ -1000,7 +979,7 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
 
   const circuitRight = right[maxLayer]! + 10 + probe.extent(simulated ? `${outName} = 1` : outName, { size: 16, weight: 700 }).w;
   const panelMax = Math.max(circuitRight - M, 520);
-  const panelLines = panel.flatMap((p) => wrap(probe, p.text, 14, panelMax).map((text) => ({ ...p, text })));
+  const panelLines = panel.flatMap((p) => wrapText(p.text, panelMax, (t) => probe.measure(t, 14)).map((text) => ({ ...p, text })));
   const panelW = Math.max(...panelLines.map((l) => probe.measure(l.text, 14)));
   const width = Math.ceil(Math.max(circuitRight, M + panelW) + M);
   const PANEL_LINE = 26;

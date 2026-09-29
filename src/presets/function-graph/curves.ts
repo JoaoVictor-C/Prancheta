@@ -26,6 +26,7 @@
  */
 
 import type { Point } from "../../ir/types.ts";
+import { distanceToSegment } from "../../geometry/hit.ts";
 
 export type Rect = { x0: number; x1: number; y0: number; y1: number };
 
@@ -57,14 +58,6 @@ const TINY = 0.5;
 const LONG = 24;
 /** At the deepest level, a chord longer than this (px) is a jump, not a curve. */
 const JUMP = 2;
-
-function distanceToSegment(p: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len2 = dx * dx + dy * dy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
-}
 
 /** The angle (radians) between chords a→m and m→b: how sharply a polyline through them turns at m. */
 function turn(a: Point, m: Point, b: Point): number {

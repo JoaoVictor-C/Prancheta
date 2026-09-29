@@ -12,20 +12,15 @@
  * Pure and exported for tests.
  */
 
-import { MINUS, asFraction, formatNumber } from "../../locale/format.ts";
+import { MINUS, asFraction, formatNumber, formatSignificant } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
+import { gcd, splitSquare } from "../../math/integer.ts";
+import type { Printed } from "../../locale/write.ts";
 
 type Frac = { p: number; q: number };
 type Term = { r: number; c: Frac };
 
 export type Exact = { kind: "exact"; terms: Term[]; pi: 0 | 1 } | { kind: "approx"; value: number };
-
-function gcd(a: number, b: number): number {
-  a = Math.abs(a);
-  b = Math.abs(b);
-  while (b !== 0) [a, b] = [b, a % b];
-  return a;
-}
 
 function frac(p: number, q: number): Frac {
   if (q < 0) {
@@ -34,19 +29,6 @@ function frac(p: number, q: number): Frac {
   }
   const g = gcd(p, q) || 1;
   return { p: p / g, q: q / g };
-}
-
-/** n = k²·s with s squarefree. */
-function splitSquare(n: number): { k: number; s: number } {
-  let k = 1;
-  let s = n;
-  for (let d = 2; d * d <= s; d += 1) {
-    while (s % (d * d) === 0) {
-      s /= d * d;
-      k *= d;
-    }
-  }
-  return { k, s };
 }
 
 const SAFE = 2 ** 40;
@@ -113,7 +95,7 @@ export function mul(a: Exact, b: Exact): Exact {
   const terms: Term[] = [];
   for (const s of a.terms) {
     for (const t of b.terms) {
-      const { k, s: r } = splitSquare(s.r * t.r);
+      const { k, r } = splitSquare(s.r * t.r);
       const p = s.c.p * t.c.p * k;
       const q = s.c.q * t.c.q;
       if (!safe(p, q, s.r * t.r)) return approx(valueOf(a) * valueOf(b));
@@ -135,11 +117,11 @@ export function sqrt(a: Exact): Exact {
   if (a.terms.length === 0) return a;
   const { p, q } = a.terms[0]!.c;
   if (!safe(p * q)) return approx(Math.sqrt(v));
-  const { k, s } = splitSquare(p * q);
-  return norm({ kind: "exact", terms: [{ r: s, c: frac(k, q) }], pi: 0 });
+  const { k, r } = splitSquare(p * q);
+  return norm({ kind: "exact", terms: [{ r, c: frac(k, q) }], pi: 0 });
 }
 
-export type Printed = { text: string; exact: boolean };
+export type { Printed };
 
 /**
  * The value as a student writes it: 8, 2,5, 2√3, 3√2/2, 12π, 32π/3,
@@ -172,10 +154,7 @@ export function print(e: Exact, locale: Locale = "pt-BR"): Printed {
  */
 function plainText(x: number, locale: Locale): string {
   if (!(Math.abs(x) < 0.01) || x === 0) return formatNumber(x, locale);
-  const rounded = Number(x.toPrecision(3));
-  const decimals = Math.min(20, Math.max(0, 2 - Math.floor(Math.log10(Math.abs(rounded)))));
-  const body = Math.abs(rounded).toFixed(decimals).replace(/0+$/, "").replace(/\.$/, "");
-  return `${x < 0 ? MINUS : ""}${locale === "pt-BR" ? body.replace(".", ",") : body}`;
+  return formatSignificant(x, 3, locale);
 }
 
 /** A value that is not exact: hundredths; three significant digits below a hundredth; whole units from a million up, where hundredths are false precision. */

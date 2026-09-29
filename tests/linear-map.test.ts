@@ -656,7 +656,7 @@ test("probe: a stretch by [[200, 0], [0, 300]] fits a page (was 4556 x 6926px)",
   const { w, h } = svgSize(svg);
   assert.ok(w <= 1200 && h <= 1200 && w >= 300 && h >= 300, `${w} x ${h}`);
   assert.ok(numericTexts(svg).length <= 24, `${numericTexts(svg).length} numbers`);
-  assert.match(svg, /60000/, "the area is still printed");
+  assert.match(svg, /60\u202f000/, "the area is still printed, grouped from five digits");
   assert.match(svg, /T\(e/, "the image labels stay");
 });
 

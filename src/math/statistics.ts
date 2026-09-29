@@ -9,13 +9,9 @@
  * figure that does not say which one it took is a figure a student cannot check.
  */
 
-// ---- small helpers ----------------------------------------------------------------
+import { tidy } from "./numeric.ts";
 
-/** A float within rounding noise of a round number IS that number. */
-export function tidy(x: number): number {
-  const r = Math.round(x * 1e10) / 1e10;
-  return Math.abs(x - r) < 1e-12 ? r + 0 : x;
-}
+// ---- small helpers ----------------------------------------------------------------
 
 export const sortedAscending = (xs: readonly number[]): number[] => [...xs].sort((a, b) => a - b);
 
@@ -311,18 +307,4 @@ export function modalClasses(rows: readonly FrequencyRow[], by: "count" | "densi
   const value = (r: FrequencyRow): number => (by === "count" ? r.count : r.density);
   const top = Math.max(...rows.map(value));
   return rows.flatMap((r, i) => (Math.abs(value(r) - top) < 1e-12 ? [i] : []));
-}
-
-// ---- axes ------------------------------------------------------------------------------------
-
-/** A tick step a reader counts by (1, 2, 5 times a power of ten) giving at most `maxTicks` divisions over `span`. */
-export function niceStep(span: number, maxTicks = 8): number {
-  if (!(span > 0)) return 1;
-  const raw = span / maxTicks;
-  const m = Math.floor(Math.log10(raw));
-  for (const mant of [1, 2, 5, 10]) {
-    const s = round10(mant * 10 ** m);
-    if (s >= raw - 1e-12) return s;
-  }
-  return round10(10 ** (m + 1));
 }

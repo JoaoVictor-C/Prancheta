@@ -31,7 +31,7 @@
 import type { Block, Connector, FigureSpec, Frame, FramedPoint, GridSpec, Mark, Point, Scene } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { resolveInFrame, tickPlan } from "../../ir/frames.ts";
-import { LOCALES, MINUS, asFraction, formatNumber, formatPoint, snapExact, writeExact } from "../../locale/format.ts";
+import { LOCALES, MINUS, asFraction, formatNumber, formatPoint } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as vec from "../../geometry/vec.ts";
 import type { Circle2, Line2, Vec2 } from "../../geometry/vec.ts";
@@ -39,10 +39,11 @@ import { constantValue } from "../../math/expr.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
-import { measuredLabel, sqrtLabel } from "../vectors/preset.ts";
+import { measuredLabel, sqrtLabel, writeSnapped } from "../../locale/write.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
-import { Placer, aroundPoint, besidePolyline, besideRun, pointToPolyline, rectAt } from "./place.ts";
+import { Placer, aroundPoint, besidePolyline, besideRun } from "./place.ts";
 import type { Claim } from "./place.ts";
+import { rectAt } from "../../geometry/hit.ts";
 
 // ---- input ------------------------------------------------------------------
 
@@ -359,7 +360,7 @@ export function boatGlyph(p: Point): GlyphPart[] {
 
 /** A value as a reader writes it, exact when it snaps: 2, 1/2, √3. */
 function exact(value: number, locale: Locale): string {
-  return writeExact(snapExact(value, TOL), locale);
+  return writeSnapped(value, TOL, locale);
 }
 
 /** "x²", "(x − 2)²", "(x + 1/2)²". */

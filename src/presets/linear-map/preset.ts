@@ -34,10 +34,16 @@ import { compileIn, constantValue } from "../../math/expr.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
-import { Placer, aroundPoint, pointToPolyline, rectAt, segmentHitsRect } from "../construction/place.ts";
-import type { Claim, Rect } from "../construction/place.ts";
+import { Placer, aroundPoint } from "../construction/place.ts";
+import type { Claim } from "../construction/place.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
-import { sqrtLabel, splitSquare } from "../vectors/preset.ts";
+import { denominatorOf, sqrtLabel } from "../../locale/write.ts";
+import type { Rect } from "../../ir/types.ts";
+import { distanceToPolyline, rectAt, segmentHitsRect } from "../../geometry/hit.ts";
+import { gcd, splitSquare } from "../../math/integer.ts";
+import { estimateWidth, packItems, wrapText } from "../shared/text.ts";
+import type { WrapRules } from "../shared/text.ts";
+import type { Printed } from "../../locale/write.ts";
 
 // ---- input ------------------------------------------------------------------
 
@@ -106,10 +112,6 @@ const EPS = 1e-9;
 export function tidy(x: number): number {
   const r = Math.round(x * 1e12) / 1e12;
   return Math.abs(x - r) < 2e-15 ? r + 0 : x;
-}
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
 
 const isInt = (x: number): boolean => Math.abs(x - Math.round(x)) < 1e-9;
@@ -337,15 +339,13 @@ export function singularParts(A: Matrix): { rank: 0 } | { rank: 1; image: Vec; k
 
 // ---- exact writing ---------------------------------------------------------------------
 
-export type Written = { text: string; exact: boolean };
-
 /**
  * A number as a reader writes it: whole, a short decimal, p/q, √n, kπ/q -- and,
  * beyond `snapExact`, the rationalised roots a rotation's matrix is made of
  * (√2/2, √3/2), found through the square: x² a small-denominator rational.
  * Anything else is the formatter's rounded decimal, flagged inexact.
  */
-export function exactText(x: number, locale: Locale = "pt-BR", fractions = false): Written {
+export function exactText(x: number, locale: Locale = "pt-BR", fractions = false): Printed {
   const t = tidy(x);
   if (Math.abs(t) < 1e-12) return { text: "0", exact: true };
   const e = snapExact(t, 1e-9);
@@ -355,10 +355,7 @@ export function exactText(x: number, locale: Locale = "pt-BR", fractions = false
   }
   if (e.exact) return { text: writeExact(e, locale), exact: true };
   const sq = t * t;
-  for (let q = 1; q <= 64; q += 1) {
-    const p = sq * q;
-    if (Math.abs(p - Math.round(p)) <= 1e-9 * Math.max(1, p)) return { text: (t < 0 ? MINUS : "") + sqrtLabel(sq, locale), exact: true };
-  }
+  if (denominatorOf(sq, 64) !== 0) return { text: (t < 0 ? MINUS : "") + sqrtLabel(sq, locale), exact: true };
   const short = formatNumber(t, locale);
   const back = parseNumber(short, locale);
   return { text: short, exact: back !== null && Math.abs(back - t) <= 1e-9 * Math.max(1, Math.abs(t)) };
@@ -406,7 +403,7 @@ export function formulaOf(A: Matrix, locale: Locale = "pt-BR"): string {
   return `T(x${pairSep(locale)}y) = (${rowText(A[0][0], A[0][1], locale, fr)}${pairSep(locale)}${rowText(A[1][0], A[1][1], locale, fr)})`;
 }
 
-function pairText(p: readonly [number, number], locale: Locale, fractions = false): Written {
+function pairText(p: readonly [number, number], locale: Locale, fractions = false): Printed {
   const a = exactText(p[0], locale, fractions);
   const b = exactText(p[1], locale, fractions);
   return { text: `(${a.text}${pairSep(locale)}${b.text})`, exact: a.exact && b.exact };
@@ -422,7 +419,7 @@ export function directionInts(d: Vec): [number, number] | null {
   return [f.q, sign * f.p];
 }
 
-function directionText(d: Vec, locale: Locale): Written {
+function directionText(d: Vec, locale: Locale): Printed {
   const ints = directionInts(d);
   if (ints !== null) return pairText(ints, locale);
   const r = d[1] / d[0];
@@ -441,7 +438,7 @@ export function lineEquation(d: Vec, locale: Locale = "pt-BR"): string {
 const SUB = ["₁", "₂"];
 
 /** An eigenvalue written exact: an integer, a fraction, √n, or the quadratic (a ± b√r)/2 when it has one. */
-export function eigenvalueText(lambda: number, tr: number, disc: number, locale: Locale = "pt-BR"): Written {
+export function eigenvalueText(lambda: number, tr: number, disc: number, locale: Locale = "pt-BR"): Printed {
   const direct = exactText(lambda, locale);
   if (direct.exact) return direct;
   if (isInt(tr) && isInt(disc) && disc > 0) {
@@ -462,7 +459,7 @@ export function eigenvalueText(lambda: number, tr: number, disc: number, locale:
 }
 
 /** The complex pair a ± bi, exact when it is. */
-export function complexPairText(re: number, im: number, locale: Locale = "pt-BR"): Written {
+export function complexPairText(re: number, im: number, locale: Locale = "pt-BR"): Printed {
   const a = exactText(re, locale);
   const b = exactText(Math.abs(im), locale);
   const coefficient = Math.abs(Math.abs(im) - 1) < 1e-9 ? "i" : /^\d+([.,]\d+)?$/.test(b.text) ? `${b.text}i` : `(${b.text})i`;
@@ -637,7 +634,7 @@ export function ringSpots(own: Point[], w: number, h: number, ts: number[]): Poi
         const u = { x: Math.cos(ang), y: Math.sin(ang) };
         const reach = Math.abs(u.x) * (w / 2) + Math.abs(u.y) * (h / 2);
         const p = { x: s.x + u.x * (reach + gap), y: s.y + u.y * (reach + gap) };
-        scored.push({ p, score: pointToPolyline(p, own) + rank * 2.5 });
+        scored.push({ p, score: distanceToPolyline(p, own) + rank * 2.5 });
       }
     }
   });
@@ -1050,7 +1047,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
    */
   const put = (claim: Claim, text: string, o: LabelOptions, groups: (w: number, h: number) => Point[][], own?: Point[]): Block => {
     const { w, h } = board.extent(text, o);
-    const best = placer.choose(claim, w, h, groups(w, h), own === undefined ? undefined : (c) => pointToPolyline(c, own));
+    const best = placer.choose(claim, w, h, groups(w, h), own === undefined ? undefined : (c) => distanceToPolyline(c, own));
     const block = board.label(text, best.centre.x, best.centre.y, { ...o, width: w, ...(best.strict ? {} : { fill: PAPER }) });
     placer.commit(rectAt(best.centre, w, h));
     return block;
@@ -1162,7 +1159,7 @@ function buildPanel(
   hide: boolean,
 ): PanelData {
   const fr = wantsFractions(A);
-  const w = A.map((row) => row.map((x) => exactText(x, locale, fr))) as Written[][];
+  const w = A.map((row) => row.map((x) => exactText(x, locale, fr))) as Printed[][];
   const entries: [[string, string], [string, string]] = [
     [w[0]![0]!.text, w[0]![1]!.text],
     [w[1]![0]!.text, w[1]![1]!.text],
@@ -1235,7 +1232,7 @@ function buildPanel(
       const pt = pairText(p, locale);
       return `${names === undefined ? `V${j + 1}` : names[j]!}′ ${pt.exact ? "=" : "≈"} ${pt.text}`;
     });
-    for (const line of chunk(img, ", ", 480)) body.push(line);
+    for (const line of packItems(img, ", ", 480, panelWidth)) body.push(line);
     const area0 = polygonArea(s.pts);
     const area1 = polygonArea(s.image);
     const a0 = exactText(area0, locale);
@@ -1248,52 +1245,21 @@ function buildPanel(
       const pt = pairText(applyMatrix(A, n.p), locale);
       return `${n.name}′ ${pt.exact ? "=" : "≈"} ${pt.text}`;
     });
-    for (const line of chunk(img, ", ", 480)) body.push(line);
+    for (const line of packItems(img, ", ", 480, panelWidth)) body.push(line);
   }
   if (inexact) body.push("entradas não exatas arredondadas a três casas");
   void fmtInt;
   return { entries, head, body };
 }
 
-/** Items joined by `sep`, split into lines no wider than `maxPx` at the panel's size. */
-function chunk(items: string[], sep: string, maxPx: number): string[] {
-  const per = (s: string): number => Math.ceil([...s].length * (PANEL_FONT * 0.56 + 0.1) + 10);
-  const out: string[] = [];
-  let cur = "";
-  for (const it of items) {
-    const next = cur === "" ? it : `${cur}${sep}${it}`;
-    if (cur !== "" && per(next) > maxPx) {
-      out.push(cur);
-      cur = it;
-    } else cur = next;
-  }
-  if (cur !== "") out.push(cur);
-  return out;
-}
+/** "=" and "≈" stay with both neighbours, and "|det" with its argument: a line never ends on "S ≈ |det A| =". */
+const EQUATION_RULES: WrapRules = {
+  joinsPrevious: (w) => w === "=" || w === "≈",
+  joinsNext: (w) => w === "=" || w === "≈" || w.endsWith("det"),
+};
 
-/** A line broken at spaces into lines no wider than `maxPx`, the way a paragraph wraps. */
-function wrapWords(text: string, maxPx: number, extent: (t: string) => number): string[] {
-  if (extent(text) <= maxPx) return [text];
-  // "=" and "≈" stay with both neighbours: a line never ends on "S ≈ |det A| =".
-  const words: string[] = [];
-  let glue = false;
-  for (const w of text.split(" ")) {
-    if (words.length > 0 && (glue || w === "=" || w === "≈")) words[words.length - 1] += ` ${w}`;
-    else words.push(w);
-    glue = w === "=" || w === "≈" || w.endsWith("det");
-  }
-  const out: string[] = [];
-  let cur = "";
-  for (const word of words) {
-    const next = cur === "" ? word : `${cur} ${word}`;
-    if (cur !== "" && extent(next) > maxPx) {
-      out.push(cur);
-      cur = word;
-    } else cur = next;
-  }
-  if (cur !== "") out.push(cur);
-  return out;
-}
+/** The panel text's width as the checks will see it, estimated per character. */
+const panelWidth = (s: string): number => estimateWidth(s, PANEL_FONT);
 
 type PanelLayout = {
   height: number;
@@ -1350,7 +1316,7 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   });
   // A head line that did not fit beside the matrix goes with the rest, first.
   const maxLine = width - MARGIN * 2;
-  const body = [...overflow, ...panel.body].flatMap((text) => wrapWords(text, maxLine, extent));
+  const body = [...overflow, ...panel.body].flatMap((text) => wrapText(text, maxLine, extent, EQUATION_RULES));
   let y = y2 + 18 + 26;
   body.forEach((text, i) => {
     labels.push({ id: `panel-line-${i}`, text, x: left, y, w: extent(text), colour: SOFT, align: "start" });

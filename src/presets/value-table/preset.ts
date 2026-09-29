@@ -31,7 +31,7 @@ import { SpecError, parseSpec } from "../../ir/types.ts";
 import { ExprError, compile } from "../../math/expr.ts";
 import { decimalUnit, limit } from "../../math/numeric.ts";
 import type { LimitResult, LimitSide } from "../../math/numeric.ts";
-import { LOCALES, MINUS, formatNumber, snapExact, writeExact } from "../../locale/format.ts";
+import { LOCALES, MINUS, formatNumber, roundKeepingNonzero, snapExact, writeExact } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
@@ -284,7 +284,7 @@ function cellText(value: number, locale: Locale): string {
  */
 function sampleText(value: number, decimals: number, locale: Locale): string {
   if (!Number.isFinite(value)) return "∄";
-  const rounded = Number(value.toFixed(decimals));
+  const rounded = roundKeepingNonzero(value, decimals);
   let d = decimals;
   while (d > 0 && Number(rounded.toFixed(d - 1)) === rounded) d -= 1;
   return formatNumber(rounded, locale, { decimals: d });

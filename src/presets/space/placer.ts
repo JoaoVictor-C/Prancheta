@@ -18,74 +18,12 @@
  */
 
 import type { Point, Rect } from "../../ir/types.ts";
+import { candidatesBeside, distanceToPolyline, pointToRect, rectAt, rectToPolyline, segmentHitsRect } from "../../geometry/hit.ts";
 
 /** Extra room kept around every label, px. */
 export const MARGIN = 3;
 
 type Ink = { id: string; group: string; pts: Point[]; stroked: boolean };
-
-function segDist(p: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len2 = dx * dx + dy * dy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
-}
-
-export function pointToPolyline(p: Point, pts: Point[]): number {
-  if (pts.length === 1) return Math.hypot(p.x - pts[0]!.x, p.y - pts[0]!.y);
-  let best = Infinity;
-  for (let i = 0; i < pts.length - 1; i += 1) best = Math.min(best, segDist(p, pts[i]!, pts[i + 1]!));
-  return best;
-}
-
-export function pointToRect(p: Point, r: Rect): number {
-  const dx = Math.max(r.x - p.x, 0, p.x - (r.x + r.width));
-  const dy = Math.max(r.y - p.y, 0, p.y - (r.y + r.height));
-  return Math.hypot(dx, dy);
-}
-
-export function segmentHitsRect(a: Point, b: Point, r: Rect): boolean {
-  let t0 = 0;
-  let t1 = 1;
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  for (const [p, q] of [
-    [-dx, a.x - r.x],
-    [dx, r.x + r.width - a.x],
-    [-dy, a.y - r.y],
-    [dy, r.y + r.height - a.y],
-  ] as const) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
-    }
-    const t = q / p;
-    if (p < 0) {
-      if (t > t1) return false;
-      if (t > t0) t0 = t;
-    } else {
-      if (t < t0) return false;
-      if (t < t1) t1 = t;
-    }
-  }
-  return true;
-}
-
-function rectToPolyline(r: Rect, pts: Point[]): number {
-  for (let i = 0; i < pts.length - 1; i += 1) if (segmentHitsRect(pts[i]!, pts[i + 1]!, r)) return 0;
-  const corners = [
-    { x: r.x, y: r.y },
-    { x: r.x + r.width, y: r.y },
-    { x: r.x + r.width, y: r.y + r.height },
-    { x: r.x, y: r.y + r.height },
-  ];
-  let best = Math.min(...pts.map((p) => pointToRect(p, r)));
-  for (const c of corners) best = Math.min(best, pointToPolyline(c, pts));
-  return best;
-}
-
-const rectAt = (c: Point, w: number, h: number): Rect => ({ x: c.x - w / 2, y: c.y - h / 2, width: w, height: h });
 
 export class SpacePlacer {
   private readonly ink: Ink[] = [];
@@ -136,9 +74,9 @@ export class SpacePlacer {
     let cost = this.clash(box);
     if (cost === Infinity) return cost;
     const own = this.ink.filter((l) => l.group === group);
-    const toOwner = Math.min(...own.map((l) => pointToPolyline(c, l.pts)));
+    const toOwner = Math.min(...own.map((l) => distanceToPolyline(c, l.pts)));
     let rival = Infinity;
-    for (const l of this.ink) if (l.group !== group) rival = Math.min(rival, pointToPolyline(c, l.pts));
+    for (const l of this.ink) if (l.group !== group) rival = Math.min(rival, distanceToPolyline(c, l.pts));
     if (rival < toOwner + lead) cost += rival < toOwner - 0.5 ? 5 : 1;
     return cost;
   }
@@ -157,7 +95,7 @@ export class SpacePlacer {
     if (toPlace > Math.max(w, h) - 2) cost += 5;
     for (const l of this.ink) {
       if (own !== null && l.group === own) continue;
-      if (pointToPolyline(p, l.pts) <= 0.5) continue;
+      if (distanceToPolyline(p, l.pts) <= 0.5) continue;
       if (rectToPolyline(box, l.pts) < toPlace + lead) {
         cost += 5;
         break;
@@ -190,7 +128,7 @@ export class SpacePlacer {
     let best = { id: "", d: Infinity };
     for (const l of this.ink) {
       if (l.group !== group) continue;
-      const d = pointToPolyline(c, l.pts);
+      const d = distanceToPolyline(c, l.pts);
       if (d < best.d) best = { id: l.id, d };
     }
     return best.id;
@@ -228,17 +166,5 @@ export function aroundPlace(p: Point, w: number, h: number, r: number): Point[] 
 
 /** Candidate centres beside the straight run a→b at fractions `ts`, on both sides, just clear of it and then further out. */
 export function besideRun(a: Point, b: Point, w: number, h: number, ts: number[]): Point[] {
-  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-  const d = { x: (b.x - a.x) / len, y: (b.y - a.y) / len };
-  const n = { x: -d.y, y: d.x };
-  const clearance = Math.abs(n.x) * (w / 2) + Math.abs(n.y) * (h / 2) + MARGIN + 3;
-  const out: Point[] = [];
-  for (const extra of [0, 5, 10, 16]) {
-    for (const t of ts) {
-      for (const side of [1, -1]) {
-        out.push({ x: a.x + d.x * len * t + n.x * side * (clearance + extra), y: a.y + d.y * len * t + n.y * side * (clearance + extra) });
-      }
-    }
-  }
-  return out;
+  return candidatesBeside(a, b, w, h, ts, { gap: MARGIN + 3, extras: [0, 5, 10, 16] });
 }

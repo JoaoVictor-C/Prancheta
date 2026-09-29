@@ -43,8 +43,12 @@ import { constantValue } from "../../math/expr.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
-import { Placer, aroundPoint, besideRun, pointToPolyline, rectAt } from "../construction/place.ts";
+import { Placer, aroundPoint, besideRun } from "../construction/place.ts";
 import type { Claim } from "../construction/place.ts";
+import { distanceToPolyline, rectAt } from "../../geometry/hit.ts";
+import { niceStep } from "../shared/scale.ts";
+import { tidy } from "../../math/numeric.ts";
+import type { Printed } from "../../locale/write.ts";
 
 // ---- input ---------------------------------------------------------------------
 
@@ -134,16 +138,10 @@ const PANEL_LINE_H = 26;
 
 // ---- small pure helpers -------------------------------------------------------------
 
-/** A float within rounding noise of a round number IS that number. */
-export function tidy(x: number): number {
-  const r = Math.round(x * 1e10) / 1e10;
-  return Math.abs(x - r) < 1e-12 ? r + 0 : x;
-}
-
 const fmtInt = (n: number): string => String(n).replace("-", MINUS);
 
 /** A number as printed on the figure: exact when short, else hundredths; `exact` says which. */
-export function written(x: number, locale: Locale = "pt-BR", decimals = 2): { text: string; exact: boolean } {
+export function written(x: number, locale: Locale = "pt-BR", decimals = 2): Printed {
   // A value that IS a short decimal is printed whole and exact: A = 7,5/20
   // is 0,375, not "≈ 0,38". Only a value with no terminating form within
   // four places is rounded to `decimals` and marked approximate.
@@ -162,7 +160,7 @@ const eq = (x: number, locale: Locale, decimals = 2): string => {
 };
 
 /** Degrees as printed: an integer when it is one, else one decimal (two if one hides the difference). */
-export function degreesText(deg: number, locale: Locale = "pt-BR"): { text: string; exact: boolean } {
+export function degreesText(deg: number, locale: Locale = "pt-BR"): Printed {
   const r = Math.round(deg);
   if (Math.abs(deg - r) < 1e-6) return { text: fmtInt(r), exact: true };
   const one = Math.round(deg * 10) / 10;
@@ -279,12 +277,6 @@ type Prepared = {
   rays: RayKind[];
   explicitRays: boolean;
   show: Required<OpticsShow>;
-};
-
-const nice = (x: number): number => {
-  const e = 10 ** Math.floor(Math.log10(x));
-  const m = x / e;
-  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * e;
 };
 
 function prepare(input: OpticsInput & { kind: "lens" | "mirror" }): Prepared {
@@ -505,7 +497,7 @@ function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): Figure
 
   // ---- draw ------------------------------------------------------------------------------
   const panelLines = answers ? opticalPanel(pr, g, iHeight, locale) : givensPanel(pr, locale);
-  const barCm = nice(Math.max(1, 90 / unit));
+  const barCm = niceStep(Math.max(1, 90 / unit), 1);
   const barPx = barCm * unit;
   const panelH = 30 + panelLines.length * PANEL_LINE_H + 46;
   const height = plotH + panelH;
@@ -739,7 +731,7 @@ function gridAround(own: Point[], w: number, h: number, reach = 70, prefer?: (c:
   for (let x = Math.min(...xs) - reach - w / 2; x <= Math.max(...xs) + reach + w / 2; x += 3) {
     for (let y = Math.min(...ys) - reach - h / 2; y <= Math.max(...ys) + reach + h / 2; y += 3) {
       const c = { x, y };
-      const d = pointToPolyline(c, own);
+      const d = distanceToPolyline(c, own);
       if (d > reach) continue;
       out.push({ c, score: d + (prefer === undefined ? 0 : prefer(c)) });
     }

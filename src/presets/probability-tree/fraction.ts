@@ -11,22 +11,17 @@
 
 import type { Locale } from "../../locale/format.ts";
 import { SpecError } from "../../ir/types.ts";
+import { gcdBig } from "../../math/integer.ts";
+import type { Printed } from "../../locale/write.ts";
 
 export type Fraction = { readonly n: bigint; readonly d: bigint };
 
 const ZERO_BI = 0n;
 
-function gcd(a: bigint, b: bigint): bigint {
-  let x = a < 0n ? -a : a;
-  let y = b < 0n ? -b : b;
-  while (y !== ZERO_BI) [x, y] = [y, x % y];
-  return x;
-}
-
 /** n/d reduced, with the sign on the numerator. d must not be zero. */
 export function frac(n: bigint, d: bigint = 1n): Fraction {
   if (d === ZERO_BI) throw new Error("fraction with zero denominator");
-  const g = gcd(n, d) || 1n;
+  const g = gcdBig(n, d) || 1n;
   const s = d < 0n ? -1n : 1n;
   return { n: (s * n) / g, d: (s * d) / g };
 }
@@ -151,19 +146,17 @@ function fixed(f: Fraction, places: number): string {
   return places === 0 ? s : `${s.slice(0, s.length - places)}.${s.slice(s.length - places)}`;
 }
 
-export type Written = { text: string; exact: boolean };
-
 /**
  * `f` as a decimal (or as a percent: 100 f) in the locale's spelling: exact when
  * it terminates within six places ("0,0095", "10,85%"), otherwise rounded to
  * `places` (more if that would print zero) and flagged inexact, so the caller
  * writes "≈" and never "=".
  */
-export function decimalText(f: Fraction, locale: Locale, o: { percent: boolean; places?: number }): Written {
+export function decimalText(f: Fraction, locale: Locale, o: { percent: boolean; places?: number }): Printed {
   const v = o.percent ? mul(f, frac(100n)) : f;
   const mark = locale === "pt-BR" ? "," : ".";
   const suffix = o.percent ? "%" : "";
-  const done = (s: string, exact: boolean): Written => {
+  const done = (s: string, exact: boolean): Printed => {
     const trimmed = s.includes(".") ? s.replace(/0+$/, "").replace(/\.$/, "") : s;
     return { text: trimmed.replace(".", mark) + suffix, exact };
   };
@@ -179,4 +172,4 @@ export function decimalText(f: Fraction, locale: Locale, o: { percent: boolean; 
 }
 
 /** The value with its comparison sign: "= 3/10" or "≈ 8,76%". */
-export const withSign = (w: Written): string => `${w.exact ? "=" : "≈"} ${w.text}`;
+export const withSign = (w: Printed): string => `${w.exact ? "=" : "≈"} ${w.text}`;

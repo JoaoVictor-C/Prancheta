@@ -14,12 +14,11 @@ import {
   angleBetweenDegrees,
   expandVectors,
   magnitudeLabel,
-  measuredLabel,
   projectComponents,
-  sqrtLabel,
   validateVectorsInput,
 } from "../src/presets/vectors/preset.ts";
 import type { VectorsInput } from "../src/presets/vectors/preset.ts";
+import { measuredLabel, sqrtLabel } from "../src/locale/write.ts";
 import { render } from "../src/pipeline.ts";
 import type { Block, Scene } from "../src/ir/types.ts";
 

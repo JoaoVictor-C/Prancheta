@@ -26,7 +26,7 @@
 import type { Block, FigureSpec, Frame, FramedPoint, Mark, Point, Scene } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { resolveInFrame } from "../../ir/frames.ts";
-import { LOCALES, MINUS, formatNumber } from "../../locale/format.ts";
+import { LOCALES, MINUS, formatNumber, roundKeepingNonzero, formatSignificant } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import {
   binomialCoefficientText,
@@ -42,8 +42,12 @@ import {
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
-import { boxInside, distanceToPolyline } from "../function-graph/areas.ts";
-import { Placer, rectAt, rectToPolyline } from "../construction/place.ts";
+import { boxInside } from "../function-graph/areas.ts";
+import { Placer } from "../construction/place.ts";
+import { distanceToPolyline, rectAt, rectToPolyline } from "../../geometry/hit.ts";
+import { wrapText } from "../shared/text.ts";
+import type { WrapRules } from "../shared/text.ts";
+import type { Printed } from "../../locale/write.ts";
 
 // ---- input ------------------------------------------------------------------
 
@@ -391,12 +395,7 @@ export function shortNumber(x: number, locale: Locale): string {
   if (Number.isInteger(t)) return formatNumber(t, locale, { fractions: false });
   for (let d = 1; d <= 9; d += 1) if (Math.abs(Number(t.toFixed(d)) - t) <= 1e-12 * Math.max(1, Math.abs(t))) return formatNumber(t, locale, { decimals: d });
   const a = Math.abs(t);
-  if (a < 0.1) {
-    const d = Math.min(15, 3 - Math.floor(Math.log10(a)));
-    let e = d;
-    while (e > 0 && Number(t.toFixed(e - 1)) === Number(t.toFixed(d))) e -= 1;
-    return formatNumber(t, locale, { decimals: e });
-  }
+  if (a < 0.1) return formatSignificant(t, 4, locale);
   return formatNumber(t, locale, { fractions: false });
 }
 
@@ -404,8 +403,8 @@ function textFor(locale: Locale) {
   const dec = (x: number, d: number): string => formatNumber(x, locale, { decimals: d });
   const short = (x: number): string => shortNumber(x, locale);
   /** z as a reader writes it: exact when it is, three decimals otherwise. */
-  const z = (x: number): { text: string; exact: boolean } => {
-    const r = Number(x.toFixed(3));
+  const z = (x: number): Printed => {
+    const r = roundKeepingNonzero(x, 3);
     return { text: formatNumber(r === 0 ? 0 : r, locale, { fractions: false }), exact: Math.abs(x - r) < 1e-9 };
   };
   return { dec, short, z };
@@ -635,49 +634,9 @@ function normalPanel(model: Extract<Model, { kind: "normal" }>, ev: Event, local
 type XY = [number, number];
 type LabelSpec = { text: string; x: number; bold: boolean; colour: string; id: string; annotates?: string };
 
-/** The lines of a paragraph, broken at spaces so none is wider than `maxPx`. */
-function wrapWords(text: string, maxPx: number, extent: (t: string) => number): string[] {
-  if (extent(text) <= maxPx) return [text];
-  const words = text.split(" ");
-  const glued: string[] = [];
-  let hold = false;
-  for (const w of words) {
-    if (glued.length > 0 && (hold || OPERATORS.has(w))) glued[glued.length - 1] += ` ${w}`;
-    else glued.push(w);
-    hold = OPERATORS.has(w);
-  }
-  const out: string[] = [];
-  let cur = "";
-  for (const w of glued) {
-    const next = cur === "" ? w : `${cur} ${w}`;
-    if (cur !== "" && extent(next) > maxPx) {
-      out.push(cur);
-      cur = w;
-    } else cur = next;
-  }
-  if (cur !== "") out.push(cur);
-  // a chain of operands and operators glues into ONE piece; a piece still too wide breaks BEFORE an operator, the way an equation is carried over
-  return out.flatMap((piece) => (extent(piece) <= maxPx ? [piece] : breakAtOperators(piece, maxPx, extent)));
-}
-
-function breakAtOperators(text: string, maxPx: number, extent: (t: string) => number): string[] {
-  const rows: string[] = [];
-  let cur = "";
-  const words = text.split(" ");
-  for (let i = 0; i < words.length; i += 1) {
-    const w = words[i]!;
-    const next = cur === "" ? w : `${cur} ${w}`;
-    const afterOperator = i > 0 && OPERATORS.has(words[i - 1]!);
-    if (cur !== "" && !afterOperator && extent(next) > maxPx) {
-      rows.push(cur);
-      cur = w;
-    } else cur = next;
-  }
-  if (cur !== "") rows.push(cur);
-  return rows;
-}
-
+/** In a panel line an operator stays with both its neighbours: a line never ends on "P(X ≤ 3) =" nor begins with "+". */
 const OPERATORS = new Set(["=", "≈", "+", MINUS, "·", "<", ">", "≤", "≥", "/", "±"]);
+const OPERATOR_RULES: WrapRules = { joinsPrevious: (w) => OPERATORS.has(w), joinsNext: (w) => OPERATORS.has(w) };
 const NICE = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000];
 
 /**
@@ -1147,7 +1106,7 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
     placer.commit(rectAt(best.centre, w, h));
   }
   if (approxOn) {
-    const text = model.kind === "binomial" || model.kind === "poisson" ? `N(${t.short(moments.mean)}; ${t.short(Number((moments.sd * moments.sd).toFixed(4)))})` : "";
+    const text = model.kind === "binomial" || model.kind === "poisson" ? `N(${t.short(moments.mean)}; ${t.short(roundKeepingNonzero(moments.sd * moments.sd, 4))})` : "";
     const o: LabelOptions = { size: 13, weight: 700, colour: APPROX_TEXT };
     const { w, h } = board.extent(text, o);
     const curve = curvePieces.find((c) => c.id === "approx-curve")!;
@@ -1170,7 +1129,7 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
   // the line that is the result is set in bold, which is wider than the regular face the board measures: allow for it
   const BOLD = 1.1;
   const panelWidth = (text: string): number => board.extent(text, { size: PANEL_FONT }).w * (text.startsWith("P(") ? BOLD : 1);
-  const wrapped = lines.flatMap((l) => wrapWords(l, maxLine, (s) => board.extent(s, { size: PANEL_FONT }).w * (l.startsWith("P(") ? BOLD : 1)));
+  const wrapped = lines.flatMap((l) => wrapText(l, maxLine, (s) => board.extent(s, { size: PANEL_FONT }).w * (l.startsWith("P(") ? BOLD : 1), OPERATOR_RULES));
   let y = plotAreaBottom + 34;
   wrapped.forEach((text, i) => {
     const w = panelWidth(text);
@@ -1212,7 +1171,7 @@ export function symbolOf(model: Model, ev: Event, t: { short: (x: number) => str
     case "equals":
       return `P(X = ${ev.k})`;
     default:
-      return `P(|Z| > ${t.short(Number(ev.z.toFixed(3)))})`;
+      return `P(|Z| > ${t.short(roundKeepingNonzero(ev.z, 3))})`;
   }
 }
 

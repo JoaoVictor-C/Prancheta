@@ -123,7 +123,9 @@ are read off them (\`{"of": "f", "x": 3}\`), tangents and secants are computed
 label is a template filled from those values -- \`"P{coords}"\` prints
 \`P(3; 9)\`. A coordinate pair typed into a label is refused. Numbers are
 written by one pt-BR formatter (decimal comma, \`(2,5; 7,25)\`, the minus
-\`−\`, \`17/3\` rather than \`5,667\`). Axis numbers are never dropped,
+\`−\`, \`17/3\` rather than \`5,667\`; from five integer digits a narrow
+no-break space groups them, \`12 000\`, and a nonzero value is never written
+as \`0\` -- \`0,000215\`). Axis numbers are never dropped,
 the zero line is always drawn when the range contains zero, and the legend
 finds its own free space. Four checks hold it to that: \`axis-number-present\`,
 \`series-distinguishable-without-colour\` (label every curve on the drawing or

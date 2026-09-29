@@ -37,10 +37,10 @@ test("limit table: x schedule is exactly 0,9; 0,99; 0,999; 0,9999 on the left an
   }
 });
 
-test("limit table: x schedule toward infinity is 10; 100; 1000; 10000", () => {
+test("limit table: x schedule toward infinity is 10; 100; 1000; 10 000 (grouped from five digits)", () => {
   const input: ValueTableInput = { limit: { expr: "(1 + 1/x)^x", at: "inf", count: 4 } };
   const text = labels(input);
-  for (const x of ["10", "100", "1000", "10000"]) {
+  for (const x of ["10", "100", "1000", "10\u202f000"]) {
     assert.ok(text.includes(x), `missing x = ${x} in ${JSON.stringify(text)}`);
   }
 });

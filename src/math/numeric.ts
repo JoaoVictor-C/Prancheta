@@ -874,3 +874,9 @@ export function partialSums(term: (n: number) => number, n0: number, N: number):
   }
   return { partialSums: sums, n: ns, hint };
 }
+
+/** A float within rounding noise of a round number IS that number (0,1 + 0,2 is 0,3, not 0,30000000000000004). */
+export function tidy(x: number): number {
+  const r = Math.round(x * 1e10) / 1e10;
+  return Math.abs(x - r) < 1e-12 ? r + 0 : x;
+}

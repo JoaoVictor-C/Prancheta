@@ -22,8 +22,18 @@
  *  - how a value that is not a short decimal is written. 17/3 is printed as
  *    "17/3", not "5,667": the rounded decimal is a different number, and a
  *    figure labelled with it contradicts the exact answer the exercise asks
- *    the student to find.
+ *    the student to find;
+ *  - how a long integer part is set. From five digits the Brazilian standard
+ *    (SI, INMETRO) puts a narrow no-break space between groups of three --
+ *    "12 000", "1 234 567" -- and "2026" stays "2026", so a year is not a
+ *    quantity. English does the same with a comma ("12,000"). Decimals are
+ *    never grouped;
+ *  - that no nonzero value is ever written as zero. A value the rounding rule
+ *    would print as "0", "0,0" or "0,000" is written to three significant
+ *    digits instead ("0,000215"). Only noise below NOISE counts as zero.
  */
+
+import { gcd } from "../math/integer.ts";
 
 export type Locale = "pt-BR" | "en";
 
@@ -37,16 +47,33 @@ export type NumberOptions = {
   decimals?: number;
   /** Allow "a/b" for a value that is a small-denominator fraction but not a short decimal. Default true. */
   fractions?: boolean;
-  /** Group thousands ("1.000" in pt-BR, "1,000" in en). Default false -- an axis number is not an amount. */
+  /**
+   * Digit grouping. Unset: the standard one -- a narrow no-break space (en: a
+   * comma) between groups of three, from five integer digits. `true`: an
+   * amount of money, grouped from four digits with the traditional mark
+   * ("1.000,00" in pt-BR). `false`: never, for a number that is read back by a
+   * program (an id, an expression) rather than by a person.
+   */
   grouping?: boolean;
 };
 
-type Marks = { decimal: string; group: string; pair: string };
+type Marks = { decimal: string; group: string; thousands: string; pair: string };
+
+/** The narrow no-break space (U+202F) that groups digits in pt-BR. */
+export const NARROW_SPACE = " ";
 
 const MARKS: Record<Locale, Marks> = {
-  "pt-BR": { decimal: ",", group: ".", pair: "; " },
-  en: { decimal: ".", group: ",", pair: ", " },
+  "pt-BR": { decimal: ",", group: ".", thousands: NARROW_SPACE, pair: "; " },
+  en: { decimal: ".", group: ",", thousands: ",", pair: ", " },
 };
+
+/** Integer digits from which the standard grouping starts. */
+const GROUP_FROM = 5;
+/**
+ * Below this a value is rounding noise and is written "0". Above it a value is
+ * a quantity, and no writer prints it as zero.
+ */
+export const NOISE = 1e-12;
 
 /** Largest denominator tried when a value is not a short decimal. */
 const MAX_DENOMINATOR = 24;
@@ -81,10 +108,39 @@ function terminatesShortly(q: number): boolean {
   return 10 ** MAX_SHORT_DECIMALS % q === 0;
 }
 
-function plain(abs: number, decimals: number, marks: Marks, grouping: boolean): string {
+function plain(abs: number, decimals: number, marks: Marks, grouping: boolean | undefined): string {
   const [whole, frac] = abs.toFixed(decimals).split(".");
-  const head = grouping ? group(whole!, marks.group) : whole!;
+  const head =
+    grouping === true
+      ? group(whole!, marks.group)
+      : grouping !== false && whole!.length >= GROUP_FROM
+        ? group(whole!, marks.thousands)
+        : whole!;
   return frac === undefined ? head : `${head}${marks.decimal}${frac}`;
+}
+
+/**
+ * `value` rounded to `decimals` places -- except that a value above NOISE never
+ * rounds to zero: it is returned as it is, for `formatNumber` to write to three
+ * significant digits. For a writer that rounds first and formats second.
+ */
+export function roundKeepingNonzero(value: number, decimals: number): number {
+  const rounded = Number(value.toFixed(decimals));
+  return rounded === 0 && Math.abs(value) > NOISE ? value : rounded;
+}
+
+/**
+ * `value` to `sig` significant digits, trailing zeros dropped, in the marks of
+ * `locale`: 0,000215 at three, 0,0002154 at four. The one way a quantity too
+ * small for a fixed number of decimals is written, so 0,0004 is never "0".
+ */
+export function formatSignificant(value: number, sig: number, locale: Locale = "pt-BR", grouping?: boolean): string {
+  if (value === 0) return "0";
+  const full = Math.min(20, Math.max(0, sig - 1 - Math.floor(Math.log10(Math.abs(value)))));
+  const target = Number(value.toFixed(full));
+  let d = full;
+  while (d > 0 && Number(value.toFixed(d - 1)) === target) d -= 1;
+  return (target < 0 ? MINUS : "") + plain(Math.abs(target), d, MARKS[locale], grouping);
 }
 
 /**
@@ -97,16 +153,19 @@ function plain(abs: number, decimals: number, marks: Marks, grouping: boolean): 
 export function formatNumber(value: number, locale: Locale = "pt-BR", options: NumberOptions = {}): string {
   if (!Number.isFinite(value)) throw new Error(`cannot format ${value} as a number`);
   const marks = MARKS[locale];
-  const grouping = options.grouping ?? false;
+  const grouping = options.grouping;
   if (options.decimals !== undefined) {
     const rounded = Number(value.toFixed(options.decimals));
+    if (rounded === 0 && Math.abs(value) > NOISE) return formatSignificant(value, 3, locale, grouping);
     const sign = rounded < 0 ? MINUS : "";
     return sign + plain(Math.abs(rounded), options.decimals, marks, grouping);
   }
-  if (close(value, 0)) return "0";
+  if (Math.abs(value) <= NOISE) return "0";
   const sign = value < 0 ? MINUS : "";
   const abs = Math.abs(value);
-  const fraction = asFraction(abs);
+  // asFraction reads anything within its tolerance of a whole number as that number; a value above NOISE is a quantity, never 0/1.
+  const found = asFraction(abs);
+  const fraction = found !== null && found.p === 0 ? null : found;
   if (fraction !== null && fraction.q === 1) return sign + plain(fraction.p, 0, marks, grouping);
   if (fraction !== null && terminatesShortly(fraction.q)) {
     const exact = fraction.p / fraction.q;
@@ -116,6 +175,8 @@ export function formatNumber(value: number, locale: Locale = "pt-BR", options: N
   }
   if (fraction !== null && options.fractions !== false) return `${sign}${fraction.p}/${fraction.q}`;
   const rounded = Number(abs.toFixed(MAX_SHORT_DECIMALS));
+  // Three decimals misstate a value below 0,005 (0,0006 would read 0,001, 0,0002 would read 0): past a tenth off, write it to three significant digits.
+  if (Math.abs(rounded - abs) > 0.1 * abs) return formatSignificant(value, 3, locale, grouping);
   let decimals = MAX_SHORT_DECIMALS;
   while (decimals > 0 && close(Number(rounded.toFixed(decimals - 1)), rounded)) decimals -= 1;
   return sign + plain(rounded, decimals, marks, grouping);
@@ -146,7 +207,7 @@ export function formatNumberTex(value: number, locale: Locale = "pt-BR", options
   const tex =
     slash >= 0
       ? `\\frac{${body.slice(0, slash)}}{${body.slice(slash + 1)}}`
-      : body.replaceAll(",", "{,}");
+      : body.replaceAll(",", "{,}").replaceAll(NARROW_SPACE, "\\,");
   return (negative ? "-" : "") + tex;
 }
 
@@ -168,7 +229,7 @@ export function formatPointTex(
  */
 export function parseNumber(text: string, locale: Locale = "pt-BR"): number | null {
   const marks = MARKS[locale];
-  let t = text.trim().replaceAll(MINUS, "-").replaceAll("–", "-");
+  let t = text.trim().replaceAll(NARROW_SPACE, "").replaceAll(MINUS, "-").replaceAll("–", "-");
   if (t === "") return null;
   const slash = t.indexOf("/");
   if (slash >= 0) {
@@ -209,10 +270,6 @@ const SNAP_MAX_Q = 12;
 const SNAP_MAX_SQUARE = 400;
 /** The powers of e a snapped value may be: e, e², e³, their reciprocals, and √e, 1/√e. */
 const E_POWERS = [1, 2, 3, -1, -2, -3, 0.5, -0.5];
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
-}
 
 /**
  * The exact value `r` is, if it is one of the numbers a Cálculo 1 text meets:

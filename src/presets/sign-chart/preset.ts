@@ -21,11 +21,12 @@
 import type { FigureSpec, Point } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { ExprError, compile, derivative } from "../../math/expr.ts";
-import { LOCALES, MINUS, formatNumber, snapExact, writeExact } from "../../locale/format.ts";
+import { LOCALES, MINUS } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
+import { writeSnapped } from "../../locale/write.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -174,7 +175,7 @@ export function criticalPoints(g: Fn, a: number, b: number): Critical[] {
  * helper (ADR 0040) at a root finder's precision.
  */
 export function exactLabel(value: number, locale: Locale): string {
-  return writeExact(snapExact(value, 1e-9), locale);
+  return writeSnapped(value, 1e-9, locale);
 }
 
 // ---- the build -------------------------------------------------------------

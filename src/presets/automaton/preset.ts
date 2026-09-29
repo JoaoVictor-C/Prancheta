@@ -26,8 +26,10 @@ import type { FigureSpec, Mark, MarkSegment, Point, Scene } from "../../ir/types
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
-import { Placer, besidePolyline, pointToPolyline, rectAt } from "../construction/place.ts";
-import type { Rect } from "../construction/place.ts";
+import { Placer, besidePolyline } from "../construction/place.ts";
+import type { Rect } from "../../ir/types.ts";
+import { distanceToPolyline, rectAt } from "../../geometry/hit.ts";
+import { packItems } from "../shared/text.ts";
 
 // ---- input ------------------------------------------------------------------
 
@@ -625,17 +627,8 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
     laid.push({ text, x, y, weight });
   };
   const wrap = (tokens: string[], maxW: number): string[] => {
-    const lines: string[] = [];
-    let line = "";
-    for (const tok of tokens) {
-      const next = line === "" ? tok : `${line} ${tok}`;
-      if (line !== "" && probeWidth(next) > maxW) {
-        lines.push(line);
-        line = tok;
-      } else line = next;
-    }
-    lines.push(line);
-    return lines;
+    const lines = packItems(tokens, " ", maxW, probeWidth);
+    return lines.length === 0 ? [""] : lines;
   };
 
   put(`${a.kind === "dfa" ? "AFD" : "AFN"}:  Σ = {${a.alphabet.join(", ")}},  estado inicial ${prettyName(a.start)},  F = ${setText(a.accept)}`, panelLeft, 600);
@@ -757,8 +750,8 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
     // Prefer a spot clear of every rule AND well away from every other edge, so two labels
     // between crossing edges are never mistaken for each other's.
     const own = inkOf.get(e.id)!;
-    const rival = (c: Point): number => Math.min(Infinity, ...[...inkOf].filter(([id]) => id !== e.id).map(([, ink]) => pointToPolyline(c, ink)));
-    const ambiguous = (c: Point): boolean => rival(c) < Math.max(RIVAL_CLEARANCE, 1.7 * pointToPolyline(c, own));
+    const rival = (c: Point): number => Math.min(Infinity, ...[...inkOf].filter(([id]) => id !== e.id).map(([, ink]) => distanceToPolyline(c, ink)));
+    const ambiguous = (c: Point): boolean => rival(c) < Math.max(RIVAL_CLEARANCE, 1.7 * distanceToPolyline(c, own));
     // Outside the curve first (or away from the automaton, for a straight edge), then inside.
     const outside = (c: Point): boolean => {
       const near = pts.reduce((best, q) => (dist(q, c) < dist(best, c) ? q : best));
@@ -768,7 +761,7 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
     const lists = [clean.filter(outside), clean.filter((c) => !outside(c))];
     // Among the clean spots on the preferred side, the one best separated from every other edge
     // relative to its own; ties (nothing else nearby) keep the caller's order, i.e. the midpoint.
-    const score = (c: Point): number => Math.min(rival(c), 60) - 1.2 * pointToPolyline(c, own);
+    const score = (c: Point): number => Math.min(rival(c), 60) - 1.2 * distanceToPolyline(c, own);
     const best = (l: Point[]): Point | undefined => l.reduce<Point | undefined>((b, c) => (b === undefined || (!e.loop && score(c) > score(b) + 0.5) ? c : b), undefined);
     const chosen = best(lists[0]!.filter((c) => !ambiguous(c))) ?? best(lists[1]!.filter((c) => !ambiguous(c)));
     let pick: { centre: Point };

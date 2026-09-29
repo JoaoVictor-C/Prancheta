@@ -48,17 +48,17 @@ import type { Rect } from "./curves.ts";
 import {
   boxInside,
   boxMeetsPolygon,
-  distanceToPolyline,
   integral,
   intersections,
-  pointInPolygon,
   sampleEdge,
   signParts,
   subscript,
 } from "./areas.ts";
 import type { XYPoint } from "./areas.ts";
+import { distanceToPolyline, pointInPolygon } from "../../geometry/hit.ts";
 import { atInfinity, classify, coincides, describeLimit, sameLine, snapExact, verticalsAndHoles, writeExact } from "./asymptotes.ts";
 import type { Exact, Hole, SideResult, Slant } from "./asymptotes.ts";
+import type { Printed } from "../../locale/write.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -1702,7 +1702,7 @@ class Build {
    * exact fraction (4/3, 8/3); else the formatter's three decimals, flagged
    * inexact so the "=" before it becomes "≈".
    */
-  valueText(value: number, decimals?: number): { text: string; exact: boolean } {
+  valueText(value: number, decimals?: number): Printed {
     // The formatter's own tolerance (a fraction is what a float within 1e-7
     // of it IS), and a much tighter one for a long decimal: 1,718282 is e's
     // integral to within 2e-7, and printing it without "≈" would claim it

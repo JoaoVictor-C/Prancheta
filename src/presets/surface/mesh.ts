@@ -37,6 +37,8 @@
  * grid line on the edge two cells share is not hidden by the nearer one.
  */
 
+import { distanceToSegment, pointInPolygon } from "../../geometry/hit.ts";
+import type { Point } from "../../ir/types.ts";
 import type { Camera } from "../../geometry/projection.ts";
 import { project } from "../../geometry/projection.ts";
 import type { Vec2, Vec3 } from "../../geometry/vec.ts";
@@ -370,7 +372,7 @@ export function cellNormal(c: Cell, k: number): Vec3 {
 
 // ---- visibility -------------------------------------------------------------------
 
-type Indexed = { cell: Cell; page: Vec2[]; lo: Vec2; hi: Vec2 };
+type Indexed = { cell: Cell; page: Vec2[]; poly: Point[]; lo: Vec2; hi: Vec2 };
 
 /** Where a point sits in the painter's order; `home` names its own cells when it lies on a field. */
 export type Position = {
@@ -385,24 +387,6 @@ export type Position = {
   /** The point lies on BOTH fields (the point of tangency): neither hides it where they touch. */
   both?: boolean;
 };
-
-function pointInPolygon(p: Vec2, poly: Vec2[]): boolean {
-  let inside = false;
-  for (let a = 0, b = poly.length - 1; a < poly.length; b = a, a += 1) {
-    const pa = poly[a]!;
-    const pb = poly[b]!;
-    if (pa[1] > p[1] !== pb[1] > p[1] && p[0] < ((pb[0] - pa[0]) * (p[1] - pa[1])) / (pb[1] - pa[1]) + pa[0]) inside = !inside;
-  }
-  return inside;
-}
-
-function distToSeg(p: Vec2, a: Vec2, b: Vec2): number {
-  const dx = b[0] - a[0];
-  const dy = b[1] - a[1];
-  const l2 = dx * dx + dy * dy;
-  const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l2));
-  return Math.hypot(p[0] - (a[0] + t * dx), p[1] - (a[1] + t * dy));
-}
 
 /**
  * The painted surface as an occluder. Page coordinates here are the
@@ -430,7 +414,7 @@ export class Occluder {
       const page = cell.poly.map((q) => project(camera, [q[0], q[1], q[2] * k]));
       const lo: Vec2 = [Math.min(...page.map((q) => q[0])), Math.min(...page.map((q) => q[1]))];
       const hi: Vec2 = [Math.max(...page.map((q) => q[0])), Math.max(...page.map((q) => q[1]))];
-      return { cell, page, lo, hi };
+      return { cell, page, poly: page.map((q) => ({ x: q[0], y: q[1] })), lo, hi };
     });
     const span = Math.max(1e-9, ...this.items.map((it) => Math.max(it.hi[0] - it.lo[0], it.hi[1] - it.lo[1])));
     this.size = span;
@@ -508,18 +492,19 @@ export class Occluder {
    */
   hidden(p: Vec3, pos: Position): boolean {
     const q = this.page(p);
+    const qp = { x: q[0], y: q[1] };
     const key = `${Math.floor(q[0] / this.size)},${Math.floor(q[1] / this.size)}`;
     for (const n of this.buckets.get(key) ?? []) {
       const it = this.items[n]!;
       if (!this.after(it.cell, pos)) continue;
       if (q[0] < it.lo[0] || q[0] > it.hi[0] || q[1] < it.lo[1] || q[1] > it.hi[1]) continue;
-      if (!pointInPolygon(q, it.page)) continue;
+      if (!pointInPolygon(qp, it.poly)) continue;
       const c = it.cell;
       const neighbour = pos.home !== undefined && pos.field === c.field && pos.home.some(([i, j]) => Math.abs(i - c.i) <= 1 && Math.abs(j - c.j) <= 1);
       if (!neighbour) return true;
       let clear = true;
       for (let a = 0; a < it.page.length; a += 1) {
-        if (distToSeg(q, it.page[a]!, it.page[(a + 1) % it.page.length]!) < this.inset) {
+        if (distanceToSegment(qp, it.poly[a]!, it.poly[(a + 1) % it.poly.length]!) < this.inset) {
           clear = false;
           break;
         }

@@ -25,12 +25,13 @@ import { GeometryError, normalize } from "../../geometry/vec.ts";
 import type { Vec2, Vec3 } from "../../geometry/vec.ts";
 import { makeCamera, project, projectDirection } from "../../geometry/projection.ts";
 import type { Camera, CameraSpec } from "../../geometry/projection.ts";
-import { MARGIN, SpacePlacer, aroundPlace, besideRun, pointToPolyline, segmentHitsRect } from "../space/placer.ts";
+import { MARGIN, SpacePlacer, aroundPlace, besideRun } from "../space/placer.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
 import { printExact, printTriple, typesANumber } from "../space/numbers.ts";
 import { boxEdges } from "../space/preset.ts";
 import { Occluder, cellNormal, clipLineToZ, densify, meshOf, painterSort, planeCells, sampleGrid, surfaceCells, tangentAt, visibleRuns } from "./mesh.ts";
 import type { Cell, Fn2, LinePoint, Range, Stacking, Tangent } from "./mesh.ts";
+import { distanceToPolyline, segmentHitsRect } from "../../geometry/hit.ts";
 
 // ---- input --------------------------------------------------------------------
 
@@ -637,7 +638,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
         p[n] = t;
         if (occ.hidden(p, occ.free(p))) continue;
         const c = page(p);
-        const id = `tick-${axisNames[n]}-${t < 0 ? "m" : ""}${formatNumber(Math.abs(t), "en").replace(/\./g, "_")}`;
+        const id = `tick-${axisNames[n]}-${t < 0 ? "m" : ""}${formatNumber(Math.abs(t), "en", { grouping: false }).replace(/\./g, "_")}`;
         const pts = [
           { x: c.x - nrm.x * TICK_HALF, y: c.y - nrm.y * TICK_HALF },
           { x: c.x + nrm.x * TICK_HALF, y: c.y + nrm.y * TICK_HALF },
@@ -695,9 +696,9 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
           const to = { x: target.x + d.x * len, y: target.y + d.y * len };
           if (labelRects.some((r) => segmentHitsRect(from, to, r))) continue;
           // The label must be nearer its leader than anything else drawn.
-          const toLeader = pointToPolyline(centre, [from, to]);
+          const toLeader = distanceToPolyline(centre, [from, to]);
           const reachBox = { x: centre.x, y: centre.y, width: 0, height: 0 };
-          if (inkPx.some((l) => near(l, reachBox, toLeader + 4) && pointToPolyline(centre, l.pts) < toLeader + 4)) continue;
+          if (inkPx.some((l) => near(l, reachBox, toLeader + 4) && distanceToPolyline(centre, l.pts) < toLeader + 4)) continue;
           // Prefer a leader that crosses few lines, then a short one.
           let crossings = 0;
           const span = { x: Math.min(from.x, to.x), y: Math.min(from.y, to.y), width: Math.abs(to.x - from.x), height: Math.abs(to.y - from.y) };
@@ -714,7 +715,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
           let along = 0;
           for (const t of [0.2, 0.4, 0.6, 0.8]) {
             const q = { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
-            if (inkPx.some((l) => l.group !== "fill" && near(l, { x: q.x, y: q.y, width: 0, height: 0 }, 3) && pointToPolyline(q, l.pts) < 3)) along += 1;
+            if (inkPx.some((l) => l.group !== "fill" && near(l, { x: q.x, y: q.y, width: 0, height: 0 }, 3) && distanceToPolyline(q, l.pts) < 3)) along += 1;
           }
           if (along >= 2) continue;
           const cost = crossings * 200 + along * 60 + len;

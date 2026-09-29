@@ -26,12 +26,12 @@
 
 import type { Block, FigureSpec, Frame, Point, Scene } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
-import { LOCALES, MINUS, formatNumber, parseNumber, snapExact } from "../../locale/format.ts";
+import { LOCALES, MINUS, formatNumber, roundKeepingNonzero, formatSignificant, parseNumber, snapExact } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
-import { Placer, pointToPolyline, rectAt } from "../construction/place.ts";
+import { Placer } from "../construction/place.ts";
 import type { Claim } from "../construction/place.ts";
 import {
   QUARTILE_METHODS,
@@ -41,15 +41,17 @@ import {
   mean,
   modalClasses,
   modes,
-  niceStep,
   standardDeviation,
   startWidthClasses,
   sturges,
   sturgesClasses,
-  tidy,
   variance,
 } from "../../math/statistics.ts";
 import type { BoxStats, ClassScheme, FrequencyRow, QuartileMethod, VarianceKind } from "../../math/statistics.ts";
+import { distanceToPolyline, rectAt } from "../../geometry/hit.ts";
+import { niceStep } from "../shared/scale.ts";
+import { packItems, wrapText } from "../shared/text.ts";
+import { tidy } from "../../math/numeric.ts";
 
 // ---- input ------------------------------------------------------------------------
 
@@ -121,11 +123,7 @@ const MAX_CLASSES = 30;
 function plain(t: number, locale: Locale): string {
   const a = Math.abs(t);
   if (a === 0 || a >= 0.1) return formatNumber(t, locale, { fractions: false });
-  const full = Math.min(15, 2 - Math.floor(Math.log10(a)));
-  const target = Number(t.toFixed(full));
-  let d = full;
-  while (d > 0 && Number(t.toFixed(d - 1)) === target) d -= 1;
-  return formatNumber(t, locale, { decimals: d });
+  return formatSignificant(t, 3, locale);
 }
 
 /** A value the way a statistics text writes it: exact when it is short ("172,5"), "√5 ≈ 2,236" when a root, else rounded and flagged. */
@@ -473,36 +471,6 @@ function outlierText(outliers: number[], locale: Locale, unit: string | undefine
   return `${outliers.length === 1 ? "outlier" : "outliers"}: ${withUnit(list, unit)}`;
 }
 
-function packLines(board: Board, items: string[], maxPx: number): string[] {
-  const sep = "   ·   ";
-  const lines: string[] = [];
-  let cur = "";
-  for (const it of items) {
-    const next = cur === "" ? it : `${cur}${sep}${it}`;
-    if (cur !== "" && board.measure(next, LABEL_SIZE) > maxPx) {
-      lines.push(cur);
-      cur = it;
-    } else cur = next;
-  }
-  if (cur !== "") lines.push(cur);
-  return lines;
-}
-
-function wrapSentence(board: Board, text: string, maxPx: number): string[] {
-  if (board.measure(text, LABEL_SIZE) <= maxPx) return [text];
-  const out: string[] = [];
-  let cur = "";
-  for (const w of text.split(" ")) {
-    const next = cur === "" ? w : `${cur} ${w}`;
-    if (cur !== "" && board.measure(next, LABEL_SIZE) > maxPx) {
-      out.push(cur);
-      cur = w;
-    } else cur = next;
-  }
-  if (cur !== "") out.push(cur);
-  return out;
-}
-
 /** The notes every figure carries: conventions, the method, the variance divisor. All statements, none a number typed by hand. */
 function noteSentences(m: Model, xs: number[] | undefined): string[] {
   const out: string[] = [];
@@ -518,7 +486,7 @@ function noteSentences(m: Model, xs: number[] | undefined): string[] {
       const raw = 1 + 3.3 * Math.log10(n);
       const width = h.rows[0]!.width;
       out.push(
-        `Sturges: k = 1 + 3,3·log ${n} = ${formatNumber(Number(raw.toFixed(2)), locale)} ≈ ${k}; amplitude A = ${num(hi, locale)} ${MINUS} ${num(lo, locale)} = ${num(hi - lo, locale)}; largura h ≥ A/k = ${formatNumber(Number(((hi - lo) / k).toFixed(3)), locale)}, arredondada para ${num(width, locale)}`,
+        `Sturges: k = 1 + 3,3·log ${n} = ${formatNumber(Number(raw.toFixed(2)), locale)} ≈ ${k}; amplitude A = ${num(hi, locale)} ${MINUS} ${num(lo, locale)} = ${num(hi - lo, locale)}; largura h ≥ A/k = ${formatNumber(roundKeepingNonzero((hi - lo) / k, 3), locale)}, arredondada para ${num(width, locale)}`,
       );
     }
     if (h.polygon && m.answers) out.push("polígono de frequências: une os pontos médios das classes, fechado no eixo pelas classes vizinhas de frequência 0");
@@ -860,9 +828,9 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
   const maxLine = W0;
   const textLines: { text: string; colour: string; weight: number }[] = [];
   if (m.showStats && m.answers) {
-    for (const g of panelGroups(m)) for (const l of packLines(probe, g.items, maxLine)) textLines.push({ text: l, colour: g.colour, weight: g.weight });
+    for (const g of panelGroups(m)) for (const l of packItems(g.items, "   ·   ", maxLine, (t) => probe.measure(t, LABEL_SIZE))) textLines.push({ text: l, colour: g.colour, weight: g.weight });
   }
-  for (const s of noteSentences(m, hist === undefined ? undefined : xs)) for (const l of wrapSentence(probe, s, maxLine)) textLines.push({ text: l, colour: SOFT, weight: 400 });
+  for (const s of noteSentences(m, hist === undefined ? undefined : xs)) for (const l of wrapText(s, maxLine, (t) => probe.measure(t, LABEL_SIZE))) textLines.push({ text: l, colour: SOFT, weight: 400 });
   if (textLines.length > 0) y += 22;
   textLines.forEach((l, i) => {
     put(board, l.text, (W - maxLine) / 2, y + NOTE_LINE / 2, { anchor: "start", size: LABEL_SIZE, weight: l.weight, colour: l.colour, freeStanding: true, id: `panel-${i}` });
@@ -893,7 +861,7 @@ function ringAround(pts: Point[], w: number, h: number): Point[] {
         const u = { x: Math.cos(ang), y: Math.sin(ang) };
         const reach = Math.abs(u.x) * (w / 2) + Math.abs(u.y) * (h / 2);
         const p = { x: s.x + u.x * (reach + gap), y: s.y + u.y * (reach + gap) };
-        scored.push({ p, score: pointToPolyline(p, pts) + (u.y > 0 ? 8 : 0) });
+        scored.push({ p, score: distanceToPolyline(p, pts) + (u.y > 0 ? 8 : 0) });
       }
     }
   }

@@ -422,6 +422,7 @@ test("the same solid at three magnitudes has the same figure size", () => {
 test("small and large dimensions print with their digits", () => {
   assert.equal(printed(rat(0.003)), "0,003");
   assert.equal(printed(mul(rat(0.003), rat(0.003))), "0,000009");
-  assert.equal(printed(rat(123456)), "123456");
-  assert.equal(print(mul(PI, rat(12000))).text, "12000π");
+  assert.equal(printed(rat(123456)), "123\u202f456");
+  assert.equal(printed(rat(2026)), "2026");
+  assert.equal(print(mul(PI, rat(12000))).text, "12\u202f000π");
 });

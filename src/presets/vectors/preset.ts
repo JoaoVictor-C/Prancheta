@@ -37,6 +37,8 @@ import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
+import { candidatesBeside, distanceToPolyline, pointToRect, rectsMeet, segmentHitsRect } from "../../geometry/hit.ts";
+import { measuredLabel, sqrtLabel } from "../../locale/write.ts";
 
 // ---- input ------------------------------------------------------------
 
@@ -95,86 +97,9 @@ const RIGHT_ANGLE = 10;
 
 // ---- pure helpers, exported for their own tests --------------------------
 
-/**
- * A whole number as k²·r with r square-free: 20 → {k: 2, r: 5}, 52 → {k: 2,
- * r: 13}, 16 → {k: 4, r: 1}. The Brazilian school form of a root is k√r --
- * "2√5", never "√20" -- so the square factor is always taken out.
- */
-export function splitSquare(n: number): { k: number; r: number } {
-  let k = 1;
-  let r = n;
-  for (let f = 2; f * f <= r; f += 1) {
-    while (r % (f * f) === 0) {
-      r /= f * f;
-      k *= f;
-    }
-  }
-  return { k, r };
-}
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
-}
-
-/** Largest denominator tried when reading a squared length as a fraction. */
-const MAX_SQUARE_DENOMINATOR = 1000;
-
-/**
- * √n written as a reader would write it by hand: simplified (√20 → 2√5),
- * and with a rational radicand rationalised (√(1274/169) → 7√26/13). Only
- * when n is not a whole number or a small-denominator fraction does it fall
- * back to a decimal -- that root has no exact form worth printing.
- */
-export function sqrtLabel(n: number, locale: Locale = "pt-BR"): string {
-  if (n < 0 || !Number.isFinite(n)) throw new SpecError(`√${n} is not a real length`);
-  let q = 0;
-  for (let d = 1; d <= MAX_SQUARE_DENOMINATOR; d += 1) {
-    const p = n * d;
-    if (Math.abs(p - Math.round(p)) <= 1e-9 * Math.max(1, p)) {
-      q = d;
-      break;
-    }
-  }
-  if (q === 0) return formatNumber(Math.sqrt(n), locale);
-  const p = Math.round(n * q);
-  if (p === 0) return "0";
-  // √(p/q) = √(p·q)/q, then the square factor k comes out and k/q reduces.
-  const { k, r } = splitSquare(p * q);
-  const g = gcd(k, q);
-  const num = k / g;
-  const den = q / g;
-  if (r === 1) return formatNumber(num / den, locale);
-  const root = `${num === 1 ? "" : num}√${r}`;
-  return den === 1 ? root : `${root}/${den}`;
-}
-
 /** |(dx, dy)|, formatted pt-BR -- an exact, simplified root when one exists. */
 export function magnitudeLabel(dx: number, dy: number, locale: Locale = "pt-BR"): string {
   return sqrtLabel(dx * dx + dy * dy, locale);
-}
-
-/**
- * A measured number printed ON the drawing: exact when it is a short
- * decimal, otherwise rounded to hundredths -- "8", "2,5", "6,40", "57,53".
- *
- * Hundredths because both checks that read these labels forgive far more
- * than that (`length-matches-its-label` half the last printed digit,
- * `sweep-matches-its-label` a whole degree), so the rounding can never be
- * what fails them, and three decimals ("57,529°") claimed a precision no
- * reader measures off a figure. The caption keeps the exact form.
- */
-export function measuredLabel(value: number, locale: Locale = "pt-BR"): string {
-  // Hundredths for an ordinary measure; two significant digits when the measure is itself below 0,1 (an arrow 0,036 long).
-  const a = Math.abs(value);
-  const decimals = a > 0 && a < 0.5 ? Math.max(2, 1 - Math.floor(Math.log10(a))) : 2;
-  const scale = 10 ** decimals;
-  const rounded = Math.round(value * scale) / scale;
-  if (Math.abs(value - rounded) <= 1e-9 * Math.max(1, Math.abs(value))) {
-    const shortest = formatNumber(rounded, locale, { fractions: false });
-    // The shortest form stops at three decimals; a smaller measure keeps the digits it was rounded to.
-    return a < 0.5 && Number(shortest.replace(",", ".").replace("−", "-")) !== rounded ? formatNumber(rounded, locale, { decimals }) : shortest;
-  }
-  return formatNumber(value, locale, { decimals });
 }
 
 /** Is this measured number printed exactly, or rounded? */
@@ -192,14 +117,10 @@ function derivation(name: string, expression: string): string {
   return bare(name) === bare(expression) ? "" : ` = ${expression}`;
 }
 
-export function magnitude(dx: number, dy: number): number {
-  return Math.hypot(dx, dy);
-}
-
 /** The angle in degrees between (ax, ay) and (bx, by), 0..180. */
 export function angleBetweenDegrees(ax: number, ay: number, bx: number, by: number): number {
-  const la = magnitude(ax, ay);
-  const lb = magnitude(bx, by);
+  const la = Math.hypot(ax, ay);
+  const lb = Math.hypot(bx, by);
   if (la === 0 || lb === 0) throw new SpecError("angleBetween: a zero vector has no direction");
   const cos = Math.min(1, Math.max(-1, (ax * bx + ay * by) / (la * lb)));
   return (Math.acos(cos) * 180) / Math.PI;
@@ -252,74 +173,7 @@ const OFFSETS = [0, 5, 10, 16];
  * beside someone else's.
  */
 export function alongShaft(tail: Point, head: Point, w: number, h: number, ts: number[]): Point[] {
-  const len = Math.hypot(head.x - tail.x, head.y - tail.y) || 1;
-  const d = { x: (head.x - tail.x) / len, y: (head.y - tail.y) / len };
-  const n = { x: -d.y, y: d.x };
-  const clearance = Math.abs(n.x) * (w / 2) + Math.abs(n.y) * (h / 2) + 5;
-  const out: Point[] = [];
-  for (const extra of OFFSETS) {
-    for (const t of ts) {
-      for (const side of [1, -1]) {
-        out.push({
-          x: tail.x + d.x * len * t + n.x * side * (clearance + extra),
-          y: tail.y + d.y * len * t + n.y * side * (clearance + extra),
-        });
-      }
-    }
-  }
-  return out;
-}
-
-function distanceToSegment(p: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len2 = dx * dx + dy * dy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
-}
-
-function distanceToPolyline(p: Point, pts: Point[]): number {
-  if (pts.length === 1) return Math.hypot(p.x - pts[0]!.x, p.y - pts[0]!.y);
-  let best = Infinity;
-  for (let i = 0; i < pts.length - 1; i += 1) best = Math.min(best, distanceToSegment(p, pts[i]!, pts[i + 1]!));
-  return best;
-}
-
-function distanceToRect(p: Point, r: Rect): number {
-  const dx = Math.max(r.x - p.x, 0, p.x - (r.x + r.width));
-  const dy = Math.max(r.y - p.y, 0, p.y - (r.y + r.height));
-  return Math.hypot(dx, dy);
-}
-
-function segmentHitsRect(a: Point, b: Point, r: Rect): boolean {
-  let t0 = 0;
-  let t1 = 1;
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  for (const [p, q] of [
-    [-dx, a.x - r.x],
-    [dx, r.x + r.width - a.x],
-    [-dy, a.y - r.y],
-    [dy, r.y + r.height - a.y],
-  ] as const) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
-    }
-    const t = q / p;
-    if (p < 0) {
-      if (t > t1) return false;
-      if (t > t0) t0 = t;
-    } else {
-      if (t < t0) return false;
-      if (t < t1) t1 = t;
-    }
-  }
-  return true;
-}
-
-function rectsMeet(a: Rect, b: Rect, pad: number): boolean {
-  return a.x - pad < b.x + b.width && b.x - pad < a.x + a.width && a.y - pad < b.y + b.height && b.y - pad < a.y + a.height;
+  return candidatesBeside(tail, head, w, h, ts, { gap: 5, extras: OFFSETS });
 }
 
 /**
@@ -388,9 +242,9 @@ export class Placer {
       if (line.owner === owner || !line.competes) continue;
       rival = Math.min(rival, distanceToPolyline(c, line.pts));
     }
-    for (const other of this.boxes) if (other.competes) rival = Math.min(rival, distanceToRect(c, other.rect));
+    for (const other of this.boxes) if (other.competes) rival = Math.min(rival, pointToRect(c, other.rect));
     if (rival < toOwner + margin) cost += rival < toOwner - 0.5 ? 5 : 1;
-    for (const p of this.placed) if (distanceToRect(p.centre, box) < p.ownerDistance + margin) cost += 5;
+    for (const p of this.placed) if (pointToRect(p.centre, box) < p.ownerDistance + margin) cost += 5;
     return cost;
   }
 
@@ -969,7 +823,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       // The magnitude, printed as a plain decimal (not the exact-root form
       // the readings panel uses) so `length-matches-its-label` can read it
       // as a number and check it against the arrow's own length.
-      magnitude: answers || vec.givenMagnitude === true ? measuredLabel(magnitude(vec.head[0] - vec.tail[0], vec.head[1] - vec.tail[1]), locale) : undefined,
+      magnitude: answers || vec.givenMagnitude === true ? measuredLabel(Math.hypot(vec.head[0] - vec.tail[0], vec.head[1] - vec.tail[1]), locale) : undefined,
       colour: vec.colour,
     })),
     ...projections.map((p) => ({ id: p.id, tail: at(p.tail), head: at(p.head), name: p.labelText, magnitude: undefined, colour: PROJECTION })),

@@ -30,10 +30,13 @@ import { LOCALES } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
-import { MARGIN as CLEAR, Placer, rectAt } from "../construction/place.ts";
-import type { Rect } from "../construction/place.ts";
+import { MARGIN as CLEAR, Placer } from "../construction/place.ts";
 import { ONE, ZERO, cmp, decimalText, div, eq, frac, fractionText, isZero, parseProbability, product, sub, sum, withSign } from "./fraction.ts";
 import type { Form, Fraction } from "./fraction.ts";
+import type { Rect } from "../../ir/types.ts";
+import { rectAt } from "../../geometry/hit.ts";
+import { wrapText } from "../shared/text.ts";
+import type { WrapRules } from "../shared/text.ts";
 
 // ---- input --------------------------------------------------------------------
 
@@ -329,28 +332,11 @@ const paren = (w: Writer, f: Fraction, text: string): string => (w.mode === "fra
 
 type Line = { text: string; colour: string; swatch?: string; weight?: number };
 
-/** Break a line at spaces into lines no wider than `maxPx`; "=" and "≈" stay with the word after, "+" and "·" with the word before. */
-function wrapWords(text: string, maxPx: number, extent: (t: string) => number): string[] {
-  if (extent(text) <= maxPx) return [text];
-  const words: string[] = [];
-  let glue = false;
-  for (const word of text.split(" ")) {
-    if (words.length > 0 && (glue || ["+", "·", "∩", "|", "/"].includes(word))) words[words.length - 1] += ` ${word}`;
-    else words.push(word);
-    glue = word === "=" || word === "≈";
-  }
-  const out: string[] = [];
-  let cur = "";
-  for (const word of words) {
-    const next = cur === "" ? word : `${cur} ${word}`;
-    if (cur !== "" && extent(next) > maxPx) {
-      out.push(cur);
-      cur = word;
-    } else cur = next;
-  }
-  if (cur !== "") out.push(cur);
-  return out;
-}
+/** "=" and "≈" stay with the word after, "+", "·", "∩", "|" and "/" with the word before. */
+const TREE_RULES: WrapRules = {
+  joinsPrevious: (w) => ["+", "·", "∩", "|", "/"].includes(w),
+  joinsNext: (w) => w === "=" || w === "≈",
+};
 
 export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   const locale = input.locale ?? "pt-BR";
@@ -502,7 +488,7 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   const panelMax = W - 2 * MARGIN - 40;
   const lines: Line[] = [];
   const pushWrapped = (text: string, colour: string, swatch?: string, weight?: number): void => {
-    wrapWords(text, panelMax, panelExtent).forEach((t, i) => lines.push({ text: t, colour, ...(i === 0 && swatch !== undefined ? { swatch } : {}), ...(weight === undefined ? {} : { weight }) }));
+    wrapText(text, panelMax, panelExtent, TREE_RULES).forEach((t, i) => lines.push({ text: t, colour, ...(i === 0 && swatch !== undefined ? { swatch } : {}), ...(weight === undefined ? {} : { weight }) }));
   };
   events.forEach((e) => {
     const set = leaves.filter((l) => e.leaves.has(l));

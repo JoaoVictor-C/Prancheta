@@ -10,9 +10,10 @@ import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
 import {
-  boxStats, classCounts, classIndex, frequencyTable, mean, median, modes, niceStep, niceWidth, quartiles,
+  boxStats, classCounts, classIndex, frequencyTable, mean, median, modes, niceWidth, quartiles,
   standardDeviation, sturges, sturgesClasses, variance,
 } from "../src/math/statistics.ts";
+import { niceStep } from "../src/presets/shared/scale.ts";
 import { describeNumber, expandStatistics, validateStatisticsInput } from "../src/presets/statistics/preset.ts";
 import type { StatisticsInput } from "../src/presets/statistics/preset.ts";
 import { SpecError } from "../src/ir/types.ts";
