@@ -27,7 +27,7 @@ const fixture = fileURLToPath(new URL("../fixtures/vectors/physics-forces.json",
 const readings = (input: VectorsInput): Map<string, string> => {
   const spec = expandVectors(input);
   const children = (spec.root as Scene).children as Block[];
-  return new Map(children.filter((b) => String(b.id ?? "").startsWith("reading-")).map((b) => [String(b.id), b.label ?? ""]));
+  return new Map(children.filter((b) => String(b.id ?? "").startsWith("panel-")).map((b) => [String(b.id), b.label ?? ""]));
 };
 
 // --- pure arithmetic --------------------------------------------------------
@@ -56,7 +56,7 @@ test("projection onto an axis vector isolates the matching component", () => {
 
 test("components and magnitude snapping reach the readings panel", () => {
   const r = readings({ vectors: [{ name: "u", components: [3, 1] }] });
-  assert.equal(r.get("reading-u"), "u = (3; 1), |u| = √10");
+  assert.equal(r.get("panel-u"), "u = (3; 1), |u| = √10");
 });
 
 test("a vector from two named points", () => {
@@ -64,12 +64,12 @@ test("a vector from two named points", () => {
     points: [{ name: "A", at: [0, 0] }, { name: "B", at: [4, 3] }],
     vectors: [{ name: "AB", from: "A", to: "B" }],
   });
-  assert.equal(r.get("reading-AB"), "AB = (4; 3), |AB| = 5");
+  assert.equal(r.get("panel-AB"), "AB = (4; 3), |AB| = 5");
 });
 
 test("magnitude and angle resolve to components", () => {
   const r = readings({ vectors: [{ name: "w", magnitude: 5, angle: "90°" }] });
-  const text = r.get("reading-w")!;
+  const text = r.get("panel-w")!;
   assert.match(text, /θ = 90°/);
   assert.match(text, /w = \(0(,0*[1-9])?; 5\)/); // (0; 5) up to float noise
 });
@@ -82,7 +82,7 @@ test("sum is component-wise addition, never typed", () => {
       { name: "s", sum: ["u", "v"] },
     ],
   });
-  assert.equal(r.get("reading-s"), "s = u + v = (4; 5), |s| = √41");
+  assert.equal(r.get("panel-s"), "s = u + v = (4; 5), |s| = √41");
 });
 
 test("difference is component-wise subtraction", () => {
@@ -93,7 +93,7 @@ test("difference is component-wise subtraction", () => {
       { name: "d", difference: ["u", "v"] },
     ],
   });
-  assert.equal(r.get("reading-d"), "d = u − v = (4; −2), |d| = 2√5");
+  assert.equal(r.get("panel-d"), "d = u − v = (4; −2), |d| = 2√5");
 });
 
 test("a scalar multiple", () => {
@@ -103,12 +103,12 @@ test("a scalar multiple", () => {
       { name: "m", scale: "u", factor: -2 },
     ],
   });
-  assert.equal(r.get("reading-m"), "m = −2u = (−6; −2), |m| = 2√10");
+  assert.equal(r.get("panel-m"), "m = −2u = (−6; −2), |m| = 2√10");
 });
 
 test("decomposition into x/y components", () => {
   const r = readings({ vectors: [{ name: "u", components: [3, 4] }, { decompose: "u" }] });
-  assert.equal(r.get("reading-u-decompose"), "u = 3î + 4ĵ");
+  assert.equal(r.get("panel-u-decompose"), "u = 3î + 4ĵ");
 });
 
 test("projection of u onto v", () => {
@@ -119,7 +119,7 @@ test("projection of u onto v", () => {
       { projection: { of: "u", onto: "v" } },
     ],
   });
-  assert.equal(r.get("reading-proj-u-v"), "proj_v(u) = (3; 0), |proj_v(u)| = 3");
+  assert.equal(r.get("panel-proj-u-v"), "projv(u) = (3; 0), |projv(u)| = 3");
 });
 
 test("angle between two vectors", () => {
@@ -130,7 +130,7 @@ test("angle between two vectors", () => {
       { angleBetween: ["u", "v"] },
     ],
   });
-  assert.equal(r.get("reading-angle-u-v"), "ângulo(u, v) = 90°");
+  assert.equal(r.get("panel-angle-u-v"), "ângulo(u, v) = 90°");
 });
 
 test("a name may be reused later, and a forward reference is refused", () => {
@@ -199,7 +199,7 @@ test("a root is simplified the Brazilian way: √20 is 2√5, √52 is 2√13", 
   assert.equal(sqrtLabel(16), "4");
   assert.equal(magnitudeLabel(2, 4), "2√5");
   assert.equal(magnitudeLabel(6, -4), "2√13");
-  // A rational radicand is rationalised: |proj_v(u)| for u = (2, 4), v = (5, 1)
+  // A rational radicand is rationalised: |projv(u)| for u = (2, 4), v = (5, 1)
   // is 14/√26, written 7√26/13 -- never 2,746.
   assert.equal(magnitudeLabel(35 / 13, 7 / 13), "7√26/13");
   assert.equal(sqrtLabel(1 / 4), "0,5");
@@ -237,15 +237,15 @@ const inputB: VectorsInput = {
 
 test("the caption never repeats a name that already is its derivation", () => {
   const a = readings(inputA);
-  assert.equal(a.get("reading-u+v"), "u+v = (5; 4), |u+v| = √41");
-  assert.equal(a.get("reading-angle-u-v"), "ângulo(u, v) ≈ 57,53°");
+  assert.equal(a.get("panel-u+v"), "u+v = (5; 4), |u+v| = √41");
+  assert.equal(a.get("panel-angle-u-v"), "ângulo(u, v) ≈ 57,53°");
   const b = readings(inputB);
-  assert.equal(b.get("reading-u"), "u = (2; 4), |u| = 2√5");
-  assert.equal(b.get("reading-proj-u-v"), "proj_v(u) = (35/13; 7/13), |proj_v(u)| = 7√26/13");
-  assert.equal(b.get("reading-w-decompose"), "w = −4î + 3ĵ");
+  assert.equal(b.get("panel-u"), "u = (2; 4), |u| = 2√5");
+  assert.equal(b.get("panel-proj-u-v"), "projv(u) = (35/13; 7/13), |projv(u)| = 7√26/13");
+  assert.equal(b.get("panel-w-decompose"), "w = −4î + 3ĵ");
   const p = readings(JSON.parse(readFileSync(fixture, "utf8")) as VectorsInput);
-  assert.equal(p.get("reading-AB"), "AB = (0; 8), |AB| = 8");
-  assert.equal(p.get("reading-F"), "F = (6; −4), |F| = 2√13");
+  assert.equal(p.get("panel-AB"), "AB = (0; 8), |AB| = 8");
+  assert.equal(p.get("panel-F"), "F = (6; −4), |F| = 2√13");
 });
 
 test("the angle is printed to hundredths on the drawing, readable by the sweep check", () => {

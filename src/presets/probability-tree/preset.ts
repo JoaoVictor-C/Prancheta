@@ -35,7 +35,8 @@ import { ONE, ZERO, cmp, decimalText, div, eq, frac, fractionText, isZero, parse
 import type { Form, Fraction } from "./fraction.ts";
 import type { Rect } from "../../ir/types.ts";
 import { rectAt } from "../../geometry/hit.ts";
-import { wrapText } from "../shared/text.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { PanelLineInput } from "../shared/panel.ts";
 import type { WrapRules } from "../shared/text.ts";
 
 // ---- input --------------------------------------------------------------------
@@ -330,7 +331,6 @@ const paren = (w: Writer, f: Fraction, text: string): string => (w.mode === "fra
 
 // ---- layout ----------------------------------------------------------------------------------------
 
-type Line = { text: string; colour: string; swatch?: string; weight?: number };
 
 /** "=" and "≈" stay with the word after, "+", "·", "∩", "|" and "/" with the word before. */
 const TREE_RULES: WrapRules = {
@@ -484,11 +484,11 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   const W = Math.max(MIN_WIDTH, Math.ceil(leafX + leafW + MARGIN));
 
   // Panel lines (built now: their number decides the canvas height).
-  const panelExtent = (t: string): number => textW(t, PANEL_FONT);
-  const panelMax = W - 2 * MARGIN - 40;
-  const lines: Line[] = [];
+  // An event's line in its own colour behind its swatch; a result strong; a note soft.
+  const lines: PanelLineInput[] = [];
   const pushWrapped = (text: string, colour: string, swatch?: string, weight?: number): void => {
-    wrapText(text, panelMax, panelExtent, TREE_RULES).forEach((t, i) => lines.push({ text: t, colour, ...(i === 0 && swatch !== undefined ? { swatch } : {}), ...(weight === undefined ? {} : { weight }) }));
+    const emphasis = swatch !== undefined ? "accent" : colour === SOFT ? "soft" : weight === 700 ? "strong" : "normal";
+    lines.push({ text: [{ text }], emphasis, ...(emphasis === "accent" ? { colour } : {}), ...(swatch === undefined ? {} : { swatch }) });
   };
   events.forEach((e) => {
     const set = leaves.filter((l) => e.leaves.has(l));
@@ -511,12 +511,13 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   if (!answers && input.urn !== undefined) {
     const contents = Object.entries(input.urn).filter(([, k]) => k > 0).map(([c, k]) => `${k} ${c}`).join(" · ");
     const how = input.replacement === true ? (locale === "pt-BR" ? "com reposição" : "with replacement") : locale === "pt-BR" ? "sem reposição" : "without replacement";
-    lines.push({ text: `${locale === "pt-BR" ? "urna" : "urn"}: ${contents} · ${how}`, colour: SOFT });
+    pushWrapped(`${locale === "pt-BR" ? "urna" : "urn"}: ${contents} · ${how}`, SOFT);
   }
-  if (write.rounded) lines.push({ text: locale === "pt-BR" ? "≈ indica valor decimal arredondado" : "≈ marks a rounded decimal value", colour: SOFT });
+  if (write.rounded) pushWrapped(locale === "pt-BR" ? "≈ indica valor decimal arredondado" : "≈ marks a rounded decimal value", SOFT);
 
-  const panelTop = treeBottom + 46;
-  const H = Math.ceil(lines.length > 0 ? panelTop + (lines.length - 1) * PANEL_LINE_H + 26 : treeBottom + 22);
+  const readingPanel = layoutPanel(lines, { width: W - 2 * MARGIN - 6, size: PANEL_FONT, lineHeight: PANEL_LINE_H, rules: TREE_RULES });
+  const panelTop = treeBottom + 33;
+  const H = Math.ceil(readingPanel.empty ? treeBottom + 22 : panelTop + readingPanel.height + 13);
 
   // ---- ink first -------------------------------------------------------------------------------------------------
   const board = new Board(W, H, PAPER);
@@ -612,12 +613,7 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
       { stroke: RULE, width: 1, id: "panel-rule" },
     );
   }
-  lines.forEach((l, i) => {
-    const y = panelTop + i * PANEL_LINE_H;
-    if (l.swatch !== undefined) board.poly([{ x: MARGIN, y }, { x: MARGIN + 22, y }], { stroke: l.swatch, width: 3.5, id: `panel-swatch-${i}` });
-    const w = textW(l.text, PANEL_FONT, l.weight ?? 400);
-    board.label(l.text, MARGIN + 34 + w / 2, y, { size: PANEL_FONT, weight: l.weight ?? 400, colour: l.colour, align: "start", freeStanding: true, claim: false, width: w, id: `panel-line-${i}` });
-  });
+  readingPanel.draw(board, { left: MARGIN, top: panelTop, cut: treeBottom + 14 });
 
   // The root and the dots, last, so no line covers them.
   board.circle({ x: x0, y: root.cy }, ROOT_R, { stroke: INK, width: 1, fill: INK, id: "root" });

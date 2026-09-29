@@ -39,16 +39,11 @@ const Am = (id: string, a: string, b: string): MnaElement => ({ id, kind: "A", a
 const blocksOf = (spec: FigureSpec): Block[] => (spec.root as Scene).children as Block[];
 const marksOf = (spec: FigureSpec): Mark[] => (spec.root as Scene).marks ?? [];
 const textOf = (spec: FigureSpec, id: string): string | undefined => blocksOf(spec).find((b) => b.id === id)?.label;
-/** A panel line as a reader reads it: its runs joined (subscripts inline). */
-const panelLines = (spec: FigureSpec): string[] => {
-  const lines = new Map<string, string>();
-  for (const b of blocksOf(spec)) {
-    const m = /^(panel-\d+)-\d+$/.exec(b.id ?? "");
-    if (m === null) continue;
-    lines.set(m[1]!, (lines.get(m[1]!) ?? "") + (b.label ?? "").replace(/ /g, " "));
-  }
-  return [...lines.values()];
-};
+/** A panel line as a reader reads it: one block per line (ADR 0062), its label the runs joined. */
+const panelLines = (spec: FigureSpec): string[] =>
+  blocksOf(spec)
+    .filter((b) => (b.id ?? "").startsWith("panel-"))
+    .map((b) => (b.label ?? "").replace(/ /g, " "));
 
 // ---- the linear algebra ------------------------------------------------------------------------
 
@@ -252,6 +247,10 @@ test("series: one arrow, pointing the way conventional current flows, labelled i
   assert.equal(textOf(spec, "label-R1"), "2 Ω");
   assert.equal(textOf(spec, "label-E1"), "12 V");
   assert.deepEqual(panelLines(spec), ["UAC = VA − VC = 6 V"]);
+  // ADR 0062: the subscripts are real runs of ONE block, not blocks set side by side.
+  const u = blocksOf(spec).find((b) => b.id === "panel-u-1")!;
+  assert.deepEqual(u.runs?.filter((r) => r.script === "sub").map((r) => r.text), ["AC", "A", "C"]);
+  assert.deepEqual(spec.readings?.lines.map((l) => l.runs.map((r) => r.text).join("")), ["UAC = VA − VC = 6 V"]);
   assert.equal(marksOf(spec).filter((m) => m.id.startsWith("dot-")).length, 0, "no T-junctions, no dots");
 });
 

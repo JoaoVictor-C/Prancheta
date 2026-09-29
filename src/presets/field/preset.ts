@@ -49,6 +49,7 @@ import { LOCALES, formatNumber } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import { compileIn } from "../../math/expr.ts";
 import { contour } from "../../math/contour.ts";
 import { rk4Scalar, rk4Planar } from "../../math/numeric.ts";
@@ -267,9 +268,26 @@ function framed(frameId: string, p: [number, number]): FramedPoint {
   return { frame: frameId, x: p[0], y: p[1] };
 }
 
-function finalizeSpec(board: Board, connectors: Connector[], title: string): FigureSpec {
+/**
+ * The reading panel under the plot (shared/panel.ts, ADR 0062): wrapped to
+ * the plot's width, soft. Returns the canvas height the panel needs, so the
+ * figure ends where its last line does rather than at the room reserved for
+ * it before the readings were known.
+ */
+function drawReadings(built: Built, readings: { id: string; text: string }[], o: { size: number; align?: "start" | "center" }): number {
+  const panel = layoutPanel(
+    readings.map((r) => ({ text: [{ text: r.text }], id: r.id })),
+    { width: built.width - MARGIN * 2, size: o.size, lineHeight: 20, emphasis: "soft" },
+  );
+  if (panel.empty) return built.plotHeight;
+  const bottom = panel.draw(built.board, { left: MARGIN, top: built.plotHeight + 12, cut: built.plotHeight, align: o.align ?? "start" });
+  return Math.ceil(bottom + 12);
+}
+
+function finalizeSpec(board: Board, connectors: Connector[], title: string, height?: number): FigureSpec {
   const spec = board.spec(title);
   const scene = spec.root as Scene;
+  if (height !== undefined) scene.height = height;
   scene.connectors = connectors;
   spec.canvas = { ...spec.canvas, constraints: { allowOverlap: true, allowConnectorCrossing: true, allowCurvedConnectors: true } };
   return parseSpec(spec);
@@ -356,7 +374,7 @@ function expandSlope(input: FieldInputSlope & WithAnswers, locale: Locale, title
     solutionCurves.push({ id, canvasPts });
     const label = s.label ?? `y(${formatNumber(x0, locale)}) = ${formatNumber(y0, locale)}`;
     readings.push({
-      id: `reading-${id}`,
+      id: id,
       text: `solução por ${label}${stopNote(bwd.stopped, fwd.stopped)}`,
     });
   });
@@ -374,21 +392,10 @@ function expandSlope(input: FieldInputSlope & WithAnswers, locale: Locale, title
     drawPoint(board, placer, `solution-${i}-start`, at(s.at), undefined, SOLUTION);
   });
 
-  const READING_LINE_H = 56; // generous: two text lines plus wrap slack
-  readings.forEach((r, i) => {
-    board.label(r.text, built.width / 2, built.plotHeight + 12 + i * READING_LINE_H + READING_LINE_H / 2, {
-      size: 12,
-      colour: SOFT,
-      align: "start",
-      width: built.width - MARGIN * 2,
-      id: r.id,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  const height = drawReadings(built, readings, { size: 12 });
 
   void refused; // recorded for the caller's own curiosity; refusing entirely happens only when NOTHING could be drawn (above)
-  return finalizeSpec(board, [], title);
+  return finalizeSpec(board, [], title, height);
 }
 
 /**
@@ -492,7 +499,7 @@ function expandVector(input: FieldInputVector & WithAnswers, locale: Locale, tit
     flowCurves.push({ id, canvasPts });
     const label = s.label ?? `(${formatNumber(x0, locale)}; ${formatNumber(y0, locale)})`;
     readings.push({
-      id: `reading-${id}`,
+      id: id,
       text: `linha de fluxo por ${label}${stopNote(bwd.stopped, fwd.stopped)}`,
     });
   });
@@ -515,20 +522,9 @@ function expandVector(input: FieldInputVector & WithAnswers, locale: Locale, tit
 
   flowLines.forEach((s, i) => drawPoint(board, placer, `flow-${i}-start`, at(s.at), undefined, SOLUTION));
 
-  const READING_LINE_H = 56; // generous: two text lines plus wrap slack
-  readings.forEach((r, i) => {
-    board.label(r.text, built.width / 2, built.plotHeight + 12 + i * READING_LINE_H + READING_LINE_H / 2, {
-      size: 12,
-      colour: SOFT,
-      align: "start",
-      width: built.width - MARGIN * 2,
-      id: r.id,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  const height = drawReadings(built, readings, { size: 12 });
 
-  return finalizeSpec(board, connectors, title);
+  return finalizeSpec(board, connectors, title, height);
 }
 
 // ---- kind: levels -----------------------------------------------------------
@@ -1171,11 +1167,9 @@ function expandCharges(input: FieldInputCharges & WithAnswers, locale: Locale, t
   const panel = ["linhas de campo (k omitido)"];
   if (zeros.length > 0) panel[0] = `linhas de campo (k omitido); ${zeros.length === 1 ? "○ marca o ponto" : "○ marca os pontos"} onde E = 0`;
   if (equipotentials.length > 0) panel.push("linhas tracejadas: equipotenciais, V = Σ q/r (k omitido)");
-  (answers ? panel : []).forEach((text, i) => {
-    board.label(text, built.width / 2, built.plotHeight + 22 + i * 20, { size: 12, colour: SOFT, id: `panel-${i}`, claim: false, freeStanding: true });
-  });
+  const height = drawReadings(built, (answers ? panel : []).map((text, i) => ({ id: String(i), text })), { size: 12, align: "center" });
 
-  return finalizeSpec(board, [], title);
+  return finalizeSpec(board, [], title, height);
 }
 
 type DiscSpot = { centre: Point; gap: number; u: Point };

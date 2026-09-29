@@ -49,6 +49,8 @@ import type { MnaElement, MnaKind, MnaSolution } from "./mna.ts";
 import { TERMINAL_R, halfLength, halfWidth, samplePath, switchTerminals, symbolPaths } from "./symbols.ts";
 import type { Op, SymbolKind } from "./symbols.ts";
 import { rectAt } from "../../geometry/hit.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { PanelLineInput } from "../shared/panel.ts";
 
 // ---- input ------------------------------------------------------------------------
 
@@ -117,7 +119,6 @@ const ARROW_WIDTH = 4.5;
 const DOT_R = 3.6;
 const LABEL_SIZE = 13;
 const PANEL_SIZE = 13;
-const SUB_SIZE = 9.5;
 const PANEL_LINE_H = 24;
 
 // ---- numbers -------------------------------------------------------------------------
@@ -335,59 +336,6 @@ function beside(p: Point, d: Point, hw: number, w: number, h: number, alongs: nu
   return out;
 }
 
-// ---- the panel: text with subscripts, one block per run ----------------------------------------
-
-type Run = { text: string; sub?: boolean };
-
-/** Advance widths (em) for the panel's sans, rounded up: good enough to pack runs tightly, never so tight a run overflows. */
-function runWidth(text: string, size: number): number {
-  let em = 0;
-  for (const ch of text) {
-    if (ch === "\u202f") em += 0.2;
-    else if (ch === " " || ch === "\u00a0") em += 0.3;
-    else if (/[0-9]/.test(ch)) em += 0.58;
-    else if (/[A-Z]/.test(ch)) em += 0.7;
-    else if (/[a-z]/.test(ch)) em += 0.56;
-    else if (ch === "," || ch === "." || ch === ":") em += 0.3;
-    else if (ch === "(" || ch === ")") em += 0.34;
-    else em += 0.68;
-  }
-  return Math.ceil(em * size + 2);
-}
-
-function lineWidth(runs: Run[]): number {
-  return runs.reduce((s, r) => s + runWidth(r.text, r.sub ? SUB_SIZE : PANEL_SIZE) + 1, 0);
-}
-
-function drawRuns(board: Board, rawRuns: Run[], left: number, y: number, id: string): void {
-  // A run set against its subscript is end-aligned, so its width estimate's
-  // surplus lands on its LEFT. Only the base letter needs that alignment:
-  // " = V" before "A" is split into " = " (start-aligned, surplus to the
-  // right, a few pixels) and "V", so "U_AB = V_A" does not open a gap
-  // before every "=" and "−".
-  const runs: Run[] = rawRuns.flatMap((r, i) => {
-    if (r.sub || rawRuns[i + 1]?.sub !== true) return [r];
-    const cut = r.text.lastIndexOf(" ");
-    if (cut < 0 || cut === r.text.length - 1) return [r];
-    return [{ text: r.text.slice(0, cut + 1) }, { text: r.text.slice(cut + 1) }];
-  });
-  let x = left;
-  runs.forEach((r, i) => {
-    const size = r.sub ? SUB_SIZE : PANEL_SIZE;
-    // A block collapses a run's leading and trailing spaces, which the width
-    // estimate still counted -- a gap where no space was drawn. Non-breaking
-    // spaces are drawn, at about the width the estimate gives them.
-    const text = r.text.replace(/ /g, " ");
-    const w = runWidth(text, size);
-    const nextIsSub = runs[i + 1]?.sub === true;
-    // A run is set against the run that follows it when that is a subscript,
-    // so "V" and its "A" touch; every other run starts at its left edge.
-    const align = !r.sub && nextIsSub ? "end" : "start";
-    board.label(text, x + w / 2, y + (r.sub ? 4 : 0), { size, width: w, colour: INK, align, id: `${id}-${i}`, claim: false, freeStanding: true });
-    x += w + 1;
-  });
-}
-
 // ---- branches -----------------------------------------------------------------------------------
 
 export type Branch = {
@@ -489,7 +437,7 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
   const plotH = Math.ceil((ymax - ymin) * unit + 2 * MARGIN_Y);
 
   // ---- the panel's text first: its width and height decide the canvas ---------------------------
-  const panel: Run[][] = [];
+  const panel: PanelLineInput[] = [];
   const unitText = (value: number, u: string): string => {
     const q = withUnit(value, u, locale);
     return `${q.rel} ${q.text}`;
@@ -500,14 +448,14 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
       const q = withUnit(Math.abs(b.current), "A", locale);
       return `${b.name} ${q.rel} ${q.text}`;
     });
-    for (let k = 0; k < items.length; k += 3) panel.push([{ text: items.slice(k, k + 3).join("\u00a0".repeat(5)) }]);
+    for (let k = 0; k < items.length; k += 3) panel.push({ text: [{ text: items.slice(k, k + 3).join("\u00a0".repeat(5)) }], id: `currents-${k / 3 + 1}`, wrap: false });
   }
   (show.voltages ?? []).forEach(([a, b], i) => {
     if (!answers) return;
     const path = `circuit.show.voltages[${i}]`;
     for (const n of [a, b]) if (!(n in nodes)) throw new SpecError(`${path}: unknown node ${JSON.stringify(n)}`);
     const u = V(a, path) - V(b, path);
-    panel.push([{ text: "U" }, { text: `${a}${b}`, sub: true }, { text: " = V" }, { text: a, sub: true }, { text: ` ${"−"} V` }, { text: b, sub: true }, { text: ` ${unitText(u, "V")}` }]);
+    panel.push({ text: [{ text: "U" }, { text: `${a}${b}`, script: "sub" }, { text: " = V" }, { text: a, script: "sub" }, { text: " − V" }, { text: b, script: "sub" }, { text: ` ${unitText(u, "V")}` }], id: `u-${i + 1}`, wrap: false });
   });
   const shownNodes = names.filter((n) => {
     const rule = show.nodeNames ?? "letters";
@@ -526,7 +474,7 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
     const listed = shownNodes.filter((n) => sol.potential.has(n)).sort();
     for (const n of listed) {
       const pot = V(n, "circuit.show.nodeVoltages");
-      panel.push([{ text: "V" }, { text: n, sub: true }, { text: ` ${sol.merged.get(n) === sol.merged.get(sol.ground) ? "= 0 (referência)" : unitText(pot, "V")}` }]);
+      panel.push({ text: [{ text: "V" }, { text: n, script: "sub" }, { text: ` ${sol.merged.get(n) === sol.merged.get(sol.ground) ? "= 0 (referência)" : unitText(pot, "V")}` }], id: `v-${n}`, wrap: false });
     }
   }
   if (show.power === true && answers) {
@@ -541,11 +489,12 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
         p = c.value! * (V(c.to, "power") - V(c.from, "power"));
         role = p >= 0 ? " (fornecida)" : " (recebida)";
       } else continue;
-      panel.push([{ text: "P" }, { text: c.id, sub: true }, { text: ` ${unitText(Math.abs(p), "W")}${Math.abs(p) < 1e-12 ? "" : role}` }]);
+      panel.push({ text: [{ text: "P" }, { text: c.id, script: "sub" }, { text: ` ${unitText(Math.abs(p), "W")}${Math.abs(p) < 1e-12 ? "" : role}` }], id: `p-${c.id}`, wrap: false });
     }
   }
-  const panelW = Math.max(0, ...panel.map(lineWidth));
-  const panelH = panel.length === 0 ? 0 : panel.length * PANEL_LINE_H + 16;
+  const readingPanel = layoutPanel(panel, { width: Infinity, size: PANEL_SIZE, lineHeight: PANEL_LINE_H });
+  const panelW = readingPanel.width;
+  const panelH = readingPanel.empty ? 0 : readingPanel.height + 16;
   const width = Math.max(plotW, Math.ceil(panelW + 2 * 40));
   const height = plotH + panelH;
   const ox = (width - plotW) / 2 + MARGIN_X;
@@ -779,8 +728,7 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
   for (const n of junctions) board.circle(X(nodes[n]!), DOT_R, { fill: INK, id: `dot-${n}` });
 
   // ---- panel ------------------------------------------------------------------------------------
-  const left = (width - panelW) / 2;
-  panel.forEach((runs, i) => drawRuns(board, runs, left, plotH + 8 + i * PANEL_LINE_H + PANEL_LINE_H / 2, `panel-${i}`));
+  readingPanel.draw(board, { top: plotH + 8, cut: plotH, align: "center" });
 
   const spec = board.spec(title);
   const scene = spec.root as Scene;

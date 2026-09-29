@@ -354,12 +354,37 @@ function renderBlock(
       : node.wrap === "anywhere"
         ? ' style="white-space: pre-line; overflow-wrap: anywhere"'
         : ' style="white-space: pre-line"';
+  // Rich text (ADR 0062) is real <sub>/<sup>, so Chromium lays out and
+  // measures exactly what the SVG will draw; measure.ts reads each run back.
+  const content =
+    node.runs === undefined
+      ? escapeHtml(node.label ?? "")
+      : node.runs.map((run) => runHtml(run.text, run.script)).join("");
+  const rich = node.runs === undefined ? "" : ' data-pr-rich="1"';
   const label =
     node.label === undefined || node.label === ""
       ? ""
-      : `<span data-pr-text="${escapeAttr(id)}"${labelStyle}>${escapeHtml(node.label)}</span>`;
+      : `<span data-pr-text="${escapeAttr(id)}"${rich}${labelStyle}>${content}</span>`;
 
   return `<div data-pr-box="${escapeAttr(id)}" ${styleAttr(style)}>${label}</div>`;
+}
+
+/**
+ * How a subscript and a superscript are set (ADR 0062), in one place because
+ * measure.ts builds its baseline probe from the same strings. Sizes and
+ * shifts are in the run's OWN em: 0.7 of the parent size; a subscript's
+ * baseline 0.21 parent-em below the line's, a superscript's 0.385 above.
+ * line-height 1 keeps a script from opening the line box, so a line with a
+ * subscript is spaced like one without.
+ */
+export const SCRIPT_STYLE = {
+  sub: "font-size: 0.7em; vertical-align: -0.3em; line-height: 1",
+  sup: "font-size: 0.7em; vertical-align: 0.55em; line-height: 1",
+} as const;
+
+export function runHtml(text: string, script: "sub" | "sup" | undefined): string {
+  if (script === undefined) return escapeHtml(text);
+  return `<${script} data-pr-script="${script}" style="${SCRIPT_STYLE[script]}">${escapeHtml(text)}</${script}>`;
 }
 
 export function escapeHtml(value: string): string {

@@ -507,11 +507,11 @@ test("the matrix is typeset in four cells and the panel prints its entries exact
   assert.equal(textOf(spec, "matrix-a12"), "−1/2");
   assert.equal(textOf(spec, "matrix-a21"), "1/2");
   assert.equal(textOf(spec, "matrix-a22"), "√3/2");
-  assert.equal(textOf(spec, "panel-head-0"), "T(x; y) = ((√3/2)x − y/2; x/2 + (√3/2)y)");
-  assert.equal(textOf(spec, "panel-head-1"), "det A = 1; tr A = √3");
+  assert.equal(textOf(spec, "matrix-head-0"), "T(x; y) = ((√3/2)x − y/2; x/2 + (√3/2)y)");
+  assert.equal(textOf(spec, "matrix-head-1"), "det A = 1; tr A = √3");
   const plain = expandLinearMap({ matrix: [[2, 1], [1, 1]], show: { grid: false, basis: false, unitSquare: false } });
-  assert.equal(textOf(plain, "panel-head-0"), "T(x; y) = (2x + y; x + y)");
-  assert.equal(textOf(plain, "panel-head-1"), "det A = 1; tr A = 3");
+  assert.equal(textOf(plain, "matrix-head-0"), "T(x; y) = (2x + y; x + y)");
+  assert.equal(textOf(plain, "matrix-head-1"), "det A = 1; tr A = 3");
   assert.equal(textOf(plain, "matrix-a11"), "2");
 });
 
@@ -520,8 +520,8 @@ test("the locale changes decimal marks and the pair separator, not the maths", (
   const en = expandLinearMap({ matrix: [[0.5, 0], [0, 2]], locale: "en", show: { grid: false, basis: true, unitSquare: false } });
   assert.equal(textOf(pt, "matrix-a11"), "0,5");
   assert.equal(textOf(en, "matrix-a11"), "0.5");
-  assert.equal(textOf(pt, "panel-head-0"), "T(x; y) = (0,5x; 2y)");
-  assert.equal(textOf(en, "panel-head-0"), "T(x, y) = (0.5x, 2y)");
+  assert.equal(textOf(pt, "matrix-head-0"), "T(x; y) = (0,5x; 2y)");
+  assert.equal(textOf(en, "matrix-head-0"), "T(x, y) = (0.5x, 2y)");
 });
 
 test("default ranges contain the unit square, its image and every shape and point", () => {

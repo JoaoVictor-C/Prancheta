@@ -50,7 +50,9 @@ import {
 import type { BoxStats, ClassScheme, FrequencyRow, QuartileMethod, VarianceKind } from "../../math/statistics.ts";
 import { distanceToPolyline, rectAt } from "../../geometry/hit.ts";
 import { niceStep } from "../shared/scale.ts";
-import { packItems, wrapText } from "../shared/text.ts";
+import { packItems } from "../shared/text.ts";
+import { estimateRunsWidth, layoutPanel } from "../shared/panel.ts";
+import type { PanelLineInput } from "../shared/panel.ts";
 import { tidy } from "../../math/numeric.ts";
 
 // ---- input ------------------------------------------------------------------------
@@ -825,17 +827,21 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
   }
 
   // ---- the reading panel --------------------------------------------------------------------------------------
+  // The statistics, packed a group to a line with "·" between items; then the notes, soft.
   const maxLine = W0;
-  const textLines: { text: string; colour: string; weight: number }[] = [];
+  const textLines: PanelLineInput[] = [];
   if (m.showStats && m.answers) {
-    for (const g of panelGroups(m)) for (const l of packItems(g.items, "   ·   ", maxLine, (t) => probe.measure(t, LABEL_SIZE))) textLines.push({ text: l, colour: g.colour, weight: g.weight });
+    for (const g of panelGroups(m)) {
+      for (const l of packItems(g.items, "   ·   ", maxLine, (t) => estimateRunsWidth([{ text: t }], LABEL_SIZE))) textLines.push({ text: [{ text: l }], wrap: false });
+    }
   }
-  for (const s of noteSentences(m, hist === undefined ? undefined : xs)) for (const l of wrapText(s, maxLine, (t) => probe.measure(t, LABEL_SIZE))) textLines.push({ text: l, colour: SOFT, weight: 400 });
-  if (textLines.length > 0) y += 22;
-  textLines.forEach((l, i) => {
-    put(board, l.text, (W - maxLine) / 2, y + NOTE_LINE / 2, { anchor: "start", size: LABEL_SIZE, weight: l.weight, colour: l.colour, freeStanding: true, id: `panel-${i}` });
-    y += NOTE_LINE;
-  });
+  for (const s of noteSentences(m, hist === undefined ? undefined : xs)) textLines.push({ text: [{ text: s }], emphasis: "soft" });
+  const readingPanel = layoutPanel(textLines, { width: maxLine, size: LABEL_SIZE, lineHeight: NOTE_LINE });
+  if (!readingPanel.empty) {
+    const cut = y + 8;
+    y += 22;
+    y = readingPanel.draw(board, { left: (W - maxLine) / 2, top: y, cut });
+  }
 
   const height = Math.ceil(y + M);
   const title = input.title ?? (m.kind === "histogram" ? "histograma" : m.kind === "boxplot" ? "boxplot" : "histograma e boxplot");

@@ -27,6 +27,7 @@ import { LOCALES, MINUS, formatNumber, snapExact, writeExact } from "../../local
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import { ExprError, compile, constantValue, parse, pretty } from "../../math/expr.ts";
 import type { Node } from "../../math/expr.ts";
 import { NumericError } from "../../math/numeric.ts";
@@ -698,11 +699,14 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
   const w2 = plan2 === null ? 0 : plan2.width;
   const h2 = plan2 === null ? 0 : plan2.height;
   const plotH = Math.max(h3, h2);
-  const board0 = new Board(1, 1, PAPER);
-  const captionStyle = { size: 13, colour: SOFT };
-  const captionW = Math.max(0, ...readings.map((t) => board0.extent(t, captionStyle).w));
+  // One reading a line, never wrapped: an integral parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((text) => ({ text: [{ text }], wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const captionW = readingPanel.width;
   const width = Math.max(w3 + (plan2 === null ? 0 : GAP + w2), Math.ceil(captionW + 48));
-  const height = plotH + readings.length * CAPTION_LINE_H + 22;
+  const height = plotH + readingPanel.height + 22;
   const shift3 = { x: 0, y: (plotH - h3) / 2 };
   const at3 = (q: Vec2): Point => {
     const p = page3(q);
@@ -812,9 +816,7 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
   if (plan2 !== null) drawPlane(board, plan2, res, { x: w3 + GAP, y: (plotH - h2) / 2 }, locale, hide);
 
   // ---- the panel ----
-  readings.forEach((text, i) => {
-    board.label(text, 24 + (width - 48) / 2, plotH + 14 + i * CAPTION_LINE_H, { ...captionStyle, align: "start", width: width - 48, id: `reading-${i}`, claim: false, freeStanding: true });
-  });
+  readingPanel.draw(board, { left: 24, top: plotH + 4, cut: plotH });
 
   const spec = board.spec(input.title ?? "sólido de revolução");
   const scene = spec.root as Scene;

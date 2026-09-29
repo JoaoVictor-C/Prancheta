@@ -423,7 +423,7 @@ test("the printed numbers are the solved ones, in their regions", () => {
 });
 
 test("with counts and a shade, the caption is the sum of the shaded regions", () => {
-  const cap = (input: VennInput): string => blocksOf(expandVenn(input)).find((b) => b.id === "caption")!.label as string;
+  const cap = (input: VennInput): string => blocksOf(expandVenn(input)).find((b) => b.id === "panel-caption")!.label as string;
   assert.equal(cap({ sets: AB, counts: { total: 100, A: 45, B: 30, "A∩B": 12 }, shade: "(A ∪ B)'" }), "n((A ∪ B)′) = 37");
   assert.equal(cap({ sets: AB, counts: { total: 100, A: 45, B: 30, "A∩B": 12 }, shade: "A ∪ B" }), "n(A ∪ B) = 63");
   assert.equal(cap({ sets: AB, counts: { total: 100, A: 45, B: 30, "A∩B": 12 }, shade: "A ∩ B" }), "n(A ∩ B) = 12");

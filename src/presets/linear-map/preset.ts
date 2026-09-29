@@ -41,7 +41,9 @@ import { denominatorOf, sqrtLabel } from "../../locale/write.ts";
 import type { Rect } from "../../ir/types.ts";
 import { distanceToPolyline, rectAt, segmentHitsRect } from "../../geometry/hit.ts";
 import { gcd, splitSquare } from "../../math/integer.ts";
-import { estimateWidth, packItems, wrapText } from "../shared/text.ts";
+import { estimateWidth, packItems } from "../shared/text.ts";
+import { layoutPanel as layoutReadings } from "../shared/panel.ts";
+import type { Panel } from "../shared/panel.ts";
 import type { WrapRules } from "../shared/text.ts";
 import type { Printed } from "../../locale/write.ts";
 
@@ -1230,7 +1232,7 @@ function buildPanel(
     const names = s.names;
     const img = s.image.map((p, j) => {
       const pt = pairText(p, locale);
-      return `${names === undefined ? `V${j + 1}` : names[j]!}′ ${pt.exact ? "=" : "≈"} ${pt.text}`;
+      return `${names === undefined ? `V_{${j + 1}}` : names[j]!}′ ${pt.exact ? "=" : "≈"} ${pt.text}`;
     });
     for (const line of packItems(img, ", ", 480, panelWidth)) body.push(line);
     const area0 = polygonArea(s.pts);
@@ -1261,8 +1263,18 @@ const EQUATION_RULES: WrapRules = {
 /** The panel text's width as the checks will see it, estimated per character. */
 const panelWidth = (s: string): number => estimateWidth(s, PANEL_FONT);
 
+/**
+ * The matrix block (A =, its entries, its brackets and the lines beside it)
+ * is part of the figure; the full-width lines under it are the reading panel
+ * (shared/panel.ts, ADR 0062), which a sheet may lift out -- so the matrix
+ * block's ids are `matrix-*`, never `panel-*`.
+ */
 type PanelLayout = {
   height: number;
+  /** The reading panel under the matrix, its first line's top and where the figure ends, relative to the plot's foot. */
+  readings: Panel;
+  readingsTop: number;
+  cut: number;
   labels: { id: string; text: string; x: number; y: number; w: number; colour: string; weight?: number; align?: "start" | "center" | "end" }[];
   brackets: { id: string; pts: Point[] }[];
 };
@@ -1274,8 +1286,8 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   if (panel.entries === undefined) {
     // A map given by name: one line, no matrix.
     const text = panel.head[0]!;
-    labels.push({ id: "panel-head-0", text, x: MARGIN, y: 46, w: board.extent(text, o).w, colour: INK, align: "start", weight: 700 });
-    return { height: 46 + 28, labels, brackets };
+    labels.push({ id: "matrix-head-0", text, x: MARGIN, y: 46, w: board.extent(text, o).w, colour: INK, align: "start", weight: 700 });
+    return { height: 46 + 28, labels, brackets, readings: layoutReadings([], { width }), readingsTop: 74, cut: 74 };
   }
   const entries = panel.entries;
   const extent = (text: string): number => board.extent(text, o).w;
@@ -1285,7 +1297,7 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   const y2 = top + rowH;
   const left = MARGIN;
   const wA = extent("A =");
-  labels.push({ id: "panel-name", text: "A =", x: left, y: (y1 + y2) / 2, w: wA, colour: INK, weight: 700 });
+  labels.push({ id: "matrix-name", text: "A =", x: left, y: (y1 + y2) / 2, w: wA, colour: INK, weight: 700 });
   const bx0 = left + wA + 12;
   const colW = [0, 1].map((j) => Math.max(extent(entries[0][j]!), extent(entries[1][j]!)));
   const gap = 22;
@@ -1312,21 +1324,21 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   panel.head.forEach((text, i) => {
     const w = extent(text);
     if (w > room) overflow.push(text);
-    else labels.push({ id: `panel-head-${i}`, text, x: xText, y: i === 0 ? y1 : y2, w, colour: INK, align: "start" });
+    else labels.push({ id: `matrix-head-${i}`, text, x: xText, y: i === 0 ? y1 : y2, w, colour: INK, align: "start" });
   });
   // A head line that did not fit beside the matrix goes with the rest, first.
   const maxLine = width - MARGIN * 2;
-  const body = [...overflow, ...panel.body].flatMap((text) => wrapText(text, maxLine, extent, EQUATION_RULES));
-  let y = y2 + 18 + 26;
-  body.forEach((text, i) => {
-    labels.push({ id: `panel-line-${i}`, text, x: left, y, w: extent(text), colour: SOFT, align: "start" });
-    y += PANEL_LINE_H;
-  });
-  const lastCentre = body.length > 0 ? y - PANEL_LINE_H : y2 + 18;
-  return { height: Math.ceil(lastCentre + 28), labels, brackets };
+  const readings = layoutReadings(
+    [...overflow, ...panel.body].map((text) => ({ text })),
+    { width: maxLine, size: PANEL_FONT, lineHeight: PANEL_LINE_H, rules: EQUATION_RULES, emphasis: "soft" },
+  );
+  const readingsTop = y2 + 18 + 14;
+  const height = readings.empty ? y2 + 18 + 28 : readingsTop + readings.height + 16;
+  return { height: Math.ceil(height), labels, brackets, readings, readingsTop, cut: yb + 8 };
 }
 
 function drawPanel(board: Board, layout: PanelLayout, plotHeight: number, _width: number): void {
+  layout.readings.draw(board, { left: MARGIN, top: plotHeight + layout.readingsTop, cut: plotHeight + layout.cut });
   for (const br of layout.brackets) {
     board.poly(
       br.pts.map((p) => ({ x: p.x, y: p.y + plotHeight })),

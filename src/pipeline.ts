@@ -48,6 +48,7 @@ import { attachRotations, attachBoxRotation } from "./geometry/rotate.ts";
 import { attachPaints } from "./paint/apply.ts";
 import { buildManifest } from "./manifest.ts";
 import type { Manifest } from "./manifest.ts";
+import { liftReadings } from "./presets/shared/panel.ts";
 import { resolveTheme } from "./theme.ts";
 
 export type RenderResult = {
@@ -91,6 +92,13 @@ export type RenderOptions = {
    * caller that genuinely needs the pixels keeps them regardless.
    */
   raster?: boolean;
+  /**
+   * "omit": draw the figure WITHOUT its reading panel, cropped to where the
+   * figure proper ends (ADR 0062) -- for a caller that sets `spec.readings`
+   * as text of its own, as a sheet does. Default "draw". A figure with no
+   * readings is drawn unchanged either way.
+   */
+  readings?: "draw" | "omit";
 };
 
 // Every render wants the same Chromium: subpixel AA off so monochrome glyphs
@@ -159,7 +167,8 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
     // a packed effect is indistinguishable from a hand-written one, which is
     // exactly the point -- it goes through the same bleed arithmetic and the
     // same effect-within-canvas check.
-    let working = normalise(applyType(applyStyle(spec))).spec;
+    const drawn = options.readings === "omit" ? liftReadings(spec).spec : spec;
+    let working = normalise(applyType(applyStyle(drawn))).spec;
     const repairs: RepairEdit[] = [];
     let unrepaired: { check: Check; why: string }[] = [];
     let pass = 0;
@@ -417,6 +426,7 @@ export function toLaidOutFigure(
         y: line.y,
         box: line.box,
         baselineUncertain: line.baselineUncertain,
+        ...(line.runs === undefined ? {} : { runs: line.runs }),
       })),
     });
   }

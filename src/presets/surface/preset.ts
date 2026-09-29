@@ -21,6 +21,8 @@ import { ExprError, compileTree, constantValue, parseIn, pretty } from "../../ma
 import { contour } from "../../math/contour.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { TextRun } from "../../ir/types.ts";
 import { GeometryError, normalize } from "../../geometry/vec.ts";
 import type { Vec2, Vec3 } from "../../geometry/vec.ts";
 import { makeCamera, project, projectDirection } from "../../geometry/projection.ts";
@@ -257,7 +259,8 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   const W = (p: Vec3): Vec3 => [p[0], p[1], p[2] * k];
 
   // ---- 3. the point, its tangent plane ----
-  const readings: string[] = [];
+  // A reading is plain text, or runs when it needs a real subscript (f_x, f_y).
+  const readings: (string | TextRun[])[] = [];
   const sep = locale === "pt-BR" ? "; " : ", ";
   let P: { name: string; p: Vec3; tangent: Tangent | null } | null = null;
   if (input.point !== undefined) {
@@ -515,8 +518,6 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   }
 
   // ---- 7. the page ----
-  const board0 = new Board(1, 1, PAPER);
-  const captionStyle = { size: 13, colour: SOFT };
   const eqOr = (exact: boolean): string => (exact ? "=" : "≈");
   readings.push(`z = f(x${sep}y) = ${fText}`);
   if (stated && (zlo > fMin || zhi < fMax)) readings.push(`cortada em ${formatNumber(zlo, locale)} ≤ z ≤ ${formatNumber(zhi, locale)}`);
@@ -531,17 +532,22 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
     if (P.tangent !== null) {
       plane = printTangentPlane(P.tangent, P.p[0], P.p[1], locale);
       const at = `(${printExact(P.p[0], locale).text}${sep}${printExact(P.p[1], locale).text})`;
-      readings.push(`fx${at} ${eqOr(plane.exact)} ${plane.fxText}${sep}fy${at} ${eqOr(plane.exact)} ${plane.fyText}`);
+      readings.push([{ text: "f" }, { text: "x", script: "sub" }, { text: `${at} ${eqOr(plane.exact)} ${plane.fxText}${sep}f` }, { text: "y", script: "sub" }, { text: `${at} ${eqOr(plane.exact)} ${plane.fyText}` }]);
       readings.push(`plano tangente em ${P.name}: ${plane.text}`);
     }
   }
   if (mesh.holes > 0) readings.push(`f não está definida (ou salta) em parte de [${formatNumber(xr[0], locale)}${sep}${formatNumber(xr[1], locale)}] × [${formatNumber(yr[0], locale)}${sep}${formatNumber(yr[1], locale)}]: ali o desenho para, nunca emenda`);
   if (Math.abs(k - 1) > 1e-9) readings.push(`eixo z desenhado na escala ${formatNumber(k, locale, { decimals: 2 })} : 1`);
-  const captionW = Math.max(0, ...readings.map((r) => board0.extent(r, captionStyle).w));
+  // One reading a line, never wrapped: an equation parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((r) => ({ text: typeof r === "string" ? [{ text: r }] : r, wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const captionW = readingPanel.width;
   const plotW = Math.ceil((uMax - uMin) * unit + 2 * PAD);
   const width = Math.max(plotW, Math.ceil(captionW + 48));
   const plotH = Math.ceil((vMax - vMin) * unit + 2 * PAD);
-  const height = plotH + readings.length * CAPTION_LINE_H + 18;
+  const height = plotH + readingPanel.height + 18;
   const ox = (width - (uMax - uMin) * unit) / 2 - uMin * unit;
   const oy = PAD + vMax * unit;
   const page = (p: Vec3): Point => {
@@ -824,16 +830,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   }
 
   // ---- 11. the readings panel ----
-  readings.forEach((text, i) => {
-    board.label(text, 24 + (width - 48) / 2, plotH + 12 + i * CAPTION_LINE_H, {
-      ...captionStyle,
-      align: "start",
-      width: width - 48,
-      id: `reading-${i}`,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  readingPanel.draw(board, { left: 24, top: plotH + 2, cut: plotH });
 
   const spec = board.spec(input.title ?? `z = ${fText}`);
   const scene = spec.root as Scene;

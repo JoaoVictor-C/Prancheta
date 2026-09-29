@@ -4,7 +4,9 @@
  * Three rules, from decision 0001, and they are not negotiable:
  *   1. Absolute coordinates only. Layout already happened.
  *   2. One <text> element per wrapped line, positioned on its measured
- *      baseline. No dominant-baseline, no tspan wrapping, no reflow.
+ *      baseline. No dominant-baseline, no tspan wrapping, no reflow. (A
+ *      rich line -- ADR 0062 -- is still one <text>, its runs tspans at the
+ *      absolute positions the mirror measured: placement, not layout.)
  *   3. No foreignObject, ever. resvg does not render it and librsvg,
  *      Inkscape and Illustrator are unreliable with it — a figure that opens
  *      blank in the tool the user actually opens is worthless.
@@ -797,7 +799,9 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
       if (fontEmbed === "outline") {
         const outlineFont = loadOutlineFont();
         if (!lineNeedsTextFallback(outlineFont, line.text)) {
-          return outlineLineToSvg(text, line, anchor, outlineFont);
+          return line.runs === undefined
+            ? outlineLineToSvg(text, line, anchor, outlineFont)
+            : line.runs.map((run) => outlineRunToSvg(text, run, outlineFont)).join("\n");
         }
         // Falls through to the ordinary <text> branch below: a character the
         // bundled font does not cover (see export/fonts.ts) is drawn with the
@@ -811,6 +815,24 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
         text.letterSpacing !== undefined && text.letterSpacing !== 0
           ? ` letter-spacing="${num(text.letterSpacing)}"`
           : "";
+      if (line.runs !== undefined) {
+        // Rich text (ADR 0062): still ONE <text> per line, so it reads and
+        // selects as one string, but every run is a tspan placed absolutely
+        // at the left edge and baseline the mirror measured for it. Nothing
+        // here is laid out by the SVG renderer: a subscript's shift and size
+        // are Chromium's, copied, exactly as a plain line's baseline is.
+        const spans = line.runs
+          .map((run) => {
+            const size = run.fontSize === text.fontSize ? "" : ` font-size="${num(run.fontSize)}"`;
+            return `<tspan x="${num(run.x)}" y="${num(run.y)}"${size}>${escapeText(run.text)}</tspan>`;
+          })
+          .join("");
+        return (
+          `<text data-pr-id="${attr(text.id)}" ` +
+          `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight}${tracking} ` +
+          `fill="${attr(text.fill)}" text-anchor="start" xml:space="preserve">${spans}</text>`
+        );
+      }
       return (
         `<text data-pr-id="${attr(text.id)}" x="${num(line.x)}" y="${num(line.y)}" ` +
         `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight}${tracking} ` +
@@ -878,6 +900,24 @@ function outlineLineToSvg(
       glyphs.push(`<path data-pr-id="${attr(text.id)}" d="${outline.d}" fill="${attr(text.fill)}"/>`);
     }
     cursor += outline.advance;
+  }
+  return glyphs.join("\n");
+}
+
+/** One run of a rich line as glyph paths, walked from the left edge the mirror measured for it (ADR 0062). */
+function outlineRunToSvg(
+  text: PlacedText,
+  run: NonNullable<PlacedText["lines"][number]["runs"]>[number],
+  outlineFont: ReturnType<typeof loadOutlineFont>,
+): string {
+  const glyphs: string[] = [];
+  let cursor = run.x;
+  for (const char of [...run.text]) {
+    const outline = outlineForChar(outlineFont, char, cursor, run.y, run.fontSize);
+    if (outline.d !== "") {
+      glyphs.push(`<path data-pr-id="${attr(text.id)}" d="${outline.d}" fill="${attr(text.fill)}"/>`);
+    }
+    cursor += outline.advance + (text.letterSpacing ?? 0);
   }
   return glyphs.join("\n");
 }

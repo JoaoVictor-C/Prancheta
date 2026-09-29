@@ -45,7 +45,7 @@ import type { LabelOptions } from "../function-graph/board.ts";
 import { boxInside } from "../function-graph/areas.ts";
 import { Placer } from "../construction/place.ts";
 import { distanceToPolyline, rectAt, rectToPolyline } from "../../geometry/hit.ts";
-import { wrapText } from "../shared/text.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import type { WrapRules } from "../shared/text.ts";
 import type { Printed } from "../../locale/write.ts";
 
@@ -446,7 +446,7 @@ export function panelLines(model: Model, ev: Event, o: { locale?: Locale; decima
       return `C(${m.n}, ${k}) · ${t.short(m.p)}${sup(k)} · ${t.short(q)}${sup(m.n - k)}`;
     }
     const lam = (model as { lambda: number }).lambda;
-    const e = Number.isInteger(lam) ? `e${sup(MINUS + lam)}` : `e^(${MINUS}${t.short(lam)})`;
+    const e = Number.isInteger(lam) ? `e${sup(MINUS + lam)}` : `e^{${MINUS}${t.short(lam)}}`;
     return `${e} · ${t.short(lam)}${sup(k)} / ${k}!`;
   };
   const symbol = ((): string => {
@@ -1125,24 +1125,24 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
 
   // ---- the panel -----------------------------------------------------------------------------------------------------------------
   const lines = answers ? panelLines(model, ev, { locale, decimals, approximation: approxOn }) : [];
-  const maxLine = W - 2 * ML;
-  // the line that is the result is set in bold, which is wider than the regular face the board measures: allow for it
-  const BOLD = 1.1;
-  const panelWidth = (text: string): number => board.extent(text, { size: PANEL_FONT }).w * (text.startsWith("P(") ? BOLD : 1);
-  const wrapped = lines.flatMap((l) => wrapText(l, maxLine, (s) => board.extent(s, { size: PANEL_FONT }).w * (l.startsWith("P(") ? BOLD : 1), OPERATOR_RULES));
-  let y = plotAreaBottom + 34;
-  wrapped.forEach((text, i) => {
-    const w = panelWidth(text);
-    putLabel(text, ML + w / 2, y, { size: PANEL_FONT, colour: text.startsWith("P(") ? INK : SOFT, weight: text.startsWith("P(") ? 700 : 400, align: "start", width: w, freeStanding: true, id: `panel-line-${i}` });
-    y += PANEL_LINE_H;
-  });
-  const height = Math.ceil(y - PANEL_LINE_H + 30);
+  // The line that is the result (it begins "P(") is strong; the arithmetic that reaches it is soft.
+  // Scripts are marked in the line itself: e^{−2,5} (ADR 0062).
+  const readingPanel = layoutPanel(
+    lines.map((l) => ({ text: l, emphasis: l.startsWith("P(") ? ("strong" as const) : ("soft" as const) })),
+    { width: W - 2 * ML, size: PANEL_FONT, lineHeight: PANEL_LINE_H, rules: OPERATOR_RULES },
+  );
+  const panelTop = plotAreaBottom + 22;
+  const boardKids = board.kids.length;
+  readingPanel.draw(board, { left: ML, top: panelTop, cut: plotAreaBottom + 10 });
+  kids.push(...board.kids.slice(boardKids));
+  const height = Math.ceil(readingPanel.empty ? plotAreaBottom + 40 : panelTop + readingPanel.height + 18);
 
   // ---- the spec -------------------------------------------------------------------------------------------------------------------
   const title = input.title ?? (answers ? `${headText}: ${symbolOf(model, ev, t)} = ${t.dec(P, decimals)}` : `${headText}: ${symbolOf(model, ev, t)}`);
   const spec: FigureSpec = {
     version: 1,
     title,
+    ...(board.readings === undefined ? {} : { readings: board.readings }),
     canvas: { padding: 0, background: PAPER, theme: "print", constraints: { allowOverlap: true, allowConnectorCrossing: true, allowCurvedConnectors: true } },
     root: {
       type: "scene",

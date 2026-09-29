@@ -38,6 +38,7 @@ import { LOCALES, formatNumber } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import { evalSetExpr, isReservedSetName, parseSetExpr, printSetExpr } from "./setexpr.ts";
 import type { SetExpr } from "./setexpr.ts";
 
@@ -611,8 +612,9 @@ export function expandVenn(input: VennInput): FigureSpec {
       if (list.length === 0) caption = `${model.shadeText} = ∅`;
     } else caption = `sombreado: ${model.shadeText}`;
   }
-  const probe = new Board(10, 10, PAPER);
-  const capW = caption === undefined ? 0 : probe.extent(caption, { size: CAPTION_SIZE }).w;
+  // The caption is the figure's one reading line (shared/panel.ts): its id is "panel-caption".
+  const readingPanel = layoutPanel(caption === undefined ? [] : [{ text: [{ text: caption }], id: "caption", wrap: false }], { width: Infinity, size: CAPTION_SIZE, lineHeight: 26, emphasis: "soft" });
+  const capW = readingPanel.width;
   const W = Math.ceil(Math.max(rectW, capW) + 2 * MARGIN);
   const captionH = caption === undefined ? 0 : 44;
   const H = Math.ceil(rectH + 2 * MARGIN + captionH);
@@ -748,7 +750,7 @@ export function expandVenn(input: VennInput): FigureSpec {
   }
 
   if (caption !== undefined) {
-    board.label(caption, W / 2, MARGIN + rectH + 26, { size: CAPTION_SIZE, colour: SOFT, freeStanding: true, id: "caption" });
+    readingPanel.draw(board, { top: MARGIN + rectH + 13, cut: MARGIN + rectH + 8, align: "center" });
   }
 
   const title = input.title ?? `diagrama de Venn (${names.join(", ")})`;

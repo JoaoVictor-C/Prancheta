@@ -29,7 +29,8 @@ import { Board } from "../function-graph/board.ts";
 import { Placer, besidePolyline } from "../construction/place.ts";
 import type { Rect } from "../../ir/types.ts";
 import { distanceToPolyline, rectAt } from "../../geometry/hit.ts";
-import { packItems } from "../shared/text.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { PanelLineInput } from "../shared/panel.ts";
 
 // ---- input ------------------------------------------------------------------
 
@@ -346,6 +347,8 @@ const EDGE_W = 1.6;
 const NAME_SIZE = 15;
 const LABEL_SIZE = 14;
 const PANEL_SIZE = 14;
+/** A run wraps between its tokens: "→a" stays with the state it reaches, and a set is never parted after a comma. */
+const RUN_RULES = { joinsNext: (w: string): boolean => w.startsWith("→") || w.endsWith(",") };
 const ARROW_LEN = 10;
 const ARROW_HALF = 4.2;
 const START_LEN = 36;
@@ -615,23 +618,11 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
   const geo = geometry(centres);
 
   // ---- the panel's text decides the canvas height ------------------------------------------
-  const panelLeft = 30;
-  const panelRight = W - 30;
-  const probeWidth = (t: string, weight = 400): number => probe.extent(t, { size: PANEL_SIZE, weight }).w;
-  const lineH = 25;
-  type Laid = { text: string; x: number; y: number; weight: number };
-  const laid: Laid[] = [];
-  let y = diagramH + 26;
   const ruleY = diagramH + 4;
-  const put = (text: string, x: number, weight: number): void => {
-    laid.push({ text, x, y, weight });
-  };
-  const wrap = (tokens: string[], maxW: number): string[] => {
-    const lines = packItems(tokens, " ", maxW, probeWidth);
-    return lines.length === 0 ? [""] : lines;
-  };
-
-  put(`${a.kind === "dfa" ? "AFD" : "AFN"}:  Σ = {${a.alphabet.join(", ")}},  estado inicial ${prettyName(a.start)},  F = ${setText(a.accept)}`, panelLeft, 600);
+  // The definition, then each word with its run hanging beside it (shared/panel.ts): the word in a
+  // column of its own, the run wrapped between tokens, never inside "→a q₁" or a set "{q₀, q₁}".
+  const panelLines: PanelLineInput[] = [];
+  panelLines.push({ text: [{ text: `${a.kind === "dfa" ? "AFD" : "AFN"}:  Σ = {${a.alphabet.join(", ")}},  estado inicial ${prettyName(a.start)},  F = ${setText(a.accept)}` }], emphasis: "strong" });
 
   if (a.partial === true) {
     const missing: string[] = [];
@@ -639,11 +630,7 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
     if (missing.length > 0) {
       const shown = missing.length > 6 ? `${missing.slice(0, 6).join("; ")}; …` : missing.join("; ");
       const text = `Estado morto implícito, não desenhado: as transições que faltam (${shown}) levam a um estado de rejeição do qual não se sai.`;
-      y += 6;
-      for (const line of wrap(text.split(" "), panelRight - panelLeft)) {
-        y += lineH;
-        put(line, panelLeft, 400);
-      }
+      panelLines.push({ text: [{ text }], gap: 6 });
     }
   }
 
@@ -652,20 +639,15 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
     tokens: input.answers === false ? ["?"] : a.kind === "dfa" ? dfaRunTokens(runDfa(a, w)) : nfaRunTokens(runNfa(a, w)),
   }));
   if (runs.length > 0) {
-    y += lineH + 8;
-    put(input.answers === false ? "Palavras, uma por linha:" : "Execuções, uma palavra por linha:", panelLeft, 600);
-    const wordCol = Math.max(...runs.map((r) => probeWidth(wordText(r.word), 600))) + 16;
+    panelLines.push({ text: [{ text: input.answers === false ? "Palavras, uma por linha:" : "Execuções, uma palavra por linha:" }], emphasis: "strong", gap: 8 });
     for (const r of runs) {
-      y += lineH + 2;
-      put(input.answers === false ? `${wordText(r.word)}:` : wordText(r.word), panelLeft, 600);
-      wrap(r.tokens, panelRight - panelLeft - wordCol).forEach((line, k) => {
-        if (k > 0) y += lineH;
-        put(line, panelLeft + wordCol, 400);
-      });
+      const lead = input.answers === false ? `${wordText(r.word)}:` : wordText(r.word);
+      panelLines.push({ lead: [{ text: lead }], text: [{ text: r.tokens.join(" ") }], gap: 2 });
     }
   }
-  const panelY = y;
-  const H = Math.ceil(panelY + lineH / 2 + 18);
+  const readingPanel = layoutPanel(panelLines, { width: W - 60, size: PANEL_SIZE, lineHeight: 25, rules: RUN_RULES });
+  const panelTop = diagramH + 14;
+  const H = Math.ceil(panelTop + readingPanel.height + 18);
 
   // ---- drawing ------------------------------------------------------------------------------
   const board = new Board(W, H, PAPER);
@@ -778,10 +760,7 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
 
   // The panel.
   board.poly([{ x: 24, y: ruleY }, { x: W - 24, y: ruleY }], { stroke: "#C9CED6", width: 1, id: "panel-rule" });
-  laid.forEach((row, i) => {
-    const w = probeWidth(row.text, row.weight);
-    board.label(row.text, row.x + w / 2, row.y, { size: PANEL_SIZE, weight: row.weight, align: "start", width: w, freeStanding: true, id: `panel-${i + 1}`, claim: false });
-  });
+  readingPanel.draw(board, { left: 30, top: panelTop, cut: ruleY - 2 });
 
   const spec = board.spec(input.title ?? (a.kind === "dfa" ? "autômato finito determinístico" : "autômato finito não determinístico"));
   const scene = spec.root as Scene;

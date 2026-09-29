@@ -38,6 +38,7 @@ import type { Circle2, Line2, Vec2 } from "../../geometry/vec.ts";
 import { constantValue } from "../../math/expr.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
 import { measuredLabel, sqrtLabel, writeSnapped } from "../../locale/write.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
@@ -1337,12 +1338,14 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   const plotWidth = Math.ceil(2 * MARGIN + spanX * unit);
   const plotHeight = Math.ceil(2 * MARGIN + spanY * unit);
 
-  const board0 = new Board(10, 10, PAPER);
-  const captionStyle = { size: 13, colour: SOFT };
-  const captionWidth = readings.length === 0 ? 0 : Math.max(...readings.map((r) => board0.extent(r, captionStyle).w));
-  const width = Math.max(plotWidth, captionWidth + 2 * 24);
+  // One reading a line, never wrapped: an equation parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((text, i) => ({ text: [{ text }], id: String(i + 1), wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const width = Math.max(plotWidth, readingPanel.width + 2 * 24);
   const offsetX = Math.round((width - plotWidth) / 2);
-  const height = plotHeight + (readings.length > 0 ? readings.length * CAPTION_LINE_H + 16 : 0);
+  const height = plotHeight + (readingPanel.empty ? 0 : readingPanel.height + 16);
 
   const grid: GridSpec | undefined = axes
     ? { x: { from: view.xMin, to: view.xMax, step, origin: 0 }, y: { from: view.yMin, to: view.yMax, step, origin: 0 }, locale }
@@ -1688,16 +1691,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   }
 
   // ---- 6. the readings panel: what the drawing cannot say exactly ----
-  readings.forEach((text, i) => {
-    board.label(text, width / 2, plotHeight + 8 + CAPTION_LINE_H / 2 + i * CAPTION_LINE_H, {
-      ...captionStyle,
-      align: "center",
-      width: Math.max(captionWidth, 40),
-      id: `reading-${i + 1}`,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  readingPanel.draw(board, { top: plotHeight + 8, cut: plotHeight, align: "center" });
 
   // Paint order: fills, lines, annotation marks, then dots over all of them.
   const spec = board.spec(input.title ?? "construção");

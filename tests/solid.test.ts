@@ -247,7 +247,7 @@ test("derived solids: a sphere in a cube, round a cube, a cone in a cylinder", (
 });
 
 test("the readings panel prints formula and exact value", () => {
-  const blocks = ((expandSolid(fixture("cylinder-volume.json")).root as Scene).children as Block[]).filter((b) => String(b.id).startsWith("reading-"));
+  const blocks = ((expandSolid(fixture("cylinder-volume.json")).root as Scene).children as Block[]).filter((b) => String(b.id).startsWith("panel-"));
   assert.deepEqual(blocks.map((b) => b.label), ["V = πr²h = 12π", "A = 2πr² + 2πrh = 20π (área total)"]);
 });
 

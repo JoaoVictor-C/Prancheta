@@ -31,7 +31,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 
 import { SpecError } from "../ir/types.ts";
-import type { FigureSpec } from "../ir/types.ts";
+import type { FigureSpec, Readings, TextRun } from "../ir/types.ts";
 import { formatNumber, formatNumberTex, formatPoint, formatPointTex, LOCALES } from "../locale/format.ts";
 import type { Locale } from "../locale/format.ts";
 import { ANSWER_AWARE, parseFigureInput } from "../presets/index.ts";
@@ -57,7 +57,16 @@ export type SheetFigure = {
   caption?: string;
   /** Wider on the page. */
   wide?: boolean;
+  /**
+   * Where the figure's reading panel goes (ADR 0062). "page" (the default,
+   * unless the sheet says otherwise): lifted out of the drawing and set as
+   * page text under the image, at the page's own size. "drawing": left in
+   * the drawing, scaled with it.
+   */
+  readings?: ReadingsPlacement;
 };
+
+export type ReadingsPlacement = "page" | "drawing";
 
 export type SheetExercise = {
   /** "1.2" */
@@ -131,6 +140,8 @@ export type SheetInput = {
   closing?: string;
   /** Params shared by every exercise (and usable in the sheet's own texts). */
   params?: ParamSpec;
+  /** The default for every figure's `readings` (ADR 0062). Default "page". */
+  readings?: ReadingsPlacement;
   sections: SheetSection[];
 };
 
@@ -145,6 +156,7 @@ function figure(value: unknown, path: string): void {
   }
   v.optionalString(f, "caption", path);
   v.optionalBoolean(f, "wide", path);
+  v.optionalEnum(f, "readings", path, ["page", "drawing"] as const);
 }
 
 /** A `variants` block: domains over the exercise's own number params, known predicate kinds. */
@@ -191,6 +203,7 @@ export function validateSheet(raw: unknown): SheetInput {
   }
   v.requiredString(s, "title", "sheet");
   v.optionalEnum(s, "locale", "sheet", LOCALES);
+  v.optionalEnum(s, "readings", "sheet", ["page", "drawing"] as const);
   for (const key of ["subtitle", "footer", "contentsNote", "exercisesLead", "answersLead", "solutionsLead", "closing"]) {
     v.optionalString(s, key, "sheet");
   }
@@ -397,16 +410,75 @@ const STYLE = `
 
 export const KATEX = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist";
 
-type Figures = Map<string, { src: string; caption?: string; wide?: boolean }>;
+type Figures = Map<string, { src: string; caption?: string; wide?: boolean; readings?: Readings }>;
 
 function figureHtml(key: string, figures: Figures): string {
   const f = figures.get(key);
   if (f === undefined) return "";
   return (
     `<figure${f.wide ? ' class="wide"' : ""}><img src="${f.src}">` +
+    (f.readings === undefined ? "" : readingsHtml(f.readings)) +
     (f.caption === undefined ? "" : `<figcaption>${f.caption}</figcaption>`) +
     `</figure>`
   );
+}
+
+/**
+ * The style of lifted readings (ADR 0062), added to a document's stylesheet
+ * only when one of its figures has them: a sheet without panels is the same
+ * document, byte for byte, that it was before panels could be lifted.
+ */
+const READINGS_CSS = `
+  /* A figure's reading panel, lifted out of the drawing (ADR 0062): page text, the image's width. */
+  .readings { display: grid; column-gap: 8pt; row-gap: 1.5pt; width: 84%; max-width: 510px; margin: 3pt auto 0;
+              text-align: left; font-size: 9.6pt; line-height: 1.35; }
+  figure.wide .readings { width: 96%; max-width: 640px; }
+  .readings .r.normal { color: #181B21; }
+  .readings .r.strong { color: #181B21; font-weight: 700; }
+  .readings .r.soft { color: #4E5763; }
+  .readings .r.accent { font-weight: 700; }
+  .readings .lead { font-weight: 700; white-space: nowrap; }
+  .readings .span { grid-column-end: span 2; }
+  .readings .sw { display: flex; align-items: center; }
+  .readings .sw i { display: block; width: 16pt; height: 2.6pt; border-radius: 1pt; }
+  .readings sub, .readings sup { font-size: 0.72em; line-height: 0; }
+`;
+
+function withReadingsCss(html: string, figures: Figures[]): string {
+  if (!figures.some((map) => [...map.values()].some((f) => f.readings !== undefined))) return html;
+  return html.replace("</style>", `${READINGS_CSS}</style>`);
+}
+
+const escapeHtml = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeAttr = (s: string): string => escapeHtml(s).replace(/"/g, "&quot;");
+
+/** Runs as HTML: a subscript is <sub>, a superscript <sup> -- the same markup the figure's mirror measured. */
+export function runsHtml(runs: readonly TextRun[]): string {
+  return runs.map((r) => (r.script === undefined ? escapeHtml(r.text) : `<${r.script}>${escapeHtml(r.text)}</${r.script}>`)).join("");
+}
+
+/**
+ * A figure's reading panel as page text (ADR 0062): the same lines, the same
+ * emphasis and colours, at the page's size, wrapped by the page. Every line
+ * sits in the grid's text column; a lead takes the column before it, and a
+ * swatch the one before that, so a panel of leads reads as a table.
+ */
+export function readingsHtml(readings: Readings): string {
+  const leads = readings.lines.some((l) => l.lead !== undefined);
+  const swatches = readings.lines.some((l) => l.swatch !== undefined);
+  const columns = [swatches ? "auto" : "", leads ? "auto" : "", "1fr"].filter((c) => c !== "").join(" ");
+  const rows = readings.lines.map((l) => {
+    const style = [l.colour === undefined ? "" : `color: ${l.colour}`, l.gap === undefined ? "" : `margin-top: ${(l.gap * 0.75).toFixed(1)}pt`].filter(Boolean).join("; ");
+    const cls = `r ${l.emphasis}`;
+    const attr = style === "" ? "" : ` style="${escapeAttr(style)}"`;
+    const cells: string[] = [];
+    if (swatches) cells.push(l.swatch === undefined ? `<span class="sw"${attr}></span>` : `<span class="sw"${attr}><i style="background: ${escapeAttr(l.swatch)}"></i></span>`);
+    if (leads && l.lead !== undefined) cells.push(`<span class="${cls} lead"${attr}>${runsHtml(l.lead)}</span>`);
+    const span = leads && l.lead === undefined ? " span" : "";
+    cells.push(`<span class="${cls}${span}"${attr}>${runsHtml(l.runs)}</span>`);
+    return cells.join("");
+  });
+  return `<div class="readings" style="grid-template-columns: ${columns}">${rows.join("")}</div>`;
 }
 
 /** A single figure or several, as a list. */
@@ -580,7 +652,7 @@ ${sheet.sections.map((s) => `      <li><b>${escape(s.title.replace(/^\d+\.\s*/, 
   }
   out.push(`</section>\n`);
   pushTail(out);
-  return out.join("\n");
+  return withReadingsCss(out.join("\n"), [figures]);
 }
 
 /** One set of answers in a gabarito: a version's texts and solution figures. */
@@ -624,7 +696,7 @@ export function gabaritoHtml(sheet: SheetInput, entries: GabaritoEntry[], katex 
     out.push(`</section>\n`);
   });
   pushTail(out);
-  return out.join("\n");
+  return withReadingsCss(out.join("\n"), entries.map((e) => e.figures));
 }
 
 // ---- build -----------------------------------------------------------------
@@ -712,6 +784,8 @@ export type ResolvedFigure = {
   kind: "q" | "s";
   figure: SheetFigure;
   captionKey: string;
+  /** Where its reading panel goes: the figure's own choice, else the sheet's, else "page". */
+  readings: ReadingsPlacement;
 };
 
 export type ResolvedSheet = {
@@ -755,10 +829,10 @@ export function resolveSheet(raw: unknown, overrides: SheetParamOverrides = {}):
       const s = listOf(e.solutionFigure).map((f, k) => sub(f, `${e.id}.solutionFigure[${k}]`));
       own.set(e.id, { q, s });
       q.forEach((f, k) =>
-        figures.push({ key: figureKey("q", e.id, k), exercise: e.id, kind: "q", figure: f, captionKey: `${e.id}.figure.${k}.caption` }),
+        figures.push({ key: figureKey("q", e.id, k), exercise: e.id, kind: "q", figure: f, captionKey: `${e.id}.figure.${k}.caption`, readings: f.readings ?? sheet.readings ?? "page" }),
       );
       s.forEach((f, k) =>
-        figures.push({ key: figureKey("s", e.id, k), exercise: e.id, kind: "s", figure: f, captionKey: `${e.id}.solutionFigure.${k}.caption` }),
+        figures.push({ key: figureKey("s", e.id, k), exercise: e.id, kind: "s", figure: f, captionKey: `${e.id}.solutionFigure.${k}.caption`, readings: f.readings ?? sheet.readings ?? "page" }),
       );
     }
   }
@@ -804,7 +878,13 @@ export function resolveSheet(raw: unknown, overrides: SheetParamOverrides = {}):
 }
 
 /** A figure drawn through the pipeline: its SVG and the checks it failed. */
-export type RenderedFigure = { svg: string; failing: string[]; checkIds: string[] };
+export type RenderedFigure = {
+  svg: string;
+  failing: string[];
+  checkIds: string[];
+  /** The reading panel, when it was lifted out of the drawing to be set as page text (ADR 0062). */
+  readings?: Readings;
+};
 
 /**
  * Renders by content: the same substituted figure is drawn once, however
@@ -815,17 +895,20 @@ export type FigureCache = Map<string, RenderedFigure>;
 /** Draw one resolved figure through the full pipeline -- its checks are the sheet's checks. */
 export async function renderSheetFigure(r: ResolvedFigure, cache?: FigureCache): Promise<RenderedFigure> {
   // The kind is part of the key: one input is two figures when the statement's copy hides its answers.
-  const key = `${r.kind}:${JSON.stringify(r.figure.graph ?? r.figure.spec)}`;
+  const key = `${r.kind}:${r.readings}:${JSON.stringify(r.figure.graph ?? r.figure.spec)}`;
   const hit = cache?.get(key);
   if (hit !== undefined) return hit;
-  const result = await render(figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`, r.kind === "q"), {
-    raster: false,
-  });
+  const spec = figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`, r.kind === "q");
+  // A panel scaled down with its figure is set at whatever size the column
+  // leaves it -- 7pt for an optics or circuit panel. Lifted, it is page text.
+  const lift = r.readings === "page" && spec.readings !== undefined;
+  const result = await render(spec, { raster: false, readings: lift ? "omit" : "draw" });
   const fails = result.manifest.checks.filter((c) => c.status === "fail");
   const drawn = {
     svg: result.svg,
     failing: fails.map((c) => `${c.id} ${c.target}: ${c.detail ?? ""}`),
     checkIds: fails.map((c) => c.id),
+    ...(lift ? { readings: spec.readings } : {}),
   };
   cache?.set(key, drawn);
   return drawn;
@@ -848,7 +931,7 @@ export async function writeFigures(
     await writeFile(file, drawn.svg, "utf8");
     written.push(file);
     if (drawn.failing.length > 0) failures.push({ figure: `${folder}/${r.key}`.replace(/^figures\//, ""), checks: drawn.failing });
-    figures.set(r.key, { src: `${folder}/${r.key}.svg`, caption: resolved.texts.get(r.captionKey), wide: r.figure.wide });
+    figures.set(r.key, { src: `${folder}/${r.key}.svg`, caption: resolved.texts.get(r.captionKey), wide: r.figure.wide, readings: drawn.readings });
   }
   return { figures, written, failures };
 }

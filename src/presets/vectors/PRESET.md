@@ -65,8 +65,9 @@ curve (`function-graph`).
   components, each labelled with its own value. Draws no new vector.
 - **`{ "projection": { "of": "u", "onto": "v" } }`** — the vector projection
   of `u` onto `v`, drawn with the perpendicular from `u`'s head to the foot
-  and a right-angle mark there. `name` is optional (default
-  `proj_v(u)`); refused if `v` is the zero vector.
+  and a right-angle mark there. `name` is optional (default: proj with
+  `v` as a real subscript, then `(u)` -- ADR 0062); refused if `v` is the
+  zero vector.
 - **`{ "angleBetween": ["u", "v"] }`** — the angle between two vectors,
   drawn as an arc at the origin (vectors are compared by direction alone,
   regardless of where each is drawn) with its computed value printed beside

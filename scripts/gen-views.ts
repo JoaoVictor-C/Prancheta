@@ -172,6 +172,13 @@ command fails, naming each one, on a KaTeX error, a broken image or a figure
 that failed a check. Look at the page PNGs before handing a sheet over: green
 checks do not mean legible.
 
+A figure's reading panel -- the computed lines a preset prints under its
+drawing (a circuit's U_AB and powers, a lens's Gauss arithmetic) --
+is lifted out of the drawing and set as page text under the image, with real
+subscripts, at the page's size (ADR 0062); scaled with the figure it would
+come out near 7pt. \`"readings": "drawing"\` on a figure, or on the sheet,
+keeps it inside the drawing.
+
 Fresh numbers for revision (ADR 0041, 0042): give an exercise
 \`"variants": {"domains": {"b": {"int": [1, 4]}, "a": {"choice": ["1/2", 1,
 2]}}, "predicates": [{"range": ["A", 0.1, 5]}]}\` -- which of its number

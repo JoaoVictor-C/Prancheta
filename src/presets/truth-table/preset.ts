@@ -46,7 +46,8 @@ import {
 import type { BoolExpr, Notation } from "../../math/boolean.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
-import { wrapText } from "../shared/text.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { PanelLineInput } from "../shared/panel.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -199,9 +200,11 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
   });
 
   // ---- panel text, computed from the same rows ---------------------------------
-  const panel: { text: string; weight: number; colour: string }[] = [];
+  // A verdict in the accent colour, a result strong, the rest in plain ink.
+  const panel: PanelLineInput[] = [];
   const say = (text: string, weight = 500, colour: string = INK): void => {
-    panel.push({ text, weight, colour });
+    const emphasis = colour === SOFT ? "soft" : colour !== INK ? "accent" : weight >= 700 ? "strong" : "normal";
+    panel.push({ text: [{ text }], emphasis, ...(emphasis === "accent" ? { colour } : {}) });
   };
   const truthWord = (n: number): string => {
     if (notation === "logic") return `verdadeira em ${n} das ${rowCount} linhas`;
@@ -278,11 +281,10 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
   const tableH = headH + rowCount * ROW;
 
   const panelMax = Math.max(tableW, 560);
-  const panelLines = panel.flatMap((p) => wrapText(p.text, panelMax, (t) => probe.measure(t, PANEL_SIZE)).map((text) => ({ ...p, text })));
-  const panelW = panelLines.length === 0 ? 0 : Math.max(...panelLines.map((l) => probe.measure(l.text, PANEL_SIZE)));
-  const width = Math.ceil(Math.max(tableW, panelW) + 2 * M);
-  const panelTop = M + tableH + (panelLines.length === 0 ? 0 : 22);
-  const height = Math.ceil(panelTop + panelLines.length * PANEL_LINE + M - (panelLines.length === 0 ? 0 : 6));
+  const readingPanel = layoutPanel(panel, { width: panelMax, size: PANEL_SIZE, lineHeight: PANEL_LINE });
+  const width = Math.ceil(Math.max(tableW, readingPanel.width) + 2 * M);
+  const panelTop = M + tableH + (readingPanel.empty ? 0 : 22);
+  const height = Math.ceil(panelTop + readingPanel.height + M - (readingPanel.empty ? 0 : 6));
 
   const board = new Board(width, height, PAPER);
   const x0 = M;
@@ -362,17 +364,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
   });
 
   // Panel.
-  panelLines.forEach((l, i) => {
-    board.label(l.text, x0 + panelW / 2 - 0, panelTop + i * PANEL_LINE + PANEL_LINE / 2, {
-      freeStanding: true,
-      size: PANEL_SIZE,
-      weight: l.weight,
-      colour: l.colour,
-      align: "start",
-      width: panelW,
-      id: `panel-${i}`,
-    });
-  });
+  readingPanel.draw(board, { left: x0, top: panelTop, cut: M + tableH + 8 });
 
   return parseSpec(board.spec(input.title ?? "tabela-verdade"));
 }

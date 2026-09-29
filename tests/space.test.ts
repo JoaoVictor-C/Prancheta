@@ -57,7 +57,7 @@ const fixture = (name: string): SpaceInput => {
   return raw as SpaceInput;
 };
 const readings = (input: SpaceInput): string[] =>
-  ((expandSpace(input).root as Scene).children as Block[]).filter((b) => String(b.id ?? "").startsWith("reading-")).map((b) => b.label ?? "");
+  ((expandSpace(input).root as Scene).children as Block[]).filter((b) => String(b.id ?? "").startsWith("panel-")).map((b) => b.label ?? "");
 const marks = (input: SpaceInput): Mark[] => (expandSpace(input).root as Scene).marks ?? [];
 
 // ---- numbers -------------------------------------------------------------------

@@ -15,7 +15,7 @@
  * costs a wrap that the repair loop then has to undo.
  */
 
-import type { Block, FigureSpec, Frame, LineStyle, Mark, Point } from "../../ir/types.ts";
+import type { Block, FigureSpec, Frame, LineStyle, Mark, Point, Readings } from "../../ir/types.ts";
 import { resolveInFrame } from "../../ir/frames.ts";
 import { estimateWidth } from "../shared/text.ts";
 
@@ -103,6 +103,8 @@ export class Board {
   frames: Frame[] = [];
   taken: Box[] = [];
   ink: Ink[] = [];
+  /** The reading panel as data (ADR 0062), set by shared/panel.ts when a panel is drawn. */
+  readings: Readings | undefined;
   private inkGrid: Map<string, number[]> | null = null;
   private n = 0;
 
@@ -352,6 +354,7 @@ export class Board {
     return {
       version: 1,
       title,
+      ...(this.readings === undefined ? {} : { readings: this.readings }),
       canvas: { padding: 0, background: this.background, theme: "print" },
       root: {
         type: "scene",

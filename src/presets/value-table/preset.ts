@@ -35,6 +35,7 @@ import { LOCALES, MINUS, formatNumber, roundKeepingNonzero, snapExact, writeExac
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -412,7 +413,12 @@ function expandLimitTable(input: ValueTableInput, li: ValueTableLimitInput, answ
   }
   const tableRight = cursor + EDGE;
 
-  const captionW = Math.max(...captionLines.map((l) => probe.measure(l, 14)));
+  // The verdict strong, the one-sided limits under it soft (shared/panel.ts).
+  const readingPanel = layoutPanel(
+    captionLines.map((line, i) => ({ text: [{ text: line }], emphasis: i === 0 ? ("strong" as const) : ("soft" as const), wrap: false })),
+    { width: Infinity, size: 14, lineHeight: CAPTION_LINE },
+  );
+  const captionW = readingPanel.width;
   const width = Math.ceil(Math.max(tableRight + M, captionW + 2 * M));
   const captionH = captionLines.length * CAPTION_LINE + CAPTION_GAP;
   const height = Math.ceil(M * 2 + ARROW_ROW + HEADER + CELL_ROW + captionH);
@@ -495,15 +501,8 @@ function expandLimitTable(input: ValueTableInput, li: ValueTableLimitInput, answ
   // Caption: separated from the table by its own rule. Hidden when answers:false (the question is what the limit is).
   if (answers) {
     const captionTop = M + ARROW_ROW + HEADER + CELL_ROW + CAPTION_GAP / 2;
-    board.poly([{ x: M, y: captionTop - CAPTION_GAP / 2 + 2 }, { x: right, y: captionTop - CAPTION_GAP / 2 + 2 }], { stroke: LIGHT, width: 1 });
-    captionLines.forEach((line, i) => {
-      board.label(line, width / 2, captionTop + CAPTION_LINE * i + CAPTION_LINE / 2, {
-        freeStanding: true,
-        size: 14,
-        weight: i === 0 ? 700 : 500,
-        colour: i === 0 ? INK : SOFT,
-      });
-    });
+    board.poly([{ x: M, y: captionTop - CAPTION_GAP / 2 + 2 }, { x: right, y: captionTop - CAPTION_GAP / 2 + 2 }], { stroke: LIGHT, width: 1, id: "panel-rule" });
+    readingPanel.draw(board, { top: captionTop, cut: captionTop - CAPTION_GAP / 2, align: "center" });
   }
 
   return parseSpec(board.spec(input.title ?? `estimando lim ${name}(${variable})`));

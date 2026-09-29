@@ -31,6 +31,50 @@ export type FigureSpec = {
    * the check reports not-applicable rather than a vacuous pass.
    */
   layoutConstraints?: Constraint[];
+  /**
+   * The figure's reading panel as data (ADR 0062): the lines of computed
+   * readings a preset set under the drawing, with their emphasis and their
+   * sub/superscripts. The drawn panel is the blocks whose ids start with
+   * `panel-`, laid out from `top` down to the bottom of the root scene, so a
+   * consumer (the sheet) can take the panel OUT of the drawing -- see
+   * `liftReadings` in presets/shared/panel.ts -- and set these lines as page
+   * text instead. Absent: the figure has no panel.
+   */
+  readings?: Readings;
+};
+
+/**
+ * One run of rich text (ADR 0062). The form is closed on purpose: a run is
+ * plain, a subscript or a superscript, and nothing else -- no nesting, no
+ * colour, no weight. That is what "U_AB", "V_A", "P_E1" and "s²" need and
+ * what every renderer (the mirror's <sub>/<sup>, the SVG's positioned
+ * tspans, outline glyphs, a sheet's HTML) can reproduce exactly.
+ */
+export type TextRun = { text: string; script?: "sub" | "sup" };
+
+export type ReadingEmphasis = "normal" | "strong" | "soft" | "accent";
+
+export type ReadingLine = {
+  runs: TextRun[];
+  /** normal: ink; strong: ink, bold (a result); soft: grey (a note, a step); accent: `colour`, bold. */
+  emphasis: ReadingEmphasis;
+  /** The accent colour; present iff emphasis is "accent". */
+  colour?: string;
+  /** A short coloured rule drawn before the line (a probability tree's highlighted paths). */
+  swatch?: string;
+  /**
+   * A term set strong in a column of its own, the line hanging beside it --
+   * an automaton's word and its run. Lines with a lead share one lead column.
+   */
+  lead?: TextRun[];
+  /** Extra space before this line, in px at the drawing's scale: a break between groups of lines. */
+  gap?: number;
+};
+
+export type Readings = {
+  lines: ReadingLine[];
+  /** Canvas y where the panel region begins; everything drawn below it is the panel. */
+  top: number;
 };
 
 export type CanvasSpec = {
@@ -783,6 +827,15 @@ export type Block = {
    */
   freeStanding?: true;
   /**
+   * Rich text (ADR 0062): the label as runs, some of them set as real
+   * subscripts or superscripts. `label` must still be present and equal the
+   * plain concatenation of the runs' text, so every check, search and
+   * accessible name keeps reading one plain string; `parseSpec` refuses the
+   * two when they disagree. The mirror lays the runs out with <sub>/<sup> so
+   * Chromium measures them, and the SVG draws each run where it was measured.
+   */
+  runs?: TextRun[];
+  /**
    * The frame this block's `x`/`y` are stated in. Unset means canvas
    * coordinates, exactly as before frames existed.
    *
@@ -1080,6 +1133,24 @@ export type TextLine = {
   localBox?: Rect;
   /** True when a fallback font rendered this line, making the baseline approximate. */
   baselineUncertain: boolean;
+  /**
+   * Present iff the owning block has `runs` (ADR 0062): the line cut into
+   * pieces of one script each, every piece at its MEASURED left edge and
+   * baseline and at its own font size. The SVG draws these instead of
+   * `text`, which stays the plain concatenation every check reads.
+   */
+  runs?: PlacedRun[];
+};
+
+/** A piece of a rich line, where the mirror put it. */
+export type PlacedRun = {
+  text: string;
+  /** Left edge of the piece's first glyph. */
+  x: number;
+  /** This piece's own baseline (a subscript's sits below the line's). */
+  y: number;
+  fontSize: number;
+  script?: "sub" | "sup";
 };
 
 export type Rect = { x: number; y: number; width: number; height: number };
@@ -1116,6 +1187,7 @@ export function parseSpec(input: unknown): FigureSpec {
   if (spec.layoutConstraints !== undefined) {
     validateLayoutConstraints(spec.layoutConstraints, "layoutConstraints");
   }
+  if (spec.readings !== undefined) validateReadings(spec.readings, "readings");
   // Whether a curve is legal depends on the canvas, so the toggles are
   // resolved once here and carried down rather than looked up per node.
   validateNode(spec.root, "root", resolveConstraints(spec.canvas as CanvasSpec | undefined));
@@ -1125,6 +1197,60 @@ export function parseSpec(input: unknown): FigureSpec {
   // references it consumes, so a resolved spec passing through here again is
   // unchanged (ir/frames.ts).
   return resolveFrames(spec as FigureSpec);
+}
+
+/** The plain text of a sequence of runs: what `label` must say beside them. */
+export function runsText(runs: readonly TextRun[]): string {
+  return runs.map((run) => run.text).join("");
+}
+
+function validateRunList(input: unknown, path: string): void {
+  if (!Array.isArray(input) || input.length === 0) throw new SpecError(`${path} must be a non-empty array of {text, script?}`);
+  input.forEach((raw, i) => {
+    const at = `${path}[${i}]`;
+    if (typeof raw !== "object" || raw === null) throw new SpecError(`${at} must be an object {text, script?}`);
+    const run = raw as Record<string, unknown>;
+    for (const key of Object.keys(run)) {
+      if (key !== "text" && key !== "script") throw new SpecError(`${at}.${key} is not a field of a run; a run is {text, script?}`);
+    }
+    if (typeof run.text !== "string" || run.text === "") throw new SpecError(`${at}.text must be a non-empty string`);
+    if (run.script !== undefined && run.script !== "sub" && run.script !== "sup") {
+      throw new SpecError(`${at}.script must be "sub" or "sup", got ${JSON.stringify(run.script)}`);
+    }
+    if (run.script !== undefined && /[\r\n]/.test(run.text)) throw new SpecError(`${at}: a ${run.script}script cannot contain a line break`);
+  });
+}
+
+function validateRuns(input: unknown, label: unknown, path: string): void {
+  validateRunList(input, `${path}.runs`);
+  const plain = runsText(input as TextRun[]);
+  if (label !== plain) {
+    throw new SpecError(
+      `${path}.label must equal the plain text of its runs (${JSON.stringify(plain)}), got ${JSON.stringify(label)}`,
+    );
+  }
+}
+
+function validateReadings(input: unknown, path: string): void {
+  if (typeof input !== "object" || input === null) throw new SpecError(`${path} must be an object {lines, top}`);
+  const r = input as Record<string, unknown>;
+  if (typeof r.top !== "number" || !Number.isFinite(r.top)) throw new SpecError(`${path}.top must be a finite number`);
+  if (!Array.isArray(r.lines)) throw new SpecError(`${path}.lines must be an array`);
+  r.lines.forEach((raw, i) => {
+    const at = `${path}.lines[${i}]`;
+    const line = raw as Record<string, unknown>;
+    if (typeof line !== "object" || line === null) throw new SpecError(`${at} must be an object`);
+    validateRunList(line.runs, `${at}.runs`);
+    if (!["normal", "strong", "soft", "accent"].includes(line.emphasis as string)) {
+      throw new SpecError(`${at}.emphasis must be normal, strong, soft or accent, got ${JSON.stringify(line.emphasis)}`);
+    }
+    if ((line.emphasis === "accent") !== (typeof line.colour === "string")) {
+      throw new SpecError(`${at}: an accent line needs a colour, and only an accent line has one`);
+    }
+    if (line.swatch !== undefined && typeof line.swatch !== "string") throw new SpecError(`${at}.swatch must be a colour string`);
+    if (line.lead !== undefined) validateRunList(line.lead, `${at}.lead`);
+    if (line.gap !== undefined && (typeof line.gap !== "number" || !(line.gap >= 0))) throw new SpecError(`${at}.gap must be a number ≥ 0`);
+  });
 }
 
 const CONSTRAINT_KINDS = ["align", "distribute", "keepClear", "sameSize", "anchor"] as const;
@@ -1421,6 +1547,7 @@ function validateNode(
     if (node.label !== undefined && typeof node.label !== "string") {
       throw new SpecError(`${path}.label must be a string`);
     }
+    if (node.runs !== undefined) validateRuns(node.runs, node.label, path);
     if (node.categoryGroup !== undefined && typeof node.categoryGroup !== "string") {
       throw new SpecError(`${path}.categoryGroup must be a string`);
     }

@@ -47,6 +47,8 @@ import { Placer, aroundPoint, besideRun } from "../construction/place.ts";
 import type { Claim } from "../construction/place.ts";
 import { distanceToPolyline, rectAt } from "../../geometry/hit.ts";
 import { niceStep } from "../shared/scale.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { Panel } from "../shared/panel.ts";
 import { tidy } from "../../math/numeric.ts";
 import type { Printed } from "../../locale/write.ts";
 
@@ -499,8 +501,12 @@ function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): Figure
   const panelLines = answers ? opticalPanel(pr, g, iHeight, locale) : givensPanel(pr, locale);
   const barCm = niceStep(Math.max(1, 90 / unit), 1);
   const barPx = barCm * unit;
-  const panelH = 30 + panelLines.length * PANEL_LINE_H + 46;
-  const height = plotH + panelH;
+  const readingPanel = typesetPanel(panelLines, width - 2 * SIDE);
+  // The scale bar belongs to the figure, so it sits ABOVE the panel: a sheet
+  // that lifts the panel out of the drawing crops at the bar's foot (ADR 0062).
+  const barRowY = plotH + 22;
+  const panelTop = plotH + 46;
+  const height = panelTop + readingPanel.height + 14;
   const board = new Board(width, height, PAPER);
   const placer = new Placer({ x: 10, y: 6, width: width - 20, height: plotH - 10 });
   const connectors: Connector[] = [];
@@ -680,24 +686,8 @@ function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): Figure
   // Dots last
   for (const d of dots) board.circle(d.c, 3, { fill: INK, id: `${d.id}-dot` });
 
-  // ---- the panel ------------------------------------------------------------------------------------
-  let y = plotH + 30;
-  panelLines.forEach((line, i) => {
-    const w = board.extent(line.text, { size: PANEL_FONT }).w;
-    board.label(line.text, SIDE + w / 2, y, {
-      size: PANEL_FONT,
-      colour: line.strong ? INK : SOFT,
-      weight: line.strong ? 700 : 400,
-      align: "start",
-      width: w,
-      id: `panel-${i}`,
-      claim: false,
-      freeStanding: true,
-    });
-    y += PANEL_LINE_H;
-  });
   // The scale: a bar of a stated number of cm, so the figure can be read to scale.
-  const barY = y + 8;
+  const barY = barRowY;
   const barA: Point = { x: SIDE, y: barY };
   const barB: Point = { x: SIDE + barPx, y: barY };
   board.poly([barA, barB], { stroke: INK, width: 2, id: "scale-bar" });
@@ -709,6 +699,9 @@ function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): Figure
   const note = "figura em escala";
   const nw = board.extent(note, { size: 13 }).w;
   board.label(note, barB.x + 12 + sw + 24 + nw / 2, barY, { size: 13, colour: SOFT, width: nw, id: "scale-note", claim: false, freeStanding: true });
+
+  // ---- the panel ------------------------------------------------------------------------------------
+  readingPanel.draw(board, { left: SIDE, top: panelTop, cut: barRowY + 16 });
 
   const title =
     input.title ??
@@ -755,6 +748,14 @@ function hatch(board: Board, placer: Placer, onMirror: (y: number) => P, half: n
 }
 
 type PanelLine = { text: string; strong?: boolean };
+
+/** A result line is strong; the arithmetic that reaches it is soft. Scripts as in "θ_{c}". */
+function typesetPanel(lines: PanelLine[], width: number): Panel {
+  return layoutPanel(
+    lines.map((l) => ({ text: l.text, emphasis: l.strong === true ? "strong" : "soft" })),
+    { width, size: PANEL_FONT, lineHeight: PANEL_LINE_H },
+  );
+}
 
 /** answers:false: one line with what the exercise gives. */
 function givensPanel(pr: Prepared, locale: Locale): PanelLine[] {
@@ -865,13 +866,13 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
   }
   if (answers && thetaC !== null) {
     const tc = degreesText(thetaC, locale);
-    lines.push({ text: `ângulo limite: sen θc = n₂/n₁  →  θc ${tc.exact ? "=" : "≈"} ${tc.text}°` });
+    lines.push({ text: `ângulo limite: sen θ_{c} = n₂/n₁  →  θ_{c} ${tc.exact ? "=" : "≈"} ${tc.text}°` });
   }
   if (!answers) {
     // no verdict
   } else if (sn.total && thetaC !== null) {
     const tc = degreesText(thetaC, locale);
-    lines.push({ text: `reflexão total (θ₁ > θc = ${tc.text}°)`, strong: true });
+    lines.push({ text: `reflexão total (θ₁ > θ_{c} = ${tc.text}°)`, strong: true });
   } else if (!sn.total && theta1 > 0) {
     lines.push({
       text:
@@ -884,8 +885,8 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
     });
   }
 
-  const panelH = 26 + lines.length * PANEL_LINE_H + 8;
-  const height = plotH + panelH;
+  const readingPanel = typesetPanel(lines, width - 72);
+  const height = plotH + 12 + readingPanel.height + 8;
   const board = new Board(width, height, PAPER);
   const placer = new Placer({ x: 8, y: 6, width: width - 16, height: plotH - 10 });
   const connectors: Connector[] = [];
@@ -1028,22 +1029,7 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
   iBlock.annotatesPlace = O;
   board.circle(O, 3.2, { fill: INK, id: "incidence-dot" });
 
-  // Panel
-  let y = plotH + 24;
-  lines.forEach((line, i) => {
-    const w = board.extent(line.text, { size: PANEL_FONT }).w;
-    board.label(line.text, 36 + w / 2, y, {
-      size: PANEL_FONT,
-      colour: line.strong ? INK : SOFT,
-      weight: line.strong ? 700 : 400,
-      align: "start",
-      width: w,
-      id: `panel-${i}`,
-      claim: false,
-      freeStanding: true,
-    });
-    y += PANEL_LINE_H;
-  });
+  readingPanel.draw(board, { left: 36, top: plotH + 12, cut: plotH });
 
   const title = input.title ?? `refração ${m1.name} → ${m2.name}, θ₁ = ${degreesText(theta1, locale).text}°`;
   const spec = board.spec(title);

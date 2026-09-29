@@ -37,6 +37,8 @@ import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
+import { hasScripts, layoutPanel, rich } from "../shared/panel.ts";
+import { runsText } from "../../ir/types.ts";
 import { candidatesBeside, distanceToPolyline, pointToRect, rectsMeet, segmentHitsRect } from "../../geometry/hit.ts";
 import { measuredLabel, sqrtLabel } from "../../locale/write.ts";
 
@@ -374,7 +376,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       touch(head);
       vecs.push({ id: it.name, tail, head, colour: TYPED, labelText: it.label ?? it.name });
       readings.push({
-        id: `reading-${it.name}`,
+        id: `${it.name}`,
         text: `${it.name} = ${formatPoint(it.components[0], it.components[1], locale)}${answers ? `, |${it.name}| = ${magnitudeLabel(it.components[0], it.components[1], locale)}` : ""}`,
       });
       return;
@@ -396,7 +398,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       // Its components are the difference of two points' coordinates: computed, so no reading without answers.
       if (answers) {
         readings.push({
-          id: `reading-${it.name}`,
+          id: `${it.name}`,
           text: `${it.name}${derivation(it.name, `${it.from}${it.to}`)} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
         });
       }
@@ -418,7 +420,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       touch(head);
       vecs.push({ id: it.name, tail, head, colour: TYPED, labelText: it.label ?? it.name, givenMagnitude: true });
       readings.push({
-        id: `reading-${it.name}`,
+        id: `${it.name}`,
         text: `${it.name}: |${it.name}| = ${formatNumber(mag, locale)}, θ = ${formatNumber(deg, locale)}°${answers ? `, ${it.name} = ${formatPoint(dx, dy, locale)}` : ""}`,
       });
       return;
@@ -454,7 +456,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       }
       vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name, guides, derived: true });
       readings.push({
-        id: `reading-${it.name}`,
+        id: `${it.name}`,
         text: `${it.name}${derivation(it.name, it.sum.join(" + "))} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
       });
       return;
@@ -475,7 +477,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       touch(head);
       vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name, derived: true });
       readings.push({
-        id: `reading-${it.name}`,
+        id: `${it.name}`,
         text: `${it.name}${derivation(it.name, `${it.difference[0]} − ${it.difference[1]}`)} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
       });
       return;
@@ -494,7 +496,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       touch(head);
       vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name, derived: true });
       readings.push({
-        id: `reading-${it.name}`,
+        id: `${it.name}`,
         text: `${it.name}${derivation(it.name, `${formatNumber(factor, locale)}${it.scale}`)} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
       });
       return;
@@ -507,7 +509,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       decomposes.push({ id, ref: it.decompose, tail: ref.tail, head: ref.head });
       touch([ref.head[0], ref.tail[1]]);
       readings.push({
-        id: `reading-${id}`,
+        id: `${id}`,
         text: `${it.decompose} = ${formatNumber(ref.dx, locale)}î ${ref.dy < 0 ? "−" : "+"} ${formatNumber(Math.abs(ref.dy), locale)}ĵ`,
       });
       return;
@@ -523,13 +525,14 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       const proj = projectComponents(u.dx, u.dy, w.dx, w.dy);
       const tail: [number, number] = [0, 0];
       const head: [number, number] = [proj.x, proj.y];
-      const label = it.name ?? `proj_${ontoName}(${ofName})`;
+      // proj with its axis as a real subscript (ADR 0062); rich() reads the mark.
+      const label = it.name ?? `proj_{${ontoName}}(${ofName})`;
       const id = it.name ?? `proj-${ofName}-${ontoName}`;
       if (it.name !== undefined) declare(it.name, path, { dx: proj.x, dy: proj.y, tail, head });
       touch(head);
       projections.push({ id, tail, head, uHead: [u.dx, u.dy], labelText: it.label ?? label });
       readings.push({
-        id: `reading-${id}`,
+        id: `${id}`,
         text: `${label} = ${formatPoint(proj.x, proj.y, locale)}, |${label}| = ${magnitudeLabel(proj.x, proj.y, locale)}`,
       });
       return;
@@ -553,7 +556,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
         labelText: it.label ?? `${measuredLabel(degrees, locale)}°`,
       });
       readings.push({
-        id: `reading-${id}`,
+        id: `${id}`,
         text: `ângulo(${it.angleBetween[0]}, ${it.angleBetween[1]}) ${isExactAtHundredths(degrees) ? "=" : "≈"} ${measuredLabel(degrees, locale)}°`,
       });
     }
@@ -569,7 +572,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
     decomposes = [];
     projections = [];
     angles = [];
-    const kept = new Set(vecs.map((vec) => `reading-${vec.id}`));
+    const kept = new Set(vecs.map((vec) => vec.id));
     readings = readings.filter((r) => kept.has(r.id));
   }
 
@@ -591,7 +594,12 @@ export function expandVectors(input: VectorsInput): FigureSpec {
 
   const plotWidth = Math.ceil(MARGIN * 2 + spanX * unit);
   const plotHeight = Math.ceil(MARGIN * 2 + spanY * unit);
-  const captionHeight = readings.length > 0 ? readings.length * CAPTION_LINE_H + 18 : 0;
+  // One reading a line, never wrapped: a pair parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((r) => ({ text: r.text, id: r.id, wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const captionHeight = readingPanel.empty ? 0 : readingPanel.height + 18;
   const width = plotWidth;
   const height = plotHeight + captionHeight;
 
@@ -785,7 +793,9 @@ export function expandVectors(input: VectorsInput): FigureSpec {
   }
 
 
-  const put = (owner: string, text: string, style: LabelOptions, spots: Point[]): void => {
+  const put = (owner: string, marked: string, style: LabelOptions, spots: Point[]): void => {
+    const runs = rich(marked);
+    const text = runsText(runs);
     const { w, h } = board.extent(text, style);
     const best = placer.choose(owner, w, h, spots);
     // No honest spot: rather than wander off to wherever there is room, which
@@ -793,6 +803,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
     // least-bad spot ON its own shaft and the checks say what is wrong with
     // it (`annotation-nearest-its-owner`, `text-clear-of-ink`).
     const block = board.label(text, best.centre.x, best.centre.y, { ...style, width: w, fill: PAPER });
+    if (hasScripts(runs)) block.runs = runs;
     block.annotates = owner;
     placer.commit(owner, best.centre, w, h);
   };
@@ -846,19 +857,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
 
   // Readings panel, below the plane -- a caption line per named or computed
   // quantity, each the same formatted text a reader would write by hand.
-  const captionWidth = width - MARGIN * 2;
-  readings.forEach((r, i) => {
-    board.label(r.text, MARGIN + captionWidth / 2, plotHeight + 12 + i * CAPTION_LINE_H, {
-      size: 13,
-      colour: SOFT,
-      align: "start",
-      width: captionWidth,
-      id: r.id,
-      claim: false,
-      // A caption line names nothing drawn beside it (ADR 0035).
-      freeStanding: true,
-    });
-  });
+  readingPanel.draw(board, { left: MARGIN, top: plotHeight + 2, cut: plotHeight });
 
   const spec = board.spec(input.title ?? "vetores no plano");
   const scene = spec.root as Scene;

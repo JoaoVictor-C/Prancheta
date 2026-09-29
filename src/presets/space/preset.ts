@@ -21,6 +21,7 @@ import { LOCALES } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import {
   GeometryError,
   add,
@@ -800,13 +801,16 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
   const vMin = Math.min(...vs);
   const vMax = Math.max(...vs);
   const unit = fitUnits(uMax - uMin, vMax - vMin, { targetWidth: TARGET, targetHeight: TARGET, equal: true, maxUnit: MAX_UNIT / step, minUnit: MIN_UNIT / step }).xUnit;
-  const board0 = new Board(1, 1, PAPER);
-  const captionStyle = { size: 13, colour: SOFT };
-  const captionW = Math.max(0, ...readings.map((r) => board0.extent(r, captionStyle).w));
+  // One reading a line, never wrapped: a triple or an equation parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((text) => ({ text: [{ text }], wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const captionW = readingPanel.width;
   const plotW = Math.ceil((uMax - uMin) * unit + 2 * PAD);
   const width = Math.max(plotW, Math.ceil(captionW + 48));
   const plotH = Math.ceil((vMax - vMin) * unit + 2 * PAD);
-  const captionH = readings.length > 0 ? readings.length * CAPTION_LINE_H + 18 : 0;
+  const captionH = readingPanel.empty ? 0 : readingPanel.height + 18;
   const height = plotH + captionH;
   const ox = (width - (uMax - uMin) * unit) / 2 - uMin * unit;
   const oy = PAD + vMax * unit;
@@ -1001,16 +1005,7 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
   }
 
   // ---- 9. the readings panel ----
-  readings.forEach((text, i) => {
-    board.label(text, 24 + (width - 48) / 2, plotH + 12 + i * CAPTION_LINE_H, {
-      ...captionStyle,
-      align: "start",
-      width: width - 48,
-      id: `reading-${i}`,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  readingPanel.draw(board, { left: 24, top: plotH + 2, cut: plotH });
 
   const spec = board.spec(input.title ?? "geometria analítica no espaço");
   const scene = spec.root as Scene;

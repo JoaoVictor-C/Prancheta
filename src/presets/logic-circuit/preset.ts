@@ -51,7 +51,8 @@ import type { BoolExpr, Notation } from "../../math/boolean.ts";
 import * as v from "../validate.ts";
 import { distanceToSegmentXY } from "../../geometry/hit.ts";
 import { Board } from "../function-graph/board.ts";
-import { wrapText } from "../shared/text.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { PanelLineInput } from "../shared/panel.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -958,9 +959,11 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
   });
 
   // ---- text sizes for the panel, then the canvas -------------------------------------------
-  const panel: { text: string; weight: number; colour: string }[] = [];
+  // The expression strong, a computed result in the accent colour, a count soft.
+  const panel: PanelLineInput[] = [];
   const say = (text: string, weight = 500, colour: string = INK): void => {
-    panel.push({ text, weight, colour });
+    const emphasis = colour === SOFT ? "soft" : colour !== INK ? "accent" : weight >= 700 ? "strong" : "normal";
+    panel.push({ text: [{ text }], emphasis, ...(emphasis === "accent" ? { colour } : {}) });
   };
   const originalCircuit = input.simplify === true && answers ? buildCircuit(original, originalVars, outName) : circuit;
   const origCount = gateCounts(originalCircuit);
@@ -979,12 +982,10 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
 
   const circuitRight = right[maxLayer]! + 10 + probe.extent(simulated ? `${outName} = 1` : outName, { size: 16, weight: 700 }).w;
   const panelMax = Math.max(circuitRight - M, 520);
-  const panelLines = panel.flatMap((p) => wrapText(p.text, panelMax, (t) => probe.measure(t, 14)).map((text) => ({ ...p, text })));
-  const panelW = Math.max(...panelLines.map((l) => probe.measure(l.text, 14)));
-  const width = Math.ceil(Math.max(circuitRight, M + panelW) + M);
-  const PANEL_LINE = 26;
+  const readingPanel = layoutPanel(panel, { width: panelMax, size: 14, lineHeight: 26 });
+  const width = Math.ceil(Math.max(circuitRight, M + readingPanel.width) + M);
   const panelTop = circuitBottom + 34;
-  const height = Math.ceil(panelTop + panelLines.length * PANEL_LINE + M - 4);
+  const height = Math.ceil(panelTop + readingPanel.height + M - 4);
   const board = new Board(width, height, PAPER);
 
   // ---- draw ---------------------------------------------------------------------------
@@ -1046,17 +1047,7 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
   }
 
   // Panel.
-  panelLines.forEach((l, i) => {
-    board.label(l.text, M + panelW / 2, panelTop + i * PANEL_LINE + PANEL_LINE / 2, {
-      freeStanding: true,
-      size: 14,
-      weight: l.weight,
-      colour: l.colour,
-      align: "start",
-      width: panelW,
-      id: `panel-${i}`,
-    });
-  });
+  readingPanel.draw(board, { left: M, top: panelTop, cut: circuitBottom + 16 });
 
   return parseSpec(board.spec(input.title ?? `circuito lógico: ${outName} = ${formatBool(original, notation)}`));
 }

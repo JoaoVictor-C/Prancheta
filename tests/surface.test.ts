@@ -172,7 +172,7 @@ test("the tangent plane of x² + y² at (1, 1) is z = 2x + 2y − 2, its coeffic
 
 test("the tangent-plane fixture prints the plane and P's computed height in the panel", () => {
   const scene = expandSurface(fixture("paraboloid-tangent-plane.json")).root as Scene;
-  const readings = scene.children.filter((b) => String(b.id).startsWith("reading-")).map((b) => (b as { label: string }).label);
+  const readings = scene.children.filter((b) => String(b.id).startsWith("panel-")).map((b) => (b as { label: string }).label);
   assert.ok(readings.includes("P = (1; 1; 2)"), readings.join(" | "));
   assert.ok(readings.includes("plano tangente em P: z = 2x + 2y − 2"), readings.join(" | "));
   assert.ok((scene.marks ?? []).some((m) => m.id.startsWith("t-")));
@@ -209,7 +209,7 @@ test("f is never drawn across a jump: no cell of sign(x) straddles x = 0", () =>
 
 test("a hemisphere's cells outside the disc are holes, and the panel says so", () => {
   const scene = expandSurface({ expr: "sqrt(4 - x^2 - y^2)", x: [-2, 2], y: [-2, 2] }).root as Scene;
-  const readings = scene.children.filter((b) => String(b.id).startsWith("reading-")).map((b) => (b as { label: string }).label);
+  const readings = scene.children.filter((b) => String(b.id).startsWith("panel-")).map((b) => (b as { label: string }).label);
   assert.ok(readings.some((r) => r.includes("nunca emenda")), readings.join(" | "));
 });
 
