@@ -1,0 +1,11 @@
+{
+  "preset": "field",
+  "title": "cargas +2q e −q",
+  "kind": "charges",
+  "charges": [
+    { "at": [-1.5, 0], "q": 2 },
+    { "at": [1.5, 0], "q": -1 }
+  ],
+  "x": [-5, 5],
+  "y": [-3.5, 3.5]
+}

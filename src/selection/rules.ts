@@ -699,6 +699,192 @@ export const RULES: Rule[] = [
     statement:
       "A graph has no coordinates; a transformation of the plane is nothing but coordinates.",
   },
+
+  // --- electric-field --------------------------------------------------------
+  {
+    id: "S-electric-field-favours-field",
+    axis: "structure",
+    when: "electric-field",
+    preset: "field",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "The field lines of point charges are drawn by the field preset: each charge seeds lines in proportion to |q|, every line is integrated by RK4 and ends on a charge of the other sign, at the box, or where E = 0.",
+  },
+  {
+    id: "S-electric-field-disqualifies-function-graph",
+    axis: "structure",
+    when: "electric-field",
+    preset: "function-graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "function-graph draws curves y = f(x); a field line is integrated from the charges and is generally not a graph over x.",
+  },
+  {
+    id: "S-electric-field-disqualifies-vectors",
+    axis: "structure",
+    when: "electric-field",
+    preset: "vectors",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "The vectors preset draws a few arrows to scale; field lines are curves that carry a direction, and their number is the charge.",
+  },
+
+  // --- circuit ---------------------------------------------------------------
+  {
+    id: "S-circuit-favours-circuit",
+    axis: "structure",
+    when: "circuit",
+    preset: "circuit",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A DC circuit is drawn by the circuit preset: symbols on the given layout, every current, reading and ddp solved by nodal analysis, and arrows pointing the way current actually flows.",
+  },
+  {
+    id: "S-circuit-disqualifies-graph",
+    axis: "structure",
+    when: "circuit",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A graph lays out its own nodes and knows no Ohm's law; a circuit's drawing is given and its numbers are solved.",
+  },
+  {
+    id: "S-circuit-disqualifies-annotated-figure",
+    axis: "structure",
+    when: "circuit",
+    preset: "annotated-figure",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "Callouts on a hand-drawn circuit would type the currents instead of solving them, and nothing would check which way an arrow points.",
+  },
+
+  // --- optics ----------------------------------------------------------------
+  {
+    id: "S-optics-favours-optics",
+    axis: "structure",
+    when: "optics",
+    preset: "optics",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A ray diagram of a lens, a mirror or a plane interface is drawn by the optics preset, which computes the image and the refracted angle and constructs every ray from its own rule.",
+  },
+  {
+    id: "S-optics-disqualifies-vectors",
+    axis: "structure",
+    when: "optics",
+    preset: "vectors",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "Rays are not vectors to add or decompose; a figure of rays and images is never drawn with vectors.",
+  },
+  {
+    id: "S-optics-disqualifies-annotated-figure",
+    axis: "structure",
+    when: "optics",
+    preset: "annotated-figure",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "Hand-placed rays can be drawn to miss their own image; the optics preset makes that impossible.",
+  },
+
+  // --- automaton -------------------------------------------------------------
+  {
+    id: "S-automaton-favours-automaton",
+    axis: "structure",
+    when: "automaton",
+    preset: "automaton",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "States with a start state, accepting states and transitions on symbols are drawn by the automaton preset, and whether a word is accepted is computed by running it, never typed.",
+  },
+  {
+    id: "S-automaton-disqualifies-graph",
+    axis: "structure",
+    when: "automaton",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "An automaton is a graph whose meaning is its runs; the graph preset has no start arrow, no accepting states and no simulation.",
+  },
+  {
+    id: "S-automaton-disqualifies-labelled-blocks",
+    axis: "structure",
+    when: "automaton",
+    preset: "labelled-blocks",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "States joined by labelled transitions are not stacked boxes.",
+  },
+
+  // --- boolean and logic-circuit ---------------------------------------------
+  {
+    id: "S-boolean-favours-truth-table",
+    axis: "structure",
+    when: "boolean",
+    preset: "truth-table",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A boolean function's values, classification, equivalence or minterms are a truth table, every cell computed from the expression.",
+  },
+  {
+    id: "S-boolean-disqualifies-value-table",
+    axis: "structure",
+    when: "boolean",
+    preset: "value-table",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "value-table evaluates real functions at chosen points; a boolean function has every assignment of its variables, and V/F or 0/1 values.",
+  },
+  {
+    id: "S-logic-circuit-favours-logic-circuit",
+    axis: "structure",
+    when: "logic-circuit",
+    preset: "logic-circuit",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A request to draw, implement or simulate a boolean function with gates is drawn by the logic-circuit preset, gates laid out from the expression tree.",
+  },
+  {
+    id: "S-logic-circuit-disqualifies-graph",
+    axis: "structure",
+    when: "logic-circuit",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "Gates are not nodes: each has a shape that is its function, and wires run orthogonally to named pins.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

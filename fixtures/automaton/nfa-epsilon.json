@@ -1,0 +1,17 @@
+{
+  "preset": "automaton",
+  "title": "AFN com ε: a* ou (ab)*a",
+  "kind": "nfa",
+  "alphabet": ["a", "b"],
+  "states": ["q0", "q1", "q2", "q3"],
+  "start": "q0",
+  "accept": ["q1", "q3"],
+  "transitions": [
+    { "from": "q0", "on": "ε", "to": "q1" },
+    { "from": "q0", "on": "ε", "to": "q2" },
+    { "from": "q1", "on": "a", "to": "q1" },
+    { "from": "q2", "on": "a", "to": "q3" },
+    { "from": "q3", "on": "b", "to": "q2" }
+  ],
+  "words": ["aaa", "abab", "ba", ""]
+}

@@ -1,0 +1,9 @@
+{
+  "preset": "field",
+  "title": "carga positiva e suas equipotenciais",
+  "kind": "charges",
+  "charges": [{ "at": [0, 0], "q": 1 }],
+  "x": [-3, 3],
+  "y": [-3, 3],
+  "equipotentials": "auto"
+}

@@ -1,0 +1,9 @@
+{
+  "preset": "truth-table",
+  "title": "XOR construído com E, OU e NÃO",
+  "notation": "digital",
+  "expressions": [{ "expr": "A'B + AB'", "label": "S" }, { "expr": "A xor B", "label": "X" }],
+  "showSubexpressions": true,
+  "compare": true,
+  "minterms": true
+}

@@ -1,0 +1,6 @@
+{
+  "preset": "logic-circuit",
+  "title": "XOR construído com portas AND, OR e NOT",
+  "expr": "A'B + AB'",
+  "output": "X"
+}

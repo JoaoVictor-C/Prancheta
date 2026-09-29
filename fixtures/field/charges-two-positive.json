@@ -1,0 +1,11 @@
+{
+  "preset": "field",
+  "title": "duas cargas positivas iguais",
+  "kind": "charges",
+  "charges": [
+    { "at": [-1.5, 0], "q": 1, "name": "q₁" },
+    { "at": [1.5, 0], "q": 1, "name": "q₂" }
+  ],
+  "x": [-4.5, 4.5],
+  "y": [-3, 3]
+}

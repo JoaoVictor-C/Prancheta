@@ -1,0 +1,11 @@
+{
+  "preset": "truth-table",
+  "title": "p → q é equivalente a ¬p ∨ q",
+  "notation": "logic",
+  "expressions": [
+    { "expr": "p -> q", "label": "P" },
+    { "expr": "not p or q", "label": "Q" }
+  ],
+  "showSubexpressions": true,
+  "compare": true
+}

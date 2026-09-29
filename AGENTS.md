@@ -100,9 +100,14 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
 | `surface` | Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact. | yes |
 | `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
-| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed. | yes |
+| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed; and the field lines and equipotentials of point charges, seeded in proportion to each charge. | yes |
 | `sequence` | Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps. | yes |
 | `linear-map` | Linear maps of the plane from a matrix or a named rotation, reflection, shear, scale or projection: the image lattice, T(e₁) and T(e₂), the unit square with |det A| measured, eigen-lines, and shapes mapped to primed vertices. | yes |
+| `circuit` | DC circuits from a given node layout: conventional symbols, branch currents solved by nodal analysis and drawn with arrows in their true direction, meter readings, U_AB, node potentials and powers. | yes |
+| `optics` | Geometric optics: thin lenses and spherical or plane mirrors with the image computed by Gauss and the principal rays constructed (virtual images dashed), and refraction and total internal reflection at a plane interface by Snell. | yes |
+| `automaton` | Finite automata (DFA, NFA with ε) in Sipser style, with each listed word run through the automaton: its path or state sets and aceita/rejeita computed. | yes |
+| `truth-table` | Truth tables of boolean expressions, every cell computed, with subexpression columns, tautology/contradiction/contingency, equivalence, and minterms with a Quine–McCluskey minimal form. | yes |
+| `logic-circuit` | Gate diagrams built from a boolean expression in distinctive-shape symbols, with fan-out dots, optional Quine–McCluskey simplification and a simulation printing every wire's value. | yes |
 
 ## Figure modules
 
@@ -234,6 +239,11 @@ resources:
 | `prancheta://preset/field` | field preset |
 | `prancheta://preset/sequence` | sequence preset |
 | `prancheta://preset/linear-map` | linear-map preset |
+| `prancheta://preset/circuit` | circuit preset |
+| `prancheta://preset/optics` | optics preset |
+| `prancheta://preset/automaton` | automaton preset |
+| `prancheta://preset/truth-table` | truth-table preset |
+| `prancheta://preset/logic-circuit` | logic-circuit preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

@@ -13,11 +13,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { expandField, frameGeometry, gradient, latticeIn, niceStep, validateFieldInput } from "../src/presets/field/preset.ts";
+import { chargeName, chargeRadius, electricField, electricPotential, expandField, frameGeometry, gradient, latticeIn, niceStep, traceChargeLines, validateFieldInput } from "../src/presets/field/preset.ts";
 import type { FieldInput } from "../src/presets/field/preset.ts";
 import { compileIn } from "../src/math/expr.ts";
 import { contour } from "../src/math/contour.ts";
 import { render } from "../src/pipeline.ts";
+import { contrastRatio } from "../src/colour/contrast.ts";
 import type { Connector, Mark, Point, Scene } from "../src/ir/types.ts";
 
 const fixtureDir = (name: string): string => fileURLToPath(new URL(`../fixtures/field/${name}`, import.meta.url));
@@ -286,7 +287,17 @@ test("validateFieldInput exercises expandField and rejects the same malformed in
 
 // --- rendering: every fixture renders with every check passing -------------
 
-for (const name of ["slope-x-minus-y.json", "vector-rotation.json", "levels-circles-gradient.json", "levels-saddle.json"]) {
+for (const name of [
+  "slope-x-minus-y.json",
+  "vector-rotation.json",
+  "levels-circles-gradient.json",
+  "levels-saddle.json",
+  "charges-dipole.json",
+  "charges-two-positive.json",
+  "charges-two-q-minus-q.json",
+  "charges-single-equipotentials.json",
+  "charges-dipole-equipotentials.json",
+]) {
   test(`fixtures/field/${name} renders with every check passing`, { timeout: 240000 }, async () => {
     const input = loadFixture(name);
     const spec = expandField(input);
@@ -295,3 +306,177 @@ for (const name of ["slope-x-minus-y.json", "vector-rotation.json", "levels-circ
     assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
   });
 }
+
+// --- charges: electric field lines and equipotentials -------------------------
+
+type ChargesInput = Extract<FieldInput, { kind: "charges" }>;
+const chargesFixture = (name: string): ChargesInput => loadFixture(name) as ChargesInput;
+
+test("charges: a field line is tangent to E along its own drawn points", () => {
+  const input = chargesFixture("charges-two-q-minus-q.json");
+  const spec = expandField(input);
+  const geo = frameGeometry(input.x, input.y);
+  const lines = marksOf(spec, "line-").filter((m) => !String(m.id).includes("arrow"));
+  assert.equal(lines.length, 16, "one line per seed: round(2 * 8) from +2q");
+  let checked = 0;
+  for (const m of lines) {
+    const pts = markPoints(m).map((p) => invert(geo, p));
+    // Skip the first points (the stub under the disc) and the last (which may be the sink's centre).
+    for (let i = 3; i < pts.length - 3; i += 5) {
+      const a = pts[i]!;
+      const b = pts[i + 1]!;
+      const [ex, ey] = electricField(input.charges, (a.x + b.x) / 2, (a.y + b.y) / 2);
+      const tx = b.x - a.x;
+      const ty = b.y - a.y;
+      const cos = (tx * ex + ty * ey) / (Math.hypot(tx, ty) * Math.hypot(ex, ey));
+      assert.ok(Math.abs(cos) > 0.999, `${m.id}: chord not along E at (${a.x.toFixed(2)}, ${a.y.toFixed(2)}), cos = ${cos}`);
+      checked += 1;
+    }
+  }
+  assert.ok(checked > 60, `only ${checked} segments checked`);
+});
+
+test("charges: seeds are evenly spaced, count is proportional to |q|, and one points at the nearest other charge", () => {
+  const input = chargesFixture("charges-two-q-minus-q.json");
+  const lines = traceChargeLines(input);
+  const seeds = lines.filter((l) => l.charge === 0);
+  assert.equal(seeds.length, 16);
+  assert.equal(lines.filter((l) => l.charge === 1).length, 0, "the negative charge is a sink here, not a source");
+  const [cx, cy] = input.charges[0]!.at;
+  const angles = seeds.map((l) => Math.atan2(l.points[0]!.y - cy, l.points[0]!.x - cx));
+  assert.ok(Math.abs(angles[0]!) < 1e-9, "the first seed points along the line joining the charges");
+  for (let k = 1; k < angles.length; k += 1) {
+    const step = (angles[k]! - angles[k - 1]! + 2 * Math.PI) % (2 * Math.PI);
+    assert.ok(Math.abs(step - (2 * Math.PI) / 16) < 1e-9);
+  }
+  for (const l of seeds) assert.ok(Math.abs(Math.hypot(l.points[0]!.x - cx, l.points[0]!.y - cy) - chargeRadius(input)) < 1e-9, "every seed sits on the charge's disc");
+});
+
+test("charges: Gauss -- about half of the 16 lines of +2q end on -q, and each ends on its rim", () => {
+  const input = chargesFixture("charges-two-q-minus-q.json");
+  const lines = traceChargeLines(input);
+  const ending = lines.filter((l) => l.end === "sink");
+  assert.ok(ending.length >= 7 && ending.length <= 9, `${ending.length} lines end on -q; Gauss says 8`);
+  const [sx, sy] = input.charges[1]!.at;
+  for (const l of ending) {
+    assert.equal(l.sink, 1);
+    const last = l.points[l.points.length - 1]!;
+    assert.ok(Math.abs(Math.hypot(last.x - sx, last.y - sy) - chargeRadius(input)) < 1e-6, "ends on the disc's rim");
+  }
+  assert.ok(lines.filter((l) => l.end === "box").length >= 7, "the rest leave the box");
+});
+
+test("charges: +3 and -1 draw 24 lines and about a third end on the sink", () => {
+  const base = { kind: "charges" as const, x: [-5, 5] as [number, number], y: [-4, 4] as [number, number] };
+  const three = traceChargeLines({ ...base, charges: [{ at: [-2, 0], q: 3 }, { at: [2, 0], q: -1 }] });
+  assert.equal(three.length, 24);
+  const ends = three.filter((l) => l.end === "sink").length;
+  assert.ok(ends >= 6 && ends <= 9, `${ends} of 24 end on -q; Gauss says 8`);
+});
+
+test("charges: two equal positive charges stop honestly at the point where E = 0", () => {
+  const input = chargesFixture("charges-two-positive.json");
+  const lines = traceChargeLines(input);
+  const stopped = lines.filter((l) => l.end === "stagnation");
+  assert.equal(stopped.length, 2, "one axis line from each charge");
+  for (const l of stopped) {
+    const z = l.stagnation!;
+    assert.ok(Math.abs(z.x) < 1e-6 && Math.abs(z.y) < 1e-6, `stops at (${z.x}, ${z.y}), not at the midpoint`);
+    const [ex, ey] = electricField(input.charges, z.x, z.y);
+    assert.ok(Math.hypot(ex, ey) < 1e-6);
+    const last = l.points[l.points.length - 1]!;
+    assert.deepEqual(last, z, "the line reaches the point, and never runs past it");
+    const side = Math.sign(input.charges[l.charge]!.at[0]);
+    for (const p of l.points) assert.ok(p.x * side >= -1e-9, "nothing is drawn beyond the saddle");
+  }
+  const spec = expandField(input);
+  assert.equal(marksOf(spec, "null-point-").length, 1, "the point where E = 0 is marked once");
+});
+
+test("charges: arrowheads point along E", () => {
+  const input = chargesFixture("charges-dipole.json");
+  const spec = expandField(input);
+  const geo = frameGeometry(input.x, input.y);
+  const arrows = marksOf(spec, "line-").filter((m) => String(m.id).includes("-arrow-"));
+  assert.ok(arrows.length >= 6);
+  for (const m of arrows) {
+    const [tip, b1, b2] = markPoints(m).map((p) => invert(geo, p));
+    const base = { x: (b1!.x + b2!.x) / 2, y: (b1!.y + b2!.y) / 2 };
+    const centre = { x: (tip!.x + base.x) / 2, y: (tip!.y + base.y) / 2 };
+    const [ex, ey] = electricField(input.charges, centre.x, centre.y);
+    const dx = tip!.x - base.x;
+    const dy = tip!.y - base.y;
+    const cos = (dx * ex + dy * ey) / (Math.hypot(dx, dy) * Math.hypot(ex, ey));
+    assert.ok(cos > 0.98, `${m.id} points ${cos} along E`);
+  }
+});
+
+test("charges: with only negative charges the lines run against E from the negative charge, arrows pointing in", () => {
+  const input: ChargesInput = { kind: "charges", x: [-3, 3], y: [-3, 3], charges: [{ at: [0, 0], q: -1 }] };
+  const lines = traceChargeLines(input);
+  assert.equal(lines.length, 8);
+  for (const l of lines) assert.equal(l.along, -1);
+  const spec = expandField(input);
+  const geo = frameGeometry(input.x, input.y);
+  const arrows = marksOf(spec, "line-").filter((m) => String(m.id).includes("-arrow-"));
+  assert.ok(arrows.length >= 4);
+  for (const m of arrows) {
+    const [tip, b1, b2] = markPoints(m).map((p) => invert(geo, p));
+    const base = { x: (b1!.x + b2!.x) / 2, y: (b1!.y + b2!.y) / 2 };
+    assert.ok(Math.hypot(tip!.x, tip!.y) < Math.hypot(base.x, base.y), `${m.id} points outward`);
+  }
+});
+
+test("charges: equipotential points satisfy V = level", () => {
+  const input: ChargesInput = { ...chargesFixture("charges-dipole.json"), equipotentials: [-0.5, 0, 0.5] };
+  const spec = expandField(input);
+  const geo = frameGeometry(input.x, input.y);
+  let checked = 0;
+  for (const m of marksOf(spec, "equipotential-")) {
+    const li = Number(String(m.id).split("-")[1]);
+    const level = (input.equipotentials as number[])[li]!;
+    assert.equal(m.lineStyle, "dashed");
+    for (const p of markPoints(m)) {
+      const w = invert(geo, p);
+      assert.ok(Math.abs(electricPotential(input.charges, w.x, w.y) - level) < 2e-3, `${m.id}: V = ${electricPotential(input.charges, w.x, w.y)}, want ${level}`);
+      checked += 1;
+    }
+  }
+  assert.ok(checked > 100);
+});
+
+test("charges: a disc is drawn last with its sign, and white on either colour passes contrast", () => {
+  const input = chargesFixture("charges-dipole.json");
+  const spec = expandField(input);
+  const scene = spec.root as Scene;
+  const ids = (scene.marks ?? []).map((m) => String(m.id));
+  const firstCharge = ids.findIndex((id) => id.startsWith("charge-"));
+  assert.ok(ids.slice(firstCharge).every((id) => id.startsWith("charge-") || id.endsWith("-place")), "nothing but charges is drawn after the first charge");
+  assert.ok(ids.includes("charge-0-sign-h") && ids.includes("charge-0-sign-v"), "a positive charge has a plus");
+  assert.ok(ids.includes("charge-1-sign-h") && !ids.includes("charge-1-sign-v"), "a negative charge has a minus only");
+  const fills = markById(spec, "charge-0").concat(markById(spec, "charge-1")).map((m) => m.fill as string);
+  assert.equal(fills.length, 2);
+  for (const fill of fills) assert.ok((contrastRatio("#FFFFFF", fill) ?? 0) >= 4.5, `${fill} against white`);
+});
+
+test("charges: names are derived from q unless given, and the panel says k is omitted", () => {
+  assert.equal(chargeName(1, "pt-BR"), "q");
+  assert.equal(chargeName(-1, "pt-BR"), "−q");
+  assert.equal(chargeName(2, "pt-BR"), "2q");
+  assert.equal(chargeName(-2.5, "pt-BR"), "−2,5q");
+  const spec = expandField(chargesFixture("charges-two-q-minus-q.json"));
+  const labels = ((spec.root as Scene).children ?? []).map((b) => (b as { label?: string }).label);
+  assert.ok(labels.includes("2q") && labels.includes("−q"));
+  assert.ok(labels.some((t) => typeof t === "string" && t.includes("k omitido")));
+});
+
+test("charges: refuses a zero charge, a charge outside the box, charges too close, and equipotentials attained nowhere", () => {
+  const ok = { kind: "charges", x: [-3, 3], y: [-3, 3], charges: [{ at: [-1, 0], q: 1 }, { at: [1, 0], q: -1 }] };
+  validateFieldInput(ok);
+  assert.throws(() => validateFieldInput({ ...ok, charges: [{ at: [0, 0], q: 0 }] }), /q is 0/);
+  assert.throws(() => validateFieldInput({ ...ok, charges: [{ at: [5, 0], q: 1 }] }), /outside the plotted box/);
+  assert.throws(() => validateFieldInput({ ...ok, charges: [{ at: [0, 0], q: 1 }, { at: [0.1, 0], q: 1 }] }), /touch/);
+  assert.throws(() => validateFieldInput({ ...ok, charges: [] }));
+  assert.throws(() => validateFieldInput({ ...ok, linesPerUnitCharge: 0 }), /at least 1/);
+  assert.throws(() => validateFieldInput({ ...ok, equipotentials: [1e6] }), /attained/);
+});

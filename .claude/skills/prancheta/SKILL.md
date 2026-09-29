@@ -59,9 +59,14 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
 | `surface` | Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact. | yes |
 | `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
-| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed. | yes |
+| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed; and the field lines and equipotentials of point charges, seeded in proportion to each charge. | yes |
 | `sequence` | Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps. | yes |
 | `linear-map` | Linear maps of the plane from a matrix or a named rotation, reflection, shear, scale or projection: the image lattice, T(e₁) and T(e₂), the unit square with |det A| measured, eigen-lines, and shapes mapped to primed vertices. | yes |
+| `circuit` | DC circuits from a given node layout: conventional symbols, branch currents solved by nodal analysis and drawn with arrows in their true direction, meter readings, U_AB, node potentials and powers. | yes |
+| `optics` | Geometric optics: thin lenses and spherical or plane mirrors with the image computed by Gauss and the principal rays constructed (virtual images dashed), and refraction and total internal reflection at a plane interface by Snell. | yes |
+| `automaton` | Finite automata (DFA, NFA with ε) in Sipser style, with each listed word run through the automaton: its path or state sets and aceita/rejeita computed. | yes |
+| `truth-table` | Truth tables of boolean expressions, every cell computed, with subexpression columns, tautology/contradiction/contingency, equivalence, and minterms with a Quine–McCluskey minimal form. | yes |
+| `logic-circuit` | Gate diagrams built from a boolean expression in distinctive-shape symbols, with fan-out dots, optional Quine–McCluskey simplification and a simulation printing every wire's value. | yes |
 
 ## Figure modules
 
@@ -173,7 +178,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, or a linear map.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, or a boolean function.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -224,6 +229,16 @@ A field is not a function and not a vector (`S-field-favours-field`). *"Esboce o
 A sequence is not a function (`S-sequence-favours-sequence`, `S-sequence-disqualifies-function-graph`). *"Represente os cinco primeiros termos de aₙ = (−1)ⁿ/n e indique seu limite"* has nothing between n and n + 1, and a curve through its terms draws values that do not exist. It is not a chart either (`S-sequence-disqualifies-chart`): a chart plots the numbers it is handed, and here every term, every partial sum and each limit is computed from the formula. The `sequence` preset evaluates aₙ or Sₙ at each n and draws unjoined dots. It computes the limit of the terms and the limit of the partial sums separately, with the numeric kit. Each limit is drawn as its own dashed line at its own height, printed exact when it snaps (`= 1`, `= e`) and approximate when it does not.
 
 A linear map is not a vector and not a graph (`S-linear-map-favours-linear-map`, `S-linear-map-disqualifies-vectors`, `S-linear-map-disqualifies-graph`). *"Represente a transformação T(x, y) = (2x + y, x + y), a imagem do quadrado unitário e a área da imagem"* asks what one matrix does to the whole plane, not which arrows add up: `vectors` adds and scales arrows and cannot carry a lattice or a region through a map, and a graph has no coordinates at all. The `linear-map` preset takes the 2×2 matrix — numbers, expressions such as `"sqrt(3)/2"`, or a named rotation, reflection about a line, shear, scale or projection, whose matrix it computes and prints. The image of the lattice, T(e₁) and T(e₂) as the columns, the unit square's parallelogram, the eigen-lines and every shape's primed vertices are computed from it, and the printed area |det A| is measured against the polygon drawn by the area check. Complex eigenvalues are stated as `a ± bi` with no line drawn, and a singular map says which line it collapses the plane onto.
+
+A charge diagram is a field, not a set of arrows (`S-electric-field-favours-field`). *"Esboce as linhas de campo de duas cargas, +2q e −q"* asks for curves that leave the positive charge, end on the negative one, and whose count follows the charge. `function-graph` draws curves it is given (`S-electric-field-disqualifies-function-graph`), and `vectors` draws a few arrows (`S-electric-field-disqualifies-vectors`). The `field` preset with `kind: "charges"` seeds lines on each source in proportion to its charge and integrates them along E. A line stops on entering a charge of the other sign, at the box, or at a point where E = 0, which it marks. Equipotentials are found where V = Σ q/r = c.
+
+A DC circuit is not a graph and not a callout scene (`S-circuit-favours-circuit`, `S-circuit-disqualifies-graph`, `S-circuit-disqualifies-annotated-figure`). *"No circuito abaixo, calcule a corrente em cada resistor e a ddp entre A e B"* shows a fixed drawing whose numbers are consequences. The `circuit` preset takes the nodes with their grid coordinates and each component between two of them; only resistances, EMFs and source currents are typed. Every branch current, meter reading, U_AB and power comes from nodal analysis, and each arrow points the way conventional current actually flows — in a two-battery problem, the battery being charged shows it. A circuit with no answer is refused by name: a shorted source, a loop of ideal sources, a floating subcircuit.
+
+A ray diagram is its own question (`S-optics-favours-optics`). *"Construa a imagem de um objeto de 3 cm a 30 cm de uma lente convergente de distância focal 10 cm e classifique-a"* or *"um raio passa do ar para a água com 30° de incidência; desenhe o raio refratado"*: the image and the angle are consequences, and rays placed by hand can miss them. Rays are not vectors (`S-optics-disqualifies-vectors`) and not callouts (`S-optics-disqualifies-annotated-figure`). The `optics` preset computes the image by Gauss (1/f = 1/p + 1/p′, A = −p′/p), constructs the principal rays from their own rules — virtual images and extensions dashed — and prints the nature of the image. At an interface the refracted angle is Snell's, and past the critical angle the figure shows total internal reflection with θc.
+
+An automaton is a graph whose meaning is its runs (`S-automaton-favours-automaton`, `S-automaton-disqualifies-graph`, `S-automaton-disqualifies-labelled-blocks`). *"Desenhe o AFD que reconhece as palavras terminadas em ab e mostre a execução de aab e ba"* needs a start arrow, double circles for accepting states, and each word run through the machine. The `automaton` preset draws it in Sipser's style and prints, for each word, the path of states (or, for an NFA, the sets of states with ε-closure) and "aceita" or "rejeita", computed and never typed.
+
+A boolean function has two honest pictures, and the verb chooses. *"Mostre que ¬(p ∨ q) é equivalente a ¬p ∧ ¬q"* asks for its values: a `truth-table` (`S-boolean-favours-truth-table`), one row per assignment, a column per subexpression, and a line saying which columns agree — not a `value-table`, which evaluates real functions (`S-boolean-disqualifies-value-table`). *"Desenhe o circuito de S = A′B + AB′ só com portas AND, OR e NOT"* asks for gates: a `logic-circuit` (`S-logic-circuit-favours-logic-circuit`), laid out from the expression tree, never a graph (`S-logic-circuit-disqualifies-graph`). Both parse the same expression; `simplify` draws the Quine–McCluskey minimal form, and `inputs` prints every wire's value.
 
 ## Answer three questions, not two
 
@@ -1644,22 +1659,24 @@ panel.
 
 ### field
 
-Slope fields, vector fields and level curves, for Cálculo 2/3 and Álgebra
-Linear: EDO's "campo de direções", a vector field's flow lines, and the 2D
-contour map of a function of two variables. Every mark on the plane —
+Slope fields, vector fields, level curves and the electric field lines of
+point charges, for Cálculo 2/3, Álgebra Linear and Física 3: EDO's "campo de
+direções", a vector field's flow lines, the 2D contour map of a function of
+two variables, and "esboce as linhas de campo de um dipolo". Every mark on the plane —
 a slope segment's direction, a vector's length, a level curve's shape, a
 solution or flow curve's path, a gradient arrow — is **derived** from the
 stated expression, never typed. See `docs/decisions/0050-fields.md` for the
 reasoning behind the scaling rule and the drawing order.
 
 **Choose it when** the content is `dy/dx = f(x, y)` (a slope field), a planar
-vector field `(P(x, y), Q(x, y))`, or the level sets of `f(x, y) = c`. It is
+vector field `(P(x, y), Q(x, y))`, the level sets of `f(x, y) = c`, or the
+field lines and equipotentials of point charges (`kind: "charges"`). It is
 not for a single curve `y = f(x)` (`function-graph`) or a static vector
 computed from other vectors (`vectors`).
 
 ## Input
 
-Three shapes, chosen by `kind`. All three share `x`/`y` (the plotted box, in
+Four shapes, chosen by `kind`. All four share `x`/`y` (the plotted box, in
 world units), `title` and `locale`.
 
 ### `kind: "slope"` — dy/dx = f(x, y)
@@ -1742,6 +1759,61 @@ world units), `title` and `locale`.
   perpendicular for a differentiable `f` (checked numerically in
   `tests/field.test.ts`, not merely asserted).
 
+### `kind: "charges"` — electric field lines and equipotentials
+
+```json
+{
+  "preset": "field",
+  "kind": "charges",
+  "charges": [
+    { "at": [-1.5, 0], "q": 2 },
+    { "at": [1.5, 0], "q": -1 }
+  ],
+  "x": [-5, 5],
+  "y": [-3.5, 3.5],
+  "equipotentials": "auto"
+}
+```
+
+- **`charges`** — each `{ at: [x, y], q, name? }`, `q` in units of the charge of
+  the problem (`+2q` is `2`, `−q` is `-1`). `name` is derived from `q` when
+  omitted (`q`, `−q`, `2q`, `−2,5q`); give `"q₁"` to name it yourself, `""` for
+  none. A zero charge, a charge outside `x`/`y`, or two charges whose discs
+  would touch are refused. No box axes or numbers are drawn: it is a physics
+  figure.
+- **Shapes only: E = Σ q·r̂/r², V = Σ q/r, k and units omitted**, and the panel
+  under the figure says so ("linhas de campo (k omitido)").
+- **`linesPerUnitCharge`** (default 8) — a charge of magnitude |q| seeds
+  `round(|q| · 8)` lines, evenly spaced on its disc, so the lines leaving a
+  charge are proportional to it. One seed points at the nearest other charge,
+  which makes a configuration symmetric about the line joining charges draw
+  symmetric lines. Lines are seeded on the positive charges (net charge ≥ 0)
+  or, when the total is negative, on the negative ones and integrated
+  backward, so every arrow still points along E.
+- Each line is `rk4Planar` along E/|E|. It ends **on the rim of a charge of the
+  other sign**, **at the box**, or **where E = 0** — found by Newton's method,
+  marked with a small ring and named in the panel ("○ marca o ponto onde
+  E = 0") — never drawn through one. With +2q and −q about half of the 16
+  lines end on −q (Gauss); the rest leave the box. A line that would curve
+  back after leaving the box is cut at the box.
+- A small filled arrowhead sits mid-line pointing along E (two on a long line,
+  none on a stub under 48px).
+- Charges are drawn last: a red disc with a white plus, a blue disc with a
+  white minus (both pass 4.5:1). The sign is drawn as strokes, not typeset:
+  the disc (11.5px radius, under the 24px marker extent `checks.ts` reads as a
+  point) is smaller than a text box. The name goes beside the disc where no
+  line is; if the fan of lines leaves no room within reach it sits farther
+  out at the end of a thin leader that runs between two lines.
+- Lines run **from the charge's centre** (the disc covers the stub), so every
+  line passes through the point the charge's name labels — which is how the
+  place check reads a name beside a fan of lines (ADR 0055).
+- **`equipotentials`** (optional) — a list of levels of V, or `"auto"` (a
+  ladder ±¼, ±½, ±1, ±2 of the largest |q|, plus 0 when the charges have both
+  signs; a level none of whose branches has room for its label is dropped).
+  Drawn thin and dashed in green, each level labelled in a gap cut into its
+  branch (the `levels` code path, shared). A list keeps every level asked for,
+  labelled where there is room.
+
 ## What is checked
 
 The same box-model checks every preset renders through (`text-clear-of-ink`,
@@ -1753,7 +1825,7 @@ additionally decodes the frame's own affine map back from canvas pixels to
 `(x, y)` and checks the DRAWN geometry against the stated expression: a
 slope mark's direction equals `f` there, a solution curve satisfies the ODE
 along its own points, a vector arrow points along `(P, Q)`, a level curve's
-points satisfy `f = c`, a gradient is perpendicular to its level curve.
+points satisfy `f = c`, a gradient is perpendicular to its level curve; for charges, a line is tangent to E, an arrowhead points along E, an equipotential's points satisfy V = level, the lines ending on a sink follow Gauss, and two equal charges' axis lines stop exactly where E = 0.
 
 ## What is refused
 
@@ -1761,10 +1833,20 @@ points satisfy `f = c`, a gradient is perpendicular to its level curve.
   the field (`f`, or `(P, Q)`, not finite there).
 - Levels that are attained nowhere inside the plotted box.
 - An `x`/`y` range that is not `[lo, hi]` with `lo < hi`.
+- Charges: a zero charge, a charge outside the box, two discs that touch,
+  `linesPerUnitCharge` under 1, equipotential levels attained nowhere.
 - A curve that would have to be drawn through a pole: `rk4Scalar`/`rk4Planar`
   stop and report why (`"boundary"`, `"non-finite"`, `"max-length"`,
   `"max-steps"`), and the curve is drawn only up to that point — never
   through it with whatever number came out the other side.
+
+## Limits (charges)
+
+- A line seeded exactly on a separatrix (the 90° line of +2q and −q) may go
+  either way, so the count ending on a sink is 8 ± 1, not exactly 8.
+- With many lines (|q| of 2 or more) the name sits on a long leader: the fan
+  leaves no room nearer.
+- Three or more charges have no simple Gauss count to check; none is claimed.
 
 ### sequence
 
@@ -1951,3 +2033,580 @@ passing every check.
 Maps of R³ (`space` has the axes; the matrix work is not here), a non-linear
 map (a translation moves the origin), and the composition of two maps — give
 their product as the matrix.
+
+### circuit
+
+DC circuit diagrams for Física 3 and Circuitos (Halliday, Ramalho): "calcule a
+corrente em cada resistor", "qual a ddp entre A e B", Kirchhoff's two-mesh
+problems, series and parallel, the Wheatstone bridge. **You give the layout.**
+Every node has grid coordinates, and every component, wires included, runs
+between two nodes. **The preset computes the electrical values.** Every
+current, potential difference, meter reading and power on the figure comes
+from Modified Nodal Analysis (`mna.ts`). See
+[`docs/decisions/0053-circuits.md`](../../../docs/decisions/0053-circuits.md)
+for what was refused and why.
+
+**Choose it when** the content is a circuit of resistors, lamps, batteries,
+ideal sources, switches and ideal meters, and the question is about its
+currents and voltages. It is not for logic gates (`logic-circuit`), and not for
+a block diagram of a system (`graph`). It also cannot lay out a bare netlist:
+you place the nodes the way the exercise draws them.
+
+## Input
+
+```json
+{
+  "preset": "circuit",
+  "nodes": { "A": [0, 2], "B": [2, 2], "C": [4, 2], "D": [4, 0], "E": [0, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "E", "to": "A", "value": 12 },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "B", "value": 2 },
+    { "id": "R2", "kind": "resistor", "from": "B", "to": "C", "value": 4 },
+    { "id": "R3", "kind": "resistor", "from": "C", "to": "D", "value": 6 },
+    { "kind": "wire", "from": "D", "to": "E" }
+  ],
+  "show": { "voltages": [["A", "C"]] }
+}
+```
+
+- **`nodes`**: a name and `[x, y]` for each node, with y pointing up. One grid
+  unit is drawn at 70–120 px, whatever fits a 440 px plot.
+- **`components`**: each is `{ id, kind, from, to, value?, via?, closed? }`.
+  A run from `from` to `to` must be horizontal or vertical. For an L-shaped
+  run, give its corner as `via: [x, y]`. The symbol goes on the longer leg.
+  `id` is required for every kind except `wire`.
+
+| kind | value | notes |
+| --- | --- | --- |
+| `resistor` | Ω | zigzag, or a rectangle with `"symbols": "iec"` |
+| `lamp` | Ω | ⊗ |
+| `battery` | V | long thin plate (+) and short thick plate (−); **+ at `to`** |
+| `voltage-source` | V | a circle with + and −; **+ at `to`** |
+| `current-source` | A | a circle with an arrow; the current flows **from `from` to `to`** through it |
+| `wire` | — | |
+| `switch` | — | `closed: true/false` (default open) |
+| `ammeter` | — | ideal (0 Ω); prints its reading \|i\| |
+| `voltmeter` | — | ideal (open); prints V(`to`) − V(`from`) |
+
+- **`ground`**: the reference node. If you leave it out, the preset uses the −
+  terminal of the first battery or voltage source. When given, the ground
+  symbol is drawn.
+- **`show`**:
+  - `currents` (default true): one arrow per branch current.
+  - `voltages: [["A", "B"], …]`: prints `U_AB = V_A − V_B = 6 V`.
+  - `nodeVoltages`: prints V for every named node and draws the ground.
+  - `power`: prints P for every resistor, lamp and source. A source is marked
+    `(fornecida)` when it supplies power and `(recebida)` when it absorbs it.
+  - `names`: writes `R₁ = 2 Ω` instead of `2 Ω`.
+  - `nodeNames`: `"letters"` (default: nodes named by one capital letter, such
+    as A or C′), `"all"`, `"none"`, or a list of node names.
+  - `currentValues`: `"auto"` (default), `"drawing"` or `"panel"`.
+- **`symbols`**: `"zigzag"` (default) or `"iec"`. **`title`** and **`locale`**
+  work as in every other preset.
+
+## What is drawn
+
+- **Symbols**: see the table above. The battery's "+" is drawn as two strokes,
+  not typeset, so it is never text sitting on ink.
+- **Values**: `10 Ω`, `12 V` or `2 A` beside the component, on the outside of
+  the circuit when there is room.
+- **Branch currents**: components in series share one branch. They are joined
+  at a node where exactly two conducting terminals meet; wires and closed
+  switches merge named nodes into one. Each branch gets one arrowhead and one
+  name, `i₁, i₂, …`, or just `i` when the circuit has a single current.
+  - The arrow points the way conventional current **actually** flows.
+  - It sits on a wire of the branch when one is long enough, and otherwise on
+    a component's lead.
+  - The label reads `i₁ = 0,5 A`. A value is written exactly when it is a
+    short decimal or snaps to a fraction (`2/3 A`, `18/7 A`). Otherwise it is
+    `≈` with three significant figures. A branch with no current reads
+    `i₂ = 0`.
+  - With `currentValues: "auto"`, if any label cannot sit right beside its
+    arrow, the whole figure is redrawn with only `i₁` on the arrows and the
+    values listed in the panel.
+- **Junction dots**: only at a node where three or more runs meet.
+- **Node names**: for the nodes chosen by `nodeNames`.
+- **The panel** below the circuit: current values (in panel mode), then
+  voltages, node potentials and powers. Subscripts are set small and low.
+
+Units are separated from the number by a space, and decimals use the pt-BR
+comma.
+
+## What is refused
+
+Every refusal names the component or node at fault.
+
+- **Layouts**:
+  - a run that is neither horizontal nor vertical (the message suggests a
+    `via`);
+  - two nodes at the same place;
+  - a run through a node it does not connect to;
+  - two runs on top of each other;
+  - two runs crossing where there is no node they both end at;
+  - a run too short to hold its symbol.
+- **Netlists** (from `mna.ts`):
+  - a source short-circuited by wires (the message names the wires);
+  - an ammeter bypassed by a wire;
+  - a loop made only of voltage sources and ammeters;
+  - a floating subcircuit, meaning one with no conducting path to the ground;
+  - a current source in series with an open circuit;
+  - a resistance ≤ 0.
+- **Input**:
+  - a `value` on a meter (its reading is computed, never typed);
+  - a negative EMF (swap `from` and `to` instead);
+  - an unknown node or flag;
+  - an id used twice.
+
+## What is checked
+
+Every fixture passes the same box-model checks as every other preset:
+`text-clear-of-ink`, `annotation-nearest-its-owner` (a current's label names
+its arrowhead, and a value's label names its symbol), `label-nearest-its-place`
+for node names, `label-declares-what-it-names`, `contrast-sufficient` and
+`content-within-canvas`.
+
+`tests/circuit.test.ts` tests the solver against circuits solved by hand:
+series, parallel, divider, Wheatstone balanced and unbalanced (18/7, 12/7,
+6/7 and 30/7 A), two batteries (7,2 V; 2,4, 0,6 and 1,8 A), superposition, a
+current source, and power balance in every fixture. It also reads each drawn
+arrowhead back and checks it against the sign of its current.
+
+## What is not covered
+
+- Automatic layout from a netlist.
+- Capacitors, inductors and AC.
+- Internal resistance as an attribute (draw it as a resistor in series).
+- Dependent sources.
+- Non-ideal meters.
+- Diagonal runs (the diamond-drawn Wheatstone bridge; draw it rectangular).
+
+### optics
+
+Geometric optics as Ramalho, Halliday and the ENEM ask for it: thin lenses and
+spherical (or plane) mirrors with the image they form, and a plane interface
+between two media where a ray refracts or reflects totally. "Construa a imagem
+de um objeto a 30 cm de uma lente convergente de 10 cm de distância focal",
+"um objeto entre F e C de um espelho côncavo", "um raio passa do ar para a
+água com 30° de incidência", "a partir de que ângulo há reflexão total?".
+Every position drawn and every number printed is **computed** from the input;
+see [`docs/decisions/0054-ray-optics.md`](../../../docs/decisions/0054-ray-optics.md)
+for what was refused and why.
+
+**Choose it when** the content is a ray diagram: an optical element on an axis
+with an object and its image, or one ray meeting a plane boundary. It is not
+for wave optics (interference, diffraction: no rays), for a prism or a system
+of several elements (two elements: author raw IR), for the eye, a telescope or
+a microscope, nor for a free-body or vector figure (`vectors`).
+
+## Input
+
+```json
+{ "preset": "optics", "kind": "lens", "lens": "converging", "f": 10, "p": 30, "o": 3 }
+```
+
+`kind` is one of:
+
+### `"lens"`
+
+| field | meaning |
+| --- | --- |
+| `lens` | `"converging"` or `"diverging"`. The kind gives the sign of f; you give its magnitude. |
+| `f` | Focal length in cm, a positive number (or a constant expression, `"20/3"`). |
+| `p` | Object distance in cm, > 0 (a real object). |
+| `o` | Object height in cm. Default: a third of the smaller of p and f, to the half centimetre. |
+| `rays` | Which principal rays, at least two of `"parallel"`, `"focal"`, `"centre"`. Default: all three. |
+| `show.antiprincipal` | The points A and A′ at 2f. Default on for a converging lens, off for a diverging one. |
+| `show.names` | The element's name above it. Default on. |
+
+### `"mirror"`
+
+`mirror` is `"concave"`, `"convex"` or `"plane"`; `f` is the magnitude (absent
+for a plane mirror, refused if given). `rays` may also name `"vertex"` (the ray
+that strikes the pole and reflects symmetrically) and `"centre"` (the ray
+through C, which returns on itself). Default: parallel, focal and the centre
+ray for a concave mirror; parallel, focal and the vertex ray for a convex one
+(the centre ray of a convex mirror runs almost on top of the focal ray). A
+default ray that would strike the mirror far above the object is replaced by
+the next one; a plane mirror draws three rays at its own heights.
+
+### `"interface"`
+
+| field | meaning |
+| --- | --- |
+| `n1`, `n2` | `{ "name": "ar", "n": 1 }`. `n` may be omitted for `ar`, `vácuo`, `água`, `gelo`, `álcool`, `acrílico`, `vidro`, `diamante`. Must be ≥ 1. |
+| `theta1` | Angle of incidence, degrees, 0 ≤ θ₁ < 90. |
+| `reflected` | Draw the reflected ray when there is also a refracted one. Default true. |
+
+`locale` (`"pt-BR"` default) formats the numbers; `title` overrides the
+figure's title. The text is Portuguese.
+
+## What is drawn
+
+**Lens or mirror.** A horizontal axis; the element (a lens is a vertical line
+with outward arrowheads when converging and inward when diverging; a mirror is
+the arc of radius 2|f| about C, hatched on the back; a plane mirror a hatched
+line); the points F, F′ (and A, A′) or F, C and V marked as dots on the axis
+and named; the object arrow at distance p with height o; the principal rays,
+each drawn from its own rule; and the image arrow. **A real image is a solid
+arrow reached by solid rays; a virtual image is a dashed arrow, and the
+backward extensions of the rays that make it are dashed too.** A ray that
+passes through a focus behind the object or beyond the element shows that part
+dashed. Small arrowheads give each ray its direction. The figure is to scale
+in both directions: the drawing states its scale with a bar ("10 cm") and the
+panel says so.
+
+- **Object at the focus** (p = f): the rays leave parallel, no image arrow is
+  drawn, and the nature line says `imagem imprópria (no infinito)`. The focal
+  ray, which runs along the focal plane, is left out.
+- **Image too far**: an object a hair inside or outside f puts the image
+  hundreds of centimetres away; a figure to scale beside the object cannot show
+  it, so it is refused, naming p′.
+
+**Interface.** The plane boundary, the denser medium tinted below (when the ray
+starts in the denser medium the figure is turned over, the incident ray coming
+from below, the way it is in a pool), the dashed normal, the incident, the
+reflected (thinner when there is also a refracted ray) and the refracted ray by
+Snell, each with its name; angle arcs at the point of incidence, each a `sweep`
+connector labelled with its bare value (`30°`, `22,1°`), so
+`sweep-matches-its-label` measures every label against the arc drawn. Past the
+critical angle there is no refracted ray, the reflected ray is drawn at full
+weight, its angle is marked too, and the panel says `reflexão total (θ₁ > θc = 48,8°)`.
+
+## The reading panel
+
+Lens and mirror: `p = 30 cm; f = 10 cm → p′ = 15 cm; A = −0,5`, then
+`1/f = 1/p + 1/p′; A = −p′/p = i/o → o = 3 cm; i = −1,5 cm`, then the nature
+line in bold — `imagem real, invertida, menor` (real or virtual; direita or
+invertida; maior, menor or igual). f is signed there (−12 cm for a diverging
+lens or convex mirror). A number that is not exact carries `≈` and hundredths.
+
+Interface: `n₁ sen θ₁ = n₂ sen θ₂` with the media, `θ₁ = 30°: sen θ₂ = 1 · 0,5
+/ 1,33 ≈ 0,376 → θ₂ ≈ 22,1°`, the critical angle when n₁ > n₂, and a
+sentence on whether the ray approaches or leaves the normal (or on total
+reflection). The angle names θ₁ and θ₂ live in the panel; the arcs carry the
+values.
+
+## What is checked
+
+The same box-model checks every preset renders through: `text-clear-of-ink`,
+`annotation-nearest-its-owner`, `label-nearest-its-place`,
+`label-declares-what-it-names`, `contrast-sufficient`,
+`sweep-matches-its-label` (the interface's angle arcs). `tests/optics.test.ts`
+reads the drawing back: that Gauss's equation and the sign convention hold
+across a sweep; that **the drawn rays meet at the drawn image tip within a
+pixel**, and that tip is at p′ and A·o in the drawing's own units; that the
+parallel ray is parallel and the central ray passes the optical centre; that
+mirror rays end on the arc of radius 2f about C; that a drawn refracted angle
+is Snell's for a sweep of media; and every fixture in
+[`fixtures/optics/`](../../../fixtures/optics/lens-converging-beyond-2f.json)
+passes every check.
+
+## What is refused
+
+A missing or unknown `kind`, `lens` or `mirror`; a field that does not belong
+to that kind; f ≤ 0, p ≤ 0, o ≤ 0; f for a plane mirror, no f for a spherical
+one; fewer than two rays, a repeated ray, `vertex` on a lens; an image beyond
+five times max(p, 2f); θ₁ outside [0, 90); a medium with no `n` that is not in
+the table; n < 1.
+
+## What is not covered
+
+Virtual objects (p < 0), systems of two elements, thick lenses, aberrations
+(mirrors are traced paraxially: rays reflect at the tangent plane through the
+vertex and are cut where they meet the drawn arc), prisms, a curved interface,
+dispersion, polarisation. **Very small angles**: an angle arc needs room for
+its own label inside its wedge, so below about 14° the rays are drawn longer
+(to 300 px) and, when even that is not enough, the arc is drawn without its
+label and the panel gives the value.
+
+### automaton
+
+A finite automaton, DFA or NFA, for Linguagens Formais e Autômatos and Teoria
+da Computação (Sipser, Menezes): "desenhe o AFD que reconhece as palavras
+terminadas em ab", "mostre a execução de aab", "o AFN com ε-transições e o que
+ele aceita". The automaton is the only typed thing. Every drawn position is
+computed from it, and **whether a word is accepted is never typed**: each word in
+`words` is *run*, and the panel prints the path or the sets the run computed.
+See [`docs/decisions/0056-automata.md`](../../../docs/decisions/0056-automata.md)
+for what was refused and why.
+
+**Choose it when** the content is a finite automaton — states, a start arrow,
+accepting states and transitions on symbols — and the question is what it
+recognises or how it runs on a word. It is not `graph` (a graph has no start
+arrow, no accepting states, no notion of a run), nor a flowchart of a program
+(`labelled-blocks`), nor a Turing machine or pushdown automaton (not covered).
+
+## Input
+
+```json
+{
+  "preset": "automaton",
+  "kind": "dfa",
+  "alphabet": ["a", "b"],
+  "states": ["q0", "q1", "q2"],
+  "start": "q0",
+  "accept": ["q2"],
+  "transitions": [
+    { "from": "q0", "on": "a", "to": "q1" },
+    { "from": "q0", "on": "b", "to": "q0" },
+    { "from": "q1", "on": "a", "to": "q1" },
+    { "from": "q1", "on": "b", "to": "q2" },
+    { "from": "q2", "on": "a", "to": "q1" },
+    { "from": "q2", "on": "b", "to": "q0" }
+  ],
+  "words": ["aab", "ba", ""]
+}
+```
+
+| field | what it does |
+| --- | --- |
+| `kind` | `"dfa"` or `"nfa"`. |
+| `alphabet` | Single visible characters, no repeats, never `ε`. |
+| `states`, `start`, `accept` | State names (any non-empty string, at most 14). `q0` is set `q₀`: digits after a letter become subscripts, also inside `{q0,q1}`. |
+| `transitions` | `{ from, on, to }`. `on` is a symbol, an array of symbols (`["a","b"]`) or `"ε"` (NFA only). Symbols on the same (from, to) pair are merged into one edge labelled `a, b`; an identical transition written twice is merged, not refused. |
+| `partial` | DFA only. Missing transitions go to an **implicit dead state**, which is not drawn; the panel says so and lists what is missing. |
+| `layout` | `"line"`, `"circle"`, or `{ "q0": [x, y], … }` for every state (y up; one unit is about 120px). Default: a **line** when there are at most four states and every edge joins neighbours in breadth-first order from the start (a chain), otherwise a **circle** ordered breadth first from the start, the start state at the left. |
+| `words` | Up to 10 words over the alphabet; `""` is the empty word, printed `ε`. |
+| `title` | As every preset. |
+
+## What is drawn
+
+Sipser style: states are circles with the name centred, accepting states are
+double circles, the start state has an arrow out of nowhere. Edges are straight
+arrows; **two opposite transitions between two states are two gently curved
+arcs**, each bulging to the left of its own travel, so they never overlap; an
+edge that skips a state on a forced line is one wide arc above (forward) or
+below (back); **self-loops** turn away from the rest of the automaton (up on a
+line, outward on a circle) and rotate to the freest direction when a neighbouring
+edge or the start arrow is in the way.
+
+**Arrowheads touch the target's circle, not its centre.** Every edge is a line or
+a circular arc (`{ arc, centre }` segments), trimmed against the circle of each
+end by the exact intersection, and the head is a filled triangle whose tip is
+that point. `tests/automaton.test.ts` decodes the drawing and checks every tip
+lies on its target's circle, every tail on its source's.
+
+Edge labels sit beside the edge's midpoint on the **outside** of its curve
+(away from the automaton's centre, for a straight edge), never on the line,
+nearer their own edge than any other. Among the clear spots the one best
+separated from every other edge is taken, so two labels between crossing edges
+are not mistaken for each other's.
+
+## The runs
+
+Below the diagram, `AFD: Σ = {a, b}, estado inicial q₀, F = {q₂}`, then one row
+per word:
+
+- **DFA**: the state path with the symbol on each arrow —
+  `q₀ →a q₁ →a q₁ →b q₂: aceita`. On a partial DFA a missing transition ends the
+  path in `morto` and rejects: `q₀ →b morto: rejeita`.
+- **NFA**: the set of states after each step, starting from the ε-closure of
+  the start — `{q₀, q₁, q₂} →a {q₁, q₃} →b {q₂}: rejeita`; the empty set is `∅`.
+- Accepted iff the last state (DFA) or any state of the last set (NFA) is in F.
+  A long run wraps onto continuation lines.
+
+## Pure helpers
+
+Exported from `preset.ts` and tested against independent oracles (a regular
+expression, binary arithmetic) over every word up to length 8–9:
+
+- `runDfa(a, word)` → `{ path, symbols, accepted, dead }`
+- `runNfa(a, word)` → `{ sets, symbols, accepted }`
+- `epsilonClosure(a, states)` — terminates on ε-cycles, keeps the automaton's state order
+- `subsetConstruction(nfa)` → a total DFA of the reachable subsets (`{q0,q1}`, `∅`), breadth first; its result is itself a valid input to this preset
+- `normaliseAutomaton(input)` → the validated `Automaton` with one symbol per transition
+
+## What is checked
+
+The box-model checks every preset renders through: `text-clear-of-ink`,
+`annotation-nearest-its-owner` (a state's name names its innermost circle),
+`label-declares-what-it-names`, `boxes-do-not-overlap`, `contrast-sufficient`.
+Every fixture in [`fixtures/automaton/`](../../../fixtures/automaton/dfa-ends-in-ab.json)
+passes all of them.
+
+## What is refused
+
+- A DFA that is not total (naming the missing state and symbol, and offering
+  `partial`) or not deterministic (naming the state, symbol and both targets).
+- `ε` in a DFA or in the alphabet; `partial` on an NFA.
+- An unknown state or symbol in a transition, `start`, `accept` or a word; an
+  unknown field (a typo is not silently ignored); a `layout` that misses a
+  state, names a stranger or puts two states at one place.
+
+## What is not covered
+
+Turing machines, pushdown automata, transducers; edge labels with more than one
+character per symbol; a drawn dead state (say `partial` and the panel states it);
+a dense automaton (eight or more states with many crossing edges) is drawn
+correctly but its labels can sit close to crossing edges — give a `layout`.
+
+### truth-table
+
+A truth table: one row per assignment of the variables, a column per variable,
+per subexpression (optional) and per expression. The *tabela-verdade* of Lógica
+e Matemática Discreta ("construa a tabela-verdade de (p → q) ∧ (q → p)",
+"mostre que ¬(p ∨ q) ≡ ¬p ∧ ¬q", "classifique como tautologia, contradição ou
+contingência") and of Eletrônica Digital ("monte a tabela da função maioria e
+extraia os mintermos"). The expression is the only typed thing; **every cell is
+computed** by [`src/math/boolean.ts`](../../../src/math/boolean.ts), the evaluator
+`logic-circuit` shares. See
+[`docs/decisions/0057-boolean-logic.md`](../../../docs/decisions/0057-boolean-logic.md).
+
+**Choose it when** the content is a boolean function and the reader must see its
+values row by row. It is not for the gates (`logic-circuit` draws the diagram
+from the same expression), nor for a table of a real function (`value-table`),
+nor for the sign of a function (`sign-chart`).
+
+## Input
+
+```json
+{
+  "preset": "truth-table",
+  "expressions": [
+    { "expr": "p -> q", "label": "P" },
+    { "expr": "not p or q", "label": "Q" }
+  ],
+  "showSubexpressions": true,
+  "compare": true
+}
+```
+
+| field | what it does |
+| --- | --- |
+| `expressions` | One to six; each a string or `{ "expr", "label" }`. Each is one result column. With a `label` the header has two lines: the label, then the expression typeset. |
+| `variables` | The columns' order. Default: order of first appearance across the expressions (`"q and p"` gives q, p). Must include every variable used. At most six (64 rows). |
+| `notation` | `"logic"` (default): V/F, ¬ ∧ ∨ ⊕ → ↔, rows from V…V down. `"digital"`: 1/0, · + ′ ⊕, rows from 0…0 up, so the row number is the minterm number. |
+| `showSubexpressions` | A column per compound subexpression, operands before the operators that use them, each once, between the variables and the results. |
+| `classify` | Panel: `p ∨ ¬p é uma tautologia: verdadeira nas 4 linhas.` / contradição / `contingência: verdadeira em 3 das 4 linhas`. |
+| `compare` | Panel, for every pair of expressions: `As colunas de P e Q são iguais: P ≡ Q.` or `… diferem nas linhas 2 e 3: P ≢ Q.` (In digital notation `=` and `≠`.) |
+| `minterms` | Adds an `m` column (the row's minterm number) and the panel `Σm(3, 5, 6, 7)`, the canonical sum of products and its Quine–McCluskey minimal form. |
+| `title` | The figure's title. |
+
+## The expression language
+
+A closed grammar, parsed without `eval`. Operators in both notations, tightest
+binding first: **not > and > xor > or > → > ↔**.
+
+| meaning | spellings |
+| --- | --- |
+| not | `not` `¬` `~` `!` and postfix `'` `′` (`A'`, `(A+B)'`) |
+| and | `and` `·` `*` `∧` `&` `.` — and **juxtaposition** (`A'B`, `A(B+C)`) |
+| or | `or` `+` `∨` `\|` |
+| xor | `xor` `⊕` |
+| nand / nor | `nand` `↑`, `nor` `↓` (at the and / or level) |
+| implication | `->` `→` `=>` (right-associative) |
+| iff | `<->` `↔` `<=>` |
+| constants | `0` `1` `V` `F` `true` `false` |
+
+A variable is **one letter with optional digits** (`A`, `p`, `x1`, `Q_2`):
+`AB` is A·B, never a variable called AB, which is what lets `A'B + AB'` be
+written the way an electronics course writes it. `V` and `F` are therefore
+constants, not variables (`V1` is a variable). Errors say where:
+`truth-table.expressions[0]: falta um operando depois de "and" (posição 6)`
+with the source and a caret under it.
+
+## Columns are sized from their text
+
+Every header line and every cell is measured, and a column is as wide as the
+widest thing in it. A long header (`A·B·C·D + A′·B′·C′·D′`) widens its column
+and the canvas rather than running into its neighbour — the bug `value-table`
+had. A panel line wider than the table is wrapped at spaces.
+
+## What is refused
+
+No expressions, or more than six; a parse error (with its position); a
+`variables` list that omits a variable the expressions use, repeats one, or
+contains something that is not a variable name; more than six variables; an
+expression with no variables at all.
+
+## What is not covered
+
+Karnaugh maps (the minimal form is printed, not drawn), don't-care rows,
+multi-letter variable names (`Cin`: write `C` or `c1`), and tables of more than
+six variables.
+
+Fixtures: [`fixtures/truth-table/`](../../../fixtures/truth-table/majority-minterms-digital.json).
+Tests: `tests/truth-table.test.ts` (decodes the drawn cells against hand-worked
+tables) and `tests/boolean.test.ts` (the grammar and the minimiser).
+
+### logic-circuit
+
+A gate diagram drawn **from the expression tree**: "desenhe o circuito de
+S = (A·B) + C′", "implemente o XOR só com AND, OR e NOT", "simplifique a
+função maioria e desenhe o circuito", "simule com A = 1, B = 0, C = 1". The
+distinctive-shape (ANSI/IEEE) symbols of Tocci — AND a D, OR a shield, NOT a
+triangle and a bubble, NAND/NOR with the bubble, XOR/XNOR with the extra curve.
+See [`docs/decisions/0057-boolean-logic.md`](../../../docs/decisions/0057-boolean-logic.md).
+
+**Choose it when** the reader must see the gates and how the signals reach the
+output. For the values row by row use `truth-table` (same expression, same
+grammar). It is not a state machine (`automaton`), a general network (`graph`),
+or an analog schematic.
+
+## Input
+
+```json
+{
+  "preset": "logic-circuit",
+  "expr": "not (A and B) and (C nand D)",
+  "output": "Y",
+  "inputs": { "A": 1, "B": 1, "C": 1, "D": 0 }
+}
+```
+
+| field | what it does |
+| --- | --- |
+| `expr` | The expression, in the grammar of [`truth-table`](../../../src/presets/truth-table/PRESET.md): `and`/`·`/`*`/`∧`, `or`/`+`/`∨`, `not`/`¬`/`'`, `xor`/`⊕`, `nand`, `nor`, `->`, `<->`, juxtaposition (`A'B + AB'`), constants. A variable is one letter with optional digits. |
+| `output` | The output's name. Default `S`. |
+| `inputs` | `{ "A": 1, "B": 0 }`: **simulate**. Every variable must be given; a name that is not in the expression is refused. |
+| `simplify` | Draw the Quine–McCluskey **minimal sum of products** instead; the panel prints both expressions and both gate counts. |
+| `notation` | How the panel writes expressions: `"digital"` (· + ′, default) or `"logic"` (∧ ∨ ¬). |
+| `title` | The figure's title. |
+
+## How the diagram is built
+
+- **Inputs** are named lines on the left in order of first appearance; the
+  output is on the right, named.
+- **Gates by depth**: a gate sits one layer past its deepest input, so depth
+  reads left to right.
+- **Flattening**: `A·B·C` is one AND with three inputs (up to four; five or
+  more become a tree). `not(and)` is a NAND, `not(or)` a NOR, `p → q` is
+  `¬p ∨ q`, `p ↔ q` an XNOR. A double negation is drawn as two NOTs.
+- **Sharing**: an identical subexpression is drawn once and fanned out.
+- **Wires** are horizontal and vertical runs only. A wire that must pass over
+  layers runs in a lane of its own, so **no wire crosses a gate**. A fan-out
+  gets a **junction dot**; two wires that merely cross get none. No two
+  different wires lie on one line over the same stretch, or within 9px of it.
+- **Order and height** come from crossing minimisation (barycentre sweeps) and
+  from aligning a gate's pins with the wires that feed it.
+
+## Simulation
+
+With `inputs`, every gate is evaluated from its inputs and the value of every
+net is printed beside its wire (small, off the wire, `annotates` the wire it
+names); a wire carrying 1 is drawn in blue and 0 in slate, but the digit says it
+too. The output reads `Y = 0`. The simulated output is then checked against
+`evalBool` on the expression; a disagreement is an error, not a figure.
+
+## What is checked
+
+The box-model checks every preset renders through (`text-clear-of-ink`,
+`annotation-nearest-its-owner`, `label-declares-what-it-names`, `contrast-sufficient`,
+`arc-is-circular`). `tests/logic-circuit.test.ts` decodes the drawing itself:
+every wire orthogonal, none lying on another, none through a gate, each gate
+with exactly one wire ending on it per input and one leaving, gates left of the
+gates they feed, dots exactly where three wire ends meet, and the simulation
+against `evalBool` on every row of many expressions, random ones included.
+
+## What is refused
+
+A parse error (with position and a caret); `inputs` that omit a variable, name
+one that is not in the expression, or give something other than 0, 1, true,
+false; an `output` longer than eight characters.
+
+## What is not covered
+
+Flip-flops and sequential logic, buses, multi-letter signal names (`Cin`),
+tri-state gates, and hop arcs at crossings (a crossing is a plain crossing).
+
+Fixtures: [`fixtures/logic-circuit/`](../../../fixtures/logic-circuit/and-or-not.json).

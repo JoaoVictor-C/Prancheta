@@ -1,0 +1,16 @@
+{
+  "preset": "automaton",
+  "title": "AFD: número par de a's",
+  "kind": "dfa",
+  "alphabet": ["a", "b"],
+  "states": ["q0", "q1"],
+  "start": "q0",
+  "accept": ["q0"],
+  "transitions": [
+    { "from": "q0", "on": "a", "to": "q1" },
+    { "from": "q1", "on": "a", "to": "q0" },
+    { "from": "q0", "on": "b", "to": "q0" },
+    { "from": "q1", "on": "b", "to": "q1" }
+  ],
+  "words": ["abba", "bab", "aaa", "bbb"]
+}

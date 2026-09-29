@@ -1,0 +1,16 @@
+{
+  "preset": "circuit",
+  "title": "divisor de tensão com voltímetro",
+  "nodes": { "p1": [0, 3], "A": [2, 3], "M": [2, 1.5], "B": [2, 0], "G": [0, 0], "m2": [3.5, 1.5], "b2": [3.5, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "G", "to": "p1", "value": 12 },
+    { "kind": "wire", "from": "p1", "to": "A" },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "M", "value": 4 },
+    { "id": "R2", "kind": "resistor", "from": "M", "to": "B", "value": 2 },
+    { "kind": "wire", "from": "B", "to": "G" },
+    { "kind": "wire", "from": "M", "to": "m2" },
+    { "kind": "wire", "from": "B", "to": "b2" },
+    { "id": "V1", "kind": "voltmeter", "from": "b2", "to": "m2" }
+  ],
+  "show": { "names": true }
+}
