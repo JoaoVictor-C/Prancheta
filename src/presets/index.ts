@@ -88,7 +88,27 @@ export type CommonPresetOptions = {
   theme?: "dark" | "light" | "print";
   /** Type pack. See src/typography.ts. */
   type?: string;
+  /**
+   * false: draw what an exercise GIVES and nothing it ASKS for -- no solved
+   * current, no image position, no probability, no count in a region, no
+   * filled-in table cell. The same input with answers left on is the
+   * solution's figure. A sheet sets it to false on every statement figure of
+   * a preset that honours it (ANSWER_AWARE). Default true.
+   */
+  answers?: boolean;
 };
+
+/**
+ * The presets that compute an answer an exercise could ask for, and draw
+ * without it under `answers: false`. A preset outside this list refuses the
+ * option rather than ignoring it.
+ */
+export const ANSWER_AWARE: readonly string[] = [
+  "value-table", "sign-chart", "number-line", "vectors", "unit-circle",
+  "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map",
+  "circuit", "optics", "automaton", "truth-table", "logic-circuit",
+  "statistics", "distribution", "probability-tree", "venn",
+];
 
 export type PresetInput = (
   | ({ preset: "graph" } & GraphInput)
@@ -215,6 +235,23 @@ export function validatePresetInput(input: PresetInput): void {
   v.optionalEnum(raw, "style", input.preset, STYLE_IDS);
   v.optionalEnum(raw, "theme", input.preset, ["dark", "light", "print"]);
   v.optionalEnum(raw, "type", input.preset, TYPE_IDS);
+  if (raw.answers !== undefined) {
+    if (typeof raw.answers !== "boolean") throw new SpecError(`${input.preset}.answers must be true or false`);
+    if (!ANSWER_AWARE.includes(input.preset)) {
+      throw new SpecError(`${input.preset}.answers: this preset draws no computed answer to hide -- write the question's figure as its own input`);
+    }
+  }
+  return validateOwn(input.preset, stripCommon(raw));
+}
+
+/** The common options are checked above; each preset's own validator sees only its own fields. */
+function stripCommon(raw: Record<string, unknown>): Record<string, unknown> {
+  const { answers: _answers, ...rest } = raw;
+  return rest;
+}
+
+function validateOwn(preset: PresetInput["preset"], raw: Record<string, unknown>): void {
+  const input = { preset } as PresetInput;
   switch (input.preset) {
     case "graph":
       return validateGraphInput(raw);

@@ -324,10 +324,6 @@ export function splitByVisibility(m: Model, camera: Camera, pts: Vec3[], size: n
 }
 
 /** The page image of a 3D polyline. */
-export function projectAll(camera: Camera, pts: Vec3[]): Vec2[] {
-  return pts.map((p) => project(camera, p));
-}
-
 // ---- volumes ------------------------------------------------------------------------
 
 /** Outer and inner radius of the washer at x (axis y = c). */

@@ -60,7 +60,8 @@ school solids (use [`solid`](../solid/PRESET.md)), or for a flat contour map
 - **The tangent plane** is refused where f has no tangent plane (one-sided
   slopes differ), where the surface crosses its plane near the point (a
   saddle), or where a silhouette crosses the plane's patch. The refusal
-  names the matplotlib module as the fallback.
+  says so plainly: no figure module draws such a surface yet
+  (`modules/plot` fits least squares and nothing else).
 - **Refused outright:** a camera looking from below or straight down, a
   floor above the z range, a point outside the domain, in a hole, outside
   the z range or on a part of the surface the camera does not see.

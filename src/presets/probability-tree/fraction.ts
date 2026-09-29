@@ -43,7 +43,6 @@ export const div = (a: Fraction, b: Fraction): Fraction => {
 };
 export const eq = (a: Fraction, b: Fraction): boolean => a.n === b.n && a.d === b.d;
 export const isZero = (a: Fraction): boolean => a.n === ZERO_BI;
-export const isOne = (a: Fraction): boolean => a.n === a.d;
 export const cmp = (a: Fraction, b: Fraction): number => {
   const l = a.n * b.d;
   const r = b.n * a.d;

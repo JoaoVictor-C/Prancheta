@@ -34,7 +34,7 @@ import { SpecError } from "../ir/types.ts";
 import type { FigureSpec } from "../ir/types.ts";
 import { formatNumber, formatNumberTex, formatPoint, formatPointTex, LOCALES } from "../locale/format.ts";
 import type { Locale } from "../locale/format.ts";
-import { parseFigureInput } from "../presets/index.ts";
+import { ANSWER_AWARE, parseFigureInput } from "../presets/index.ts";
 import { functionGraphPoints } from "../presets/function-graph/preset.ts";
 import type { FunctionGraphInput } from "../presets/function-graph/preset.ts";
 import { render } from "../pipeline.ts";
@@ -654,12 +654,26 @@ export function defaultSheetDir(name: string): string {
   return join(base, name);
 }
 
-function figureSpec(f: SheetFigure, where: string): FigureSpec {
+function figureSpec(f: SheetFigure, where: string, statement: boolean): FigureSpec {
   try {
-    return f.graph !== undefined ? parseFigureInput({ preset: "function-graph", ...f.graph }) : parseFigureInput(f.spec);
+    return f.graph !== undefined ? parseFigureInput({ preset: "function-graph", ...f.graph }) : parseFigureInput(statement ? withoutAnswers(f.spec) : f.spec);
   } catch (error) {
     throw new SpecError(`${where}: ${(error as Error).message}`);
   }
+}
+
+/**
+ * A statement's figure shows what the exercise gives, never what it asks
+ * (review of 2026-09-29): a circuit printing every solved current, or a
+ * Venn diagram printing the 37 the question asks for, hands the reader the
+ * answer. So a statement figure of a preset that can hide its answers does,
+ * unless its author says `"answers": true`. A solution figure is untouched.
+ */
+function withoutAnswers(spec: unknown): unknown {
+  if (typeof spec !== "object" || spec === null) return spec;
+  const o = spec as Record<string, unknown>;
+  if (typeof o.preset !== "string" || !ANSWER_AWARE.includes(o.preset) || o.answers !== undefined) return spec;
+  return { ...o, answers: false };
 }
 
 /**
@@ -800,10 +814,11 @@ export type FigureCache = Map<string, RenderedFigure>;
 
 /** Draw one resolved figure through the full pipeline -- its checks are the sheet's checks. */
 export async function renderSheetFigure(r: ResolvedFigure, cache?: FigureCache): Promise<RenderedFigure> {
-  const key = JSON.stringify(r.figure.graph ?? r.figure.spec);
+  // The kind is part of the key: one input is two figures when the statement's copy hides its answers.
+  const key = `${r.kind}:${JSON.stringify(r.figure.graph ?? r.figure.spec)}`;
   const hit = cache?.get(key);
   if (hit !== undefined) return hit;
-  const result = await render(figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`), {
+  const result = await render(figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`, r.kind === "q"), {
     raster: false,
   });
   const fails = result.manifest.checks.filter((c) => c.status === "fail");

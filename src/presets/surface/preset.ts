@@ -324,7 +324,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
     if (above > 0 && below > 0) {
       throw new SpecError(
         `point.tangentPlane: the surface crosses its tangent plane near ${P.name} (it lies above it in some directions and below in others, as at a saddle point). ` +
-          "The painter's order cannot stack two surfaces that cross -- draw this one with the matplotlib module (modules/plot)",
+          "The painter's order cannot stack two surfaces that cross -- no module draws it yet (modules/plot fits least squares only); choose a point off the saddle or draw the plane without its tangency",
       );
     }
     if (top > 0 && under > 0) {

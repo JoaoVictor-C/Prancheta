@@ -20,7 +20,6 @@
  *     release so their glyph shapes and metrics agree.
  */
 
-import { readFile } from "node:fs/promises";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -35,24 +34,11 @@ export const BUNDLED_FONT_FAMILY = "Prancheta Sans";
 const WOFF2_PATH = join(fontsDir, "Inter-Regular.woff2");
 const OUTLINE_PATH = join(fontsDir, "Inter-Variable.ttf");
 
-let cachedFaceCss: Promise<string> | undefined;
-
-/** The `@font-face` rule embedding the bundled WOFF2, base64-encoded. Cached after first read. */
-export async function bundledFontFaceCss(): Promise<string> {
-  if (cachedFaceCss === undefined) {
-    cachedFaceCss = readFile(WOFF2_PATH).then(
-      (bytes) =>
-        `@font-face { font-family: "${BUNDLED_FONT_FAMILY}"; ` +
-        `src: url(data:font/woff2;base64,${bytes.toString("base64")}) format("woff2"); }`,
-    );
-  }
-  return cachedFaceCss;
-}
-
 /**
- * Synchronous variant of the above, for callers (the HTML mirror builder)
- * that cannot go async without rippling an `await` through every layout
- * function above them. Reads the same file; not cached separately, but the
+ * The `@font-face` rule embedding the bundled WOFF2, base64-encoded.
+ * Synchronous, for callers (the HTML mirror builder) that cannot go async
+ * without rippling an `await` through every layout function above them.
+ * Not cached, but the
  * OS page cache makes the repeat cost negligible against a headless-Chromium
  * layout pass.
  */
