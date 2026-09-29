@@ -127,3 +127,23 @@ it than to anything else, which is what a leader would say; a leader would be a
 second mark for the label to be nearer than); a boundary label that would land
 on a tick number replaces that tick's number rather than sharing its row, so
 1050 can go missing beside a bold 1000.
+
+## answers: false
+
+The figure of the question: curve or bars, the event shaded, and the boundary
+values the statement gives. Hidden: the P value inside the region, the reading
+panel (standardisation, Φ arithmetic, complement, the approximation's
+calculation), the z row and its tick numbers (`showZ` is the standardisation
+the exercise asks for), and — for `approximation: "normal"` — the approximating
+curve, its N(μ; σ²) label and the continuity edges (they are the solution of
+"aproxime"; the question shows the binomial or Poisson bars with the event).
+For a two-sided test given by `alpha` the critical values are what is asked:
+the shaded tails and their boundary lines stay, the numbers under them and the
+α/2 labels do not (given as a critical z, the boundary is a datum and stays).
+The heading keeps the law, and the title loses `= P`.
+
+## Magnitudes
+
+Boundaries, ticks and the μ ± zσ line are written in full (`0,0125`, not
+`0,013`; `50000`), and a computed critical x is rounded to a thousandth of σ.
+A result line too long for the canvas is carried over before an operator.

@@ -1,0 +1,10 @@
+{
+  "preset": "value-table",
+  "title": "Tabela de valores (para completar): f(x) = x² − 1",
+  "variable": "x",
+  "xs": [-2, -1, 0, 1, 2],
+  "functions": [
+    { "name": "f", "expr": "x^2 - 1" }
+  ],
+  "answers": false
+}

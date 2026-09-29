@@ -96,6 +96,8 @@ export type CircuitInput = {
   symbols?: "zigzag" | "iec";
   title?: string;
   locale?: Locale;
+  /** false: draw what the exercise gives, none of what it asks (no arrows, readings, U, V or P). Default true. */
+  answers?: boolean;
 };
 
 // ---- palette and geometry ------------------------------------------------------------
@@ -458,6 +460,7 @@ export function expandCircuit(input: CircuitInput): FigureSpec {
 function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: FigureSpec; crowded: boolean } {
   const locale = input.locale ?? "pt-BR";
   const title = input.title ?? "circuito elétrico";
+  const answers = input.answers !== false;
   const show = input.show ?? {};
   const iec = input.symbols === "iec";
   const comps = normalise(input);
@@ -490,7 +493,7 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
     return `${q.rel} ${q.text}`;
   };
   const branches = analyseBranches(input, sol);
-  if (currentsIn === "panel" && show.currents !== false) {
+  if (answers && currentsIn === "panel" && show.currents !== false) {
     const items = branches.map((b) => {
       const q = withUnit(Math.abs(b.current), "A", locale);
       return `${b.name} ${q.rel} ${q.text}`;
@@ -498,6 +501,7 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
     for (let k = 0; k < items.length; k += 3) panel.push([{ text: items.slice(k, k + 3).join("\u00a0".repeat(5)) }]);
   }
   (show.voltages ?? []).forEach(([a, b], i) => {
+    if (!answers) return;
     const path = `circuit.show.voltages[${i}]`;
     for (const n of [a, b]) if (!(n in nodes)) throw new SpecError(`${path}: unknown node ${JSON.stringify(n)}`);
     const u = V(a, path) - V(b, path);
@@ -516,14 +520,14 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
     });
   }
   const drawGround = input.ground !== undefined || show.nodeVoltages === true;
-  if (show.nodeVoltages === true) {
+  if (show.nodeVoltages === true && answers) {
     const listed = shownNodes.filter((n) => sol.potential.has(n)).sort();
     for (const n of listed) {
       const pot = V(n, "circuit.show.nodeVoltages");
       panel.push([{ text: "V" }, { text: n, sub: true }, { text: ` ${sol.merged.get(n) === sol.merged.get(sol.ground) ? "= 0 (referência)" : unitText(pot, "V")}` }]);
     }
   }
-  if (show.power === true) {
+  if (show.power === true && answers) {
     for (const c of comps) {
       let p: number;
       let role = "";
@@ -663,6 +667,7 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
       const letter = c.kind === "ammeter" ? "A" : "V";
       board.label(letter, s.c.x, s.c.y, { size: 14, weight: 700, colour: INK, width: 14, annotates: l.mainId, id: `label-${c.id}-letter` });
       placer.commit(rectAt(s.c, 14, 18));
+      if (!answers) continue;
       const reading = c.kind === "ammeter" ? Math.abs(I(c.id)) : V(c.to, valuePath) - V(c.from, valuePath);
       const q = withUnit(reading, c.kind === "ammeter" ? "A" : "V", locale);
       const readText = `${q.rel === "≈" ? "≈ " : ""}${q.text === "0" ? `0 ${c.kind === "ammeter" ? "A" : "V"}` : q.text}`;
@@ -672,7 +677,7 @@ function layout(input: CircuitInput, currentsIn: "drawing" | "panel"): { spec: F
 
   // ---- branch currents ------------------------------------------------------------------------
   let crowded = false;
-  if (show.currents !== false) drawCurrents();
+  if (answers && show.currents !== false) drawCurrents();
 
   function drawCurrents(): void {
     const root = (n: string): string => sol.merged.get(n)!;

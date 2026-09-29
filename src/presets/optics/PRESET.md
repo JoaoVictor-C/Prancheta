@@ -136,3 +136,17 @@ dispersion, polarisation. **Very small angles**: an angle arc needs room for
 its own label inside its wedge, so below about 14° the rays are drawn longer
 (to 300 px) and, when even that is not enough, the arc is drawn without its
 label and the panel gives the value.
+
+## answers: false
+
+Draws what the exercise gives and nothing it asks. **Lens and mirror:** the
+axis, the element, F and F′ (or F and C, and A, A′ with `antiprincipal`), the
+object and the `objeto` label, and one panel line with the givens
+(`p = 30 cm; f = 10 cm; o = 3 cm`). Hidden: every principal ray and its
+backward extension, the image arrow and its label, and the p′ / A / nature
+lines. The frame no longer widens to take in the image, so the canvas does not
+betray where it is. **Interface:** the incident ray, the normal, both media,
+the point I, the θ₁ arc, and a panel line with n₁, n₂ and θ₁. Hidden: the
+refracted ray and its θ₂ arc, the thick total-reflection ray and its arc, and
+the Snell, θc and verdict lines. The thin reflected ray follows the existing
+`reflected` flag (it is θ₁ again, a given).

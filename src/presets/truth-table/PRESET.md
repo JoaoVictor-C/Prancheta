@@ -86,3 +86,14 @@ six variables.
 Fixtures: [`fixtures/truth-table/`](../../../fixtures/truth-table/majority-minterms-digital.json).
 Tests: `tests/truth-table.test.ts` (decodes the drawn cells against hand-worked
 tables) and `tests/boolean.test.ts` (the grammar and the minimiser).
+
+## answers: false
+
+A "complete a tabela" figure. Kept: the frame, every header (variables,
+subexpression columns, result columns with their typeset expressions), the
+variable columns filled with every assignment, and the row-number column when
+`minterms` is on (a row's number is its position, not a result). Hidden: every
+cell of a subexpression or result column (they are drawn empty, and those
+columns keep the width of one cell), and the whole panel, so `classify`,
+`compare` and `minterms` print no tautologia / equivalência line, no Σm and no
+simplified form even when their flags are set.

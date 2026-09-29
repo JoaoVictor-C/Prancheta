@@ -73,3 +73,25 @@ terminate within six places, otherwise rounded and marked `≈`.
 Up to 32 leaves and 6 levels; the canvas grows rather than crams. No
 tree editing beyond typed input; no continuous distributions; events are sets
 of leaves, so an event not expressible as paths or a count is written as paths.
+
+## answers: false
+
+The figure of the question: the tree, its stage headings and the branch
+probabilities the statement *gives*. Hidden: the path-product column and its
+heading, the highlighted event paths, every event sum and conditional in the
+panel. A branch whose probability is computed is also hidden: one left out of
+the input to be "1 minus the others", and — decision for the urn — **every**
+branch of an urn-built tree, since its fractions are counted from the urn and
+are exactly what "construa a árvore" asks for. The urn's contents are given, so
+a line under the tree restates them (`urna: 3 V · 2 A · sem reposição`). An
+exercise whose statement hands over the whole tree should type it with `root`
+and every `p` written out; those are kept. Events and `given` are still
+validated, but nothing of them is drawn.
+
+## Magnitudes
+
+An urn of thousands of balls writes `2999/6499`. In a fan of three or more the
+level branch's label must stay clear of the rising neighbour, which needs a
+longer branch and a taller row gap when the labels are wide (`wideFan`); the
+figure grows (27 leaves of 4-digit fractions is 1270 × 2263) and the tree stays
+under the 32-leaf limit and 4000 px.

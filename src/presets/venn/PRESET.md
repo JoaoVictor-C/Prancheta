@@ -116,3 +116,13 @@ With `shade`, the caption lists the shaded elements: `A − B = {a, b}`.
 
 Four or more sets (a circle diagram does not give all the regions), area-
 proportional diagrams, and shading by hatching (fills are one tint).
+
+## answers: false
+
+The empty diagram: the circles, the set names and the universe, nothing else.
+No shading (what to shade is the question), no region counts (the data are in
+the statement; the regions' values are the answer), no elements placed in
+regions (where each belongs is what "represente" asks) and no caption. With
+`elements` the circles keep the standard size, since nothing is written inside.
+The input is still solved, so contradictory data are refused either way. Counts
+up to seven digits fit their regions (checked at 250 000 and 1 234 567).

@@ -205,7 +205,7 @@ export class SpacePlacer {
  */
 export function aroundPlace(p: Point, w: number, h: number, r: number): Point[] {
   const out: Point[] = [];
-  for (const extra of [0, 3, 7, 12, 18, 26]) {
+  for (const extra of [0, 3, 7, 12, 18, 26, 38, 52, 70]) {
     const g = r + MARGIN + 2 + extra;
     const d = g * Math.SQRT1_2;
     out.push(

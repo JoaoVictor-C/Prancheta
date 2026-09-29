@@ -409,3 +409,27 @@ test("render: a forced line with a skip edge, a placed layout and a determinised
     }
   }
 });
+
+// ---- answers: false ------------------------------------------------------------------------------
+
+fixtures.forEach((filename) => {
+  test(`answers:false ${filename}: the diagram and the word list stay, no path and no verdict`, async () => {
+    const input = load(filename);
+    const on = blocksOf(expand(input)).map((b) => b.label ?? "");
+    const spec = expand({ ...input, answers: false });
+    const off = blocksOf(spec).map((b) => b.label ?? "");
+    const joined = off.join("\n");
+    assert.ok(!/aceita|rejeita|→/.test(joined), `${filename}: ${joined}`);
+    assert.ok(on.some((t) => /aceita|rejeita/.test(t)), "answers:true still prints the verdicts");
+    // Every state, every edge label and the header survive; every word is still listed, with "?".
+    for (const s of automatonOf(filename).states) assert.ok(off.includes(prettyName(s)), `state ${s}`);
+    assert.ok(off.some((t) => t.startsWith("AF") && t.includes("F = ")), "header with F");
+    const words = (input.words as string[] | undefined) ?? [];
+    if (words.length > 0) {
+      for (const w of words) assert.ok(off.includes(`${w === "" ? "ε" : w}:`), `word ${JSON.stringify(w)} listed`);
+      assert.equal(off.filter((t) => t === "?").length, words.length);
+    }
+    const result = await render(spec, { maxPasses: 3, raster: false });
+    for (const check of result.manifest.checks) assert.ok(check.status === "pass" || check.status === "not-applicable", `${filename}: ${check.id} ${check.status}: ${check.detail}`);
+  });
+});

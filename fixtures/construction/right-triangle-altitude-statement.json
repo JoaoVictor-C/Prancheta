@@ -1,0 +1,20 @@
+{
+  "preset": "construction",
+  "title": "Triângulo retângulo 3-4-5, o enunciado: a altura h é o que se pede",
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [4, 0] },
+    { "C": [0, 3] },
+    { "name": "ABC", "polygon": ["A", "B", "C"] },
+    { "name": "H", "foot": { "of": "A", "on": "BC" }, "answer": true },
+    { "name": "h", "perpendicular": { "through": "A", "to": "BC" }, "draw": "segment", "dashed": true, "answer": true }
+  ],
+  "annotations": [
+    { "angle": ["C", "B", "A"] },
+    { "length": "AB" },
+    { "length": "AC" },
+    { "length": "BC" },
+    { "length": "h", "name": "h" }
+  ],
+  "answers": false
+}

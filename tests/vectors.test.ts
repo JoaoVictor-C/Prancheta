@@ -306,3 +306,111 @@ for (const name of ["parallelogram-angle.json", "projection-decomposition.json"]
     assert.equal(owner?.status, "pass", owner?.detail);
   });
 }
+
+// --- review of 2026-09-29: the unit follows the data, and answers can be withheld ---
+
+const fixtureInput = (name: string): VectorsInput => JSON.parse(readFileSync(fileURLToPath(new URL(`../fixtures/vectors/${name}`, import.meta.url)), "utf8")) as VectorsInput;
+const childrenOf = (spec: ReturnType<typeof expandVectors>): Block[] => (spec.root as Scene).children as Block[];
+const textsOf = (spec: ReturnType<typeof expandVectors>): string[] => childrenOf(spec).filter((b) => !String(b.id ?? "").startsWith("plane-tick")).map((b) => b.label ?? "");
+const idsOf = (spec: ReturnType<typeof expandVectors>): string[] => [...(((spec.root as Scene).connectors ?? []) as { id?: string }[]).map((c) => String(c.id)), ...(((spec.root as Scene).marks ?? []) as { id?: string }[]).map((m) => String(m.id))];
+const ticksOn = (spec: ReturnType<typeof expandVectors>, axis: "x" | "y"): number => childrenOf(spec).filter((b) => new RegExp(`^plane-tick-${axis}-|^plane-tick-origin`).test(b.id ?? "")).length;
+const passing = async (input: VectorsInput): Promise<void> => {
+  const result = await render(expandVectors(input), { raster: false });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
+};
+
+test("probe: a force (3000; 4000) is a sane canvas with a dozen numbers at most, and every check passes", { timeout: 240000 }, async () => {
+  const input: VectorsInput = { vectors: [{ name: "F", components: [3000, 4000] }] };
+  const spec = expandVectors(input);
+  const w = (spec.root as Scene).width as number;
+  const h = (spec.root as Scene).height as number;
+  assert.ok(w >= 60 && w <= 4000 && h >= 60 && h <= 4000, `${w} x ${h}`);
+  for (const axis of ["x", "y"] as const) assert.ok(ticksOn(spec, axis) >= 3 && ticksOn(spec, axis) <= 12, `${ticksOn(spec, axis)} numbers on ${axis}`);
+  await passing(input);
+});
+
+test("probe: a vector (0,02; 0,03) is drawn as a legible arrow, numbered and measured", { timeout: 240000 }, async () => {
+  const input: VectorsInput = { vectors: [{ name: "F", components: [0.02, 0.03] }] };
+  const spec = expandVectors(input);
+  const arrow = ((spec.root as Scene).connectors ?? []).find((c) => c.id === "F")!;
+  const from = arrow.from as { x: number; y: number };
+  const to = arrow.to as { x: number; y: number };
+  assert.ok(Math.hypot(to.x - from.x, to.y - from.y) > 200, "the arrow is a couple of hundred pixels long, not a stub");
+  for (const axis of ["x", "y"] as const) assert.ok(ticksOn(spec, axis) >= 3 && ticksOn(spec, axis) <= 12, `${ticksOn(spec, axis)} numbers on ${axis}`);
+  assert.ok(textsOf(spec).includes("0,036"), "the magnitude is printed to two significant digits, not rounded away");
+  await passing(input);
+});
+
+test("the same vector at any magnitude is the same figure", () => {
+  const at = (s: number): { w: number; h: number; x: number; y: number } => {
+    const spec = expandVectors({ vectors: [{ name: "F", components: [3 * s, 4 * s] }] });
+    return { w: (spec.root as Scene).width as number, h: (spec.root as Scene).height as number, x: ticksOn(spec, "x"), y: ticksOn(spec, "y") };
+  };
+  assert.deepEqual(at(1000), at(1));
+  assert.deepEqual(at(0.001), at(1));
+});
+
+test("measuredLabel keeps two significant digits below 0,5 and hundredths above", () => {
+  assert.equal(measuredLabel(0.036), "0,036");
+  assert.equal(measuredLabel(0.0072), "0,0072");
+  assert.equal(measuredLabel(0.02), "0,02");
+  assert.equal(measuredLabel(0.5), "0,5");
+  assert.equal(measuredLabel(57.529), "57,53");
+  assert.equal(measuredLabel(8), "8");
+});
+
+test("answers: false parallelogram keeps u and v and nothing derived: no sum, guides, angle or value", () => {
+  const input = fixtureInput("parallelogram-angle.json");
+  const full = expandVectors(input);
+  const bare = expandVectors({ ...input, answers: false });
+  assert.ok(idsOf(full).includes("u+v") && idsOf(full).some((i) => i.startsWith("angle-")));
+  assert.deepEqual(idsOf(bare).filter((i) => !/^(axis|plane)-/.test(i)).sort(), ["u", "v"]);
+  const text = textsOf(bare).join(" ; ");
+  assert.deepEqual(textsOf(bare).filter((t) => t !== "" && !/^[uv]$/.test(t)).sort(), ["u = (4; 1)", "v = (1; 3)"]);
+  assert.ok(!/[|°√]|u\+v|55|4,12|3,16/.test(text), text);
+  assert.ok(/√17/.test(textsOf(full).join("|")), "the full figure does print them");
+});
+
+test("answers: false keeps the frame of the full figure, so the question and the answer overlay", () => {
+  for (const name of ["parallelogram-angle.json", "projection-decomposition.json"]) {
+    const input = fixtureInput(name);
+    const a = expandVectors(input);
+    const b = expandVectors({ ...input, answers: false });
+    assert.equal((a.root as Scene).width, (b.root as Scene).width, name);
+    // (a tick number steps aside from ink it would touch, so only which numbers there are, and where along the axis, is compared)
+    const ticks = (sp: ReturnType<typeof expandVectors>): string[] => childrenOf(sp).filter((c) => String(c.id).startsWith("plane-tick")).map((c) => `${c.id}:${c.label}:${/tick-y/.test(String(c.id)) ? Math.round(c.y!) : Math.round(c.x!)}`);
+    assert.deepEqual(ticks(a), ticks(b), name);
+  }
+});
+
+test("answers: false displacement between points keeps A, B and AB, and prints no components or length", () => {
+  const input = JSON.parse(readFileSync(fixture, "utf8")) as VectorsInput;
+  const bare = expandVectors({ ...input, answers: false });
+  const text = textsOf(bare);
+  assert.ok(text.includes("A") && text.includes("B") && text.includes("AB") && text.includes("F"));
+  assert.deepEqual(text.filter((t) => /=/.test(t)), ["F = (6; −4)"], "F is typed, so its components are a datum; |F| and everything about AB are not");
+  assert.ok(!text.some((t) => /\||√|7,21/.test(t)));
+});
+
+test("answers: false keeps a magnitude that was the datum, and drops the components computed from it", () => {
+  const bare = expandVectors({ ...fixtureInput("projection-decomposition.json"), answers: false });
+  const text = textsOf(bare);
+  assert.ok(text.includes("w: |w| = 5, θ = 143,13°"), text.join("|"));
+  assert.ok(text.includes("5"), "the given magnitude is on the arrow");
+  assert.ok(!text.some((t) => /w = \(|î|ĵ|proj/.test(t)));
+  assert.ok(!idsOf(bare).some((i) => /proj|decompose/.test(i)));
+});
+
+test("answers: true (or unset) is exactly the figure it was before the option existed", () => {
+  for (const name of ["parallelogram-angle.json", "physics-forces.json", "projection-decomposition.json"]) {
+    const input = fixtureInput(name);
+    assert.deepEqual(expandVectors({ ...input, answers: true }), expandVectors(input), name);
+  }
+});
+
+for (const name of ["parallelogram-angle.json", "physics-forces.json", "projection-decomposition.json", "projection-decomposition-statement.json"]) {
+  test(`${name} with answers: false renders with every check passing`, { timeout: 240000 }, async () => {
+    await passing({ ...fixtureInput(name), answers: false });
+  });
+}

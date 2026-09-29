@@ -67,6 +67,8 @@ export type TruthTableInput = {
   classify?: boolean;
   /** Panel: are the expressions' columns equal? (every pair) */
   compare?: boolean;
+  /** false: the frame, the headers and the variable columns only; every computed cell empty, no panel. Default true. */
+  answers?: boolean;
 };
 
 /** Tables past this many variables would need more rows than a page holds. */
@@ -142,6 +144,7 @@ function wrap(board: Board, text: string, size: number, maxWidth: number): strin
 export function expandTruthTable(input: TruthTableInput): FigureSpec {
   const notation: Notation = input.notation ?? "logic";
   const sym = symbolsOf(notation);
+  const answers = input.answers !== false;
   const parsed = input.expressions.map((e, i) => parseExpression(e, i, notation));
 
   // Variables: the caller's order, or first appearance across the expressions.
@@ -194,7 +197,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
         columns.push({
           kind: "sub",
           head: [formatBool(sub, notation)],
-          cells: truthRows(sub, vars, order).map((r) => cellText(r.result)),
+          cells: truthRows(sub, vars, order).map((r) => (answers ? cellText(r.result) : "")),
           bold: false,
         });
       }
@@ -205,7 +208,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
     columns.push({
       kind: "result",
       head: p.label === undefined ? [p.typeset] : [p.label, p.typeset],
-      cells: rowsPerExpr[ei]!.map((r) => cellText(r.result)),
+      cells: rowsPerExpr[ei]!.map((r) => (answers ? cellText(r.result) : "")),
       bold: true,
     });
   });
@@ -220,7 +223,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
     return `vale 1 em ${n} das ${rowCount} linhas`;
   };
 
-  if (input.classify === true) {
+  if (answers && input.classify === true) {
     for (const [ei, p] of parsed.entries()) {
       const trues = rowsPerExpr[ei]!.filter((r) => r.result).length;
       const kind = classify(p.expr, vars);
@@ -238,7 +241,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
     }
   }
 
-  if (input.compare === true) {
+  if (answers && input.compare === true) {
     for (let a = 0; a < parsed.length; a += 1) {
       for (let b = a + 1; b < parsed.length; b += 1) {
         const pa = parsed[a]!;
@@ -260,7 +263,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
     }
   }
 
-  if (input.minterms === true) {
+  if (answers && input.minterms === true) {
     for (const p of parsed) {
       const prefix = parsed.length > 1 ? `${p.name}: ` : "";
       const ms = mintermsOf(p.expr, vars);
@@ -281,7 +284,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
     Math.max(
       50,
       ...c.head.map((h) => probe.measure(h, HEAD_SIZE) + 26),
-      ...c.cells.map((t) => probe.measure(t, CELL_SIZE) + 26),
+      ...(c.cells.every((t) => t === "") ? [probe.measure(sym.t, CELL_SIZE) + 26] : c.cells.map((t) => probe.measure(t, CELL_SIZE) + 26)),
     ),
   );
   const tableW = colW.reduce((s, w) => s + w, 0);
@@ -362,6 +365,7 @@ export function expandTruthTable(input: TruthTableInput): FigureSpec {
       });
     });
     c.cells.forEach((text, r) => {
+      if (text === "") return;
       board.label(text, cx, y0 + headH + r * ROW + ROW / 2, {
         freeStanding: true,
         size: CELL_SIZE,

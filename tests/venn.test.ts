@@ -536,3 +536,37 @@ fixtures.forEach((filename) => {
     }
   });
 });
+
+// ---- answers: false, and magnitudes ---------------------------------------------------------------
+
+const vennPasses = async (input: VennInput, what: string): Promise<void> => {
+  const result = await render(expandVenn(input), { maxPasses: 3 });
+  for (const c of result.manifest.checks) assert.ok(c.status === "pass" || c.status === "not-applicable", `${what}: ${c.id} ${c.status}: ${c.detail}`);
+};
+const SURVEY: VennInput = { sets: ["A", "B", "C"], counts: { total: 130, A: 60, B: 50, C: 40, "A∩B": 20, "A∩C": 15, "B∩C": 10, "A∩B∩C": 5 }, shade: "C'" };
+
+test("answers:true is the default and changes nothing", () => {
+  assert.deepEqual(expandVenn({ ...SURVEY, answers: true }), expandVenn(SURVEY));
+});
+
+test("answers:false is the empty diagram: circles, names and the universe, no counts, shading or caption", async () => {
+  const q = { ...SURVEY, answers: false };
+  const spec = expandVenn(q);
+  const labels = blocksOf(spec).map((b) => b.label);
+  assert.deepEqual([...labels].sort(), ["A", "B", "C", "U"]);
+  const marks = (spec.root as Scene).marks ?? [];
+  assert.ok(!marks.some((m) => m.fill !== undefined && /^#9DBDE9$/i.test(m.fill)), "nothing shaded");
+  await vennPasses(q, "venn counts answers:false");
+  const els: VennInput = { sets: ["A", "B"], elements: { U: [1, 2, 3, 4, 5, 6], A: [1, 2, 3], B: [3, 4] }, shade: "A ∩ B", answers: false };
+  assert.deepEqual(blocksOf(expandVenn(els)).map((b) => b.label).sort(), ["A", "B", "U"]);
+  await vennPasses(els, "venn elements answers:false");
+});
+
+test("answers:false still refuses contradictory data", () => {
+  assert.throws(() => expandVenn({ sets: ["A", "B"], counts: { total: 10, A: 5, B: 5, "A∩B": 9 }, answers: false }), SpecError);
+});
+
+test("counts in the thousands and hundreds of thousands fit their regions", async () => {
+  await vennPasses({ sets: ["A", "B", "C"], counts: { total: 250000, A: 60000, B: 50000, C: 40000, "A∩B": 20000, "A∩C": 15000, "B∩C": 10000, "A∩B∩C": 5000 } }, "venn 5-digit");
+  await vennPasses({ sets: ["A", "B"], counts: { regions: { A: 123456, "A∩B": 98765, B: 12345, none: 1234567 } } }, "venn 7-digit");
+});

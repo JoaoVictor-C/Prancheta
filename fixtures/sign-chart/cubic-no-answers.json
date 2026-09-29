@@ -1,0 +1,6 @@
+{
+  "preset": "sign-chart",
+  "title": "Quadro de sinais (para completar): f(x) = x³ − 3x",
+  "expr": "x^3 - 3*x",
+  "answers": false
+}

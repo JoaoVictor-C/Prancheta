@@ -188,3 +188,33 @@ points satisfy `f = c`, a gradient is perpendicular to its level curve; for char
 - With many lines (|q| of 2 or more) the name sits on a long leader: the fan
   leaves no room nearer.
 - Three or more charges have no simple Gauss count to check; none is claimed.
+
+## Scale
+
+The unit is **fitted** to the range: the larger side of `x`/`y` (with its 8 %
+margin) fills about 460 px, so a range of `[0, 5000]`, of `[0, 0,2]` and of
+`[-4, 4]` are the same figure at different numbers. The tick step and the
+lattice step are 1, 2 or 5 × 10ᵏ at any k (`src/presets/shared/scale.ts`),
+about eight numbers to an axis and `density` (default 11) marks, so a mark is
+never closer to its neighbour than a readable distance. `∇f` is taken with a
+step in proportion to the range.
+
+## answers: false
+
+`"answers": false` draws what a Cálculo 2 or Física statement **gives**. A
+sheet sets it on every statement figure; the solution figure keeps the
+default. The frame, ranges and canvas are the same either way, so the two
+overlay.
+
+| kind | kept (the givens) | withheld (what is asked) |
+| --- | --- | --- |
+| `slope` | every slope mark, the axes and numbers, a dot at each `solutions[i].at` (y(x₀) = y₀ is a datum) | the solution curves and the `solução por …` readings |
+| `vector` | every arrow, the axes, a dot at each `flowLines[i].at` | the flow lines, their labels and the `linha de fluxo …` readings |
+| `levels` | the axes and numbers, a dot at each `gradientAt` point | the level curves and their values, the ∇f arrows |
+| `charges` | the charges, their signs and names, the box | the field lines and arrowheads, the null points, the equipotentials and their values, the panel |
+
+Decided, not obvious: a **level curve** is the answer to "esboce as curvas de
+nível", and an **equipotential** to "esboce as equipotenciais", so both go with
+the field lines. An exercise that instead *gives* the contour map to read a
+gradient off it writes `"answers": true` on that figure (a sheet leaves an
+explicit value alone).

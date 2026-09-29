@@ -65,3 +65,11 @@ school solids (use [`solid`](../solid/PRESET.md)), or for a flat contour map
 - **Refused outright:** a camera looking from below or straight down, a
   floor above the z range, a point outside the domain, in a hole, outside
   the z range or on a part of the surface the camera does not see.
+
+## answers: false
+
+A question on a surface gives the function, its domain and a point, and asks for what follows from them: the tangent plane, the partial derivatives, the point's height, the level curves. With `answers: false` the figure keeps the shaded mesh, the axes, the stated z cut and the point's dot and name (its place is given: its reading becomes `P: x = 1; y = 1`), and drops the tangent plane and its patch, the fx and fy line and the plane's equation, the point's z and its dashed guides to the axes, and the level curves (on the surface and on the floor) with the line that lists their values, even when `levels` is set: a level curve is the drawing that answers "esboce as curvas de nível". The point's height is still visible on the drawing where the dot sits; a picture cannot avoid that.
+
+## Scale
+
+The page scale is fitted to the drawing's extent (about 500px on its longer side, at any magnitude), not fixed at a floor of 18px per unit: over [−100, 100]² it was 5046 × 5543px and is now 588 × 686. The z scale was already derived from the ratio of heights to the domain. Axis ticks are 1, 2 or 5 × 10ᵏ.

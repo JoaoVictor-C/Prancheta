@@ -118,3 +118,13 @@ Turing machines, pushdown automata, transducers; edge labels with more than one
 character per symbol; a drawn dead state (say `partial` and the panel states it);
 a dense automaton (eight or more states with many crossing edges) is drawn
 correctly but its labels can sit close to crossing edges — give a `layout`.
+
+## answers: false
+
+"Which of these words does it accept?" is the usual question, and the diagram
+is its given, so the diagram stays whole: states, start arrow, accepting
+rings, every edge label, and the header line with Σ and F (and the implicit
+dead-state note of a `partial` DFA). The run panel keeps the word list but
+loses what was computed: each line reads `aab: ?` instead of the path or
+state sets and `aceita` / `rejeita`. The words are still validated against
+the alphabet.

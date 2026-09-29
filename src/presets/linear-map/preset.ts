@@ -36,6 +36,7 @@ import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
 import { Placer, aroundPoint, pointToPolyline, rectAt, segmentHitsRect } from "../construction/place.ts";
 import type { Claim, Rect } from "../construction/place.ts";
+import { fitUnits, niceStep } from "../shared/scale.ts";
 import { sqrtLabel, splitSquare } from "../vectors/preset.ts";
 
 // ---- input ------------------------------------------------------------------
@@ -64,6 +65,8 @@ export type LinearMapInput = {
   show?: LinearMapShow;
   shapes?: LinearMapShape[];
   points?: LinearMapPoint[];
+  /** false: the question's figure -- the given and its frame, no image, T(e₁), T(e₂), parallelogram, eigen-lines or results. Default true. */
+  answers?: boolean;
 };
 
 export type Matrix = [[number, number], [number, number]];
@@ -87,7 +90,6 @@ const TINT = "1C";
 
 const MARGIN = 56;
 const PLOT_TARGET_PX = 460;
-const MIN_UNIT = 22;
 const MAX_UNIT = 90;
 const MIN_WIDTH = 620;
 const RANGE_MARGIN = 0.5;
@@ -470,12 +472,6 @@ export function complexPairText(re: number, im: number, locale: Locale = "pt-BR"
 
 // ---- the plot's frame ---------------------------------------------------------------------
 
-/** A tick step a reader counts by, at most `maxLines` divisions across the span. */
-export function tickStepFor(span: number, maxLines = 10): number {
-  for (const s of [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]) if (span / s <= maxLines) return s;
-  return 1000;
-}
-
 /** Where the line P0 + t·D (t ∈ ℝ) is inside the box, as two endpoints, or null. */
 export function clipLineToBox(p0: Vec, dir: Vec, box: { xlo: number; xhi: number; ylo: number; yhi: number }): [Vec, Vec] | null {
   let t0 = -Infinity;
@@ -672,8 +668,13 @@ const fmtInt = (n: number): string => String(n).replace("-", MINUS);
 export function planeGeometry(x: [number, number], y: [number, number]): { unit: number; step: number; plotWidth: number; plotHeight: number; width: number; origin: Point } {
   const spanX = x[1] - x[0];
   const spanY = y[1] - y[0];
-  const unit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, PLOT_TARGET_PX / Math.max(spanX, spanY)));
-  const step = tickStepFor(Math.max(spanX, spanY));
+  // One unit on both axes (angles and areas must survive), FITTED to the box:
+  // a stretch of 300 gives a plane of the same size as a stretch of 3, with
+  // the unit square correspondingly small -- that is what the map does.
+  const { xUnit: unit } = fitUnits(spanX, spanY, { equal: true, targetWidth: PLOT_TARGET_PX, targetHeight: PLOT_TARGET_PX, maxUnit: MAX_UNIT });
+  // Whole units while the box is a few units wide (as it always was); 1, 2 or 5 x 10^k at any other magnitude.
+  const span = Math.max(spanX, spanY);
+  const step = span >= 4 ? Math.max(1, niceStep(span, 10)) : niceStep(span, 10);
   const plotWidth = Math.ceil(MARGIN * 2 + spanX * unit);
   const plotHeight = Math.ceil(MARGIN * 2 + spanY * unit);
   const width = Math.max(plotWidth, MIN_WIDTH);
@@ -721,6 +722,12 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
     }
   }
   const show = parseShow(input.show, shapes.length > 0 || named.length > 0);
+  // answers: false draws what the exercise GIVES (the plane, e₁ e₂, the unit
+  // square, the original shapes and points, the matrix as typed) and nothing
+  // it ASKS FOR (every image, T(e₁) T(e₂), the parallelogram and its area,
+  // the eigen-lines, the image line, det/tr and every reading). The box is
+  // still fitted to the images, so the question and its solution share one page.
+  const hide = input.answers === false;
 
   // ---- what must be inside the box ------------------------------------------
   const must: { what: string; p: Vec }[] = [{ what: "the origin", p: [0, 0] }];
@@ -769,7 +776,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   const box = { xlo, xhi, ylo, yhi };
 
   // ---- the panel's text first: its height decides the canvas -----------------------
-  const panel = buildPanel(A, det, tr, singular, show, shapes, named, locale);
+  const panel = buildPanel(A, det, tr, singular, show, shapes, named, locale, hide ? input.named : undefined, hide);
 
   // ---- frame ----------------------------------------------------------------------
   const { unit, step, plotHeight, width, origin } = planeGeometry([xlo, xhi], [ylo, yhi]);
@@ -834,7 +841,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
 
   // The image lattice, as grid furniture beneath everything else.
   let latticeStep = 1;
-  if (show.grid && !singular) {
+  if (show.grid && !singular && !hide) {
     const lattice = imageLattice(A, box, unit);
     latticeStep = lattice.step;
     for (const line of lattice.lines) {
@@ -875,7 +882,9 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
     });
     placer.addInk(squareIds.original, [...px, px[0]!], false);
     imageOrder = [[0, 0], t1, t12, t2];
-    if (singular) {
+    if (hide) {
+      // the parallelogram is the answer
+    } else if (singular) {
       // The parallelogram has collapsed onto a segment: draw the segment, as ink.
       const along = imageOrder.map((p) => p);
       const dirv = singularParts(A);
@@ -898,17 +907,18 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   const centroidOf = (pts: Point[]): Point => ({ x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length });
   shapes.forEach((s, i) => {
     const px = canvasRegion(`shape-${i}`, s.pts, `${ORIGINAL}${TINT}`, ORIGINAL, 1.8);
-    const ix = canvasRegion(`shape-${i}-image`, s.image, `${IMAGE}${TINT}`, IMAGE, 2.2);
+    const ix = hide ? [] : canvasRegion(`shape-${i}-image`, s.image, `${IMAGE}${TINT}`, IMAGE, 2.2);
     if (s.names === undefined) return;
     const ctr = centroidOf(px);
-    const ictr = centroidOf(ix);
+    const ictr = hide ? ctr : centroidOf(ix);
     s.names.forEach((n, j) => {
       const same = Math.hypot(s.pts[j]![0] - s.image[j]![0], s.pts[j]![1] - s.image[j]![1]) < 1e-9;
       const dir = (p: Point, o: Point): Point => {
         const len = Math.hypot(p.x - o.x, p.y - o.y) || 1;
         return { x: (p.x - o.x) / len, y: (p.y - o.y) / len };
       };
-      if (same) vertices.push({ id: `shape-${i}-v${j}`, name: `${n} = ${n}′`, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
+      if (hide) vertices.push({ id: `shape-${i}-v${j}`, name: n, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
+      else if (same) vertices.push({ id: `shape-${i}-v${j}`, name: `${n} = ${n}′`, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
       else {
         vertices.push({ id: `shape-${i}-v${j}`, name: n, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
         vertices.push({ id: `shape-${i}-v${j}-image`, name: `${n}′`, c: ix[j]!, colour: IMAGE, outward: dir(ix[j]!, ictr) });
@@ -918,7 +928,8 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   named.forEach((n, i) => {
     const p = at(n.p);
     const q = T(n.p);
-    if (Math.hypot(n.p[0] - q[0], n.p[1] - q[1]) < 1e-9) vertices.push({ id: `point-${i}`, name: `${n.name} = ${n.name}′`, c: p, colour: INK, outward: { x: 0, y: -1 } });
+    if (hide) vertices.push({ id: `point-${i}`, name: n.name, c: p, colour: INK, outward: { x: 0, y: -1 } });
+    else if (Math.hypot(n.p[0] - q[0], n.p[1] - q[1]) < 1e-9) vertices.push({ id: `point-${i}`, name: `${n.name} = ${n.name}′`, c: p, colour: INK, outward: { x: 0, y: -1 } });
     else {
       vertices.push({ id: `point-${i}`, name: n.name, c: p, colour: INK, outward: { x: 0, y: -1 } });
       vertices.push({ id: `point-${i}-image`, name: `${n.name}′`, c: at(q), colour: IMAGE, outward: { x: 0, y: -1 } });
@@ -931,7 +942,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   const disc = tr * tr - 4 * det;
   type Through = { id: string; seg: [Point, Point]; stroke: string; width: number; dashed: boolean; text: string; textColour: string };
   const through: Through[] = [];
-  if (show.eigen && eig.kind === "real") {
+  if (show.eigen && !hide && eig.kind === "real") {
     eig.lines.forEach((line, i) => {
       const seg = clipLineToBox([0, 0], line.direction, box);
       if (seg === null) return;
@@ -939,7 +950,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
       through.push({ id: `eigen-${i}`, seg: [at(seg[0]), at(seg[1])], stroke: EIGEN, width: 1.9, dashed: true, text: `λ ${w.exact ? "=" : "≈"} ${w.text}`, textColour: EIGEN_TEXT });
     });
   }
-  if (singular) {
+  if (singular && !hide) {
     const parts = singularParts(A);
     if (parts.rank === 1) {
       const seg = clipLineToBox([0, 0], parts.image, box);
@@ -951,11 +962,11 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   // spots that no ink crosses. Two lines through the origin at 45° cross all
   // four; then the lines are drawn with a small gap round the origin, which a
   // dashed line reads as anyway, instead of leaving the "0" struck through.
-  const arrowTips: Vec[] = show.basis ? [e1, e2, t1, t2] : [];
+  const arrowTips: Vec[] = show.basis ? (hide ? [e1, e2] : [e1, e2, t1, t2]) : [];
   const drawn: Point[][] = [
     ...arrowTips.map((tip) => [O, at(tip)]),
-    ...(show.unitSquare ? [[...([[0, 0], e1, corner, e2, [0, 0]] as Vec[]).map((p) => at(p))], [...([[0, 0], t1, t12, t2, [0, 0]] as Vec[]).map((p) => at(p))]] : []),
-    ...shapes.flatMap((sh) => [[...sh.pts, sh.pts[0]!].map((p) => at(p)), [...sh.image, sh.image[0]!].map((p) => at(p))]),
+    ...(show.unitSquare ? [[...([[0, 0], e1, corner, e2, [0, 0]] as Vec[]).map((p) => at(p))], ...(hide ? [] : [[...([[0, 0], t1, t12, t2, [0, 0]] as Vec[]).map((p) => at(p))]])] : []),
+    ...shapes.flatMap((sh) => [[...sh.pts, sh.pts[0]!].map((p) => at(p)), ...(hide ? [] : [[...sh.image, sh.image[0]!].map((p) => at(p))])]),
   ];
   const originSpots = tickPlan(frame, grid).find((t) => t.id === `${frame.id}-tick-origin`)?.spots.map((sp) => sp.box) ?? [];
   const hitsRect = (poly: Point[], r: Rect): boolean => {
@@ -996,8 +1007,10 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
     const same = (p: Vec, q: Vec): boolean => Math.hypot(p[0] - q[0], p[1] - q[1]) < 1e-9;
     type Named = { name: string; v: Vec; image: boolean; id: string };
     const items: Named[] = [
-      { name: "T(e₁)", v: t1, image: true, id: "image-e1" },
-      { name: "T(e₂)", v: t2, image: true, id: "image-e2" },
+      ...(hide ? [] : [
+        { name: "T(e₁)", v: t1, image: true, id: "image-e1" },
+        { name: "T(e₂)", v: t2, image: true, id: "image-e2" },
+      ]),
       { name: "e₁", v: e1, image: false, id: "basis-e1" },
       { name: "e₂", v: e2, image: false, id: "basis-e2" },
     ];
@@ -1107,10 +1120,34 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
 // ---- the reading panel -------------------------------------------------------------------------------
 
 type PanelData = {
-  entries: [[string, string], [string, string]];
+  /** Absent when the map is given by name and the matrix is what is asked for. */
+  entries?: [[string, string], [string, string]];
   head: string[]; // the lines beside the matrix
   body: string[]; // full-width lines beneath
 };
+
+/** A named map in words, as the exercise would state it. */
+function namedText(named: NamedMap, locale: Locale): string {
+  const n = named as Record<string, unknown>;
+  const num = (x: unknown): string => (typeof x === "number" ? formatNumber(x, locale) : String(x));
+  const angle = (x: unknown): string => (typeof x === "number" ? `${formatNumber(x, locale)}°` : String(x));
+  if ("rotation" in n) return `rotação de ${angle(n.rotation)}`;
+  if ("reflection" in n) {
+    const line = (n.reflection as { line: unknown }).line;
+    return typeof line === "number" ? `reflexão na reta de ângulo ${angle(line)}` : `reflexão na reta ${String(line)}`;
+  }
+  if ("shear" in n) {
+    const sh = n.shear as { x?: unknown; y?: unknown };
+    return sh.x !== undefined ? `cisalhamento horizontal de fator ${num(sh.x)}` : `cisalhamento vertical de fator ${num(sh.y)}`;
+  }
+  if ("scale" in n) {
+    const sc = n.scale as unknown[];
+    return `escala de fatores ${num(sc[0])} e ${num(sc[1])}`;
+  }
+  const onto = (n.projection as { onto: unknown }).onto;
+  if (Array.isArray(onto)) return `projeção sobre o vetor (${num(onto[0])}; ${num(onto[1])})`;
+  return typeof onto === "number" ? `projeção sobre a reta de ângulo ${angle(onto)}` : `projeção sobre a reta ${String(onto)}`;
+}
 
 function buildPanel(
   A: Matrix,
@@ -1121,6 +1158,8 @@ function buildPanel(
   shapes: { pts: Vec[]; names: string[] | undefined; image: Vec[] }[],
   named: Item[],
   locale: Locale,
+  givenName: NamedMap | undefined,
+  hide: boolean,
 ): PanelData {
   const fr = wantsFractions(A);
   const w = A.map((row) => row.map((x) => exactText(x, locale, fr))) as Written[][];
@@ -1130,6 +1169,12 @@ function buildPanel(
   ];
   const detW = exactText(det, locale);
   const trW = exactText(tr, locale);
+  if (hide) {
+    // The question's panel: the map as the exercise states it and nothing computed from it.
+    // A map given by name is stated by its name -- its matrix would be the answer.
+    if (givenName !== undefined) return { head: [`T: ${namedText(givenName, locale)}`], body: [] };
+    return { entries, head: [formulaOf(A, locale)], body: [] };
+  }
   const head = [formulaOf(A, locale), `det A ${detW.exact ? "=" : "≈"} ${detW.text}; tr A ${trW.exact ? "=" : "≈"} ${trW.text}`];
   const body: string[] = [];
   const inexact = w.flat().some((x) => !x.exact);
@@ -1260,6 +1305,13 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   const labels: PanelLayout["labels"] = [];
   const brackets: PanelLayout["brackets"] = [];
   const o = { size: PANEL_FONT };
+  if (panel.entries === undefined) {
+    // A map given by name: one line, no matrix.
+    const text = panel.head[0]!;
+    labels.push({ id: "panel-head-0", text, x: MARGIN, y: 46, w: board.extent(text, o).w, colour: INK, align: "start", weight: 700 });
+    return { height: 46 + 28, labels, brackets };
+  }
+  const entries = panel.entries;
   const extent = (text: string): number => board.extent(text, o).w;
   const rowH = 28;
   const top = 46; // the first row centre, below the plot: the matrix brackets start 28px under it
@@ -1269,7 +1321,7 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   const wA = extent("A =");
   labels.push({ id: "panel-name", text: "A =", x: left, y: (y1 + y2) / 2, w: wA, colour: INK, weight: 700 });
   const bx0 = left + wA + 12;
-  const colW = [0, 1].map((j) => Math.max(extent(panel.entries[0][j]!), extent(panel.entries[1][j]!)));
+  const colW = [0, 1].map((j) => Math.max(extent(entries[0][j]!), extent(entries[1][j]!)));
   const gap = 22;
   const pad = 12;
   const c0 = bx0 + pad;
@@ -1278,10 +1330,10 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   const cell = (id: string, text: string, x: number, w: number, y: number): void => {
     labels.push({ id, text, x, y, w, colour: INK, align: "center" });
   };
-  cell("matrix-a11", panel.entries[0][0], c0, colW[0]!, y1);
-  cell("matrix-a12", panel.entries[0][1], c1, colW[1]!, y1);
-  cell("matrix-a21", panel.entries[1][0], c0, colW[0]!, y2);
-  cell("matrix-a22", panel.entries[1][1], c1, colW[1]!, y2);
+  cell("matrix-a11", entries[0][0], c0, colW[0]!, y1);
+  cell("matrix-a12", entries[0][1], c1, colW[1]!, y1);
+  cell("matrix-a21", entries[1][0], c0, colW[0]!, y2);
+  cell("matrix-a22", entries[1][1], c1, colW[1]!, y2);
   const yt = y1 - 18;
   const yb = y2 + 18;
   const serif = 5;

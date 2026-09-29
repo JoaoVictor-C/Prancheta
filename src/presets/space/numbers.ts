@@ -31,12 +31,28 @@ function squareIsRational(x: number): boolean {
 }
 
 /**
+ * Below this a number is not a hundredth-rounded value: locale/format.ts reads
+ * anything under its own tolerance as zero and "0,00" would stand for 0,0005.
+ */
+const SMALL = 0.01;
+
+/** A small number to three significant digits, decimal mark of the locale, trailing zeros dropped; exact when that IS the number. */
+function printSmall(x: number, locale: Locale): Printed {
+  const rounded = Number(x.toPrecision(3));
+  const decimals = Math.min(20, Math.max(0, 2 - Math.floor(Math.log10(Math.abs(rounded)))));
+  const plainText = Math.abs(rounded).toFixed(decimals).replace(/0+$/, "").replace(/\.$/, "");
+  const marked = locale === "pt-BR" ? plainText.replace(".", ",") : plainText;
+  return { text: `${x < 0 ? MINUS : ""}${marked}`, exact: Math.abs(rounded - x) <= 1e-9 * Math.abs(x) };
+}
+
+/**
  * `x` the way a reader writes it: 3, 1/2, 2,5, √14, 2√14/7, π/3 -- or,
  * when none of those is the number, rounded to hundredths and flagged
  * inexact so the caller writes "≈".
  */
 export function printExact(x: number, locale: Locale = "pt-BR"): Printed {
   if (!Number.isFinite(x)) throw new SpecError(`cannot print ${x}`);
+  if (Math.abs(x) < SMALL && Math.abs(x) > 1e-12) return printSmall(x, locale);
   const snapped = snapExact(x, 1e-9);
   if (snapped.exact && snapped.form === "rational") return { text: formatNumber(snapped.value, locale), exact: true };
   if (squareIsRational(x)) {

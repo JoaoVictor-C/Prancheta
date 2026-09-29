@@ -63,6 +63,8 @@ export type LogicCircuitInput = {
   simplify?: boolean;
   /** Input values to simulate: `{ "A": 1, "B": 0 }`. Every variable of the expression must be given. */
   inputs?: Record<string, 0 | 1 | boolean>;
+  /** false: the exercise's figure -- with `simplify` the ORIGINAL circuit only; with `inputs` the values on the input lines but no wire or output value; no gate count, no simplified form. Default true. */
+  answers?: boolean;
   /** How the panel writes expressions: "digital" (· + ′, default) or "logic" (∧ ∨ ¬). */
   notation?: Notation;
 };
@@ -841,6 +843,7 @@ function wrap(board: Board, text: string, size: number, maxWidth: number): strin
 export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
   const notation: Notation = input.notation ?? "digital";
   const outName = input.output ?? "S";
+  const answers = input.answers !== false;
   const original = parseOrThrow(input.expr, "logic-circuit.expr");
   const originalVars = variablesOf(original);
 
@@ -851,7 +854,7 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
     const min = simplify(original, originalVars);
     const back = sopToExpr(min);
     if (!equivalent(original, back)) throw new Error("logic-circuit: the simplified expression disagrees with the original");
-    drawn = back;
+    if (answers) drawn = back;
     minimal = { text: formatSop(min, notation), expr: back };
   }
 
@@ -871,7 +874,8 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
     if (outputValue !== evalBool(original, env)) throw new Error("logic-circuit: the simulated output disagrees with evalBool");
     valuesText = `${originalVars.map((n) => `${n} = ${env[n] ? 1 : 0}`).join(", ")}  →  ${outName} = ${outputValue ? 1 : 0}`;
   }
-  const simulated = outputValue !== undefined;
+  const simulated = outputValue !== undefined && answers;
+  const givenInputs = outputValue !== undefined;
 
   // ---- layout ---------------------------------------------------------------
   const probe = new Board(10, 10, PAPER);
@@ -979,18 +983,20 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
   const say = (text: string, weight = 500, colour: string = INK): void => {
     panel.push({ text, weight, colour });
   };
-  const originalCircuit = input.simplify === true ? buildCircuit(original, originalVars, outName) : circuit;
+  const originalCircuit = input.simplify === true && answers ? buildCircuit(original, originalVars, outName) : circuit;
   const origCount = gateCounts(originalCircuit);
   const portas = (c: { total: number; text: string }): string => `${c.total} ${c.total === 1 ? "porta" : "portas"}${c.text === "" ? "" : `: ${c.text}`}`;
   say(`${outName} = ${formatBool(original, notation)}`, 700);
-  if (minimal !== undefined) {
+  if (!answers) {
+    if (givenInputs) say(originalVars.map((n) => `${n} = ${input.inputs![n] === 1 || input.inputs![n] === true ? 1 : 0}`).join(", "), 500, INK);
+  } else if (minimal !== undefined) {
     const mc = gateCounts(circuit);
     say(`Simplificada (Quine–McCluskey): ${outName} = ${minimal.text}`, 700, ON);
     say(`Original: ${portas(origCount)}. Simplificada: ${portas(mc)}.`, 500, SOFT);
   } else {
     say(portas(origCount), 500, SOFT);
   }
-  if (valuesText !== undefined) say(valuesText, 700, ON);
+  if (valuesText !== undefined && answers) say(valuesText, 700, ON);
 
   const circuitRight = right[maxLayer]! + 10 + probe.extent(simulated ? `${outName} = 1` : outName, { size: 16, weight: 700 }).w;
   const panelMax = Math.max(circuitRight - M, 520);
@@ -1052,8 +1058,9 @@ export function expandLogicCircuit(input: LogicCircuitInput): FigureSpec {
       width: label.w,
     });
   }
-  if (simulated) {
+  if (givenInputs) {
     for (const net of nets) {
+      if (!answers && net.root.kind !== "input") continue;
       if (net.root.kind === "const" || (net.root === circuit.root && isGate(net.root.kind))) continue;
       placeBeside(board, net.root.value ? "1" : "0", net.chains, { size: 11, weight: 700, colour: colourOf(net.root) });
     }

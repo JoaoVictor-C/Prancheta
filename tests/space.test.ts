@@ -385,3 +385,106 @@ test("the same figure under another camera moves every point by that camera's ow
   const pc = project(cavalierCamera(), [2, 3, 4]);
   assert.ok(pc[0] > 0 && pc[1] > 0);
 });
+
+// ---- answers: false -------------------------------------------------------------------------
+
+const questionInput = (): SpaceInput => ({
+  points: [
+    { name: "A", at: [2, 1, 0] },
+    { name: "B", at: [2, 3, 2] },
+    { name: "I", intersection: ["r", "π"] },
+  ],
+  lines: [{ name: "r", through: ["A", "B"] }],
+  planes: [{ name: "π", equation: "2x + y + 2z = 8", intercepts: true }],
+  vectors: [{ name: "u", components: [2, 1, 0] }, { name: "w", cross: ["u", "u2"] }, { name: "u2", components: [0, 2, 1] }],
+  measures: [{ angle: ["r", "π"] }, { distance: ["A", "π"] }, { position: ["r", "π"] }],
+});
+const texts = (input: SpaceInput): string[] => ((expandSpace(input).root as Scene).children as Block[]).map((b) => b.label ?? "").filter((t) => t !== "");
+
+test("answers:false prints no computed number: no coordinates of I, no distance, angle, equation, |u| or intercept", () => {
+  const on = texts(questionInput());
+  const off = texts({ ...questionInput(), answers: false });
+  assert.ok(on.some((t) => t.startsWith("d(A, π)")));
+  assert.ok(on.some((t) => t.startsWith("ângulo(r, π)")));
+  assert.ok(on.some((t) => t.startsWith("π: ")));
+  assert.ok(on.some((t) => t.startsWith("I = r ∩ π")));
+  assert.ok(on.includes("4"), "the intercepts are numbered when the answers are on");
+  for (const t of off) {
+    assert.ok(!/^d\(|^ângulo|^π: |^r = |^I = |\|u\||concorrentes|= 0$/.test(t), `answer text survived: ${t}`);
+  }
+  assert.ok(!off.includes("4") && !off.includes("8") && !off.includes("2√5"));
+});
+
+test("answers:false keeps what was typed: A and B with coordinates, the vector's typed components, the derived point's name", () => {
+  const off = texts({ ...questionInput(), answers: false });
+  assert.ok(off.includes("A(2; 1; 0)"));
+  assert.ok(off.some((t) => t.startsWith("B")), "B is named, on the drawing or in the panel");
+  assert.ok(off.includes("I"), "the derived point keeps its name and no coordinates");
+  assert.ok(off.includes("u = (2; 1; 0)"));
+  const fixtureOff = texts({ ...fixture("line-pierces-plane"), answers: false });
+  assert.ok(fixtureOff.includes("A(2; 1; 0)") && fixtureOff.includes("B(2; 3; 2)"));
+  assert.ok(!off.some((t) => t.startsWith("w") && t.includes("=")), "a cross product's components are the answer");
+  assert.ok(off.includes("π") && off.includes("r"));
+});
+
+test("answers:true is the default and unchanged", () => {
+  assert.deepEqual(texts(questionInput()), texts({ ...questionInput(), answers: true }));
+});
+
+test("the question fixtures render with every check passing", { timeout: 120000 }, async () => {
+  for (const name of ["question-line-pierces-plane", "question-cross-product"]) {
+    const input = fixture(name);
+    assert.equal(input.answers, false);
+    const result = await render(expandSpace(input), { raster: false });
+    assert.deepEqual(result.manifest.checks.filter((c) => c.status === "fail").map((c) => `${name} ${c.id} ${c.detail ?? ""}`), []);
+  }
+});
+
+// ---- the scale follows the data --------------------------------------------------------------
+
+const tickLabels = (input: SpaceInput): string[] => texts(input).filter((t) => /^[−]?[\d,]+$/.test(t));
+const sizeOf = (input: SpaceInput): { w: number; h: number } => {
+  const root = expandSpace(input).root as Scene & { width: number; height: number };
+  return { w: root.width, h: root.height };
+};
+
+for (const [name, at] of [
+  ["thousands", [3000, 4000, 5000]],
+  ["tiny decimals", [0.001, 0.002, 0.003]],
+  ["negative thousands", [-2500, 40, 900]],
+  ["mixed magnitudes", [1234.5, 0.5, 88]],
+] as [string, [number, number, number]][]) {
+  test(`a point at ${name} draws a canvas a page can hold, with about as many tick numbers as (3; 4; 5)`, { timeout: 120000 }, async () => {
+    const input: SpaceInput = { axes: { ticks: true }, points: [{ name: "P", at, box: true }] };
+    const { w, h } = sizeOf(input);
+    assert.ok(w >= 300 && w <= 900 && h >= 300 && h <= 900, `${w} x ${h}`);
+    const reference = tickLabels({ axes: { ticks: true }, points: [{ name: "P", at: [3, 4, 5], box: true }] }).length;
+    const n = tickLabels(input).length;
+    assert.ok(n >= 6 && n <= reference + 4, `${n} tick numbers against ${reference} for (3; 4; 5)`);
+    const result = await render(expandSpace(input), { raster: false });
+    assert.deepEqual(result.manifest.checks.filter((c) => c.status === "fail").map((c) => `${c.id} ${c.detail ?? ""}`), []);
+  });
+}
+
+test("a plane with far intercepts frames itself by its own magnitude", async () => {
+  const input: SpaceInput = { axes: { ticks: true }, planes: [{ name: "π", equation: "x + y + z = 3000", patch: "octant", intercepts: true }] };
+  const { w, h } = sizeOf(input);
+  assert.ok(w <= 900 && h <= 900, `${w} x ${h}`);
+  assert.ok(texts(input).filter((t) => t === "3000").length === 3);
+  const result = await render(expandSpace(input), { raster: false });
+  assert.deepEqual(result.manifest.checks.filter((c) => c.status === "fail").map((c) => c.id), []);
+});
+
+test("small numbers print with their digits, not as 0,00", () => {
+  assert.equal(printExact(0.0005).text, "0,0005");
+  assert.equal(printExact(0.0005).exact, true);
+  assert.equal(printExact(-0.00123).text, "−0,00123");
+  assert.equal(printExact(0.0004999999, "en").exact, false);
+  assert.equal(printTriple([0.001, 0.002, 0.003]).text, "(0,001; 0,002; 0,003)");
+});
+
+test("the fixtures keep their whole-number ticks", () => {
+  const input = fixture("point-box");
+  const nums = tickLabels(input);
+  assert.ok(nums.includes("1") && nums.includes("2") && !nums.some((t) => t.includes(",")), nums.join(" "));
+});

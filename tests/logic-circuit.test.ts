@@ -574,3 +574,53 @@ test("random expressions lay out with orthogonal, non-overlapping wires that nev
 });
 
 const formatBoolDigital = (e: BoolExpr): string => formatBool(e, "digital");
+
+// ---- answers: false ------------------------------------------------------------------------------
+
+const loadFixture = (name: string): LogicCircuitInput => {
+  const { preset: _p, ...input } = JSON.parse(readFileSync(join(dir, name), "utf8")) as Record<string, unknown>;
+  return input as unknown as LogicCircuitInput;
+};
+const labelsOf = (spec: { root: unknown }): string[] => ((spec.root as Scene).children as Block[]).map((b) => b.label ?? "");
+
+fixtures.forEach((filename) => {
+  test(`answers:false ${filename}: no gate count, no wire values, no output value, every check passes`, async () => {
+    const input = loadFixture(filename);
+    const spec = expandLogicCircuit({ ...input, answers: false });
+    const text = labelsOf(spec).join("\n");
+    assert.ok(!/porta|Simplificada|→|Original/.test(text), `${filename}: ${text}`);
+    assert.ok(text.includes(`${input.output ?? "S"} = `) || labelsOf(spec).some((t) => t.startsWith(`${input.output ?? "S"} =`)));
+    assert.ok(!labelsOf(spec).some((t) => t === `${input.output ?? "S"} = 0` || t === `${input.output ?? "S"} = 1`), "no output value");
+    const result = await render(spec, { maxPasses: 3, raster: false });
+    for (const check of result.manifest.checks) assert.ok(check.status === "pass" || check.status === "not-applicable", `${filename}: ${check.id} ${check.status}: ${check.detail}`);
+  });
+});
+
+test("answers:false with inputs keeps the input values and hides every other wire and the output", () => {
+  const input = loadFixture("nand-simulation.json");
+  const off = labelsOf(expandLogicCircuit({ ...input, answers: false }));
+  const on = labelsOf(expandLogicCircuit(input));
+  assert.ok(on.includes("Y = 0") || on.includes("Y = 1"), "answers:true prints the output value");
+  assert.ok(off.includes("Y") && !off.some((t) => /^Y = [01]$/.test(t)), "the output is a bare name");
+  const digits = (l: string[]): number => l.filter((t) => t === "0" || t === "1").length;
+  // 4 variables: A, B, C, D each carry their given value (a fan-out input may carry it on more than one wire).
+  assert.ok(digits(off) >= 4 && digits(off) < digits(on), `${digits(off)} vs ${digits(on)}`);
+  assert.ok(off.some((t) => t === "A = 1, B = 1, C = 1, D = 0"), "the givens are listed");
+  assert.ok(!off.some((t) => t.includes("→")));
+});
+
+test("answers:false with simplify draws the original circuit and hides the simplified expression", async () => {
+  const input = loadFixture("majority-simplified.json");
+  const off = expandLogicCircuit({ ...input, answers: false });
+  const on = expandLogicCircuit(input);
+  const orig = expandLogicCircuit({ ...input, simplify: false, answers: false });
+  assert.ok(!labelsOf(off).join("\n").includes("Simplificada"));
+  assert.ok(labelsOf(on).join("\n").includes("Simplificada"));
+  assert.deepEqual(off, orig, "the same drawing as the unsimplified original");
+  assert.notDeepEqual(off, on);
+});
+
+test("answers:true is the default and unchanged", () => {
+  const input = loadFixture("majority-simplified.json");
+  assert.deepEqual(expandLogicCircuit({ ...input, answers: true }), expandLogicCircuit(input));
+});

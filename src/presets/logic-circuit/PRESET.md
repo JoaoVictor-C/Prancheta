@@ -79,3 +79,15 @@ Flip-flops and sequential logic, buses, multi-letter signal names (`Cin`),
 tri-state gates, and hop arcs at crossings (a crossing is a plain crossing).
 
 Fixtures: [`fixtures/logic-circuit/`](../../../fixtures/logic-circuit/and-or-not.json).
+
+## answers: false
+
+The figure of the exercise, not of its solution. The circuit is drawn with its
+input names, its output name and the expression line (`S = …`). Hidden:
+the gate count; with `inputs`, every wire's value, the ON/OFF colouring of the
+wires, the value beside the output and the `→ S = …` line (the input values
+stay on their input lines and are listed as the givens, `A = 1, B = 0`); with
+`simplify`, the ORIGINAL circuit is drawn instead of the minimal one, and the
+simplified expression and the before/after count are left out (so the figure
+is the same as one without `simplify`). The circuit is still simulated and
+simplified internally, so a wrong input is refused the same way.

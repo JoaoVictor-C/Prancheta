@@ -1,0 +1,14 @@
+{
+  "preset": "probability-tree",
+  "answers": false,
+  "title": "enunciado: teste de uma doença, só os dados",
+  "stages": ["condição", "resultado do teste"],
+  "root": {
+    "children": [
+      { "label": "D", "p": "1%", "children": [{ "label": "+", "p": "95%" }, { "label": "−", "p": "5%" }] },
+      { "label": "S", "p": "99%", "children": [{ "label": "+", "p": "10%" }, { "label": "−", "p": "90%" }] }
+    ]
+  },
+  "events": [{ "name": "D", "paths": [["D"]] }, { "name": "+", "paths": [["*", "+"]] }],
+  "given": { "event": "D", "given": "+" }
+}

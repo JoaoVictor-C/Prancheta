@@ -34,6 +34,8 @@ export type NumberLineInput = {
   set?: string;
   /** Rows, top to bottom. A leaf row states a set in text; a computed row combines earlier rows. */
   rows?: NumberLineRow[];
+  /** When false, draw only the axis and row names but leave intervals empty. Default true. */
+  answers?: boolean;
 };
 
 // ---- palette -----------------------------------------------------------------
@@ -290,6 +292,7 @@ function keyOf(v: number): string {
 export function expandNumberLine(input: NumberLineInput): FigureSpec {
   const locale = input.locale ?? "pt-BR";
   const variable = input.variable ?? "x";
+  const answers = input.answers ?? true;
 
   if (input.set === undefined && (input.rows === undefined || input.rows.length === 0)) {
     throw new SpecError(`number-line: give either "set" or a non-empty "rows"`);
@@ -385,7 +388,7 @@ export function expandNumberLine(input: NumberLineInput): FigureSpec {
         freeStanding: true,
       });
     }
-    drawLine(board, row.set, cy, leftArrowX, rightArrowX, xOfValue, `row-${ri + 1}`);
+    drawLine(board, row.set, cy, leftArrowX, rightArrowX, xOfValue, `row-${ri + 1}`, answers);
     top += ROW_H;
   });
 
@@ -411,6 +414,7 @@ export function expandNumberLine(input: NumberLineInput): FigureSpec {
  * One row's line: a thin reference stroke the full width, a thick coloured
  * overlay over every included interval, a filled or open circle at each
  * finite endpoint, and an arrowhead where an interval runs to ±∞.
+ * When answers:false, only the reference stroke is drawn (intervals are empty).
  */
 function drawLine(
   board: Board,
@@ -420,17 +424,20 @@ function drawLine(
   rightX: number,
   xOfValue: (value: number) => number,
   idPrefix: string,
+  answers: boolean = true,
 ): void {
   board.poly([{ x: leftX, y }, { x: rightX, y }], { stroke: LIGHT, width: 1.4 });
-  set.forEach((iv, i) => {
-    const x0 = iv.lo.value === -INF ? leftX : xOfValue(iv.lo.value);
-    const x1 = iv.hi.value === INF ? rightX : xOfValue(iv.hi.value);
-    board.poly([{ x: x0, y }, { x: x1, y }], { stroke: ACCENT, width: 4.5 });
-    if (iv.lo.value === -INF) arrowHead(board, { x: leftX, y }, { x: -1, y: 0 }, ACCENT);
-    else endpoint(board, { x: x0, y }, iv.loIncl, `${idPrefix}-lo-${i + 1}`);
-    if (iv.hi.value === INF) arrowHead(board, { x: rightX, y }, { x: 1, y: 0 }, ACCENT);
-    else endpoint(board, { x: x1, y }, iv.hiIncl, `${idPrefix}-hi-${i + 1}`);
-  });
+  if (answers) {
+    set.forEach((iv, i) => {
+      const x0 = iv.lo.value === -INF ? leftX : xOfValue(iv.lo.value);
+      const x1 = iv.hi.value === INF ? rightX : xOfValue(iv.hi.value);
+      board.poly([{ x: x0, y }, { x: x1, y }], { stroke: ACCENT, width: 4.5 });
+      if (iv.lo.value === -INF) arrowHead(board, { x: leftX, y }, { x: -1, y: 0 }, ACCENT);
+      else endpoint(board, { x: x0, y }, iv.loIncl, `${idPrefix}-lo-${i + 1}`);
+      if (iv.hi.value === INF) arrowHead(board, { x: rightX, y }, { x: 1, y: 0 }, ACCENT);
+      else endpoint(board, { x: x1, y }, iv.hiIncl, `${idPrefix}-hi-${i + 1}`);
+    });
+  }
 }
 
 function endpoint(board: Board, at: Point, filled: boolean, id: string): void {

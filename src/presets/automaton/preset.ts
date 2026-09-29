@@ -49,6 +49,8 @@ export type AutomatonInput = {
   partial?: boolean;
   layout?: LayoutInput;
   words?: string[];
+  /** false: the diagram and the word list only; no path, no verdict. Default true. */
+  answers?: boolean;
 };
 
 /** A validated automaton with one symbol per transition. */
@@ -172,7 +174,7 @@ export function subsetConstruction(nfa: Automaton): Automaton {
 
 // ---- reading the input ------------------------------------------------------------
 
-const KEYS = ["preset", "title", "kind", "alphabet", "states", "start", "accept", "transitions", "partial", "layout", "words", "style", "theme", "type"];
+const KEYS = ["preset", "title", "kind", "alphabet", "states", "start", "accept", "transitions", "partial", "layout", "words", "answers", "style", "theme", "type"];
 const MAX_STATES = 14;
 const MAX_WORDS = 10;
 const MAX_WORD = 40;
@@ -654,15 +656,15 @@ export function expandAutomaton(input: AutomatonInput): FigureSpec {
 
   const runs = words.map((w) => ({
     word: w,
-    tokens: a.kind === "dfa" ? dfaRunTokens(runDfa(a, w)) : nfaRunTokens(runNfa(a, w)),
+    tokens: input.answers === false ? ["?"] : a.kind === "dfa" ? dfaRunTokens(runDfa(a, w)) : nfaRunTokens(runNfa(a, w)),
   }));
   if (runs.length > 0) {
     y += lineH + 8;
-    put("Execuções, uma palavra por linha:", panelLeft, 600);
+    put(input.answers === false ? "Palavras, uma por linha:" : "Execuções, uma palavra por linha:", panelLeft, 600);
     const wordCol = Math.max(...runs.map((r) => probeWidth(wordText(r.word), 600))) + 16;
     for (const r of runs) {
       y += lineH + 2;
-      put(wordText(r.word), panelLeft, 600);
+      put(input.answers === false ? `${wordText(r.word)}:` : wordText(r.word), panelLeft, 600);
       wrap(r.tokens, panelRight - panelLeft - wordCol).forEach((line, k) => {
         if (k > 0) y += lineH;
         put(line, panelLeft + wordCol, 400);

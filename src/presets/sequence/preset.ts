@@ -44,6 +44,7 @@ import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import { tickPlan } from "../../ir/frames.ts";
+import { fitUnits, niceStep, ticksIn } from "../shared/scale.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -60,6 +61,8 @@ export type SequenceInput = {
   show?: SequenceShowMode;
   /** Draw a dashed limit line for every convergent series shown. Default false. */
   limit?: boolean;
+  /** false: the dots as given, without the limit lines and their values (a question's figure). Default true. */
+  answers?: boolean;
 };
 
 // ---- palette ---------------------------------------------------------------
@@ -80,9 +83,15 @@ const MARGIN_BOTTOM = 54;
 const ARROW_OVERSHOOT = 16;
 const RANGE_PAD = 0.8;
 const PLOT_TARGET_PX = 420;
+/** Terms are given this much width each until the plot reaches MAX_PLOT_WIDTH; past that the unit shrinks so the figure stays a page. */
 const MIN_UNIT = 22;
 const MAX_UNIT = 80;
+const MAX_PLOT_WIDTH = 720;
 const DOT_RADIUS = 3;
+/** The most terms one figure plots. Past this the dots are sub-pixel apart on any page. */
+export const MAX_TERMS = 500;
+/** The most labelled n ticks on the horizontal axis. */
+const MAX_N_TICKS = 12;
 
 type Dir = "R" | "L" | "U" | "D";
 const DIRS: Record<Dir, Point> = {
@@ -95,12 +104,6 @@ const DIRS: Record<Dir, Point> = {
 /** "=" or "≈": a limit's sign follows whether its printed value is exact. */
 function eq(exact: boolean): string {
   return exact ? "=" : "≈";
-}
-
-function niceStep(span: number): number {
-  const steps = [0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500];
-  for (const s of steps) if (span / s <= 6) return s;
-  return steps[steps.length - 1]!;
 }
 
 /**
@@ -205,9 +208,13 @@ export function expandSequence(input: SequenceInput): FigureSpec {
 
   const yMin = Math.min(...yValues);
   const yMax = Math.max(...yValues);
-  const ySpan = Math.max(2 * RANGE_PAD, yMax - yMin);
-  const yRangeMin = yMin - RANGE_PAD;
-  const yRangeMax = yMax + RANGE_PAD;
+  // The padding above and below the values is 0,8 while the values span a
+  // few units and grows in proportion beyond that, so 1000n is padded as
+  // generously (in proportion) as 1/n.
+  const pad = RANGE_PAD * Math.max(1, (yMax - yMin) / 5);
+  const ySpan = Math.max(2 * pad, yMax - yMin);
+  const yRangeMin = yMin - pad;
+  const yRangeMax = yMax + pad;
   const spansZero = yRangeMin <= 0 && yRangeMax >= 0;
 
   const nSpanUnits = n_end - n_start + 1; // frame units, x = n_start-0.5 .. n_end+0.5
@@ -219,8 +226,19 @@ export function expandSequence(input: SequenceInput): FigureSpec {
   // unit on both squeezed every dot, its limit line and that line's label
   // into a strip a few px tall, leaving no room a label search could ever
   // find clear.
-  const xUnit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, PLOT_TARGET_PX / nSpanUnits));
-  const yUnit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, PLOT_TARGET_PX / Math.max(ySpanUnits, ySpan)));
+  // Both are FITTED to the data span (shared/scale.ts): a term range of any
+  // length and a value range of any magnitude come out a page-sized plane.
+  const { xUnit } = fitUnits(nSpanUnits, 1, {
+    equal: false,
+    targetWidth: Math.min(MAX_PLOT_WIDTH, Math.max(PLOT_TARGET_PX, nSpanUnits * MIN_UNIT)),
+    maxUnit: MAX_UNIT,
+  });
+  const { yUnit } = fitUnits(1, Math.max(ySpanUnits, ySpan), {
+    equal: false,
+    targetHeight: PLOT_TARGET_PX,
+    maxUnit: MAX_UNIT,
+  });
+  const dotRadius = Math.max(1.5, Math.min(DOT_RADIUS, xUnit * 0.35));
 
   // "both" plots two series, up to two limit lines and a legend into the
   // same small plane -- often too crowded for a 2-row legend to find any
@@ -231,7 +249,12 @@ export function expandSequence(input: SequenceInput): FigureSpec {
   const legendGutter = show === "both" ? 34 : 0;
   const marginTop = MARGIN_TOP + legendGutter;
 
-  const plotWidth = Math.ceil(MARGIN_LEFT + MARGIN_RIGHT + nSpanUnits * xUnit);
+  const yStep = niceStep(ySpanUnits, 6);
+  // The left margin holds the widest value-axis number: 1/n's 0,5 needs the
+  // default, 0,000002 needs more.
+  const widestTick = Math.max(...ticksIn(yRangeMin, yRangeMax, yStep).map((t) => formatNumber(t, locale).length), 1);
+  const marginLeft = Math.max(MARGIN_LEFT, Math.ceil(widestTick * 8 + 24));
+  const plotWidth = Math.ceil(marginLeft + MARGIN_RIGHT + nSpanUnits * xUnit);
   const plotHeight = Math.ceil(marginTop + MARGIN_BOTTOM + ySpanUnits * yUnit);
   const width = plotWidth;
   const height = plotHeight;
@@ -240,7 +263,7 @@ export function expandSequence(input: SequenceInput): FigureSpec {
 
   const frame: Frame & { origin: Point } = {
     id: "plane",
-    origin: { x: MARGIN_LEFT - (n_start - 0.5) * xUnit, y: marginTop + yRangeMax * yUnit },
+    origin: { x: marginLeft - (n_start - 0.5) * xUnit, y: marginTop + yRangeMax * yUnit },
     xUnit,
     yUnit,
   };
@@ -250,9 +273,11 @@ export function expandSequence(input: SequenceInput): FigureSpec {
     y: frame.origin.y - y * yUnit,
   });
 
-  const yStep = niceStep(ySpanUnits);
+  // n is labelled every 1, 2, 5, 10 ... terms so at most MAX_N_TICKS numbers
+  // appear however many terms are plotted; every term still has its dot.
+  const nStep = Math.max(1, niceStep(nSpanUnits, MAX_N_TICKS));
   const grid: GridSpec = {
-    x: { from: n_start - 0.5, to: n_end + 0.5, step: 1, origin: n_start },
+    x: { from: n_start - 0.5, to: n_end + 0.5, step: nStep, origin: nStep === 1 ? n_start : 0 },
     y: { from: yRangeMin, to: yRangeMax, step: yStep, origin: 0 },
     // Both axes are hand-drawn below, as arrowed connectors -- the core
     // grid's own zero lines would otherwise duplicate them. The lattice and
@@ -302,10 +327,10 @@ export function expandSequence(input: SequenceInput): FigureSpec {
   const termsPoints: Point[] = (show === "terms" || show === "both") ? ns.map((n, i) => at(n, values[i]!)) : [];
   const sumsPoints: Point[] = (show === "partial-sums" || show === "both") ? ns.map((n, i) => at(n, partialSumsData![i]!)) : [];
   for (let i = 0; i < termsPoints.length; i++) {
-    board.circle(termsPoints[i]!, DOT_RADIUS, { stroke: TERMS_COLOUR, fill: TERMS_COLOUR, width: 1, id: `terms-${ns[i]}` });
+    board.circle(termsPoints[i]!, dotRadius, { stroke: TERMS_COLOUR, fill: TERMS_COLOUR, width: 1, id: `terms-${ns[i]}` });
   }
   for (let i = 0; i < sumsPoints.length; i++) {
-    board.circle(sumsPoints[i]!, DOT_RADIUS, { stroke: SUMS_COLOUR, fill: SUMS_COLOUR, width: 1, id: `sums-${ns[i]}` });
+    board.circle(sumsPoints[i]!, dotRadius, { stroke: SUMS_COLOUR, fill: SUMS_COLOUR, width: 1, id: `sums-${ns[i]}` });
   }
   const allDots = [...termsPoints, ...sumsPoints];
 
@@ -317,10 +342,13 @@ export function expandSequence(input: SequenceInput): FigureSpec {
   // line existed to be seen, and it landed straight on top of that line.
   type LimitLine = { id: string; symbol: string; colour: string; p1: Point; p2: Point; l: { value: number; exact: boolean; text: string } };
   const limitLines: LimitLine[] = [];
-  if (termsLimit !== undefined) {
+  // answers: false keeps the limits in the frame's range (so the question's
+  // figure and the solution's share one scale) but draws neither line nor value.
+  const drawLimits = input.answers !== false;
+  if (drawLimits && termsLimit !== undefined) {
     limitLines.push({ id: "limit-line-terms", symbol: "aₙ", colour: TERMS_COLOUR, p1: at(n_start - 0.5, termsLimit.value), p2: at(n_end + 0.5, termsLimit.value), l: termsLimit });
   }
-  if (sumsLimit !== undefined) {
+  if (drawLimits && sumsLimit !== undefined) {
     limitLines.push({ id: "limit-line-sums", symbol: "Sₙ", colour: SUMS_COLOUR, p1: at(n_start - 0.5, sumsLimit.value), p2: at(n_end + 0.5, sumsLimit.value), l: sumsLimit });
   }
   for (const line of limitLines) {
@@ -391,7 +419,7 @@ export function expandSequence(input: SequenceInput): FigureSpec {
     // y0 reaches up into the reserved legend gutter above the plot, not
     // just the plotted area -- the guaranteed-clear strip a crowded "both"
     // plane needs (see `legendGutter` above).
-    const plot = { x0: MARGIN_LEFT, x1: width - MARGIN_RIGHT, y0: 8, y1: height - MARGIN_BOTTOM };
+    const plot = { x0: marginLeft, x1: width - MARGIN_RIGHT, y0: 8, y1: height - MARGIN_BOTTOM };
     const inset = 8;
     const score = (x: number, y: number): number => {
       const box = board.box(x + W / 2, y - rowH / 2 + H / 2 + 1, W + 8, H + 8);
@@ -463,8 +491,8 @@ export function validateSequenceInput(raw: Record<string, unknown>): void {
   if (!Number.isInteger(n_end) || n_end < n_start) {
     throw new SpecError(`${path}.n[1] must be an integer >= n[0], got ${n_end}`);
   }
-  if (n_end - n_start >= 60) {
-    throw new SpecError(`${path}: range is ${n_end - n_start + 1} terms, maximum is 60`);
+  if (n_end - n_start >= MAX_TERMS) {
+    throw new SpecError(`${path}: range is ${n_end - n_start + 1} terms, maximum is ${MAX_TERMS}`);
   }
 
   if (raw.show !== undefined) {

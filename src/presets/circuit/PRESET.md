@@ -143,3 +143,13 @@ arrowhead back and checks it against the sign of its current.
 - Dependent sources.
 - Non-ideal meters.
 - Diagonal runs (the diamond-drawn Wheatstone bridge; draw it rectangular).
+
+## answers: false
+
+`answers: false` draws what the exercise gives and none of what it asks. Kept:
+the symbols with their given values (and names), node letters, the ground, the
+meters' letters (A, V). Hidden: every branch-current arrow and its label, the
+meters' readings, and the whole panel (`U_AB`, node potentials, powers,
+currents listed in panel mode). The current arrows are part of the answer
+because their direction is what "qual o sentido da corrente" asks. The circuit
+is still solved, so an unsolvable netlist is refused either way.

@@ -26,6 +26,7 @@ import { GeometryError, add, lerp, normalize, sub as vsub } from "../../geometry
 import type { Vec2, Vec3 } from "../../geometry/vec.ts";
 import { facesViewer, makeCamera, orthographicCamera, project, projectDirection } from "../../geometry/projection.ts";
 import type { Camera, CameraSpec, ProjectedCircle } from "../../geometry/projection.ts";
+import { fitUnits } from "../shared/scale.ts";
 import { SpacePlacer, aroundPlace } from "../space/placer.ts";
 import { rightAngle3 } from "../space/preset.ts";
 import { typesANumber } from "../space/numbers.ts";
@@ -89,6 +90,12 @@ export type SolidInput = {
   /** Default: cavalier for polyhedra alone; orthographic when a round solid is present (ADR 0046). */
   camera?: CameraSpec;
   solids: SolidDef[];
+  /**
+   * Default true. With false the figure is the exercise's question: every solid keeps the dimensions it was
+   * GIVEN, drawn and labelled, and nothing computed -- no diagonal, no slant height or apothem the dimensions
+   * did not state, no derived height, no radius of a derived sphere, and no volume, area or measures in the panel.
+   */
+  answers?: boolean;
 };
 
 const SHOW_BY_KIND: Record<SolidKind, ShowItem[]> = {
@@ -119,6 +126,7 @@ const SOLID_COLOURS = ["#181B21", "#1D4E89", "#2F6B3A"];
 const ACCENT = "#9A3409";
 const SOFT = "#4E5763";
 const TARGET = 400;
+/** Pixels per unit of length for a solid whose largest dimension is from 1 to 30; other magnitudes scale by their decade. */
 const MIN_UNIT = 20;
 const MAX_UNIT = 120;
 const PAD = 62;
@@ -152,6 +160,28 @@ type Resolved = {
   derivation?: string;
   colour: string;
 };
+
+/**
+ * Whether a construction of `show` draws a length the exercise states. A derived solid states none; a height or a
+ * slant is given only when it was typed (a cone typed by its slant does not state the height); a diagonal and a
+ * base apothem are always computed.
+ */
+function isGiven(s: Resolved, item: ShowItem): boolean {
+  if (s.derivation !== undefined) return item === "equator";
+  switch (item) {
+    case "edge":
+    case "dimensions":
+    case "radius":
+    case "equator":
+      return true;
+    case "height":
+      return s.def.height !== undefined;
+    case "slant":
+      return s.def.slant !== undefined;
+    default:
+      return false;
+  }
+}
 
 function positive(o: Record<string, unknown>, key: string, path: string): Exact {
   const x = v.requiredNumber(o, key, path);
@@ -270,7 +300,7 @@ function resolveAll(input: SolidInput): Resolved[] {
         } else {
           dims.g = positive(o, "slant", path);
           const h2 = xsub(square(dims.g), square(dims.m));
-          if (!(valueOf(h2) > 1e-12)) {
+          if (!(valueOf(h2) > 1e-12 * valueOf(square(dims.g)))) {
             throw new SpecError(`${path}.slant ${print(dims.g).text} must exceed the base apothem m = ${print(dims.m).text} -- no pyramid has that apótema`);
           }
           dims.h = xsqrt(h2);
@@ -286,7 +316,7 @@ function resolveAll(input: SolidInput): Resolved[] {
       else {
         const g = positive(o, "slant", path);
         const h2 = xsub(square(g), square(dims.r));
-        if (!(valueOf(h2) > 1e-12)) throw new SpecError(`${path}.slant ${print(g).text} must exceed the radius ${print(dims.r).text} -- the geratriz is the hypotenuse`);
+        if (!(valueOf(h2) > 1e-12 * valueOf(square(g)))) throw new SpecError(`${path}.slant ${print(g).text} must exceed the radius ${print(dims.r).text} -- the geratriz is the hypotenuse`);
         dims.h = xsqrt(h2);
       }
     } else {
@@ -383,6 +413,7 @@ export function expandSolid(input: SolidInput): FigureSpec {
 function draw(input: SolidInput, extra: string[]): { spec: FigureSpec; needs: string[] } {
   const locale = input.locale ?? "pt-BR";
   const solids = resolveAll(input);
+  const answers = input.answers ?? true;
   let camera: Camera;
   try {
     camera = input.camera === undefined ? defaultCamera(solids.map((s) => s.kind)) : makeCamera(input.camera);
@@ -428,8 +459,8 @@ function draw(input: SolidInput, extra: string[]): { spec: FigureSpec; needs: st
 
   for (const s of solids) {
     const k = s.index;
-    const show = new Set(s.def.show ?? []);
-    const want = new Set(s.def.readings ?? []);
+    const show = new Set((s.def.show ?? []).filter((item) => answers || isGiven(s, item)));
+    const want = new Set(answers ? s.def.readings ?? [] : []);
     const prefix = solids.length > 1 ? `${s.name}: ` : "";
     const lines: string[] = [];
     const pagePts: Vec2[] = [];
@@ -674,7 +705,11 @@ function draw(input: SolidInput, extra: string[]): { spec: FigureSpec; needs: st
   const us = every.map((p) => p[0]);
   const vs = every.map((p) => p[1]);
   const [uMin, uMax, vMin, vMax] = [Math.min(...us), Math.max(...us), Math.min(...vs), Math.max(...vs)];
-  const unitPx = Math.min(MAX_UNIT, Math.max(MIN_UNIT, TARGET / Math.max(uMax - uMin, vMax - vMin, 1e-9)));
+  // The unit is fitted to the solid: the bounds are for a solid of 1 to 30 lengths, and a solid of 5000 or of
+  // 0,003 has the same figure, its bounds scaled by its decade (shared/scale.ts).
+  const largest = Math.max(...solids.map((s) => Math.max(...[s.dims.a, s.dims.w, s.dims.d, s.dims.h, s.dims.r ? xscale(s.dims.r, 2) : undefined].filter((x): x is Exact => x !== undefined).map(valueOf))));
+  const decade = largest >= 1 && largest < 30 ? 1 : 10 ** Math.floor(Math.log10(largest));
+  const unitPx = fitUnits(uMax - uMin, vMax - vMin, { targetWidth: TARGET, targetHeight: TARGET, equal: true, maxUnit: MAX_UNIT / decade, minUnit: MIN_UNIT / decade }).xUnit;
   const board0 = new Board(1, 1, PAPER);
   const captionStyle = { size: 13, colour: SOFT };
   const captionW = Math.max(0, ...readings.map((r) => board0.extent(r, captionStyle).w));

@@ -66,6 +66,8 @@ export type ProbabilityTreeInput = {
   notation?: Form;
   /** Also print each result in this notation. */
   also?: "percent" | "decimal";
+  /** false: the figure of the QUESTION -- the tree and its given branch probabilities, none of the computed ones, no path products, events or conditionals (see PRESET.md). Default true. */
+  answers?: boolean;
 };
 
 // ---- palette and metrics ---------------------------------------------------------
@@ -102,6 +104,8 @@ type TNode = {
   /** The numerator and denominator as written, for a fraction ("2/4" stays 2/4 on its branch). */
   written: { n: bigint; d: bigint } | undefined;
   form: Form | undefined;
+  /** The probability was not typed: it is 1 minus its siblings, or the count of an urn over what is left in it. */
+  computed: boolean;
   where: string;
   depth: number;
   parent: TNode | null;
@@ -115,7 +119,7 @@ type TNode = {
 type Leaf = { node: TNode; labels: string[]; factors: TNode[]; value: Fraction };
 
 function buildExplicit(rootIn: unknown, counter: { n: number; leaves: number }): TNode {
-  const root: TNode = { id: 0, label: "", p: ONE, written: undefined, form: undefined, where: "root", depth: 0, parent: null, children: [], cx: 0, cy: 0, w: 0 };
+  const root: TNode = { id: 0, label: "", p: ONE, written: undefined, form: undefined, computed: false, where: "root", depth: 0, parent: null, children: [], cx: 0, cy: 0, w: 0 };
   const rootObj = v.object(rootIn, "probability-tree.root");
   const grow = (parent: TNode, kids: unknown, path: string): void => {
     if (!Array.isArray(kids) || kids.length === 0) throw new SpecError(`${path} must be a non-empty array of branches`);
@@ -130,7 +134,7 @@ function buildExplicit(rootIn: unknown, counter: { n: number; leaves: number }):
       if (seen.has(label)) throw new SpecError(`${at}: two branches out of ${parent.depth === 0 ? "the root" : `"${parent.label}"`} are both named "${label}"; an event's path could not tell them apart`);
       seen.add(label);
       counter.n += 1;
-      const node: TNode = { id: counter.n, label, p: ZERO, written: undefined, form: undefined, where: at, depth: parent.depth + 1, parent, children: [], cx: 0, cy: 0, w: 0 };
+      const node: TNode = { id: counter.n, label, p: ZERO, written: undefined, form: undefined, computed: false, where: at, depth: parent.depth + 1, parent, children: [], cx: 0, cy: 0, w: 0 };
       const missing = o.p === undefined;
       if (!missing) {
         const parsed = parseProbability(o.p, `${at}.p`);
@@ -146,6 +150,7 @@ function buildExplicit(rootIn: unknown, counter: { n: number; leaves: number }):
       const known = sum(made.filter((m) => !m.missing).map((m) => m.node.p));
       if (cmp(known, ONE) > 0) throw new SpecError(`${path}: the other branches already sum to ${fractionText(known)}, more than 1, so ${gaps[0]!.at} has no probability left`);
       gaps[0]!.node.p = sub(ONE, known);
+      gaps[0]!.node.computed = true;
     }
     checkSum(parent, made.map((m) => m.node), path);
     for (const m of made) {
@@ -173,7 +178,7 @@ function buildUrn(urn: Record<string, number>, draws: number, replacement: boole
   const colours = Object.keys(urn);
   const total = colours.reduce((s, k) => s + urn[k]!, 0);
   if (!replacement && draws > total) throw new SpecError(`probability-tree.draws: ${draws} draws without replacement from an urn of ${total} balls`);
-  const root: TNode = { id: 0, label: "", p: ONE, written: undefined, form: undefined, where: "root", depth: 0, parent: null, children: [], cx: 0, cy: 0, w: 0 };
+  const root: TNode = { id: 0, label: "", p: ONE, written: undefined, form: undefined, computed: false, where: "root", depth: 0, parent: null, children: [], cx: 0, cy: 0, w: 0 };
   const grow = (parent: TNode, left: Record<string, number>, remaining: number): void => {
     if (remaining === 0) {
       counter.leaves += 1;
@@ -191,6 +196,7 @@ function buildUrn(urn: Record<string, number>, draws: number, replacement: boole
         p: frac(BigInt(k), BigInt(N)),
         written: { n: BigInt(k), d: BigInt(N) },
         form: "fraction",
+        computed: true,
         where: `draw ${parent.depth + 1}`,
         depth: parent.depth + 1,
         parent,
@@ -348,6 +354,7 @@ function wrapWords(text: string, maxPx: number, extent: (t: string) => number): 
 
 export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   const locale = input.locale ?? "pt-BR";
+  const answers = input.answers !== false;
   if ((input.root === undefined) === (input.urn === undefined)) throw new SpecError("probability-tree: give exactly one of `root` (a typed tree) or `urn` (a tree built from an urn)");
 
   // ---- the tree ---------------------------------------------------------------
@@ -399,16 +406,19 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   const write = makeWriter(mode, input.also, locale);
 
   // ---- events and conditionals ---------------------------------------------------------------
-  const events = resolveEvents(input.events, leaves);
+  // under answers:false the events are still checked (a bad path is still a bad input) but nothing of them is drawn
+  const resolved = resolveEvents(input.events, leaves);
+  const events = answers ? resolved : [];
   if (events.length > EVENT_COLOURS.length) throw new SpecError(`probability-tree.events: at most ${EVENT_COLOURS.length} events can be highlighted at once, got ${events.length}`);
-  const givens: GivenInput[] = input.given === undefined ? [] : Array.isArray(input.given) ? input.given : [input.given];
-  const byName = new Map(events.map((e) => [e.name, e]));
-  givens.forEach((g, i) => {
+  const givens0: GivenInput[] = input.given === undefined ? [] : Array.isArray(input.given) ? input.given : [input.given];
+  const givens: GivenInput[] = answers ? givens0 : [];
+  const byName = new Map(resolved.map((e) => [e.name, e]));
+  givens0.forEach((g, i) => {
     const at = `probability-tree.given[${i}]`;
     const o = v.object(g, at);
     for (const key of ["event", "given"] as const) {
       const name = v.requiredString(o, key, at);
-      if (!byName.has(name)) throw new SpecError(`${at}.${key}: "${name}" is not a declared event (${events.length === 0 ? "declare events first" : events.map((e) => `"${e.name}"`).join(", ")})`);
+      if (!byName.has(name)) throw new SpecError(`${at}.${key}: "${name}" is not a declared event (${resolved.length === 0 ? "declare events first" : resolved.map((e) => `"${e.name}"`).join(", ")})`);
     }
   });
 
@@ -425,14 +435,22 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   walk(root, (n) => nodes.push(n));
   for (const n of nodes) n.w = textW(n.label, NODE_FONT, 700);
   const probText = new Map<TNode, string>();
-  for (const n of nodes) probText.set(n, write.branch(n));
+  // a probability the exercise asks for (1 minus the others, or a fraction of an urn's counts) is not on the question's tree
+  const shown = (n: TNode): boolean => answers || !n.computed;
+  for (const n of nodes) probText.set(n, shown(n) ? write.branch(n) : "");
   const maxProbW = Math.max(...nodes.map((n) => textW(probText.get(n)!, PROB_FONT)));
   const levelHalf = (k: number): number => (k === 0 ? ROOT_R + 2 : Math.max(...nodes.filter((n) => n.depth === k).map((n) => n.w / 2), 0));
-  const minBranch = Math.max(96, maxProbW + 46);
+  const maxBranching = Math.max(...[root, ...nodes].map((n) => n.children.length));
+  // In a fan of three or more the middle branch is level and its neighbours rise and fall from the same node: a label
+  // above the level branch is clear of the rising one only if that line is still above the label's top at the label's
+  // near end, i.e. gap · (1/2 − w/2L) ≥ ~44. A short label ("2/5") manages it with the default spacing; a wide one
+  // ("2999/6499", counts in the thousands) needs a longer branch and a taller gap, or it sits on its neighbour.
+  const wideFan = maxBranching >= 3 && maxProbW > 40;
+  const minBranch = wideFan ? Math.max(96, maxProbW + 46, 2 * maxProbW + 20) : Math.max(96, maxProbW + 46);
   let dx = 0;
   for (let k = 1; k <= depth; k += 1) dx = Math.max(dx, levelHalf(k - 1) + levelHalf(k) + 4 + minBranch);
-  const maxBranching = Math.max(...[root, ...nodes].map((n) => n.children.length));
-  const gap = maxBranching >= 3 ? 54 : leaves.length > 8 ? 42 : 48;
+  const fanGap = wideFan ? Math.min(110, Math.ceil(44 / Math.max(0.2, 1 - maxProbW / minBranch))) : 0;
+  const gap = maxBranching >= 3 ? Math.max(54, fanGap) : leaves.length > 8 ? 42 : 48;
 
   const headers = stages !== undefined && stages.length > 0;
   const top0 = headers ? 58 : 26;
@@ -472,8 +490,8 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
     const tail = write.tail(leaf.value);
     return leaf.factors.length === 1 ? `${head} ${tail}` : `${head} = ${factors.join(" · ")} ${tail}`;
   };
-  const leafTexts = leaves.map(leafText);
-  const leafW = Math.max(...leafTexts.map((t) => textW(t, LEAF_FONT, 400))) + 6;
+  const leafTexts = answers ? leaves.map(leafText) : [];
+  const leafW = answers ? Math.max(...leafTexts.map((t) => textW(t, LEAF_FONT, 400))) + 6 : 0;
   // Clear of the last node AND of the last stage's heading, which is wider than a node.
   const lastHeading = stages !== undefined && stages.length >= depth ? textW(stages[depth - 1]!, HEADER_FONT, 700) / 2 : 0;
   const leafX = colX(depth) + Math.max(levelHalf(depth) + 34, lastHeading + 20);
@@ -504,6 +522,11 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
     pushWrapped(`P(${a.name} | ${b.name}) = P(${nameAB}) / P(${b.name})`, INK, undefined, 700);
     pushWrapped(`= ${paren(write, pAB, write.num(pAB))} / ${paren(write, b.value, write.num(b.value))} ${write.tail(q, alsoDefault).replace(/^= /, "= ")}`, INK, undefined, 700);
   });
+  if (!answers && input.urn !== undefined) {
+    const contents = Object.entries(input.urn).filter(([, k]) => k > 0).map(([c, k]) => `${k} ${c}`).join(" · ");
+    const how = input.replacement === true ? (locale === "pt-BR" ? "com reposição" : "with replacement") : locale === "pt-BR" ? "sem reposição" : "without replacement";
+    lines.push({ text: `${locale === "pt-BR" ? "urna" : "urn"}: ${contents} · ${how}`, colour: SOFT });
+  }
   if (write.rounded) lines.push({ text: locale === "pt-BR" ? "≈ indica valor decimal arredondado" : "≈ marks a rounded decimal value", colour: SOFT });
 
   const panelTop = treeBottom + 46;
@@ -545,13 +568,15 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
       board.label(s, cx, 26, { size: HEADER_FONT, weight: 700, colour: SOFT, freeStanding: true, claim: false, width: w, id: `stage-${i + 1}` });
       headerRects.push({ x: cx - w / 2, y: 26 - 12, width: w, height: 24 });
     });
-    const hl = locale === "pt-BR" ? "probabilidade do caminho" : "path probability";
-    const w = textW(hl, HEADER_FONT, 700);
-    board.label(hl, leafX + w / 2, 26, { size: HEADER_FONT, weight: 700, colour: SOFT, freeStanding: true, claim: false, width: w, id: "leaf-header" });
-    headerRects.push({ x: leafX, y: 14, width: w, height: 24 });
+    if (answers) {
+      const hl = locale === "pt-BR" ? "probabilidade do caminho" : "path probability";
+      const w = textW(hl, HEADER_FONT, 700);
+      board.label(hl, leafX + w / 2, 26, { size: HEADER_FONT, weight: 700, colour: SOFT, freeStanding: true, claim: false, width: w, id: "leaf-header" });
+      headerRects.push({ x: leafX, y: 14, width: w, height: 24 });
+    }
   }
   headerRects.forEach((r) => placer.reserve(r));
-  leaves.forEach((leaf, i) => {
+  if (answers) leaves.forEach((leaf, i) => {
     const w = textW(leafTexts[i]!, LEAF_FONT);
     const e = eventOfLeaf.get(leaf);
     board.label(leafTexts[i]!, leafX + w / 2, leaf.node.cy, {
@@ -570,6 +595,7 @@ export function expandProbabilityTree(input: ProbabilityTreeInput): FigureSpec {
   const PH = board0.extent("0", { size: PROB_FONT }).h;
   for (const n of nodes) {
     const text = probText.get(n)!;
+    if (text === "") continue;
     const w = textW(text, PROB_FONT);
     const [a, b] = branchPts(n) as [Point, Point];
     const len = Math.hypot(b.x - a.x, b.y - a.y);
@@ -626,7 +652,7 @@ function singleTerm(head: string, set: Leaf[], value: Fraction, w: Writer): stri
 
 // ---- validation -----------------------------------------------------------------------------------------------------
 
-const KEYS = ["preset", "title", "locale", "stages", "root", "urn", "draws", "replacement", "events", "given", "notation", "also"];
+const KEYS = ["preset", "title", "locale", "stages", "root", "urn", "draws", "replacement", "events", "given", "notation", "also", "answers"];
 
 export function validateProbabilityTreeInput(raw: Record<string, unknown>): void {
   const path = "probability-tree";

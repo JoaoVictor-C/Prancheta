@@ -58,6 +58,8 @@ export type VennInput = {
   counts?: Record<string, unknown>;
   /** The elements of each set, and of the universe under its own name. */
   elements?: Record<string, VennElement[]>;
+  /** false: the figure of the QUESTION -- circles, names and the universe only: no shading, counts, elements or caption (see PRESET.md). Default true. */
+  answers?: boolean;
 };
 
 // ---- palette and geometry constants ------------------------------------------
@@ -438,7 +440,7 @@ export function solveElements(
 
 // ---- validation ----------------------------------------------------------------------------
 
-const KEYS = ["preset", "title", "locale", "sets", "universe", "shade", "counts", "elements"];
+const KEYS = ["preset", "title", "locale", "sets", "universe", "shade", "counts", "elements", "answers"];
 
 export function validateVennInput(raw: Record<string, unknown>): void {
   const path = "venn";
@@ -556,7 +558,7 @@ export function buildVennModel(input: VennInput): VennModel {
   const locale = input.locale ?? "pt-BR";
   const solved = input.counts === undefined ? undefined : solveCounts(input.counts, names, `${path}.counts`);
   const elems = input.elements === undefined ? undefined : solveElements(input.elements, names, universe, locale, `${path}.elements`);
-  const r = elems !== undefined ? 128 : 100;
+  const r = elems !== undefined && input.answers !== false ? 128 : 100;
   const circles = vennCircles(n, r);
   const shaded: boolean[] = new Array(1 << n).fill(false);
   let shadeText: string | undefined;
@@ -572,8 +574,14 @@ const idOf = (names: readonly string[], mask: number): string => (mask === 0 ? "
 
 export function expandVenn(input: VennInput): FigureSpec {
   const locale = input.locale ?? "pt-BR";
+  const answers = input.answers !== false;
+  // Everything the diagram would print or shade is what an exercise asks to be put there: the question figure is the empty diagram.
+  // (The input is still solved and checked above, so a contradictory statement is refused either way.)
   const model = buildVennModel(input);
-  const { names, universe, circles, shaded, solved, elems } = model;
+  const { names, universe, circles } = model;
+  const shaded = answers ? model.shaded : model.shaded.map(() => false);
+  const solved = answers ? model.solved : undefined;
+  const elems = answers ? model.elems : undefined;
   const n = names.length;
 
   // ---- the frame: the universe rectangle around the circles, in the y-up frame ----
@@ -588,7 +596,7 @@ export function expandVenn(input: VennInput): FigureSpec {
   // ---- the caption under the rectangle ----
   const inShade = (m: number): boolean => shaded[m] === true;
   let caption: string | undefined;
-  if (model.shadeText !== undefined) {
+  if (model.shadeText !== undefined && answers) {
     if (solved !== undefined) {
       const unknown = shaded[0] === true && solved.none === undefined;
       if (!unknown) {

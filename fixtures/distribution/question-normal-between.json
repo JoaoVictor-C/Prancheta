@@ -1,0 +1,9 @@
+{
+  "preset": "distribution",
+  "answers": false,
+  "kind": "normal",
+  "mean": 50000,
+  "sd": 8000,
+  "showZ": true,
+  "event": { "between": [42000, 60000] }
+}

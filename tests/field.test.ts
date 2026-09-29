@@ -13,8 +13,9 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { chargeName, chargeRadius, electricField, electricPotential, expandField, frameGeometry, gradient, latticeIn, niceStep, traceChargeLines, validateFieldInput } from "../src/presets/field/preset.ts";
+import { chargeName, chargeRadius, electricField, electricPotential, expandField, frameGeometry, gradient, latticeIn, traceChargeLines, validateFieldInput } from "../src/presets/field/preset.ts";
 import type { FieldInput } from "../src/presets/field/preset.ts";
+import { niceStep } from "../src/presets/shared/scale.ts";
 import { compileIn } from "../src/math/expr.ts";
 import { contour } from "../src/math/contour.ts";
 import { render } from "../src/pipeline.ts";
@@ -58,11 +59,16 @@ function connectorsOf(spec: ReturnType<typeof expandField>, prefix: string): Con
 
 // --- pure helpers ------------------------------------------------------------
 
-test("niceStep keeps the span within maxLines divisions, on a 1/2/5 schedule", () => {
+test("the tick step is 1, 2 or 5 x 10^k at any magnitude, and the unit is fitted to the range", () => {
   assert.equal(niceStep(8, 8), 1);
-  assert.equal(niceStep(8.64, 11), 1);
   assert.equal(niceStep(40, 8), 5);
-  assert.equal(niceStep(0.8, 8), 0.5);
+  assert.equal(niceStep(0.8, 8), 0.1);
+  assert.equal(frameGeometry([0, 5000], [0, 5000]).tickStep, 1000);
+  assert.equal(frameGeometry([0, 0.2], [0, 0.2]).tickStep, 0.05);
+  for (const r of [[0, 0.2], [-3, 3], [0, 5000]] as [number, number][]) {
+    const g = frameGeometry(r, r);
+    assert.ok(Math.abs((g.xMax - g.xMin) * g.unit - 460) < 1e-6, `fills ~460px for ${r}`);
+  }
 });
 
 test("latticeIn returns exactly the multiples of step inside [lo, hi]", () => {
@@ -480,3 +486,119 @@ test("charges: refuses a zero charge, a charge outside the box, charges too clos
   assert.throws(() => validateFieldInput({ ...ok, linesPerUnitCharge: 0 }), /at least 1/);
   assert.throws(() => validateFieldInput({ ...ok, equipotentials: [1e6] }), /attained/);
 });
+
+// --- review of 2026-09-29: the unit follows the data, and answers can be withheld ---
+
+const labelTexts = (spec: ReturnType<typeof expandField>): string[] => ((spec.root as Scene).children as { label?: string }[]).map((b) => b.label ?? "");
+const tickCount = (spec: ReturnType<typeof expandField>, axis: "x" | "y"): number =>
+  ((spec.root as Scene).children as { id?: string }[]).filter((b) => new RegExp(`^plane-tick-${axis}-|^plane-tick-origin`).test(b.id ?? "")).length;
+const sizeOf = (spec: ReturnType<typeof expandField>): { w: number; h: number } => ({ w: (spec.root as Scene).width as number, h: (spec.root as Scene).height as number });
+const passes = async (input: FieldInput): Promise<void> => {
+  const result = await render(expandField(input), { raster: false });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
+};
+
+const PROBES: [string, FieldInput][] = [
+  ["slope over [0; 5000]", { kind: "slope", f: "x - y", x: [0, 5000], y: [0, 5000] }],
+  ["vector field over [-0,1; 0,1]", { kind: "vector", p: "-y", q: "x", x: [-0.1, 0.1], y: [-0.1, 0.1] }],
+  ["slope over [0; 0,2]", { kind: "slope", f: "x - y", x: [0, 0.2], y: [0, 0.2] }],
+  ["levels over [0; 5000]", { kind: "levels", f: "x + y", x: [0, 5000], y: [0, 5000], levels: [2000, 5000, 8000] }],
+];
+for (const [name, input] of PROBES) {
+  test(`probe: ${name} is a sane canvas, a numbered plane, and a lattice of marks`, { timeout: 240000 }, async () => {
+    const spec = expandField(input);
+    const { w, h } = sizeOf(spec);
+    assert.ok(w >= 60 && w <= 4000 && h >= 60 && h <= 4000, `${w} x ${h}`);
+    for (const axis of ["x", "y"] as const) {
+      const n = tickCount(spec, axis);
+      assert.ok(n >= 3 && n <= 12, `${n} numbers on ${axis}`);
+    }
+    if (input.kind !== "levels") {
+      // The lattice follows the fitted scale: a readable number of marks whatever the range.
+      const marks = marksOf(spec, "mark-").length + connectorsOf(spec, "mark-").length;
+      assert.ok(marks >= 36 && marks <= 196, `${marks} marks`);
+    }
+    await passes(input);
+  });
+}
+
+test("the same field over a range of any magnitude is the same figure", () => {
+  const at = (s: number): { w: number; h: number; marks: number } => {
+    const spec = expandField({ kind: "slope", f: "x - y", x: [0, 5 * s], y: [0, 5 * s] });
+    return { ...sizeOf(spec), marks: marksOf(spec, "mark-").length };
+  };
+  assert.deepEqual(at(1000), at(1));
+  assert.deepEqual(at(0.001), at(1));
+});
+
+test("answers: false slope field keeps every mark and the points a curve starts from, and no curve or reading", () => {
+  const input = loadFixture("slope-x-minus-y.json");
+  const full = expandField(input);
+  const bare = expandField({ ...input, answers: false });
+  assert.equal(marksOf(bare, "mark-").length, marksOf(full, "mark-").length);
+  assert.ok(marksOf(full, "solution-").some((m) => m.id === "solution-0"));
+  assert.equal(marksOf(bare, "solution-").filter((m) => /^solution-\d$/.test(String(m.id))).length, 0, "no solution curve");
+  assert.equal(marksOf(bare, "solution-").filter((m) => /-start-dot$/.test(String(m.id))).length, 3, "the initial points stay");
+  assert.ok(labelTexts(full).some((t) => t.startsWith("solução por")));
+  assert.ok(!labelTexts(bare).some((t) => t.startsWith("solução")), labelTexts(bare).join("|"));
+  assert.ok(sizeOf(bare).h < sizeOf(full).h, "no room reserved for readings");
+});
+
+test("answers: false vector field keeps every arrow and the starting points, and no flow line, label or reading", () => {
+  const input = loadFixture("vector-rotation.json");
+  const full = expandField(input);
+  const bare = expandField({ ...input, answers: false });
+  assert.equal(connectorsOf(bare, "mark-").length, connectorsOf(full, "mark-").length);
+  assert.equal(marksOf(bare, "flow-").filter((m) => /^flow-\d$/.test(String(m.id))).length, 0);
+  assert.equal(marksOf(bare, "flow-").filter((m) => /-start-dot$/.test(String(m.id))).length, 2);
+  const text = labelTexts(bare).join("|");
+  assert.ok(!/linha de fluxo|r=1|r=2/.test(text), text);
+  assert.ok(/linha de fluxo/.test(labelTexts(full).join("|")));
+});
+
+test("answers: false levels keeps the plane and the points a gradient is asked at, and no curve, level value or gradient", () => {
+  const input = loadFixture("levels-circles-gradient.json");
+  const full = expandField(input);
+  const bare = expandField({ ...input, answers: false });
+  assert.ok(marksOf(full, "level-").length > 0);
+  assert.equal(marksOf(bare, "level-").length, 0);
+  assert.equal(connectorsOf(bare, "grad-").length, 0);
+  assert.equal(connectorsOf(full, "grad-").length, 2);
+  assert.equal(marksOf(bare, "grad-").filter((m) => /-foot-dot$/.test(String(m.id))).length, 2, "the points stay");
+  // (the axis numbers are blocks too; a level label is one that is not a tick)
+  const printed = ((bare.root as Scene).children as { id?: string; label?: string }[]).filter((b) => !String(b.id ?? "").startsWith("plane-tick")).map((b) => b.label ?? "");
+  for (const level of ["1", "4", "9"]) assert.ok(!printed.includes(level), `level ${level} is printed`);
+  assert.deepEqual(sizeOf(bare), sizeOf(full), "the question plane is the answer plane");
+});
+
+test("answers: false charges keeps the charges and their names, and no field line, arrowhead, null point, equipotential or panel", () => {
+  const input = loadFixture("charges-dipole-equipotentials.json");
+  const full = expandField(input);
+  const bare = expandField({ ...input, answers: false });
+  const ids = (s: ReturnType<typeof expandField>): string[] => marksOf(s, "").map((m) => String(m.id));
+  assert.ok(ids(full).some((i) => i.startsWith("line-")) && ids(full).some((i) => i.startsWith("equipotential-")));
+  assert.ok(!ids(bare).some((i) => /^(line-|equipotential-|null-point)/.test(i)), ids(bare).join(","));
+  const discs = (s: ReturnType<typeof expandField>): string[] => ids(s).filter((i) => i.startsWith("charge-") && !i.endsWith("-leader"));
+  assert.deepEqual(discs(bare), discs(full));
+  assert.deepEqual(labelTexts(bare).filter((t) => t !== ""), ["q", "−q"]);
+  assert.ok(labelTexts(full).some((t) => t.startsWith("linhas de campo")));
+});
+
+test("answers: true (or unset) is exactly the figure it was before the option existed", () => {
+  for (const name of ["slope-x-minus-y.json", "vector-rotation.json", "levels-saddle.json", "charges-dipole.json"]) {
+    const input = loadFixture(name);
+    assert.deepEqual(expandField({ ...input, answers: true }), expandField(input), name);
+  }
+});
+
+for (const [name, input] of [
+  ["slope-x-minus-y-statement.json", loadFixture("slope-x-minus-y-statement.json")],
+  ["vector-rotation, answers false", { ...loadFixture("vector-rotation.json"), answers: false }],
+  ["levels-saddle, answers false", { ...loadFixture("levels-saddle.json"), answers: false }],
+  ["charges-dipole-equipotentials, answers false", { ...loadFixture("charges-dipole-equipotentials.json"), answers: false }],
+] as [string, FieldInput][]) {
+  test(`${name} renders with every check passing`, { timeout: 240000 }, async () => {
+    await passes(input);
+  });
+}

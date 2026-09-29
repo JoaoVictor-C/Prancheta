@@ -120,3 +120,28 @@ repeated (`u+v = (5; 4)`, never `u+v = u + v = (5; 4)`).
   only their components.
 - Non-right angles between more than two vectors, or an angle stated between
   vectors that do not share components computed the same way.
+
+## Scale
+
+The plane is drawn to the vectors' own extent: the margin is 28 % of the
+bounding box's larger side and the unit is fitted so that box fills about
+440 px, so `(3000; 4000)` and `(0,02; 0,03)` are as large as `(3; 4)`. The grid
+step is 1, 2 or 5 × 10ᵏ at any k (`src/presets/shared/scale.ts`), at most eight
+lines to a span; a span of 2 to 12 keeps whole steps of 1. A printed measure
+below 0,5 keeps two significant digits (`0,036`, not `0,04`).
+
+## answers: false
+
+`"answers": false` draws what an exercise **gives**: the vectors that were
+typed (`components`, `from`/`to`, `magnitude` + `angle`) with their names and
+the named points. Everything **derived** is left out — sums (and their
+parallelogram or head-to-tail guides), differences, multiples, projections
+with their perpendicular and right angle, `decompose` components, angle arcs
+and their values — but still bounds the frame, so the question's plane is the
+answer's plane.
+
+The readings panel keeps only what was typed: `F = (6; −4)` for `components`,
+`w: |w| = 5, θ = 143,13°` for `magnitude` + `angle` (with the components
+computed from them left out), and nothing for `from`/`to` (its components are
+the difference of two points). The magnitude printed beside an arrow stays
+only where the magnitude was the datum (`magnitude` + `angle`).

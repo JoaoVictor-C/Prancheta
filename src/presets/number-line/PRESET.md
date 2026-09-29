@@ -54,3 +54,17 @@ Several rows draw a line per row (labelled at the left, in declaration order) ab
 ## What is not covered
 
 The axis range is derived only from the boundaries the rows actually state; a row whose set has no finite boundary at all (the whole line, or the empty set) does not by itself widen or narrow it. Equalities (`x = 3`, a single point) are not part of the grammar — write the point's neighbourhood as two touching inequalities if a single marked point is truly needed.
+
+## answers: false
+
+In an exercise sheet, the question's figure passes `answers: false` (set automatically
+by the sheet dispatcher for ANSWER_AWARE presets); the solution figure draws the same
+input with the default `answers: true`. When `answers: false`:
+
+- **Number line**: the row names, axis labels, tick marks and boundary numbers remain;
+  the coloured interval lines (thick strokes and endpoint circles/arrows) are hidden. Each
+  row shows only a thin light reference line — the question is where to shade and what
+  endpoints to mark.
+
+This is the "mark the solution set" figure — the student must identify the boundaries and
+decide which intervals to include.

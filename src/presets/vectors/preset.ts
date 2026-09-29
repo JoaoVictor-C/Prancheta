@@ -36,6 +36,7 @@ import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
+import { fitUnits, niceStep } from "../shared/scale.ts";
 
 // ---- input ------------------------------------------------------------
 
@@ -62,6 +63,12 @@ export type VectorsInput = {
   /** Named points, for a vector stated as `from`/`to`. */
   points?: PointDef[];
   vectors: VectorItem[];
+  /**
+   * false: the figure an exercise GIVES -- the typed vectors (with their names, and the points they run between) and
+   * nothing derived from them: no sum, difference, multiple, projection, components or angle, and no printed magnitude
+   * except where the magnitude was the datum. Default true.
+   */
+  answers?: boolean;
 };
 
 // ---- palette ------------------------------------------------------------
@@ -77,10 +84,9 @@ const GUIDE = "#9AA3AE"; // grey -- a construction line, never itself a claim
 // ---- geometry constants (canvas pixels; the plane carries no rotation) ----
 
 const MARGIN = 56;
-const RANGE_PAD = 1.4;
+/** The margin round the vectors' bounding box, as a share of its larger side (1,4 for a box 5 across). */
+const RANGE_PAD_SHARE = 0.28;
 const PLOT_TARGET_PX = 440;
-const MIN_UNIT = 24;
-const MAX_UNIT = 84;
 const CAPTION_LINE_H = 20;
 /** An angle arc is 30% of its shorter arm, within these bounds. */
 const ARC_MIN = 24;
@@ -158,11 +164,17 @@ export function magnitudeLabel(dx: number, dy: number, locale: Locale = "pt-BR")
  * reader measures off a figure. The caption keeps the exact form.
  */
 export function measuredLabel(value: number, locale: Locale = "pt-BR"): string {
-  const hundredths = Math.round(value * 100) / 100;
-  if (Math.abs(value - hundredths) <= 1e-9 * Math.max(1, Math.abs(value))) {
-    return formatNumber(hundredths, locale, { fractions: false });
+  // Hundredths for an ordinary measure; two significant digits when the measure is itself below 0,1 (an arrow 0,036 long).
+  const a = Math.abs(value);
+  const decimals = a > 0 && a < 0.5 ? Math.max(2, 1 - Math.floor(Math.log10(a))) : 2;
+  const scale = 10 ** decimals;
+  const rounded = Math.round(value * scale) / scale;
+  if (Math.abs(value - rounded) <= 1e-9 * Math.max(1, Math.abs(value))) {
+    const shortest = formatNumber(rounded, locale, { fractions: false });
+    // The shortest form stops at three decimals; a smaller measure keeps the digits it was rounded to.
+    return a < 0.5 && Number(shortest.replace(",", ".").replace("−", "-")) !== rounded ? formatNumber(rounded, locale, { decimals }) : shortest;
   }
-  return formatNumber(value, locale, { decimals: 2 });
+  return formatNumber(value, locale, { decimals });
 }
 
 /** Is this measured number printed exactly, or rounded? */
@@ -213,14 +225,13 @@ function parseAngle(raw: number | string, path: string): number {
 }
 
 /**
- * A lattice step a student counts by. The vectors here are almost always
- * given in whole components, so a step of 2.5 put A = (−6, −6) between two
- * gridlines; only whole steps are offered, at most eight lines to a span.
+ * A lattice step a student counts by: 1, 2 or 5 x 10^k at any magnitude, at most eight lines to a span. Where the
+ * vectors are given in whole components (a span from 2 to 12) a step of 1 is kept rather than 0,5, so A = (−6, −6) never
+ * falls between two gridlines.
  */
-function niceStep(span: number): number {
-  const steps = [1, 2, 5, 10, 20, 50, 100];
-  for (const s of steps) if (span / s <= 8) return s;
-  return steps[steps.length - 1]!;
+function gridStepFor(span: number): number {
+  const step = niceStep(span, 8);
+  return step < 1 && span >= 2 && span <= 12 ? 1 : step;
 }
 
 // ---- label placement: every label anchored to its own ink ------------------
@@ -413,6 +424,7 @@ type Reading = { id: string; text: string };
 
 export function expandVectors(input: VectorsInput): FigureSpec {
   const locale = input.locale ?? "pt-BR";
+  const answers = input.answers !== false;
   for (const [i, item] of (input.vectors ?? []).entries()) {
     const anyItem = item as Record<string, unknown>;
     const label = anyItem.label;
@@ -446,6 +458,10 @@ export function expandVectors(input: VectorsInput): FigureSpec {
     dashed?: boolean;
     labelText: string;
     guides?: { id: string; from: [number, number]; to: [number, number] }[];
+    /** A sum, difference or multiple: what an exercise asks for, so `answers: false` leaves it out. */
+    derived?: true;
+    /** Print |v| beside the arrow: always with answers, and without them only where the magnitude was the datum. */
+    givenMagnitude?: true;
   };
   type DecomposeDraw = { id: string; ref: string; tail: [number, number]; head: [number, number] };
   type ProjectionDraw = {
@@ -457,11 +473,11 @@ export function expandVectors(input: VectorsInput): FigureSpec {
   };
   type AngleDraw = { id: string; a: [number, number]; b: [number, number]; degrees: number; labelText: string };
 
-  const vecs: VecDraw[] = [];
-  const decomposes: DecomposeDraw[] = [];
-  const projections: ProjectionDraw[] = [];
-  const angles: AngleDraw[] = [];
-  const readings: Reading[] = [];
+  let vecs: VecDraw[] = [];
+  let decomposes: DecomposeDraw[] = [];
+  let projections: ProjectionDraw[] = [];
+  let angles: AngleDraw[] = [];
+  let readings: Reading[] = [];
 
   const known = (name: string, path: string): Named => {
     v.knownId(name, new Set(named.keys()), path, "a vector");
@@ -505,7 +521,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       vecs.push({ id: it.name, tail, head, colour: TYPED, labelText: it.label ?? it.name });
       readings.push({
         id: `reading-${it.name}`,
-        text: `${it.name} = ${formatPoint(it.components[0], it.components[1], locale)}, |${it.name}| = ${magnitudeLabel(it.components[0], it.components[1], locale)}`,
+        text: `${it.name} = ${formatPoint(it.components[0], it.components[1], locale)}${answers ? `, |${it.name}| = ${magnitudeLabel(it.components[0], it.components[1], locale)}` : ""}`,
       });
       return;
     }
@@ -523,10 +539,13 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       touch(tail);
       touch(head);
       vecs.push({ id: it.name, tail, head, colour: TYPED, labelText: it.label ?? it.name });
-      readings.push({
-        id: `reading-${it.name}`,
-        text: `${it.name}${derivation(it.name, `${it.from}${it.to}`)} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
-      });
+      // Its components are the difference of two points' coordinates: computed, so no reading without answers.
+      if (answers) {
+        readings.push({
+          id: `reading-${it.name}`,
+          text: `${it.name}${derivation(it.name, `${it.from}${it.to}`)} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
+        });
+      }
       return;
     }
 
@@ -543,10 +562,10 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       declare(it.name, path, { dx, dy, tail, head });
       touch(tail);
       touch(head);
-      vecs.push({ id: it.name, tail, head, colour: TYPED, labelText: it.label ?? it.name });
+      vecs.push({ id: it.name, tail, head, colour: TYPED, labelText: it.label ?? it.name, givenMagnitude: true });
       readings.push({
         id: `reading-${it.name}`,
-        text: `${it.name}: |${it.name}| = ${formatNumber(mag, locale)}, θ = ${formatNumber(deg, locale)}°, ${it.name} = ${formatPoint(dx, dy, locale)}`,
+        text: `${it.name}: |${it.name}| = ${formatNumber(mag, locale)}, θ = ${formatNumber(deg, locale)}°${answers ? `, ${it.name} = ${formatPoint(dx, dy, locale)}` : ""}`,
       });
       return;
     }
@@ -579,7 +598,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
         guides.push({ id: `${it.name}-g1`, from: [pb.dx, pb.dy], to: cornerA });
         touch(cornerA);
       }
-      vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name, guides });
+      vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name, guides, derived: true });
       readings.push({
         id: `reading-${it.name}`,
         text: `${it.name}${derivation(it.name, it.sum.join(" + "))} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
@@ -600,7 +619,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       const head: [number, number] = [dx, dy];
       declare(it.name, path, { dx, dy, tail, head });
       touch(head);
-      vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name });
+      vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name, derived: true });
       readings.push({
         id: `reading-${it.name}`,
         text: `${it.name}${derivation(it.name, `${it.difference[0]} − ${it.difference[1]}`)} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
@@ -619,7 +638,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       const head: [number, number] = [dx, dy];
       declare(it.name, path, { dx, dy, tail, head });
       touch(head);
-      vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name });
+      vecs.push({ id: it.name, tail, head, colour: RESULT, labelText: it.label ?? it.name, derived: true });
       readings.push({
         id: `reading-${it.name}`,
         text: `${it.name}${derivation(it.name, `${formatNumber(factor, locale)}${it.scale}`)} = ${formatPoint(dx, dy, locale)}, |${it.name}| = ${magnitudeLabel(dx, dy, locale)}`,
@@ -688,18 +707,33 @@ export function expandVectors(input: VectorsInput): FigureSpec {
 
   if (named.size === 0 && vecs.length === 0) throw new SpecError("vectors: at least one vector must be given or derived");
 
+  // ---- answers: false -----------------------------------------------------
+  // Everything derived was needed above (to bound the frame, so the question's plane is the answer's plane, and to
+  // resolve names); none of it is drawn or printed. What stays is what was typed.
+  if (!answers) {
+    vecs = vecs.filter((vec) => vec.derived !== true);
+    decomposes = [];
+    projections = [];
+    angles = [];
+    const kept = new Set(vecs.map((vec) => `reading-${vec.id}`));
+    readings = readings.filter((r) => kept.has(r.id));
+  }
+
   // ---- frame ---------------------------------------------------------------
 
   const xs = bounds.map((p) => p[0]);
   const ys = bounds.map((p) => p[1]);
-  const xMin = Math.min(...xs) - RANGE_PAD;
-  const xMax = Math.max(...xs) + RANGE_PAD;
-  const yMin = Math.min(...ys) - RANGE_PAD;
-  const yMax = Math.max(...ys) + RANGE_PAD;
-  const spanX = Math.max(2, xMax - xMin);
-  const spanY = Math.max(2, yMax - yMin);
-  const unit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, PLOT_TARGET_PX / Math.max(spanX, spanY)));
-  const gridStep = niceStep(Math.max(spanX, spanY));
+  // The margin and the unit follow the vectors' own extent, so (3000; 4000) and (0,02; 0,03) are drawn as large as (3; 4).
+  const extent = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)) || 1;
+  const pad = RANGE_PAD_SHARE * extent;
+  const xMin = Math.min(...xs) - pad;
+  const xMax = Math.max(...xs) + pad;
+  const yMin = Math.min(...ys) - pad;
+  const yMax = Math.max(...ys) + pad;
+  const spanX = xMax - xMin;
+  const spanY = yMax - yMin;
+  const { xUnit: unit } = fitUnits(spanX, spanY, { targetWidth: PLOT_TARGET_PX, targetHeight: PLOT_TARGET_PX, equal: true });
+  const gridStep = gridStepFor(Math.max(spanX, spanY));
 
   const plotWidth = Math.ceil(MARGIN * 2 + spanX * unit);
   const plotHeight = Math.ceil(MARGIN * 2 + spanY * unit);
@@ -935,7 +969,7 @@ export function expandVectors(input: VectorsInput): FigureSpec {
       // The magnitude, printed as a plain decimal (not the exact-root form
       // the readings panel uses) so `length-matches-its-label` can read it
       // as a number and check it against the arrow's own length.
-      magnitude: measuredLabel(magnitude(vec.head[0] - vec.tail[0], vec.head[1] - vec.tail[1]), locale),
+      magnitude: answers || vec.givenMagnitude === true ? measuredLabel(magnitude(vec.head[0] - vec.tail[0], vec.head[1] - vec.tail[1]), locale) : undefined,
       colour: vec.colour,
     })),
     ...projections.map((p) => ({ id: p.id, tail: at(p.tail), head: at(p.head), name: p.labelText, magnitude: undefined, colour: PROJECTION })),

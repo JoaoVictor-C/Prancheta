@@ -89,7 +89,8 @@ export type InterfaceInput = {
   reflected?: boolean;
 };
 
-export type OpticsInput = { title?: string; locale?: Locale } & (LensInput | MirrorInput | InterfaceInput);
+/** `answers: false` draws the givens only: no rays, no image, no computed panel line. Default true. */
+export type OpticsInput = { title?: string; locale?: Locale; answers?: boolean } & (LensInput | MirrorInput | InterfaceInput);
 
 // ---- tables ---------------------------------------------------------------------
 
@@ -335,6 +336,7 @@ function farLimit(pr: Prepared): number {
 
 function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): FigureSpec {
   const locale = input.locale ?? "pt-BR";
+  const answers = input.answers !== false;
   const pr = prepare(input);
   const isMirror = pr.kind === "mirror";
   const plane = pr.f === null;
@@ -389,12 +391,13 @@ function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): Figure
   if (f !== null) keys.push(-f, f);
   if (f !== null && pr.show.antiprincipal && !isMirror) keys.push(-2 * f, 2 * f);
   if (f !== null && isMirror) keys.push(-2 * f);
-  if (imageTip !== null) keys.push(imageTip.x);
-  const hits = rules.map((r) => Math.abs(r.yh));
-  const plainHalf = Math.max(1.7 * o, 1.6 * Math.abs(iHeight), 1.25 * Math.max(0, ...hits));
+  if (imageTip !== null && answers) keys.push(imageTip.x);
+  const hits = answers ? rules.map((r) => Math.abs(r.yh)) : [];
+  const iShown = answers ? Math.abs(iHeight) : 0;
+  const plainHalf = Math.max(1.7 * o, 1.6 * iShown, 1.25 * Math.max(0, ...hits));
   const mirrorR = f === null ? Infinity : 2 * Math.abs(f);
   const elementHalf = Math.min(plainHalf, 0.92 * mirrorR * (isMirror ? 1 : 1e9));
-  const vhalf = Math.max(elementHalf * 1.08, 1.3 * o, 1.3 * Math.abs(iHeight));
+  const vhalf = Math.max(elementHalf * 1.08, 1.3 * o, 1.3 * iShown);
   const span = Math.max(...keys) - Math.min(...keys);
   const pad = 0.1 * span + 0.6;
   const xlo = Math.min(...keys) - pad;
@@ -497,8 +500,11 @@ function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): Figure
     }
   }
 
+  // The rays and the image are what the exercise asks for.
+  if (!answers) pieces.length = 0;
+
   // ---- draw ------------------------------------------------------------------------------
-  const panelLines = opticalPanel(pr, g, iHeight, locale);
+  const panelLines = answers ? opticalPanel(pr, g, iHeight, locale) : givensPanel(pr, locale);
   const barCm = nice(Math.max(1, 90 / unit));
   const barPx = barCm * unit;
   const panelH = 30 + panelLines.length * PANEL_LINE_H + 46;
@@ -595,7 +601,7 @@ function expandOptical(input: OpticsInput & { kind: "lens" | "mirror" }): Figure
   placer.addInk("object", [objBase, objTip]);
   let imgBase: Point | null = null;
   let imgTipPx: Point | null = null;
-  if (imageTip !== null) {
+  if (imageTip !== null && answers) {
     imgBase = at({ x: imageTip.x, y: 0 });
     imgTipPx = at(imageTip);
     if (dist(imgBase, imgTipPx) > 3) {
@@ -758,6 +764,15 @@ function hatch(board: Board, placer: Placer, onMirror: (y: number) => P, half: n
 
 type PanelLine = { text: string; strong?: boolean };
 
+/** answers:false: one line with what the exercise gives. */
+function givensPanel(pr: Prepared, locale: Locale): PanelLine[] {
+  const cm = (x: number): string => written(x, locale).text;
+  const parts = [`p = ${cm(pr.p)} cm`];
+  if (pr.f !== null) parts.push(`f = ${cm(pr.f)} cm`);
+  parts.push(`o = ${cm(pr.o)} cm`);
+  return [{ text: parts.join("; ") }];
+}
+
 function opticalPanel(pr: Prepared, g: Gauss, iHeight: number, locale: Locale): PanelLine[] {
   const cm = (x: number): string => written(x, locale).text;
   const p = pr.p;
@@ -803,6 +818,7 @@ function mediumOf(m: Medium | undefined, key: string): { name: string; n: number
 
 function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec {
   const locale = input.locale ?? "pt-BR";
+  const answers = input.answers !== false;
   const m1 = mediumOf(input.n1, "n1");
   const m2 = mediumOf(input.n2, "n2");
   const theta1 = numberOf(input.theta1, "optics.theta1");
@@ -821,7 +837,7 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
   const dy = flip ? -1 : 1;
 
   // A narrow angle needs long rays: a label of ~34px only fits inside a wedge of half-angle θ/2 at a radius of about (34 + slack) / 2 sin(θ/2).
-  const drawnAngles = [theta1, ...(sn.total ? [] : [sn.theta2])].filter((t) => t > 0);
+  const drawnAngles = [theta1, ...(sn.total || !answers ? [] : [sn.theta2])].filter((t) => t > 0);
   const needed = Math.max(0, ...drawnAngles.map((t) => 60 / (2 * Math.sin(rad(t) / 2)) + 30));
   const L = Math.round(Math.min(300, Math.max(190, needed + 10)));
   const width = Math.max(780, 2 * L + 100);
@@ -834,7 +850,7 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
   const rays = {
     incident: { from: from(-s1, c1, L), to: O },
     reflected: { from: O, to: from(s1, c1, L) },
-    refracted: sn.total ? null : { from: O, to: from(Math.sin(rad(sn.theta2)), -Math.cos(rad(sn.theta2)), L) },
+    refracted: sn.total || !answers ? null : { from: O, to: from(Math.sin(rad(sn.theta2)), -Math.cos(rad(sn.theta2)), L) },
   };
 
   const lines: PanelLine[] = [];
@@ -842,8 +858,12 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
   const sinText = (x: number): string => written(x, locale, 3).text;
   const n1t = formatNumber(m1.n, locale);
   const n2t = formatNumber(m2.n, locale);
-  lines.push({ text: `n₁ sen θ₁ = n₂ sen θ₂;  n₁ = ${n1t} (${m1.name}), n₂ = ${n2t} (${m2.name})` });
-  if (theta1 === 0) {
+  if (!answers) {
+    lines.push({ text: `n₁ = ${n1t} (${m1.name}), n₂ = ${n2t} (${m2.name});  θ₁ = ${t1.text}°` });
+  } else lines.push({ text: `n₁ sen θ₁ = n₂ sen θ₂;  n₁ = ${n1t} (${m1.name}), n₂ = ${n2t} (${m2.name})` });
+  if (!answers) {
+    // the givens only: nothing below is asked to be copied
+  } else if (theta1 === 0) {
     lines.push({ text: "θ₁ = 0°: o raio incide na normal e atravessa sem se desviar (θ₂ = 0°)" });
   } else if (sn.total) {
     lines.push({ text: `θ₁ = ${t1.text}°:  sen θ₂ = ${n1t} · ${sinText(Math.sin(rad(theta1)))} / ${n2t} ${eq(sn.sin2, locale, 3)} > 1  →  não há raio refratado` });
@@ -851,11 +871,13 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
     const t2 = degreesText(sn.theta2, locale);
     lines.push({ text: `θ₁ = ${t1.text}°:  sen θ₂ = ${n1t} · ${sinText(Math.sin(rad(theta1)))} / ${n2t} ${eq(sn.sin2, locale, 3)}  →  θ₂ ${t2.exact ? "=" : "≈"} ${t2.text}°` });
   }
-  if (thetaC !== null) {
+  if (answers && thetaC !== null) {
     const tc = degreesText(thetaC, locale);
     lines.push({ text: `ângulo limite: sen θc = n₂/n₁  →  θc ${tc.exact ? "=" : "≈"} ${tc.text}°` });
   }
-  if (sn.total && thetaC !== null) {
+  if (!answers) {
+    // no verdict
+  } else if (sn.total && thetaC !== null) {
     const tc = degreesText(thetaC, locale);
     lines.push({ text: `reflexão total (θ₁ > θc = ${tc.text}°)`, strong: true });
   } else if (!sn.total && theta1 > 0) {
@@ -903,9 +925,9 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
     board.poly(pts, { stroke: colour, width: 1, fill: colour, close: true, id });
     placer.addInk(id, [...pts, pts[0]!]);
   };
-  const reflectedDrawn = showReflected || sn.total;
+  const reflectedDrawn = answers ? showReflected || sn.total : showReflected;
   drawRay("ray-incident", rays.incident.from, rays.incident.to, PARALLEL, 2.6);
-  if (reflectedDrawn) drawRay("ray-reflected", rays.reflected.from, rays.reflected.to, REFLECT, sn.total ? 2.6 : 1.6);
+  if (reflectedDrawn) drawRay("ray-reflected", rays.reflected.from, rays.reflected.to, REFLECT, sn.total && answers ? 2.6 : 1.6);
   if (rays.refracted !== null) drawRay("ray-refracted", rays.refracted.from, rays.refracted.to, IMAGE, 2.6);
   arrowOn(rays.incident.from, rays.incident.to, PARALLEL, "head-incident", 0.3);
   if (reflectedDrawn) arrowOn(rays.reflected.from, rays.reflected.to, REFLECT, "head-reflected", 0.82);
@@ -925,8 +947,8 @@ function expandInterface(input: OpticsInput & { kind: "interface" }): FigureSpec
   const arcs: ArcSpec[] = [];
   if (theta1 > 0) {
     arcs.push({ id: "arc-incident", a: { x: 0, y: 1 }, b: { x: -s1, y: c1 }, value: theta1, colour: PARALLEL });
-    if (!sn.total) arcs.push({ id: "arc-refracted", a: { x: 0, y: -1 }, b: { x: Math.sin(rad(sn.theta2)), y: -Math.cos(rad(sn.theta2)) }, value: sn.theta2, colour: IMAGE });
-    if (sn.total) arcs.push({ id: "arc-reflected", a: { x: 0, y: 1 }, b: { x: s1, y: c1 }, value: theta1, colour: REFLECT });
+    if (!sn.total && answers) arcs.push({ id: "arc-refracted", a: { x: 0, y: -1 }, b: { x: Math.sin(rad(sn.theta2)), y: -Math.cos(rad(sn.theta2)) }, value: sn.theta2, colour: IMAGE });
+    if (sn.total && answers) arcs.push({ id: "arc-reflected", a: { x: 0, y: 1 }, b: { x: s1, y: c1 }, value: theta1, colour: REFLECT });
   }
   for (const a of arcs) {
     const angA = Math.atan2(-dy * a.a.y, a.a.x);

@@ -206,3 +206,62 @@ fixtures.forEach((f) => {
     for (const c of result.manifest.checks) assert.ok(c.status === "pass" || c.status === "not-applicable", `${f}: ${c.id} ${c.status}: ${c.detail}`);
   });
 });
+
+// ---- answers: false, and magnitudes ---------------------------------------------------------------
+
+const labelsOf = (s: Spec): string[] => blocks(s).map((b) => b.label ?? "");
+const assertChecks = async (input: StatisticsInput, what: string): Promise<void> => {
+  const result = await render(expandStatistics(input), { maxPasses: 3 });
+  for (const c of result.manifest.checks) assert.ok(c.status === "pass" || c.status === "not-applicable", `${what}: ${c.id} ${c.status}: ${c.detail}`);
+};
+
+test("answers:true is the default and changes nothing", () => {
+  const both: StatisticsInput = { ...H, kind: "both", showTable: true, polygon: true };
+  assert.deepEqual(expandStatistics({ ...both, answers: true }), expandStatistics(both));
+});
+
+test("answers:false hides every computed statistic and keeps the drawing and the classes", async () => {
+  const q: StatisticsInput = { ...H, kind: "both", showTable: true, polygon: true, unit: "cm", answers: false };
+  const spec = expandStatistics(q);
+  const text = labelsOf(spec).join("|");
+  for (const forbidden of [/n = 40/, /x̄/, /Md =/, /Mo =/, /Q₁ =/, /Q₃ =/, /IQR =/, /Sturges/, /amplitude/, /outliers?: \d/, /nenhum outlier\b/, /polígono/]) assert.doesNotMatch(text, forbidden);
+  const cell = (id: string): string | undefined => blocks(spec).find((b) => b.id === id)?.label;
+  assert.equal(cell("freq-cell-0-0"), "[150; 157)");
+  assert.equal(cell("freq-cell-5-0"), "[185; 192]");
+  for (let r = 0; r < 6; r += 1) for (let c = 1; c < 5; c += 1) assert.equal(cell(`freq-cell-${r}-${c}`) ?? "", "");
+  assert.equal(cell("freq-foot-1") ?? "", "");
+  assert.equal(marks(spec).filter((m) => /^bar-\d+$/.test(m.id)).length, 6);
+  assert.ok(!marks(spec).some((m) => m.id === "polygon"));
+  assert.ok(marks(spec).some((m) => m.id === "median-0"), "the boxplot is still drawn");
+  assert.ok(!labelsOf(spec).some((l) => /^(Q₁|Md|Q₃) = /.test(l)));
+  await assertChecks(q, "statistics answers:false");
+});
+
+test("answers:false: the groups' summary table keeps the groups and empties the measures", async () => {
+  const q: StatisticsInput = { kind: "boxplot", data: [{ label: "A", values: [10, 12, 13, 15, 18, 19, 20, 40] }, { label: "B", values: [5, 9, 14, 15, 16, 17, 19, 22] }], answers: false };
+  const spec = expandStatistics(q);
+  const cell = (id: string): string | undefined => blocks(spec).find((b) => b.id === id)?.label;
+  assert.equal(cell("summary-cell-0-0"), "A");
+  for (let c = 1; c < 9; c += 1) assert.equal(cell(`summary-cell-0-${c}`) ?? "", "");
+  await assertChecks(q, "statistics two groups answers:false");
+});
+
+test("thousands: the classes and the box axis follow the data and every check passes", async () => {
+  const data = [12000, 13500, 15000, 16200, 17800, 18000, 19500, 21000, 22400, 24000, 25500, 27000, 28800, 30000, 33000, 36500, 41000, 45000];
+  const spec = expandStatistics({ kind: "both", data, showTable: true });
+  const ticks = blocks(spec).filter((b) => !b.id?.startsWith("freq-") && /^\d+$/.test(b.label ?? ""));
+  assert.ok(ticks.length <= 30, `${ticks.length} numbers`);
+  await assertChecks({ kind: "both", data, showTable: true }, "statistics thousands");
+  await assertChecks({ kind: "both", data, showTable: true, answers: false }, "statistics thousands answers:false");
+});
+
+test("thousandths: a variance of 0,00000565 is not printed as 0, and the quartiles keep their digits", async () => {
+  const data = [0.001, 0.002, 0.002, 0.003, 0.003, 0.003, 0.004, 0.004, 0.005, 0.005, 0.006, 0.007, 0.008, 0.009];
+  const text = labelsOf(expandStatistics({ kind: "both", data, unit: "g" })).join("|");
+  assert.match(text, /s² ≈ 0,00000565 g²/);
+  assert.match(text, /x̄ ≈ 0,00443 g/);
+  assert.doesNotMatch(text, /s² ≈ 0 /);
+  assert.deepEqual(describeNumber(0.0000056484), { sym: "≈", text: "0,00000565" });
+  assert.deepEqual(describeNumber(0.0042), { sym: "=", text: "0,0042" });
+  await assertChecks({ kind: "both", data, unit: "g", showTable: true, polygon: true }, "statistics thousandths");
+});

@@ -182,3 +182,36 @@ or a number.
 - Points are drawn last, so a dot is never under a line through it.
 
 Examples: `fixtures/construction/`.
+
+## Scale
+
+The view is built from the drawn objects' extent alone: the margin is 8 % of
+it (13 % with axes) and the unit is fitted so it fills about 460 px, so a
+triangle with sides 3000 and 4000, one with sides 3 and 4 and one with sides
+0,003 and 0,004 are the same figure. With `axes` the tick step is 1, 2 or 5 ×
+10ᵏ at any k, at most ten divisions to an axis, and a division is never
+narrower than 48 px (ADR 0034).
+
+## answers: false
+
+`"answers": false` draws what an exercise **gives**. A construction figure *is*
+its objects, so the drawing stays; what goes is every **measured number**:
+
+- a `length` annotation with a `name` prints just the name (`h`, the unknown);
+  one without prints nothing;
+- an `angle` annotation with a `name` keeps it; one without is marked `?` in the
+  unknown's red — the arc says which angle, the degrees are the answer. A 90°
+  square is a shape, and stays;
+- the readings panel (exact lengths, angle values, `equation` annotations, a
+  conic's `show: ["equation"]` and its asymptote equations) is empty;
+- `coords: true` prints a **free** point's pair (typed: a datum) and leaves a
+  computed point (a midpoint, a foot, an intersection) with its name only.
+
+The construction's own results are not guessed at: whether the altitude *is*
+the answer ("construa a altura") or a given ("calcule a altura h") is the
+author's to say. `"answer": true` on an object withholds it under
+`answers: false` — not drawn, its dot and label gone, every `length`, `angle`
+and `equal` annotation that touches it dropped — and it still bounds the view
+and can be built on, so the question and the solution overlay. With `answers`
+left on `"answer"` does nothing. Example:
+`fixtures/construction/right-triangle-altitude-statement.json`.

@@ -217,3 +217,35 @@ test("the fixtures say what they claim: p → q ≡ ¬p ∨ q, De Morgan, the ma
   assert.equal(decode(load("majority-minterms-digital.json")).panel[0], "Σm(3, 5, 6, 7)");
   assert.match(decode(load("tautology-excluded-middle.json")).panel[0]!, /tautologia/);
 });
+
+// ---- answers: false ------------------------------------------------------------------------------
+
+fixtures.forEach((filename) => {
+  test(`answers:false ${filename}: variable columns filled, computed cells empty, no verdict lines, every check passes`, async () => {
+    const { preset: _p, ...raw } = JSON.parse(readFileSync(join(dir, filename), "utf8")) as Record<string, unknown>;
+    const on = decode(raw as unknown as TruthTableInput);
+    const spec = expandTruthTable({ ...raw, answers: false } as unknown as TruthTableInput);
+    const blocks = blocksOf(spec);
+    assert.deepEqual(blocks.filter((b) => b.id.startsWith("panel-")), [], "no panel");
+    const cells = blocks.filter((b) => /^cell-\d+-\d+$/.test(b.id));
+    const vars = new Set(on.heads.filter((h) => h.length === 1 && /^[A-Za-z]\d*$/.test(h[0]!) && !(raw.minterms === true && h[0] === "m")).map((h) => h[0]));
+    const cols = new Set(cells.map((b) => Number(b.id.split("-")[2])));
+    const rowsN = new Set(cells.map((b) => Number(b.id.split("-")[1]))).size;
+    assert.equal(rowsN, on.rows.length, "every row is still drawn");
+    // Only the leading index and variable columns keep a cell: as many as the variables (plus the m column).
+    const filled = [...cols].length;
+    const varCount = [...vars].length;
+    assert.ok(filled === varCount + (raw.minterms === true ? 1 : 0), `${filename}: ${filled} filled columns for ${varCount} variables`);
+    for (const c of cells) assert.ok(/^[VF01]$|^\d+$/.test(c.label ?? ""), `${c.id} "${c.label}"`);
+    // The headers, computed columns included, are still there.
+    assert.equal(blocks.filter((b) => b.id.startsWith("head-")).length, on.heads.reduce((s, h) => s + h.length, 0));
+    const result = await render(spec, { maxPasses: 3, raster: false });
+    for (const check of result.manifest.checks) assert.ok(check.status === "pass" || check.status === "not-applicable", `${filename}: ${check.id} ${check.status}: ${check.detail}`);
+  });
+});
+
+test("answers:true is the default and unchanged", () => {
+  const input = { expressions: ["p -> q"], classify: true } as TruthTableInput;
+  assert.deepEqual(expandTruthTable({ ...input, answers: true }), expandTruthTable(input));
+  assert.ok(decode(input).panel.length > 0);
+});

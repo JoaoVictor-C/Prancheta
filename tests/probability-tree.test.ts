@@ -59,12 +59,12 @@ test("the urn 3V/2A without replacement: products and P(cores diferentes) = 3/5"
 });
 
 test("with replacement the second draw is the same 3/5, 2/5", () => {
-  const t = texts(expandProbabilityTree({ urn: { V: 3, A: 2 }, draws: 2, replacement: true }));
+  const t = treeTexts(expandProbabilityTree({ urn: { V: 3, A: 2 }, draws: 2, replacement: true }));
   assert.ok(t.includes("P(A ∩ A) = 2/5 · 2/5 = 4/25"));
 });
 
 test("an exhausted colour has no branch (probability 0)", () => {
-  const t = texts(expandProbabilityTree({ urn: { V: 1, A: 2 }, draws: 2 }));
+  const t = treeTexts(expandProbabilityTree({ urn: { V: 1, A: 2 }, draws: 2 }));
   assert.ok(!t.some((x) => x.startsWith("P(V ∩ V)")));
   assert.ok(t.includes("P(V ∩ A) = 1/3 · 2/2 = 1/3"));
 });
@@ -155,4 +155,74 @@ fixtures.forEach((filename) => {
       assert.ok(check.status === "pass" || check.status === "not-applicable", `${filename}: ${check.id} ${check.status}: ${check.detail}`);
     }
   });
+});
+
+// ---- answers: false, and magnitudes ---------------------------------------------------------------
+
+const treeTexts = (s: ReturnType<typeof expandProbabilityTree>): string[] => ((s.root as Scene).children as Block[]).map((b) => b.label ?? "");
+const treePasses = async (input: ProbabilityTreeInput, what: string): Promise<void> => {
+  const result = await render(expandProbabilityTree(input), { maxPasses: 3 });
+  for (const c of result.manifest.checks) assert.ok(c.status === "pass" || c.status === "not-applicable", `${what}: ${c.id} ${c.status}: ${c.detail}`);
+};
+const BAYES: ProbabilityTreeInput = {
+  stages: ["condição", "resultado do teste"],
+  root: { children: [
+    { label: "D", p: "1%", children: [{ label: "+", p: "95%" }, { label: "−", p: "5%" }] },
+    { label: "S", p: "99%", children: [{ label: "+", p: "10%" }, { label: "−", p: "90%" }] },
+  ] },
+  events: [{ name: "D", paths: [["D"]] }, { name: "+", paths: [["*", "+"]] }],
+  given: { event: "D", given: "+" },
+};
+
+test("answers:true is the default and changes nothing", () => {
+  assert.deepEqual(expandProbabilityTree({ ...BAYES, answers: true }), expandProbabilityTree(BAYES));
+});
+
+test("answers:false keeps the tree and the typed probabilities; no products, sums or conditionals", async () => {
+  const q = { ...BAYES, answers: false };
+  const t = treeTexts(expandProbabilityTree(q));
+  const all = t.join("|");
+  assert.doesNotMatch(all, /P\(|caminho|∩| = /);
+  for (const given of ["1%", "99%", "95%", "5%", "10%", "90%", "D", "S", "+", "−", "condição"]) assert.ok(t.includes(given), given);
+  const marks = ((expandProbabilityTree(q).root as Scene).marks ?? []);
+  assert.ok(marks.filter((m) => m.strokeWidth === 3).length === 0, "no highlighted paths");
+  await treePasses(q, "tree answers:false");
+});
+
+test("answers:false: a branch left as 1 minus the others is computed, so it is not printed", () => {
+  const t = treeTexts(expandProbabilityTree({ root: { children: [{ label: "A", p: 0.3 }, { label: "B" }] }, answers: false }));
+  assert.ok(t.includes("0,3") && !t.includes("0,7"));
+  assert.ok(treeTexts(expandProbabilityTree({ root: { children: [{ label: "A", p: 0.3 }, { label: "B" }] } })).includes("0,7"));
+});
+
+test("answers:false: an urn's branch fractions are computed, so the tree is drawn without them and the urn is stated", async () => {
+  const q: ProbabilityTreeInput = { urn: { V: 3, A: 2 }, draws: 2, replacement: false, events: [{ name: "iguais", paths: [["V", "V"], ["A", "A"]] }], answers: false };
+  const t = treeTexts(expandProbabilityTree(q));
+  assert.ok(!t.some((s) => /\d\/\d/.test(s)), t.join("|"));
+  assert.ok(t.includes("urna: 3 V · 2 A · sem reposição"));
+  await treePasses(q, "urn answers:false");
+});
+
+test("an event that matches no leaf is still refused under answers:false", () => {
+  assert.throws(() => expandProbabilityTree({ ...BAYES, events: [{ name: "X", paths: [["Q"]] }], answers: false }), SpecError);
+});
+
+test("thousands: an urn of 3000, 2000 and 1500 balls drawn three times keeps its labels off the neighbouring branches", async () => {
+  const q: ProbabilityTreeInput = { urn: { V: 3000, A: 2000, B: 1500 }, draws: 3, replacement: false, events: [{ name: "três V", count: { of: "V", is: 3 } }] };
+  const result = await render(expandProbabilityTree(q), { maxPasses: 3 });
+  for (const c of result.manifest.checks) assert.ok(c.status === "pass" || c.status === "not-applicable", `${c.id} ${c.status}: ${c.detail}`);
+  assert.ok(result.figure.height <= 4000);
+});
+
+test("tiny decimals: 0,001 prevalence in decimal notation passes every check", async () => {
+  await treePasses({
+    notation: "decimal",
+    stages: ["defeito", "teste"],
+    root: { children: [
+      { label: "D", p: 0.001, children: [{ label: "+", p: 0.995 }, { label: "−", p: 0.005 }] },
+      { label: "S", p: 0.999, children: [{ label: "+", p: 0.002 }, { label: "−", p: 0.998 }] },
+    ] },
+    events: [{ name: "+", paths: [["*", "+"]] }, { name: "D", paths: [["D"]] }],
+    given: { event: "D", given: "+" },
+  }, "tiny decimals");
 });

@@ -106,6 +106,31 @@ test("validation refuses what cannot be drawn", () => {
   );
 });
 
+// --- answers: false ---------------------------------------------------------------
+
+test("answers:false hides critical points and signs, but keeps row names", () => {
+  const input: SignChartInput = { expr: "x^2 - 1", answers: false };
+  assert.deepEqual(header(input), []);
+  assert.deepEqual(signs(input, 1), []);
+});
+
+test("answers:true (default) shows critical points and signs", () => {
+  const input: SignChartInput = { expr: "x^2 - 1" };
+  // x^2 - 1 has derivative 2x, which has a critical point at x = 0
+  assert.deepEqual(header(input), ["0"]);
+  assert.deepEqual(signs(input, 1).length > 0, true);
+});
+
+test("answers:false renders with every check passing", { timeout: 240000 }, async () => {
+  const input: SignChartInput = { expr: "x^2 - 3", rows: ["f"], answers: false };
+  const spec = expandSignChart(input);
+  const result = await render(spec, { raster: false });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
+  // Verify no signs are present
+  assert.deepEqual(signs(input, 1), []);
+});
+
 // --- rendering ---------------------------------------------------------------
 
 for (const name of fixtures) {

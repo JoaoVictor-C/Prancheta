@@ -38,6 +38,7 @@ import { makeCamera, orthographicCamera, project, projectDirection, tangentParam
 import type { Camera, CameraSpec, ProjectedCircle } from "../../geometry/projection.ts";
 import { SpacePlacer, aroundPlace } from "../space/placer.ts";
 import { convexHull, splitCircle } from "../solid/geometry.ts";
+import { fitUnits, niceStep } from "../shared/scale.ts";
 import * as G from "./geometry.ts";
 
 // ---- input ------------------------------------------------------------------------
@@ -65,6 +66,8 @@ export type RevolutionInput = {
   plane?: boolean;
   /** Default: orthographic, looking slightly along the axis (ADR 0049). */
   camera?: CameraSpec;
+  /** false: the question's figure -- the solid and the region as given, the slice named by letters only, no expressions and no volume. Default true. */
+  answers?: boolean;
 };
 
 // ---- palette and sizes -------------------------------------------------------------
@@ -459,6 +462,10 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
   if (view.R < 0.05) throw new SpecError("revolution.camera looks along the axis of revolution: the solid would draw as its own cross-section");
   if (Math.abs(view.gamma) < 0.05) throw new SpecError("revolution.camera sees the cross-sections edge-on, as straight lines -- turn it off the plane perpendicular to the axis");
 
+  // answers: false: the solid, the region and the axis are the given; the slice
+  // keeps its letters (R, r, h, dx) but not the expressions they equal, and the
+  // panel -- the method's integral and the volume -- is not printed.
+  const hide = input.answers === false;
   const size = G.solidSize(m);
   const P = (p: Vec3): Vec2 => project(camera, p);
   const strokes: Stroke[] = [];
@@ -588,13 +595,13 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
       };
       const ANGLES = [0, Math.PI, Math.PI / 4, -Math.PI / 4, (3 * Math.PI) / 4, (-3 * Math.PI) / 4];
       const R0 = radiusRun(R, 0);
-      strokes.push({ id: "slice-R", pts: R0.pts, colour: ACCENT, width: W_SLICE, dashed: false, layer: 6, group: "slice-R", measure: { dir3: R0.dir3, texts: [`R(x) = ${res.texts.R}`, "R"], reading: null, alts: ANGLES.slice(1).map((th) => radiusRun(R, th)) } });
+      strokes.push({ id: "slice-R", pts: R0.pts, colour: ACCENT, width: W_SLICE, dashed: false, layer: 6, group: "slice-R", measure: { dir3: R0.dir3, texts: hide ? ["R"] : hide ? ["R"] : [`R(x) = ${res.texts.R}`, "R"], reading: null, alts: ANGLES.slice(1).map((th) => radiusRun(R, th)) } });
       if (res.method === "washers" && r > 1e-9) {
         const inF = G.crossSection(m, camera, sF, r);
         fills.push({ id: "slice-hole", pts: full(inF), colour: holeColour });
         strokes.push({ id: "slice-front-inner", pts: full(inF), colour: ACCENT, width: W_SLICE, dashed: false, layer: 4, group: "slice" });
         const r0 = radiusRun(r, Math.PI);
-        strokes.push({ id: "slice-r", pts: r0.pts, colour: ACCENT, width: W_SLICE, dashed: false, layer: 6, group: "slice-r", measure: { dir3: r0.dir3, texts: [`r(x) = ${res.texts.r}`, "r"], reading: null, alts: [0, ...ANGLES.slice(2)].map((th) => radiusRun(r, th)) } });
+        strokes.push({ id: "slice-r", pts: r0.pts, colour: ACCENT, width: W_SLICE, dashed: false, layer: 6, group: "slice-r", measure: { dir3: r0.dir3, texts: hide ? ["r"] : hide ? ["r"] : [`r(x) = ${res.texts.r}`, "r"], reading: null, alts: [0, ...ANGLES.slice(2)].map((th) => radiusRun(r, th)) } });
       }
       // dx: a dimension run under the solid, the slab's own thickness along the axis.
       const below = G.solidRadius(m) + 0.08 * size;
@@ -637,7 +644,7 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
           dashed: false,
           layer: carries ? 6 : 4,
           group: carries ? "slice-h" : "slice",
-          ...(carries ? { measure: { dir3: vsub(b3, a3), texts: [`h(x) = ${res.texts.height}`, "h"], reading: null } } : {}),
+          ...(carries ? { measure: { dir3: vsub(b3, a3), texts: hide ? ["h"] : hide ? ["h"] : [`h(x) = ${res.texts.height}`, "h"], reading: null } } : {}),
         });
       });
       const c0 = G.axisPoint(m, sTop);
@@ -646,7 +653,7 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
         const e = G.sweep(m, sTop, radius, th);
         return { pts: [P(c0), P(e)], dir3: vsub(e, c0) };
       };
-      strokes.push({ id: "slice-radius", pts: [P(c0), P(rEnd)], colour: ACCENT, width: W_SLICE, dashed: false, layer: 6, group: "slice-radius", measure: { dir3: vsub(rEnd, c0), texts: [`r(x) = ${res.texts.radius}`, "r"], reading: null, alts: [Math.PI, 0.6, -0.6].map(radAlt) } });
+      strokes.push({ id: "slice-radius", pts: [P(c0), P(rEnd)], colour: ACCENT, width: W_SLICE, dashed: false, layer: 6, group: "slice-radius", measure: { dir3: vsub(rEnd, c0), texts: hide ? ["r"] : hide ? ["r"] : [`r(x) = ${res.texts.radius}`, "r"], reading: null, alts: [Math.PI, 0.6, -0.6].map(radAlt) } });
       // dx: a dimension run below the solid, the shell's own thickness across the axis.
       // Below everything drawn so far on the page: solve the page height of the run for s.
       const pageLow = Math.min(...strokes.filter((st) => st.group !== "axis").flatMap((st) => st.pts.map((q) => q[1])), ...fills.flatMap((fl) => fl.pts.map((q) => q[1])));
@@ -660,14 +667,21 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
       strokes.push({ id: "slice-dx", pts: [P(d0), P(d1)], colour: ACCENT, width: W_SLICE, dashed: false, layer: 6, group: "slice-dx", measure: { dir3: vsub(d1, d0), texts: ["dx"], reading: null, ext: [[P(e0), P(d0)], [P(e1), P(d1)]] } });
     }
   }
-  readings.push(...volumeLines(res, locale));
+  if (!hide) readings.push(...volumeLines(res, locale));
 
   // ---- page transform for the 3D view ----
   const every3: Vec2[] = [...strokes.flatMap((s) => s.pts), ...fills.flatMap((f) => f.pts)];
   const us = every3.map((p) => p[0]);
   const vs = every3.map((p) => p[1]);
   const [uMin, uMax, vMin, vMax] = [Math.min(...us), Math.max(...us), Math.min(...vs), Math.max(...vs)];
-  const unit3 = Math.min(420, Math.max(24, TARGET_3D / Math.max(uMax - uMin, vMax - vMin, 1e-9)));
+  // Fitted to the solid: a region running to x = 400 is as big on the page as
+  // one running to x = 4, with the same 3D view of it.
+  // A solid much longer than it is wide (sqrt x to 400: 10 to 1) may run wider,
+  // up to 1,6 times the target, so its slice still has room for a label.
+  const spanU = Math.max(uMax - uMin, 1e-9);
+  const spanV = Math.max(vMax - vMin, 1e-9);
+  const longer = Math.min(1.6, Math.max(1, spanU / spanV / 2.5));
+  const { xUnit: unit3 } = fitUnits(spanU, spanV, { equal: true, targetWidth: TARGET_3D * longer, targetHeight: TARGET_3D });
   const w3 = Math.ceil((uMax - uMin) * unit3 + 2 * PAD);
   const h3 = Math.ceil((vMax - vMin) * unit3 + 2 * PAD);
   const ox3 = PAD - uMin * unit3;
@@ -792,7 +806,7 @@ export function expandRevolution(input: RevolutionInput): FigureSpec {
   }
 
   // ---- the plane view, drawn into its own box to the right ----
-  if (plan2 !== null) drawPlane(board, plan2, res, { x: w3 + GAP, y: (plotH - h2) / 2 }, locale);
+  if (plan2 !== null) drawPlane(board, plan2, res, { x: w3 + GAP, y: (plotH - h2) / 2 }, locale, hide);
 
   // ---- the panel ----
   readings.forEach((text, i) => {
@@ -812,14 +826,7 @@ function dist(p: Point, q: Point): number {
 
 // ---- the plane view ------------------------------------------------------------------
 
-type PlaneLayout = { width: number; height: number; unit: number; xr: [number, number]; yr: [number, number]; step: number };
-
-function niceStep(span: number): number {
-  const raw = span / 6;
-  const p = 10 ** Math.floor(Math.log10(raw));
-  for (const k of [1, 2, 5, 10]) if (k * p >= raw) return k * p;
-  return 10 * p;
-}
+type PlaneLayout = { width: number; height: number; ux: number; uy: number; xr: [number, number]; yr: [number, number]; step: number };
 
 function planeLayout(res: Resolved): PlaneLayout {
   const r = res.model.region;
@@ -839,23 +846,31 @@ function planeLayout(res: Resolved): PlaneLayout {
     xa = Math.min(xa, res.model.axis.c);
     xb = Math.max(xb, res.model.axis.c);
   }
-  const step = niceStep(Math.max(xb - xa, yb - ya));
+  const step = niceStep(Math.max(xb - xa, yb - ya), 6);
   // A plane whose content is all on one side of an axis ends at that axis, as the textbook draws the first quadrant.
   const lowEnd = (lo: number): number => (lo >= 0 ? 0 : Math.floor(lo / step - 0.5) * step);
   const xr: [number, number] = [lowEnd(xa), Math.ceil(xb / step + 0.6) * step];
   const yr: [number, number] = [lowEnd(ya), Math.ceil(yb / step + 0.6) * step];
-  const unit = Math.min(420, Math.max(30, TARGET_2D / Math.max(xr[1] - xr[0], yr[1] - yr[0])));
-  return { width: Math.ceil((xr[1] - xr[0]) * unit + 2 * 30), height: Math.ceil((yr[1] - yr[0]) * unit + 2 * 30), unit, xr, yr, step };
+  // Equal scales while the plane is not extremely long or tall; a region that
+  // runs to x = 400 under a curve reaching y = 20 would be a 340 x 14px strip,
+  // so once the plane is longer than 3 to 1 the shorter axis is stretched to hold it at 3 to 1 (the tick numbers say so). Planes up to 3 to 1 stay equal-scaled.
+  const u = fitUnits(xr[1] - xr[0], yr[1] - yr[0], { equal: false, targetWidth: TARGET_2D, targetHeight: TARGET_2D });
+  const equal = Math.min(u.xUnit, u.yUnit);
+  const aspect = equal === u.xUnit ? u.yUnit / u.xUnit : u.xUnit / u.yUnit;
+  const stretch = Math.max(1, aspect / 3);
+  const ux = Math.min(u.xUnit, stretch * equal);
+  const uy = Math.min(u.yUnit, stretch * equal);
+  return { width: Math.ceil((xr[1] - xr[0]) * ux + 2 * 30), height: Math.ceil((yr[1] - yr[0]) * uy + 2 * 30), ux, uy, xr, yr, step };
 }
 
-function drawPlane(board: Board, L: PlaneLayout, res: Resolved, origin: Point, locale: Locale): void {
+function drawPlane(board: Board, L: PlaneLayout, res: Resolved, origin: Point, locale: Locale, hide = false): void {
   const m = res.model;
   const r = m.region;
   const frame: Frame & { origin: Point } = {
     id: "plane",
-    origin: { x: origin.x + 30 - L.xr[0] * L.unit, y: origin.y + 30 + L.yr[1] * L.unit },
-    xUnit: L.unit,
-    yUnit: L.unit,
+    origin: { x: origin.x + 30 - L.xr[0] * L.ux, y: origin.y + 30 + L.yr[1] * L.uy },
+    xUnit: L.ux,
+    yUnit: L.uy,
     grid: {
       x: { from: L.xr[0], to: L.xr[1], step: L.step, origin: 0 },
       y: { from: L.yr[0], to: L.yr[1], step: L.step, origin: 0 },
@@ -864,7 +879,7 @@ function drawPlane(board: Board, L: PlaneLayout, res: Resolved, origin: Point, l
     } satisfies GridSpec,
   };
   board.addFrame(frame);
-  const at = (x: number, y: number): Point => ({ x: frame.origin.x + x * L.unit, y: frame.origin.y - y * L.unit });
+  const at = (x: number, y: number): Point => ({ x: frame.origin.x + x * L.ux, y: frame.origin.y - y * L.uy });
   const placer = new SpacePlacer({ x: origin.x + 4, y: origin.y + 4, width: L.width - 8, height: L.height - 8 });
   placer.addInk("plane-axis-x", "plane-axis", [at(L.xr[0], 0), at(L.xr[1], 0)]);
   placer.addInk("plane-axis-y", "plane-axis", [at(0, L.yr[0]), at(0, L.yr[1])]);
@@ -926,7 +941,7 @@ function drawPlane(board: Board, L: PlaneLayout, res: Resolved, origin: Point, l
     const rect = [at(x0, r.lo(xs)), at(x1, r.lo(xs)), at(x1, r.hi(xs)), at(x0, r.hi(xs))];
     board.poly(rect, { stroke: ACCENT, width: W_SLICE, fill: `${ACCENT}40`, close: true, id: "plane-rect" });
     placer.addInk("plane-rect", "plane-rect", [...rect, rect[0]!]);
-    const gap = 7 / L.unit;
+    const gap = 7 / L.ux;
     const dimLine = (id: string, pa: [number, number], pb: [number, number], texts: string[]): void => {
       const A = at(...pa);
       const B = at(...pb);
@@ -936,19 +951,19 @@ function drawPlane(board: Board, L: PlaneLayout, res: Resolved, origin: Point, l
     if (ax.kind === "h") {
       const { R, r: rr } = G.washerRadii(m, xs);
       const s = m.side;
-      dimLine("plane-R", [x1 + gap, ax.c], [x1 + gap, ax.c + s * R], [`R(x) = ${res.texts.R}`, "R"]);
+      dimLine("plane-R", [x1 + gap, ax.c], [x1 + gap, ax.c + s * R], hide ? ["R"] : [`R(x) = ${res.texts.R}`, "R"]);
       // r beside R, further out: R's label sits above the top of r, r's below it.
-      if (res.method === "washers" && rr > 1e-9) dimLine("plane-r", [x1 + 2.2 * gap, ax.c], [x1 + 2.2 * gap, ax.c + s * rr], [`r(x) = ${res.texts.r}`, "r"]);
+      if (res.method === "washers" && rr > 1e-9) dimLine("plane-r", [x1 + 2.2 * gap, ax.c], [x1 + 2.2 * gap, ax.c + s * rr], hide ? ["r"] : [`r(x) = ${res.texts.r}`, "r"]);
     } else {
       // The radius runs above the region, from the axis to the strip's middle, clear of the curves.
       let top = -Infinity;
       for (let i = 0; i <= 200; i += 1) top = Math.max(top, r.hi(r.a + ((r.b - r.a) * i) / 200));
       const yr = top + 0.35 * L.step;
-      dimLine("plane-radius", [ax.c, yr], [xs, yr], [`r(x) = ${res.texts.radius}`, "r"]);
+      dimLine("plane-radius", [ax.c, yr], [xs, yr], hide ? ["r"] : [`r(x) = ${res.texts.radius}`, "r"]);
       extensions.push([at(xs, r.hi(xs)), at(xs, yr)]);
       placer.addInk("plane-ext-0", "plane-radius", extensions[0]!);
       const outside = m.side === 1 ? x1 + gap : x0 - gap;
-      dimLine("plane-height", [outside, r.lo(xs)], [outside, r.hi(xs)], [`h(x) = ${res.texts.height}`, "h"]);
+      dimLine("plane-height", [outside, r.lo(xs)], [outside, r.hi(xs)], hide ? ["h"] : [`h(x) = ${res.texts.height}`, "h"]);
     }
   }
 

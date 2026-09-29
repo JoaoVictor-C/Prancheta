@@ -76,6 +76,8 @@ export type ValueTableInput = {
   orientation?: ValueTableOrientation;
   /** Limit-table mode (ADR 0039). Mutually exclusive with `xs`/`functions`. */
   limit?: ValueTableLimitInput;
+  /** When false, draw the table frame and headers with INPUT cells but leave computed cells empty. Default true. */
+  answers?: boolean;
 };
 
 /** The shape `expandValuesTable` actually needs: `xs` and `functions` present. */
@@ -99,7 +101,7 @@ const HEADER = 36;
 const CELL_ROW = 42;
 
 export function expandValueTable(input: ValueTableInput): FigureSpec {
-  if (input.limit !== undefined) return expandLimitTable(input, input.limit);
+  if (input.limit !== undefined) return expandLimitTable(input, input.limit, input.answers ?? true);
   if (input.xs === undefined || input.functions === undefined) {
     throw new SpecError(
       `value-table: without "limit", both "xs" and "functions" are required (a values table needs the points ` +
@@ -115,6 +117,7 @@ function expandValuesTable(input: ValuesTableInput): FigureSpec {
   const xs = input.xs;
   const functions = input.functions;
   const orientation = input.orientation ?? "rows";
+  const answers = input.answers ?? true;
 
   // Compile each function expression.
   const compiled: Array<{ name: string; fn: (x: number) => number }> = [];
@@ -202,14 +205,24 @@ function expandValuesTable(input: ValuesTableInput): FigureSpec {
     // Separator line between rows (but not before the first).
     if (fi > 0) board.poly([{ x: M, y: top }, { x: right, y: top }], { stroke: LIGHT, width: 1 });
 
-    // Value cells: one per x value.
+    // Value cells: one per x value. When answers:false, draw empty cells (same size, no text).
     for (let xi = 0; xi < xs.length; xi += 1) {
-      board.label(cells[fi]![xi]!, centres.xvals[xi]!, cy, { freeStanding: true,
-        size: 14,
-        weight: 600,
-        colour: INK,
-        id: `cell-${fi}-${xi}`,
-      });
+      if (answers) {
+        board.label(cells[fi]![xi]!, centres.xvals[xi]!, cy, { freeStanding: true,
+          size: 14,
+          weight: 600,
+          colour: INK,
+          id: `cell-${fi}-${xi}`,
+        });
+      } else {
+        // Draw empty cell by placing a transparent/invisible placeholder to keep the geometry the same
+        board.label("", centres.xvals[xi]!, cy, { freeStanding: true,
+          size: 14,
+          weight: 600,
+          colour: INK,
+          id: `cell-${fi}-${xi}`,
+        });
+      }
     }
 
     top += CELL_ROW;
@@ -284,7 +297,7 @@ function relation(lhs: string, value: string): string {
 
 type LimitCol = { xText: string; valueText: string; group: "left" | "a" | "right" };
 
-function expandLimitTable(input: ValueTableInput, li: ValueTableLimitInput): FigureSpec {
+function expandLimitTable(input: ValueTableInput, li: ValueTableLimitInput, answers: boolean): FigureSpec {
   const locale = input.locale ?? "pt-BR";
   const variable = input.variable ?? "x";
   const name = li.name ?? "f";
@@ -448,7 +461,7 @@ function expandLimitTable(input: ValueTableInput, li: ValueTableLimitInput): Fig
     }
   }
 
-  // Value row.
+  // Value row. When answers:false, draw empty cells (same size, no text).
   const cy = M + ARROW_ROW + HEADER + CELL_ROW / 2;
   board.label(`${name}(${variable})`, M + labelW / 2, cy, {
     freeStanding: true,
@@ -460,26 +473,38 @@ function expandLimitTable(input: ValueTableInput, li: ValueTableLimitInput): Fig
   });
   columns.forEach((c, i) => {
     const isA = c.group === "a";
-    board.label(c.valueText, xvals[i]!, cy, {
-      freeStanding: true,
-      size: 14,
-      weight: 600,
-      colour: isA ? ACCENT : INK,
-      id: `cell-0-${i}`,
-    });
+    if (answers) {
+      board.label(c.valueText, xvals[i]!, cy, {
+        freeStanding: true,
+        size: 14,
+        weight: 600,
+        colour: isA ? ACCENT : INK,
+        id: `cell-0-${i}`,
+      });
+    } else {
+      board.label("", xvals[i]!, cy, {
+        freeStanding: true,
+        size: 14,
+        weight: 600,
+        colour: isA ? ACCENT : INK,
+        id: `cell-0-${i}`,
+      });
+    }
   });
 
-  // Caption: separated from the table by its own rule.
-  const captionTop = M + ARROW_ROW + HEADER + CELL_ROW + CAPTION_GAP / 2;
-  board.poly([{ x: M, y: captionTop - CAPTION_GAP / 2 + 2 }, { x: right, y: captionTop - CAPTION_GAP / 2 + 2 }], { stroke: LIGHT, width: 1 });
-  captionLines.forEach((line, i) => {
-    board.label(line, width / 2, captionTop + CAPTION_LINE * i + CAPTION_LINE / 2, {
-      freeStanding: true,
-      size: 14,
-      weight: i === 0 ? 700 : 500,
-      colour: i === 0 ? INK : SOFT,
+  // Caption: separated from the table by its own rule. Hidden when answers:false (the question is what the limit is).
+  if (answers) {
+    const captionTop = M + ARROW_ROW + HEADER + CELL_ROW + CAPTION_GAP / 2;
+    board.poly([{ x: M, y: captionTop - CAPTION_GAP / 2 + 2 }, { x: right, y: captionTop - CAPTION_GAP / 2 + 2 }], { stroke: LIGHT, width: 1 });
+    captionLines.forEach((line, i) => {
+      board.label(line, width / 2, captionTop + CAPTION_LINE * i + CAPTION_LINE / 2, {
+        freeStanding: true,
+        size: 14,
+        weight: i === 0 ? 700 : 500,
+        colour: i === 0 ? INK : SOFT,
+      });
     });
-  });
+  }
 
   return parseSpec(board.spec(input.title ?? `estimando lim ${name}(${variable})`));
 }

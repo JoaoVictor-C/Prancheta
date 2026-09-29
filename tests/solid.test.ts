@@ -333,3 +333,95 @@ test("a wrong length would fail: the slant drawn 2% long is caught against its e
   const failing = result.manifest.checks.filter((c) => c.id === "length-matches-its-label" && c.status === "fail");
   assert.deepEqual(failing.map((c) => c.target), ["s0-generator-0"]);
 });
+
+// ---- answers: false --------------------------------------------------------------------------
+
+const labelsOf = (input: SolidInput): string[] => ((expandSolid(input).root as Scene).children as Block[]).map((b) => b.label ?? "").filter((t) => t !== "");
+const ask = (input: SolidInput): SolidInput => ({ ...input, answers: false });
+
+test("answers:false keeps a cone's given r and h and hides g, V and A", () => {
+  const input = fixture("cone-slant.json");
+  const on = labelsOf(input);
+  const off = labelsOf(ask(input));
+  assert.ok(on.some((t) => t.startsWith("g = 2√5")) && on.some((t) => t.startsWith("V = ")) && on.some((t) => t.startsWith("A = ")));
+  assert.ok(off.includes("r = 2") && off.includes("h = 4"), off.join(" | "));
+  assert.ok(!off.some((t) => /√5|π|^[gVA] /.test(t)), off.join(" | "));
+});
+
+test("answers:false hides a cube's diagonals and readings and keeps its edge", () => {
+  const input: SolidInput = { unit: "cm", solids: [{ kind: "cube", edge: 3, labels: true, show: ["edge", "spaceDiagonal", "faceDiagonal"], readings: ["measures", "volume", "area"] }] };
+  const off = labelsOf(ask(input));
+  assert.ok(off.includes("a = 3 cm"));
+  assert.ok(!off.some((t) => /√|^[Dd] |27|54/.test(t)), off.join(" | "));
+  const spec = expandSolid(ask(input));
+  const ids = ((spec.root as Scene).marks ?? []).map((m) => m.id);
+  assert.ok(!ids.some((id) => /diagonal/.test(id)), "no diagonal is drawn");
+});
+
+test("answers:false: a pyramid typed by its slant does not state the height; typed by its height it does not state the slant", () => {
+  const bySlant = labelsOf(ask({ solids: [{ kind: "pyramid", edge: 6, slant: 5, labels: true, show: ["height", "baseApothem", "slant"] }] }));
+  assert.ok(bySlant.some((t) => t.startsWith("g = 5")) && !bySlant.some((t) => t.startsWith("h")) && !bySlant.some((t) => t.startsWith("m")), bySlant.join(" | "));
+  const byHeight = labelsOf(ask({ solids: [{ kind: "pyramid", edge: 6, height: 4, labels: true, show: ["height", "baseApothem", "slant"] }] }));
+  assert.ok(byHeight.some((t) => t.startsWith("h = 4")) && !byHeight.some((t) => t.startsWith("g")) && !byHeight.some((t) => t.startsWith("m")), byHeight.join(" | "));
+});
+
+test("answers:false: a derived sphere states no radius, and no measure of a box either", () => {
+  const off = labelsOf(ask({ solids: [{ kind: "cube", name: "C", edge: 4 }, { kind: "sphere", inscribedIn: "C", show: ["radius", "equator"], readings: ["measures", "volume"] }] }));
+  assert.ok(!off.some((t) => t.startsWith("r ") || t.startsWith("V ")), off.join(" | "));
+  const box = labelsOf(ask({ solids: [{ kind: "box", width: 3, depth: 4, height: 12, show: ["dimensions", "spaceDiagonal"], readings: ["measures", "volume", "area"] }] }));
+  assert.ok(box.includes("3") && box.includes("4") && box.includes("12"), box.join(" | "));
+  assert.ok(!box.some((t) => /13|144|^D/.test(t)), box.join(" | "));
+});
+
+test("answers:true is the default and unchanged", () => {
+  const input = fixture("cube-space-diagonal.json");
+  assert.deepEqual(labelsOf(input), labelsOf({ ...input, answers: true }));
+});
+
+test("the question fixtures render with every check passing", { timeout: 120000 }, async () => {
+  for (const name of ["question-cone-slant.json", "question-cube-diagonal.json"]) {
+    const input = fixture(name);
+    assert.equal(input.answers, false);
+    const result = await render(expandSolid(input), { raster: false });
+    assert.deepEqual(result.manifest.checks.filter((c) => c.status === "fail").map((c) => `${name} ${c.id} ${c.detail ?? ""}`), []);
+  }
+});
+
+// ---- the unit follows the dimensions ---------------------------------------------------------
+
+const sized = (input: SolidInput): { w: number; h: number } => {
+  const root = expandSolid(input).root as Scene & { width: number; height: number };
+  return { w: root.width, h: root.height };
+};
+
+for (const [name, def] of [
+  ["a cube of edge 5000", { kind: "cube", edge: 5000, labels: true, show: ["edge", "spaceDiagonal"], readings: ["volume", "measures"] }],
+  ["a cube of edge 0,003", { kind: "cube", edge: 0.003, labels: true, show: ["edge", "spaceDiagonal"], readings: ["volume", "measures"] }],
+  ["a cone of r 3000 and h 4000", { kind: "cone", radius: 3000, height: 4000, labels: true, show: ["height", "radius", "slant"], readings: ["volume", "measures"] }],
+  ["a cylinder of r 0,002 and h 0,005", { kind: "cylinder", radius: 0.002, height: 0.005, labels: true, show: ["radius", "height"], readings: ["volume", "area"] }],
+  ["a pyramid of edge 0,0004", { kind: "pyramid", edge: 0.0004, height: 0.0006, labels: true, show: ["height", "baseApothem", "slant"], readings: ["measures", "volume"] }],
+  ["a sphere of r 12000", { kind: "sphere", radius: 12000, show: ["radius", "equator"], readings: ["volume", "area"] }],
+] as [string, SolidDef][]) {
+  test(`${name} draws a canvas a page can hold, and every check passes`, { timeout: 120000 }, async () => {
+    for (const answers of [true, false]) {
+      const input: SolidInput = { solids: [def], answers };
+      const { w, h } = sized(input);
+      assert.ok(w >= 300 && w <= 900 && h >= 300 && h <= 900, `${w} x ${h}`);
+      const result = await render(expandSolid(input), { raster: false });
+      assert.deepEqual(result.manifest.checks.filter((c) => c.status === "fail").map((c) => `${c.id} ${c.detail ?? ""}`), []);
+    }
+  });
+}
+
+test("the same solid at three magnitudes has the same figure size", () => {
+  const at = (k: number): { w: number; h: number } => sized({ solids: [{ kind: "cone", radius: 2 * k, height: 4 * k, labels: true, show: ["height", "radius", "slant"] }] });
+  assert.deepEqual(at(1000), at(1));
+  assert.deepEqual(at(0.001), at(1));
+});
+
+test("small and large dimensions print with their digits", () => {
+  assert.equal(printed(rat(0.003)), "0,003");
+  assert.equal(printed(mul(rat(0.003), rat(0.003))), "0,000009");
+  assert.equal(printed(rat(123456)), "123456");
+  assert.equal(print(mul(PI, rat(12000))).text, "12000π");
+});

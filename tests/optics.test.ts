@@ -504,3 +504,35 @@ test("a spread of interface figures all pass their checks", async () => {
     }
   }
 });
+
+// ---- answers: false ------------------------------------------------------------------------------
+
+fixtures.forEach((filename) => {
+  test(`answers:false ${filename}: no ray, image or computed panel line, every check passes`, async () => {
+    const { preset: _p, ...raw } = JSON.parse(readFileSync(join(dir, filename), "utf8")) as Record<string, unknown>;
+    const input = { ...raw, answers: false } as unknown as OpticsInput;
+    const spec = expandOptics(input);
+    const ids = [...blocksOf(spec).map((b) => b.id ?? ""), ...marksOf(spec).map((m) => m.id ?? ""), ...connectorsOf(spec).map((c) => c.id ?? "")];
+    assert.deepEqual(ids.filter((id) => /^(ray-(?!incident|reflected)|image|arc-refracted|arc-reflected)/.test(id) || id === "image"), [], filename);
+    const text = labels(spec).join("\n");
+    assert.ok(!/imagem|p′|θ₂|θc|sen θ|refratado|reflexão total|virtual|real\b|invertida|direita|ampliada|reduzida|imprópria|não há raio/.test(text), `${filename}: ${text}`);
+    if (raw.kind === "interface") {
+      assert.ok(/θ₁ = /.test(text) && /n₁ = /.test(text), "the givens stay");
+      assert.ok(!ids.includes("ray-refracted") && !ids.includes("ray-reflected") || raw.reflected !== false);
+    } else {
+      assert.ok(/p = .* cm/.test(text) && /o = .* cm/.test(text), "p and o stay");
+      assert.ok(ids.includes("object") && ids.includes("element"));
+      assert.ok(!ids.some((id) => id.startsWith("ray-")), "no ray");
+    }
+    const result = await render(spec, { maxPasses: 3, raster: false });
+    for (const check of result.manifest.checks) assert.ok(check.status === "pass" || check.status === "not-applicable", `${filename}: ${check.id} ${check.status}: ${check.detail}`);
+  });
+});
+
+test("answers:false does not let the hidden image steer the frame; answers:true is unchanged", () => {
+  const a = expandOptics({ kind: "lens", lens: "converging", f: 10, p: 30, o: 3, answers: false } as OpticsInput);
+  const b = expandOptics({ kind: "lens", lens: "converging", f: 10, p: 30, o: 3 } as OpticsInput);
+  assert.deepEqual(expandOptics({ kind: "lens", lens: "converging", f: 10, p: 30, o: 3, answers: true } as OpticsInput), b);
+  assert.ok(labels(b).some((t) => t.includes("imagem")) && !labels(a).some((t) => t.includes("imagem")));
+  assert.ok(labels(b).some((t) => t.includes("p′")));
+});

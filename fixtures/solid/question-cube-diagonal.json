@@ -1,0 +1,9 @@
+{
+  "preset": "solid",
+  "title": "Determine a diagonal do cubo de aresta 3 cm",
+  "answers": false,
+  "unit": "cm",
+  "solids": [
+    { "kind": "cube", "edge": 3, "labels": true, "show": ["edge", "spaceDiagonal", "faceDiagonal"], "readings": ["measures", "volume", "area"] }
+  ]
+}

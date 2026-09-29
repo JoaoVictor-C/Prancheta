@@ -68,6 +68,8 @@ export type DistributionInput = {
   approximation?: "normal";
   decimals?: number;
   tickLabels?: boolean;
+  /** false: the figure of the QUESTION -- curve, shaded event and boundary values, no probability, z row, panel or approximation (see PRESET.md). Default true. */
+  answers?: boolean;
 };
 
 export type Model =
@@ -82,7 +84,7 @@ export type Event =
   | { type: "equals"; k: number }
   | { type: "tails"; z: number; alpha?: number };
 
-const KEYS = ["preset", "title", "locale", "kind", "mean", "sd", "n", "p", "lambda", "event", "showZ", "approximation", "decimals", "tickLabels"];
+const KEYS = ["preset", "title", "locale", "kind", "mean", "sd", "n", "p", "lambda", "event", "showZ", "approximation", "decimals", "tickLabels", "answers"];
 const MAX_N = 5000;
 
 // ---- palette ------------------------------------------------------------------
@@ -371,9 +373,36 @@ export function normalReach(model: Model, ev: Event, decimals: number): number {
 
 // ---- numbers as text ----------------------------------------------------------------------------------------
 
+/**
+ * A typed or derived value as a reader writes it. formatNumber stops at three
+ * decimals, so 0,0125 came out "0,013" and μ ± kσ of N(0,15; 0,0125²) printed
+ * ticks that were not the values drawn. A value with a short decimal expansion
+ * is written in full, whatever its magnitude; one without keeps formatNumber's
+ * rounding from 0,1 up, and four significant figures below it.
+ */
+/** A computed x rounded to a thousandth of σ (never past whole units): the resolution the drawing itself has. */
+export function roundToSd(x: number, sd: number): number {
+  const d = Math.max(0, Math.ceil(-Math.log10(sd)) + 3);
+  return Number(x.toFixed(Math.min(d, 15)));
+}
+
+export function shortNumber(x: number, locale: Locale): string {
+  const t = tidy(x);
+  if (Number.isInteger(t)) return formatNumber(t, locale, { fractions: false });
+  for (let d = 1; d <= 9; d += 1) if (Math.abs(Number(t.toFixed(d)) - t) <= 1e-12 * Math.max(1, Math.abs(t))) return formatNumber(t, locale, { decimals: d });
+  const a = Math.abs(t);
+  if (a < 0.1) {
+    const d = Math.min(15, 3 - Math.floor(Math.log10(a)));
+    let e = d;
+    while (e > 0 && Number(t.toFixed(e - 1)) === Number(t.toFixed(d))) e -= 1;
+    return formatNumber(t, locale, { decimals: e });
+  }
+  return formatNumber(t, locale, { fractions: false });
+}
+
 function textFor(locale: Locale) {
   const dec = (x: number, d: number): string => formatNumber(x, locale, { decimals: d });
-  const short = (x: number): string => formatNumber(tidy(x), locale, { fractions: false });
+  const short = (x: number): string => shortNumber(x, locale);
   /** z as a reader writes it: exact when it is, three decimals otherwise. */
   const z = (x: number): { text: string; exact: boolean } => {
     const r = Number(x.toFixed(3));
@@ -591,7 +620,7 @@ function normalPanel(model: Extract<Model, { kind: "normal" }>, ev: Event, local
       if (!standard) {
         const lo = model.mean - ev.z * model.sd;
         const hi = model.mean + ev.z * model.sd;
-        lines.push(`x = μ ± z·σ = ${t.short(model.mean)} ± ${zz.text} · ${t.short(model.sd)}: ${t.short(Number(lo.toFixed(4)))} e ${t.short(Number(hi.toFixed(4)))}`);
+        lines.push(`x = μ ± z·σ = ${t.short(model.mean)} ± ${zz.text} · ${t.short(model.sd)}: ${t.short(roundToSd(lo, model.sd))} e ${t.short(roundToSd(hi, model.sd))}`);
       }
       break;
     }
@@ -627,7 +656,25 @@ function wrapWords(text: string, maxPx: number, extent: (t: string) => number): 
     } else cur = next;
   }
   if (cur !== "") out.push(cur);
-  return out;
+  // a chain of operands and operators glues into ONE piece; a piece still too wide breaks BEFORE an operator, the way an equation is carried over
+  return out.flatMap((piece) => (extent(piece) <= maxPx ? [piece] : breakAtOperators(piece, maxPx, extent)));
+}
+
+function breakAtOperators(text: string, maxPx: number, extent: (t: string) => number): string[] {
+  const rows: string[] = [];
+  let cur = "";
+  const words = text.split(" ");
+  for (let i = 0; i < words.length; i += 1) {
+    const w = words[i]!;
+    const next = cur === "" ? w : `${cur} ${w}`;
+    const afterOperator = i > 0 && OPERATORS.has(words[i - 1]!);
+    if (cur !== "" && !afterOperator && extent(next) > maxPx) {
+      rows.push(cur);
+      cur = w;
+    } else cur = next;
+  }
+  if (cur !== "") rows.push(cur);
+  return rows;
 }
 
 const OPERATORS = new Set(["=", "≈", "+", MINUS, "·", "<", ">", "≤", "≥", "/", "±"]);
@@ -677,7 +724,7 @@ export function planeOf(input: DistributionInput): { origin: Point; xUnit: numbe
   const raw = input as unknown as Record<string, unknown>;
   const model = parseModel(raw);
   const ev = parseEvent(model, raw.event);
-  const g = planeGeometry(model, ev, raw.decimals === undefined ? 4 : (raw.decimals as number), raw.approximation !== undefined);
+  const g = planeGeometry(model, ev, raw.decimals === undefined ? 4 : (raw.decimals as number), raw.approximation !== undefined && raw.answers !== false);
   return { origin: g.origin, xUnit: g.unitX, yUnit: g.unitY };
 }
 
@@ -691,14 +738,19 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
   const decimals = decimalsRaw;
   const standardNormal = model.kind === "normal" && model.mean === 0 && model.sd === 1;
   // for the standard normal x IS z: a second row would print every number twice
-  const showZ = v.optionalBoolean(raw, "showZ", "distribution") === true && !standardNormal;
+  const answers = v.optionalBoolean(raw, "answers", "distribution") !== false;
+  const showZRequested = v.optionalBoolean(raw, "showZ", "distribution") === true && !standardNormal;
+  // the z row is the standardisation an exercise asks for; the question figure carries x only
+  const showZ = showZRequested && answers;
   const tickLabels = v.optionalBoolean(raw, "tickLabels", "distribution") !== false;
-  const approxOn = raw.approximation !== undefined;
-  if (approxOn) {
+  const approxAsked = raw.approximation !== undefined;
+  // the approximating normal, its continuity edges and its N(μ; σ²) are the solution of "aproxime"
+  const approxOn = approxAsked && answers;
+  if (approxAsked) {
     if (raw.approximation !== "normal") throw new SpecError(`distribution.approximation must be "normal", got ${JSON.stringify(raw.approximation)}`);
     if (model.kind === "normal") throw new SpecError("distribution.approximation: a normal needs no approximation; it applies to a binomial or a Poisson");
   }
-  if (showZ && model.kind !== "normal" && !approxOn) {
+  if (showZRequested && model.kind !== "normal" && !approxAsked) {
     throw new SpecError("distribution.showZ: the z axis belongs to a normal, or to a discrete law drawn with approximation: \"normal\"");
   }
   const t = textFor(locale);
@@ -799,7 +851,7 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
   ink("axis-x", [px(xlo, 0), px(xhi, 0)], false, false);
 
   // boundaries: where the labels go under the axis
-  type Bound = { x: number; id: string; xText: string; zText?: string; colour: string; xRow?: number; zRow?: number };
+  type Bound = { x: number; id: string; hidden?: boolean; xText: string; zText?: string; colour: string; xRow?: number; zRow?: number };
   const bounds: Bound[] = [];
   const stdMean = discrete ? moments.mean : (model as { mean: number }).mean;
   const stdSd = discrete ? moments.sd : (model as { sd: number }).sd;
@@ -807,7 +859,7 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
   if (model.kind === "normal") {
     const xs = new Set<number>();
     for (const r of regions) for (const x of [r.lo, r.hi]) if (x > xlo + 1e-9 && x < xhi - 1e-9) xs.add(x);
-    [...xs].sort((a, b) => a - b).forEach((x, i) => bounds.push({ x, id: `boundary-${i}`, xText: t.short(Number(x.toFixed(6))), zText: showZ ? zLabel(x) : undefined, colour: ACCENT_TEXT }));
+    [...xs].sort((a, b) => a - b).forEach((x, i) => bounds.push({ x, id: `boundary-${i}`, hidden: !answers && ev.type === "tails" && ev.alpha !== undefined, xText: t.short(ev.type === "tails" ? roundToSd(x, stdSd) : Number(x.toPrecision(9))), zText: showZ ? zLabel(x) : undefined, colour: ACCENT_TEXT }));
   } else if (approxOn) {
     const { lo, hi } = continuityEdges(ev, range);
     [lo, hi].filter(Number.isFinite).forEach((x, i) => bounds.push({ x, id: `boundary-${i}`, xText: t.short(x), zText: showZ ? zLabel(x) : undefined, colour: APPROX_TEXT }));
@@ -849,6 +901,12 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
     const row = second ? rowX2! : rowX;
     const cx = px(b.x, 0).x;
     const w = labelOf(b.xText, { size: 13, weight: 700 }).w;
+    if (b.hidden === true) {
+      // the critical value of a test given by alpha is what the exercise asks for: the line stays, its number does not
+      b.xRow = row.y;
+      drops.push({ b, length: row.y - 11 - BASE_Y });
+      return;
+    }
     claimBox(row, cx, w);
     boundaryLabels.push({ text: b.xText, x: cx, bold: true, colour: b.colour, id: `label-${b.id}-x`, annotates: b.id });
     const rowLabelY = row.y;
@@ -880,7 +938,7 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
     const m = model as Extract<Model, { kind: "normal" }>;
     for (let k = -Math.floor(reach); k <= Math.floor(reach); k += 1) {
       const x = m.mean + k * m.sd;
-      xTicks.push({ x, text: t.short(Number(x.toFixed(6))) });
+      xTicks.push({ x, text: t.short(Number(x.toPrecision(9))) });
       zTicks.push({ x, text: t.short(k) });
     }
   }
@@ -919,7 +977,7 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
       const outline = shape.map((p) => px(p[0], p[1]));
       outlines.set(r.id, outline);
       ink(r.id, outline, true);
-      regionText.set(r.id, r.text);
+      if (answers) regionText.set(r.id, r.text);
     }
     // the curve where it is not shaded: each piece starts and stops on a region's edge
     const cuts = [xlo, ...regions.flatMap((r) => [r.lo, r.hi]), xhi].sort((a, b) => a - b);
@@ -960,7 +1018,7 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
     const outline = stair.map((p) => px(p[0], p[1]));
     outlines.set("event-region", outline);
     ink("event-region", outline, true);
-    regionText.set("event-region", `P = ${t.dec(P, decimals)}`);
+    if (answers) regionText.set("event-region", `P = ${t.dec(P, decimals)}`);
     if (approxOn) {
       const pts = sample(pdfAt, xlo, xhi);
       curvePieces.push({ id: "approx-curve", pts });
@@ -1079,7 +1137,8 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
     return [...out, ...ring.slice(0, 5000).map((s) => s.p)];
   };
   for (const [id, poly] of outlines) {
-    const text = regionText.get(id)!;
+    const text = regionText.get(id);
+    if (text === undefined) continue;
     const o: LabelOptions = { size: 14, weight: 700, colour: ACCENT_TEXT };
     const { w, h } = board.extent(text, o);
     const best = placer.choose({ kind: "element", id }, w, h, spotsFor(poly, w, h, model.kind === "normal"));
@@ -1106,19 +1165,22 @@ export function expandDistribution(input: DistributionInput): FigureSpec {
   }
 
   // ---- the panel -----------------------------------------------------------------------------------------------------------------
-  const lines = panelLines(model, ev, { locale, decimals, approximation: approxOn });
+  const lines = answers ? panelLines(model, ev, { locale, decimals, approximation: approxOn }) : [];
   const maxLine = W - 2 * ML;
-  const wrapped = lines.flatMap((l) => wrapWords(l, maxLine, (s) => board.extent(s, { size: PANEL_FONT }).w));
+  // the line that is the result is set in bold, which is wider than the regular face the board measures: allow for it
+  const BOLD = 1.1;
+  const panelWidth = (text: string): number => board.extent(text, { size: PANEL_FONT }).w * (text.startsWith("P(") ? BOLD : 1);
+  const wrapped = lines.flatMap((l) => wrapWords(l, maxLine, (s) => board.extent(s, { size: PANEL_FONT }).w * (l.startsWith("P(") ? BOLD : 1)));
   let y = plotAreaBottom + 34;
   wrapped.forEach((text, i) => {
-    const w = board.extent(text, { size: PANEL_FONT }).w;
+    const w = panelWidth(text);
     putLabel(text, ML + w / 2, y, { size: PANEL_FONT, colour: text.startsWith("P(") ? INK : SOFT, weight: text.startsWith("P(") ? 700 : 400, align: "start", width: w, freeStanding: true, id: `panel-line-${i}` });
     y += PANEL_LINE_H;
   });
   const height = Math.ceil(y - PANEL_LINE_H + 30);
 
   // ---- the spec -------------------------------------------------------------------------------------------------------------------
-  const title = input.title ?? `${headText}: ${symbolOf(model, ev, t)} = ${t.dec(P, decimals)}`;
+  const title = input.title ?? (answers ? `${headText}: ${symbolOf(model, ev, t)} = ${t.dec(P, decimals)}` : `${headText}: ${symbolOf(model, ev, t)}`);
   const spec: FigureSpec = {
     version: 1,
     title,

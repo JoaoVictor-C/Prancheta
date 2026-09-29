@@ -75,6 +75,8 @@ export type StatisticsInput = {
   unit?: string;
   /** What the observations are ("Altura"): names the x axis. */
   variable?: string;
+  /** false: the figure of the QUESTION -- the drawing and the classes, none of the computed statistics (see PRESET.md). Default true. */
+  answers?: boolean;
 };
 
 // ---- palette and constants --------------------------------------------------------------
@@ -110,13 +112,29 @@ const MAX_CLASSES = 30;
 
 // ---- number writing ------------------------------------------------------------------------
 
+/**
+ * formatNumber keeps three decimal places, which is three significant figures
+ * from 0,1 up and NONE below 0,001: a variance of 0,00000622 g² printed as
+ * "0", and 0,0042 as "0,004". Below 0,1 the places follow the magnitude
+ * instead -- three significant figures, trailing zeros dropped.
+ */
+function plain(t: number, locale: Locale): string {
+  const a = Math.abs(t);
+  if (a === 0 || a >= 0.1) return formatNumber(t, locale, { fractions: false });
+  const full = Math.min(15, 2 - Math.floor(Math.log10(a)));
+  const target = Number(t.toFixed(full));
+  let d = full;
+  while (d > 0 && Number(t.toFixed(d - 1)) === target) d -= 1;
+  return formatNumber(t, locale, { decimals: d });
+}
+
 /** A value the way a statistics text writes it: exact when it is short ("172,5"), "√5 ≈ 2,236" when a root, else rounded and flagged. */
 export function describeNumber(x: number, locale: Locale = "pt-BR"): { sym: "=" | "≈"; text: string } {
   const t = tidy(x);
   if (Math.abs(t) < 1e-12) return { sym: "=", text: "0" };
-  const short = formatNumber(t, locale, { fractions: false });
+  const short = plain(t, locale);
   const back = parseNumber(short, locale);
-  if (back !== null && Math.abs(back - t) <= 1e-9 * Math.max(1, Math.abs(t))) return { sym: "=", text: short };
+  if (back !== null && Math.abs(back - t) <= 1e-9 * Math.abs(t)) return { sym: "=", text: short };
   const e = snapExact(t, 1e-9);
   if (e.exact && e.form === "sqrt") return { sym: "=", text: `${e.value < 0 ? MINUS : ""}√${e.n} ≈ ${short}` };
   return { sym: "≈", text: short };
@@ -124,7 +142,7 @@ export function describeNumber(x: number, locale: Locale = "pt-BR"): { sym: "=" 
 
 const withUnit = (text: string, unit: string | undefined, power = 1): string => (unit === undefined ? text : `${text} ${unit}${power === 2 ? "²" : ""}`);
 
-const num = (x: number, locale: Locale): string => formatNumber(tidy(x), locale, { fractions: false });
+const num = (x: number, locale: Locale): string => plain(tidy(x), locale);
 
 /** Three significant figures, for a density that may be 0,0214. */
 const sig3 = (x: number, locale: Locale): string => formatNumber(Number(x.toPrecision(3)), locale, { fractions: false });
@@ -282,7 +300,7 @@ type Hist = {
   modalIdx: number[];
 };
 
-function buildHist(xs: number[], input: StatisticsInput, locale: Locale): Hist {
+function buildHist(xs: number[], input: StatisticsInput, locale: Locale, answers: boolean): Hist {
   const scheme = classSchemeFor(xs, input.classes);
   const rows = frequencyTable(xs, scheme.edges);
   const frequency = input.frequency ?? "absolute";
@@ -294,7 +312,8 @@ function buildHist(xs: number[], input: StatisticsInput, locale: Locale): Hist {
   }
   const unit = input.unit;
   const heights = rows.map((r) => (frequency === "absolute" ? r.count : frequency === "relative" ? r.relative : frequency === "percent" ? r.relative * 100 : r.density));
-  const polygon = input.polygon === true;
+  // The frequency polygon is a derived drawing: an exercise that draws it asks for it.
+  const polygon = input.polygon === true && answers;
   const first = rows[0]!;
   const last = rows[rows.length - 1]!;
   const axisEdges = polygon ? [round(first.lo - first.width), ...scheme.edges, round(last.hi + last.width)] : scheme.edges;
@@ -345,6 +364,8 @@ type Model = {
   variable: string;
   showTable: boolean;
   showStats: boolean;
+  /** false: hide every computed statistic (panel, quartile labels, bar frequencies, computed table columns, polygon). */
+  answers: boolean;
 };
 
 function buildModel(input: StatisticsInput): Model {
@@ -375,13 +396,14 @@ function buildModel(input: StatisticsInput): Model {
     locale,
     kind: input.kind,
     groups,
-    hist: wantsHist ? buildHist(groups[0]!.values, input, locale) : undefined,
+    hist: wantsHist ? buildHist(groups[0]!.values, input, locale, input.answers !== false) : undefined,
     method,
     varianceKind,
     unit: input.unit,
     variable: input.variable ?? "x",
     showTable: input.showTable === true,
     showStats: input.showStats !== false,
+    answers: input.answers !== false,
   };
 }
 
@@ -488,7 +510,7 @@ function noteSentences(m: Model, xs: number[] | undefined): string[] {
   if (m.hist !== undefined && xs !== undefined) {
     const h = m.hist;
     out.push("classes [a; b): fechadas à esquerda e abertas à direita; a última classe é fechada nas duas pontas");
-    if (h.scheme.origin === "sturges") {
+    if (h.scheme.origin === "sturges" && m.answers) {
       const n = xs.length;
       const lo = Math.min(...xs);
       const hi = Math.max(...xs);
@@ -499,14 +521,14 @@ function noteSentences(m: Model, xs: number[] | undefined): string[] {
         `Sturges: k = 1 + 3,3·log ${n} = ${formatNumber(Number(raw.toFixed(2)), locale)} ≈ ${k}; amplitude A = ${num(hi, locale)} ${MINUS} ${num(lo, locale)} = ${num(hi - lo, locale)}; largura h ≥ A/k = ${formatNumber(Number(((hi - lo) / k).toFixed(3)), locale)}, arredondada para ${num(width, locale)}`,
       );
     }
-    if (h.polygon) out.push("polígono de frequências: une os pontos médios das classes, fechado no eixo pelas classes vizinhas de frequência 0");
+    if (h.polygon && m.answers) out.push("polígono de frequências: une os pontos médios das classes, fechado no eixo pelas classes vizinhas de frequência 0");
     if (h.rows.some((r) => Math.abs(r.width - h.rows[0]!.width) > 1e-9)) out.push("classes de larguras diferentes: a altura é a densidade fᵢ/(n·hᵢ), e é a ÁREA da barra que vale a frequência relativa");
   }
   if (m.kind !== "histogram") {
     out.push(METHOD_NOTE[m.method]);
     out.push(`outlier: valor fora de [Q₁ ${MINUS} 1,5·IQR; Q₃ + 1,5·IQR]; os bigodes vão até a observação mais extrema dentro desses limites`);
   }
-  if (m.groups.length > 1 || m.showStats) {
+  if (m.answers && (m.groups.length > 1 || m.showStats)) {
     out.push(m.varianceKind === "sample" ? "s² e s amostrais: soma dos quadrados dos desvios dividida por n − 1" : "σ² e σ populacionais: soma dos quadrados dos desvios dividida por n");
   }
   if (m.unit !== undefined && m.groups.length > 1) out.push(`valores em ${m.unit}`);
@@ -521,6 +543,7 @@ function summaryTable(m: Model): TableSpec {
     head: ["grupo", "n", "x̄", "Md", sd, "Q₁", "Q₃", "IQR", "outliers"],
     rows: m.groups.map((g) => {
       const st = g.stats;
+      if (!m.answers) return [g.name, "", "", "", "", "", "", "", ""];
       return [
         g.name,
         String(st.n),
@@ -545,13 +568,14 @@ function frequencyTableSpec(m: Model): TableSpec {
   const head = ["classe", "fᵢ", percent ? "frᵢ (%)" : "frᵢ", "Fᵢ", "xᵢ"];
   if (density) head.push("dᵢ");
   const rows = h.rows.map((r, i) => {
+    if (!m.answers) return head.map((_, c) => (c === 0 ? classLabel(r, i, k, locale) : ""));
     const row = [classLabel(r, i, k, locale), String(r.count), percent ? num(r.relative * 100, locale) : num(r.relative, locale), String(r.cumulative), num(r.mid, locale)];
     if (density) row.push(sig3(r.density, locale));
     return row;
   });
   const total = h.rows.reduce((s, r) => s + r.count, 0);
-  const foot = ["Σ", String(total), percent ? "100" : "1", "", ""];
-  if (density) foot.push("");
+  const foot = m.answers ? ["Σ", String(total), percent ? "100" : "1", "", ""] : head.map((_, c) => (c === 0 ? "Σ" : ""));
+  if (density && m.answers) foot.push("");
   return { id: "freq", head, rows, foot };
 }
 
@@ -687,6 +711,7 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
     // Labels: the frequency of each bar, wherever it fits clear of ink; then the polygon's name.
     const valueSize = 12;
     hist.rows.forEach((r, i) => {
+      if (!m.answers) return;
       const text = hist.valueText(i);
       const { w, h } = board.extent(text, { size: valueSize, weight: 700 });
       const cx = (sc.px(r.lo) + sc.px(r.hi)) / 2;
@@ -793,11 +818,11 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
       if (g.name !== "") {
         put(board, g.name, plotLeft - 14, a.cy, { anchor: "end", size: LABEL_SIZE, weight: 700, colour: INK, annotates: `row-${gi}` });
       }
-      const items: { key: string; text: string; x: number; sides: (-1 | 1)[] }[] = [
+      const items: { key: string; text: string; x: number; sides: (-1 | 1)[] }[] = m.answers ? [
         { key: "q1", text: withUnit(`Q₁ = ${describeNumber(st.q1, locale).text}`, unit), x: a.q1, sides: [-1, 1] },
         { key: "med", text: withUnit(`Md = ${describeNumber(st.median, locale).text}`, unit), x: a.med, sides: [1, -1] },
         { key: "q3", text: withUnit(`Q₃ = ${describeNumber(st.q3, locale).text}`, unit), x: a.q3, sides: [-1, 1] },
-      ];
+      ] : [];
       for (const it of items) {
         const { w, h } = board.extent(it.text, { size: LABEL_SIZE, weight: 700 });
         let chosen: { centre: Point; cost: number; anchor: Point } | undefined;
@@ -834,7 +859,7 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
   // ---- the reading panel --------------------------------------------------------------------------------------
   const maxLine = W0;
   const textLines: { text: string; colour: string; weight: number }[] = [];
-  if (m.showStats) {
+  if (m.showStats && m.answers) {
     for (const g of panelGroups(m)) for (const l of packLines(probe, g.items, maxLine)) textLines.push({ text: l, colour: g.colour, weight: g.weight });
   }
   for (const s of noteSentences(m, hist === undefined ? undefined : xs)) for (const l of wrapSentence(probe, s, maxLine)) textLines.push({ text: l, colour: SOFT, weight: 400 });
@@ -884,7 +909,7 @@ export function validateStatisticsInput(raw: Record<string, unknown>): void {
   v.optionalEnum(raw, "locale", path, LOCALES);
   v.optionalString(raw, "unit", path);
   v.optionalString(raw, "variable", path);
-  for (const key of ["polygon", "showTable", "showStats"]) v.optionalBoolean(raw, key, path);
+  for (const key of ["polygon", "showTable", "showStats", "answers"]) v.optionalBoolean(raw, key, path);
   if (raw.kind === undefined) throw new SpecError(`${path}.kind is required: "histogram", "boxplot" or "both"`);
   v.optionalEnum(raw, "kind", path, ["histogram", "boxplot", "both"] as const);
   v.optionalEnum(raw, "frequency", path, ["absolute", "relative", "percent", "density"] as const);

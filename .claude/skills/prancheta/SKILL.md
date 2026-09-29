@@ -224,7 +224,7 @@ A configuration in space is its own question (`S-space-favours-space`). *"Repres
 
 A school solid is its own question (`S-solid-favours-solid`). *"Um cone tem raio 2 e altura 4; calcule a geratriz e o volume"* is about a body and the numbers its dimensions fix, not about points on axes. The `space` preset draws lines and planes and has no rims or silhouettes (`S-solid-disqualifies-space`), and a graph has no geometry at all (`S-solid-disqualifies-graph`). The `solid` preset takes the dimensions once. Every vertex, rim ellipse and silhouette is computed from them. Hidden edges are dashed by which faces the reader sees. Diagonals, slant heights, volumes and areas are printed exact (`2√3`, `2√5`, `16π/3`), and each length on the drawing is measured in true 3D length. Composites (a sphere in a cube, a cone in a cylinder) are transparent: each solid dashes only its own hidden edges.
 
-The graph of a function of two variables is its own question (`S-surface-favours-surface`). *"Esboce o gráfico de f(x, y) = x² + y² e suas curvas de nível"* is not a curve on a plane — `function-graph` has one variable (`S-surface-disqualifies-function-graph`) — and not a configuration of points, lines and planes (`S-surface-disqualifies-space`). The `surface` preset takes the expression and the domain. Every mesh height is f, cells are painted far to near, which is exact for a surface with one z per (x, y), and every line is drawn only where no nearer cell covers it. Level curves are found where f = c and drawn at their height and projected onto a floor; a point's height is computed, and its tangent plane is printed exact (`z = 2x + 2y − 2`). A sphere, a torus or a surface that crosses itself has more than one z per (x, y): that is the matplotlib module's figure, not this preset's. A flat contour map is the `field` preset's.
+The graph of a function of two variables is its own question (`S-surface-favours-surface`). *"Esboce o gráfico de f(x, y) = x² + y² e suas curvas de nível"* is not a curve on a plane — `function-graph` has one variable (`S-surface-disqualifies-function-graph`) — and not a configuration of points, lines and planes (`S-surface-disqualifies-space`). The `surface` preset takes the expression and the domain. Every mesh height is f, cells are painted far to near, which is exact for a surface with one z per (x, y), and every line is drawn only where no nearer cell covers it. Level curves are found where f = c and drawn at their height and projected onto a floor; a point's height is computed, and its tangent plane is printed exact (`z = 2x + 2y − 2`). A sphere, a torus or a surface that crosses itself has more than one z per (x, y), and no preset or module draws it yet: say so rather than approximate it. A flat contour map is the `field` preset's.
 
 A solid of revolution is not a school solid (`S-revolution-favours-revolution`, `S-revolution-disqualifies-solid`). *"Calcule o volume do sólido obtido girando a região entre y = x² e y = x em torno do eixo x"* names a region and an axis, and the body exists only as what the region sweeps; the `solid` preset has dimensions and no functions, and the `space` preset has no curved silhouette (`S-revolution-disqualifies-space`). The `revolution` preset takes the bounding functions, the interval and the axis. The region is sampled from the functions, the silhouette and rims are swept from it, and the far half is dashed. The slice the method names — disc, washer or shell — is drawn at a chosen x with R(x), r(x) and dx labelled on it, and the volume integral is evaluated numerically and printed exact when it snaps (`2π/15`), never typed.
 
@@ -704,6 +704,20 @@ The sign table of a function — the *quadro de sinais*: where f, f′, f″ or 
 
 A root outside `search` is not found, and neither is a hole the function does not visibly skip (write it in `undefinedAt`). The value printed at a critical point is f there; limits at ±∞ and at poles are not computed — the arrows say which way f goes, not where it ends.
 
+## answers: false
+
+In an exercise sheet, the question's figure passes `answers: false` (set automatically
+by the sheet dispatcher for ANSWER_AWARE presets); the solution figure draws the same
+input with the default `answers: true`. When `answers: false`:
+
+- **Sign chart**: the row names and variable name remain, the structure (frame, column
+  dividers) stays; all critical points and computed signs/values are hidden. No intervals
+  are marked: the question is where to draw them. The header row with boundaries (-∞, 
+  critical points, +∞) is omitted.
+
+This is the "study the sign" figure — the student must find the roots and poles and fill in
+the signs and values herself.
+
 ### value-table
 
 A table of x values and function values: the *tabela de valores* used in Cálculo 1 and school mathematics to evaluate functions at specified points. Written once, as the functions' expressions; every cell is computed from them.
@@ -813,6 +827,21 @@ except the x-schedule column, which is printed at the exact decimal width the st
 actually is — `formatNumber`'s own "shortest honest form" would round 0,9999 to 1 and
 make the fourth decimal step indistinguishable from `at`.
 
+## answers: false
+
+In an exercise sheet, the question's figure passes `answers: false` (set automatically
+by the sheet dispatcher for ANSWER_AWARE presets); the solution figure draws the same
+input with the default `answers: true`. When `answers: false`:
+
+- **Values table**: the table frame, headers, variable name, and x-values remain; every
+  computed cell is drawn empty (same size and position, no text) so the reader sees the
+  structure and can fill it in.
+- **Limit table**: as above for the x-values and function-value row; the conclusion line
+  is hidden (the question is what the limit is).
+
+This is the "complete the table" figure — a useful exercise where the computation discipline
+of `value-table` pins the setup while the student supplies the values.
+
 ### number-line
 
 The "reta real" used to answer an inequality, a domain, or a union/intersection of sets — a horizontal line with the boundary points marked (● included, ○ excluded) and the solution picked out in ink, rays to ±∞ carrying an arrow. Written once, as text; every boundary, every open-or-closed mark and the axis range itself are found from it.
@@ -869,6 +898,20 @@ Several rows draw a line per row (labelled at the left, in declaration order) ab
 ## What is not covered
 
 The axis range is derived only from the boundaries the rows actually state; a row whose set has no finite boundary at all (the whole line, or the empty set) does not by itself widen or narrow it. Equalities (`x = 3`, a single point) are not part of the grammar — write the point's neighbourhood as two touching inequalities if a single marked point is truly needed.
+
+## answers: false
+
+In an exercise sheet, the question's figure passes `answers: false` (set automatically
+by the sheet dispatcher for ANSWER_AWARE presets); the solution figure draws the same
+input with the default `answers: true`. When `answers: false`:
+
+- **Number line**: the row names, axis labels, tick marks and boundary numbers remain;
+  the coloured interval lines (thick strokes and endpoint circles/arrows) are hidden. Each
+  row shows only a thin light reference line — the question is where to shade and what
+  endpoints to mark.
+
+This is the "mark the solution set" figure — the student must identify the boundaries and
+decide which intervals to include.
 
 ### vectors
 
@@ -993,6 +1036,31 @@ repeated (`u+v = (5; 4)`, never `u+v = u + v = (5; 4)`).
 - Non-right angles between more than two vectors, or an angle stated between
   vectors that do not share components computed the same way.
 
+## Scale
+
+The plane is drawn to the vectors' own extent: the margin is 28 % of the
+bounding box's larger side and the unit is fitted so that box fills about
+440 px, so `(3000; 4000)` and `(0,02; 0,03)` are as large as `(3; 4)`. The grid
+step is 1, 2 or 5 × 10ᵏ at any k (`src/presets/shared/scale.ts`), at most eight
+lines to a span; a span of 2 to 12 keeps whole steps of 1. A printed measure
+below 0,5 keeps two significant digits (`0,036`, not `0,04`).
+
+## answers: false
+
+`"answers": false` draws what an exercise **gives**: the vectors that were
+typed (`components`, `from`/`to`, `magnitude` + `angle`) with their names and
+the named points. Everything **derived** is left out — sums (and their
+parallelogram or head-to-tail guides), differences, multiples, projections
+with their perpendicular and right angle, `decompose` components, angle arcs
+and their values — but still bounds the frame, so the question's plane is the
+answer's plane.
+
+The readings panel keeps only what was typed: `F = (6; −4)` for `components`,
+`w: |w| = 5, θ = 143,13°` for `magnitude` + `angle` (with the components
+computed from them left out), and nothing for `from`/`to` (its components are
+the difference of two points). The magnitude printed beside an arrow stays
+only where the magnitude was the datum (`magnitude` + `angle`).
+
 ### unit-circle
 
 The *ciclo trigonométrico* used before trig derivatives: a circle of radius 1 on axes, with one or more angles marked on it. Written once, as text — `"π/6"`, `"5π/4"`, `"150°"`, `"-π/3"` — every point, arc, projection and tangent is computed from that.
@@ -1047,6 +1115,10 @@ Every point's own label names its point the same way (`annotatesPlace`, ADR 0035
 - A symmetric point never carries its own arc, projection or tangent — request those on a primary angle entry instead.
 - OP (and the tangent's dashed extension of it) is drawn only for a primary angle with `arc` or `tangent`. A plain `projection`-only point draws no OP: there is no arc or tangent construction for it to connect to, and drawing one anyway crowds the sin label of a *symmetric pair* sharing that same sin value (30°/150°, 45°/135°, ...) — their sin labels sit on the axis side opposite their own point by design (continuing the direction their own guide already travels), which is exactly where the other point's OP would run.
 - The circle is always the unit circle (radius 1 in math terms, `radius` px on the canvas); there is no scaled or off-centre circle here.
+
+## answers: false
+
+`"answers": false` draws the exercise's question ("determine sen, cos and tg of π/4"). Kept: the circle, the axes, every given angle with its name, OP, the angle arc with its degree value, the dashed projection guides (the construction, not a value), quadrant letters. Hidden: the printed cos and sin at the feet of a projection, the tangent segment with its dashed extension and `tg θ = …`, and every symmetric point (π − θ, π + θ, 2π − θ are what such an exercise asks the reader to find). The canvas keeps the size the answered figure has, so question and solution line up.
 
 ### construction
 
@@ -1233,6 +1305,39 @@ or a number.
 
 Examples: `fixtures/construction/`.
 
+## Scale
+
+The view is built from the drawn objects' extent alone: the margin is 8 % of
+it (13 % with axes) and the unit is fitted so it fills about 460 px, so a
+triangle with sides 3000 and 4000, one with sides 3 and 4 and one with sides
+0,003 and 0,004 are the same figure. With `axes` the tick step is 1, 2 or 5 ×
+10ᵏ at any k, at most ten divisions to an axis, and a division is never
+narrower than 48 px (ADR 0034).
+
+## answers: false
+
+`"answers": false` draws what an exercise **gives**. A construction figure *is*
+its objects, so the drawing stays; what goes is every **measured number**:
+
+- a `length` annotation with a `name` prints just the name (`h`, the unknown);
+  one without prints nothing;
+- an `angle` annotation with a `name` keeps it; one without is marked `?` in the
+  unknown's red — the arc says which angle, the degrees are the answer. A 90°
+  square is a shape, and stays;
+- the readings panel (exact lengths, angle values, `equation` annotations, a
+  conic's `show: ["equation"]` and its asymptote equations) is empty;
+- `coords: true` prints a **free** point's pair (typed: a datum) and leaves a
+  computed point (a midpoint, a foot, an intersection) with its name only.
+
+The construction's own results are not guessed at: whether the altitude *is*
+the answer ("construa a altura") or a given ("calcule a altura h") is the
+author's to say. `"answer": true` on an object withholds it under
+`answers: false` — not drawn, its dot and label gone, every `length`, `angle`
+and `equal` annotation that touches it dropped — and it still bounds the view
+and can be built on, so the question and the solution overlay. With `answers`
+left on `"answer"` does nothing. Example:
+`fixtures/construction/right-triangle-altitude-statement.json`.
+
 ### space
 
 Points, vectors, lines and planes in R³, the Geometria Analítica course's
@@ -1394,6 +1499,34 @@ set only where it is at least 3 px clear of every line and every other label,
 and nearer what it names than anything else. A tick number with no such spot
 is left off, and its tick mark stays.
 
+## Scale
+
+The tick step is 1, 2 or 5 × 10ᵏ for any k, fitted to the span of the
+figure's own points (`shared/scale.ts`). A point at (3; 4; 5) is numbered
+1, 2, 3 …; one at (3000; 4000; 5000) by 500 or 1000; one at
+(0,001; 0,002; 0,003) by 0,0005. Every axis has about ten intervals whatever
+the magnitude, and the canvas stays a page. Where the figure is framed by
+points, a plane's far intercept still does not stretch it ("far" is more than
+twelve steps). Small numbers print with their digits (`0,0005`), never as
+`0,00`. A typed point whose label (name and coordinates) finds no clear spot on
+a crowded page is drawn again with the name alone beside the dot and the
+coordinates in the panel.
+
+## answers: false
+
+`"answers": false` draws the exercise's question, not its solution. Kept:
+the axes and ticks, every typed point with its coordinates, every typed
+vector with its components in the panel (`u = (2; 1; 0)`), lines and planes
+as drawn, and the names of derived points and lines. Hidden: the arrow of a
+derived vector (a cross product or a sum -- drawing it is the answer),
+the coordinates of every derived point (an intersection, midpoint or foot),
+the derivation lines, every `distance`, `angle`, `position` and
+`commonPerpendicular` reading, the printed equation of each plane and line,
+`|v|` and the components of a derived or two-point vector, and the numbers at
+a plane's marked intercepts. A figure with nothing to say in the panel has
+no panel. The dashed guides and the common perpendicular's segment stay:
+they are the construction, not a number.
+
 ## What is not covered
 
 - School solids (cylinders, cones, spheres, prisms). `geometry/projection.ts`
@@ -1505,6 +1638,30 @@ is not for points, lines and planes on axes (use
   symbol alone (`g`) and its value moves to the panel. This happens when
   the full label (`g = 13`) would sit nearer another line.
 
+## Scale
+
+Pixels per unit are fitted to the largest dimension: solids of 1 to 30
+lengths draw as they always did, and any other magnitude scales its bounds by
+its decade, so a cone of r = 3000 and h = 4000, a cube of edge 0,003 and a cone
+of r = 2 and h = 4 are the same figure. Small and large values print with
+their digits (`a = 0,003`, `D = 3√3/1000`, `V ≈ 7238229473871`), never as
+`0,00`. A typed decimal is exact whatever its magnitude.
+
+## answers: false
+
+`"answers": false` draws the exercise's question. Every solid keeps the
+dimensions it was GIVEN, drawn and labelled; nothing computed is drawn or
+printed. Kept: the solid, its vertex letters, the edge of a cube or prism, the
+three dimensions of a box, r and h of a cylinder, r of a cone or sphere, the
+`height` of a prism, cylinder, pyramid or cone typed by its height, the
+`slant` of a pyramid or cone typed by its slant, and the equator of a sphere.
+Hidden: the space and face diagonals (and their right-angle mark), a base
+apothem, a height or slant the dimensions did not state (a cone typed by its
+slant does not show h), every length of a derived solid (the radius of an
+inscribed sphere), and the whole panel: `measures`, `volume` and `area`. The
+derivation line of a derived solid keeps only its relation ("inscrita no
+cubo"), not its formula.
+
 ### surface
 
 The graph of a function of two variables, z = f(x, y), as Cálculo 2/3
@@ -1567,10 +1724,19 @@ school solids (use [`solid`](../../../src/presets/solid/PRESET.md)), or for a fl
 - **The tangent plane** is refused where f has no tangent plane (one-sided
   slopes differ), where the surface crosses its plane near the point (a
   saddle), or where a silhouette crosses the plane's patch. The refusal
-  names the matplotlib module as the fallback.
+  says so plainly: no figure module draws such a surface yet
+  (`modules/plot` fits least squares and nothing else).
 - **Refused outright:** a camera looking from below or straight down, a
   floor above the z range, a point outside the domain, in a hole, outside
   the z range or on a part of the surface the camera does not see.
+
+## answers: false
+
+A question on a surface gives the function, its domain and a point, and asks for what follows from them: the tangent plane, the partial derivatives, the point's height, the level curves. With `answers: false` the figure keeps the shaded mesh, the axes, the stated z cut and the point's dot and name (its place is given: its reading becomes `P: x = 1; y = 1`), and drops the tangent plane and its patch, the fx and fy line and the plane's equation, the point's z and its dashed guides to the axes, and the level curves (on the surface and on the floor) with the line that lists their values, even when `levels` is set: a level curve is the drawing that answers "esboce as curvas de nível". The point's height is still visible on the drawing where the dot sits; a picture cannot avoid that.
+
+## Scale
+
+The page scale is fitted to the drawing's extent (about 500px on its longer side, at any magnitude), not fixed at a floor of 18px per unit: over [−100, 100]² it was 5046 × 5543px and is now 588 × 686. The z scale was already derived from the ratio of heights to the domain. Axis ticks are 1, 2 or 5 × 10ᵏ.
 
 ### revolution
 
@@ -1668,6 +1834,15 @@ panel.
   one.
 - A slice outside the interval.
 - A camera that looks along the axis, or sees the cross-sections edge-on.
+
+## answers: false
+
+"Calcule o volume" gives the region and the axis; the volume and the integral that leads to it are the answer. With `answers: false` the panel (the method's integral and the volume) is not printed, and the slice's labels lose the expressions they equal: R(x) = √x becomes R, r(x) = … becomes r, h(x) = … becomes h; dx stays. Kept: the solid with its rims, sections and axis, the highlighted slice and the plane view with the region, its curves' equations `y = f(x)`, the axis line and its equation, and the representative rectangle. The slice is kept on purpose: it helps read the solid and it is not a number; the method it implies (discs, washers, shells) is visible, the price of a figure a student can use.
+
+## Scale
+
+Both views are fitted to the shape, not drawn at a fixed number of pixels per unit: √x on [0, 400] is a 1224 × 269 page, not 28 007 × 3122. The 3D view keeps one scale on all axes (about 420px on its longer side, up to 1,6 times that for a very elongated solid so the slice keeps room for a label). The plane view is equal-scaled up to a 3 to 1 plane; a longer one has its shorter axis stretched to hold 3 to 1 (its tick numbers give the scale), since a 340 × 14px strip cannot carry a label. Ticks are 1, 2 or 5 × 10ᵏ at any magnitude.
+Known limit: a region extremely thin against its length (x to 0,0004 under √x) still draws, but the plane view's curve label can sit on the curve.
 
 ### field
 
@@ -1860,6 +2035,36 @@ points satisfy `f = c`, a gradient is perpendicular to its level curve; for char
   leaves no room nearer.
 - Three or more charges have no simple Gauss count to check; none is claimed.
 
+## Scale
+
+The unit is **fitted** to the range: the larger side of `x`/`y` (with its 8 %
+margin) fills about 460 px, so a range of `[0, 5000]`, of `[0, 0,2]` and of
+`[-4, 4]` are the same figure at different numbers. The tick step and the
+lattice step are 1, 2 or 5 × 10ᵏ at any k (`src/presets/shared/scale.ts`),
+about eight numbers to an axis and `density` (default 11) marks, so a mark is
+never closer to its neighbour than a readable distance. `∇f` is taken with a
+step in proportion to the range.
+
+## answers: false
+
+`"answers": false` draws what a Cálculo 2 or Física statement **gives**. A
+sheet sets it on every statement figure; the solution figure keeps the
+default. The frame, ranges and canvas are the same either way, so the two
+overlay.
+
+| kind | kept (the givens) | withheld (what is asked) |
+| --- | --- | --- |
+| `slope` | every slope mark, the axes and numbers, a dot at each `solutions[i].at` (y(x₀) = y₀ is a datum) | the solution curves and the `solução por …` readings |
+| `vector` | every arrow, the axes, a dot at each `flowLines[i].at` | the flow lines, their labels and the `linha de fluxo …` readings |
+| `levels` | the axes and numbers, a dot at each `gradientAt` point | the level curves and their values, the ∇f arrows |
+| `charges` | the charges, their signs and names, the box | the field lines and arrowheads, the null points, the equipotentials and their values, the panel |
+
+Decided, not obvious: a **level curve** is the answer to "esboce as curvas de
+nível", and an **equipotential** to "esboce as equipotenciais", so both go with
+the field lines. An exercise that instead *gives* the contour map to read a
+gradient off it writes `"answers": true` on that figure (a sheet leaves an
+explicit value alone).
+
 ### sequence
 
 ## What it is
@@ -1918,9 +2123,13 @@ Example: `"(-1)^n / n"` for the alternating harmonic series.
 
 - n must be integers in the range [1, ∞).
 - All term values must be finite (no ±∞, no NaN).
-- Maximum 60 terms (to keep rendering fast).
+- Maximum 500 terms. Both scales are fitted to the data (a plot is about 420-720px wide however many terms, and about 420px tall however large or small the values); n is labelled every 1, 2, 5, 10 ... terms so at most about 12 numbers appear, and dots shrink (to 1,5px radius) as they crowd, but every term keeps its dot.
 - Empty or reversed ranges are refused.
 - A series' limit is computed only at integer n — the term expression is not assumed continuous (`(-1)^n/n` is not defined at a fractional n), so both the terms' limit and the partial sums' (series') limit are read off an integer-indexed approach to infinity, never a continuous one.
+
+## answers: false
+
+The dots are what the exercise gives (the sequence, or its partial sums); what it asks for is the limit. With `answers: false` the dashed limit lines and their "lim aₙ = …" / "lim Sₙ = …" labels are not drawn. The limit is still computed and still counts toward the value range, so the question's figure and the solution's figure share one scale; the frame, axes, dots and (for `both`) the legend are unchanged.
 
 ### linear-map
 
@@ -2045,6 +2254,14 @@ passing every check.
 Maps of R³ (`space` has the axes; the matrix work is not here), a non-linear
 map (a translation moves the origin), and the composition of two maps — give
 their product as the matrix.
+
+## answers: false
+
+An exercise on a linear map gives the map and asks for its image, so the question's figure keeps what is given and draws none of what is asked. Kept: the plane with its ticks, the basis e₁ e₂, the original unit square, the original shapes with their vertex letters, the original points, and the map as typed (the matrix and `T(x; y) = …`). A map given by `named` is stated by its name ("T: rotação de 90°") and its matrix is not printed, since finding it is a usual question. Hidden: the image lattice, T(e₁) and T(e₂), the unit square's image and its area S, the eigen-lines, the image line of a singular map, every shape's and point's image and primed name, det A and tr A, and every reading beneath the plane (the columns, the eigenvalues and eigenvectors, the image areas, the primed coordinates). The plotted box is still fitted to the images, so the question and its solution share one page and a reader can draw the answer on it.
+
+## Scale
+
+One unit on both axes, fitted so the larger span of the box is about 460px (at most 90px per unit): `[[200, 0], [0, 300]]` is a page-sized plane, not 6926px. The unit square is then honestly small (its arrows and names drop out where they would be under 4px), while the image, its area and the tick numbers stay legible. Ticks are whole units while the box is a few units wide and 1, 2 or 5 × 10ᵏ beyond.
 
 ### circuit
 
@@ -2192,6 +2409,16 @@ arrowhead back and checks it against the sign of its current.
 - Non-ideal meters.
 - Diagonal runs (the diamond-drawn Wheatstone bridge; draw it rectangular).
 
+## answers: false
+
+`answers: false` draws what the exercise gives and none of what it asks. Kept:
+the symbols with their given values (and names), node letters, the ground, the
+meters' letters (A, V). Hidden: every branch-current arrow and its label, the
+meters' readings, and the whole panel (`U_AB`, node potentials, powers,
+currents listed in panel mode). The current arrows are part of the answer
+because their direction is what "qual o sentido da corrente" asks. The circuit
+is still solved, so an unsolvable netlist is refused either way.
+
 ### optics
 
 Geometric optics as Ramalho, Halliday and the ENEM ask for it: thin lenses and
@@ -2331,6 +2558,20 @@ its own label inside its wedge, so below about 14° the rays are drawn longer
 (to 300 px) and, when even that is not enough, the arc is drawn without its
 label and the panel gives the value.
 
+## answers: false
+
+Draws what the exercise gives and nothing it asks. **Lens and mirror:** the
+axis, the element, F and F′ (or F and C, and A, A′ with `antiprincipal`), the
+object and the `objeto` label, and one panel line with the givens
+(`p = 30 cm; f = 10 cm; o = 3 cm`). Hidden: every principal ray and its
+backward extension, the image arrow and its label, and the p′ / A / nature
+lines. The frame no longer widens to take in the image, so the canvas does not
+betray where it is. **Interface:** the incident ray, the normal, both media,
+the point I, the θ₁ arc, and a panel line with n₁, n₂ and θ₁. Hidden: the
+refracted ray and its θ₂ arc, the thick total-reflection ray and its arc, and
+the Snell, θc and verdict lines. The thin reflected ray follows the existing
+`reflected` flag (it is θ₁ again, a given).
+
 ### automaton
 
 A finite automaton, DFA or NFA, for Linguagens Formais e Autômatos and Teoria
@@ -2452,6 +2693,16 @@ character per symbol; a drawn dead state (say `partial` and the panel states it)
 a dense automaton (eight or more states with many crossing edges) is drawn
 correctly but its labels can sit close to crossing edges — give a `layout`.
 
+## answers: false
+
+"Which of these words does it accept?" is the usual question, and the diagram
+is its given, so the diagram stays whole: states, start arrow, accepting
+rings, every edge label, and the header line with Σ and F (and the implicit
+dead-state note of a `partial` DFA). The run panel keeps the word list but
+loses what was computed: each line reads `aab: ?` instead of the path or
+state sets and `aceita` / `rejeita`. The words are still validated against
+the alphabet.
+
 ### truth-table
 
 A truth table: one row per assignment of the variables, a column per variable,
@@ -2541,6 +2792,17 @@ Fixtures: [`fixtures/truth-table/`](../../../fixtures/truth-table/majority-minte
 Tests: `tests/truth-table.test.ts` (decodes the drawn cells against hand-worked
 tables) and `tests/boolean.test.ts` (the grammar and the minimiser).
 
+## answers: false
+
+A "complete a tabela" figure. Kept: the frame, every header (variables,
+subexpression columns, result columns with their typeset expressions), the
+variable columns filled with every assignment, and the row-number column when
+`minterms` is on (a row's number is its position, not a result). Hidden: every
+cell of a subexpression or result column (they are drawn empty, and those
+columns keep the width of one cell), and the whole panel, so `classify`,
+`compare` and `minterms` print no tautologia / equivalência line, no Σm and no
+simplified form even when their flags are set.
+
 ### logic-circuit
 
 A gate diagram drawn **from the expression tree**: "desenhe o circuito de
@@ -2623,6 +2885,18 @@ tri-state gates, and hop arcs at crossings (a crossing is a plain crossing).
 
 Fixtures: [`fixtures/logic-circuit/`](../../../fixtures/logic-circuit/and-or-not.json).
 
+## answers: false
+
+The figure of the exercise, not of its solution. The circuit is drawn with its
+input names, its output name and the expression line (`S = …`). Hidden:
+the gate count; with `inputs`, every wire's value, the ON/OFF colouring of the
+wires, the value beside the output and the `→ S = …` line (the input values
+stay on their input lines and are listed as the givens, `A = 1, B = 0`); with
+`simplify`, the ORIGINAL circuit is drawn instead of the minimal one, and the
+simplified expression and the before/after count are left out (so the figure
+is the same as one without `simplify`). The circuit is still simulated and
+simplified internally, so a wrong input is refused the same way.
+
 ### statistics
 
 Descriptive statistics of RAW DATA, for Estatística and ENEM: "construa o
@@ -2671,6 +2945,30 @@ axis with dotted row guides. Horizontal only.
 
 Limits: horizontal boxplots only; at most 4 groups; the numbers in the panel are
 rounded to three decimals with "≈" when not exact (√n shown as `√5 ≈ 2,236`).
+
+## answers: false
+
+The figure of the question: the data are given, the exercise asks for the
+histogram, the boxplot or the measures. Kept: bars on the classes, the frame,
+axes and numbered ticks, the boxplot's box, whiskers, median line and outlier
+dots, the class column of the frequency table (with its headers), the group
+names and the conventions (`[a; b)`, the quartile method, what an outlier
+is). Hidden: the reading panel (n, x̄, Md, Mo, s², s, A, quartiles, IQR, fences,
+outliers), the frequency written over each bar, the Sturges derivation, the
+quartile labels, the computed columns of both tables (fᵢ, frᵢ, Fᵢ, xᵢ, dᵢ, Σ;
+n, x̄, Md, s, Q₁, Q₃, IQR, outliers — the cells stay, empty, for the student to
+fill) and the frequency polygon (a derived drawing an exercise asks for; its
+empty neighbouring classes go with it). The bars themselves stay: the classes
+and the drawing are the frame of "complete a tabela" and "leia o gráfico". An
+exercise that asks the student to *draw* the histogram should not use this
+figure for its statement.
+
+## Magnitudes
+
+Numbers below 0,1 are written to three significant figures rather than three
+decimals (a variance of 0,00000565 g² used to print as `0`), and `≈`/`=` is
+decided on the relative error. Ticks and classes follow the data's span at any
+magnitude (12 000 … 45 000, 0,001 … 0,009).
 
 ### distribution
 
@@ -2802,6 +3100,26 @@ second mark for the label to be nearer than); a boundary label that would land
 on a tick number replaces that tick's number rather than sharing its row, so
 1050 can go missing beside a bold 1000.
 
+## answers: false
+
+The figure of the question: curve or bars, the event shaded, and the boundary
+values the statement gives. Hidden: the P value inside the region, the reading
+panel (standardisation, Φ arithmetic, complement, the approximation's
+calculation), the z row and its tick numbers (`showZ` is the standardisation
+the exercise asks for), and — for `approximation: "normal"` — the approximating
+curve, its N(μ; σ²) label and the continuity edges (they are the solution of
+"aproxime"; the question shows the binomial or Poisson bars with the event).
+For a two-sided test given by `alpha` the critical values are what is asked:
+the shaded tails and their boundary lines stay, the numbers under them and the
+α/2 labels do not (given as a critical z, the boundary is a datum and stays).
+The heading keeps the law, and the title loses `= P`.
+
+## Magnitudes
+
+Boundaries, ticks and the μ ± zσ line are written in full (`0,0125`, not
+`0,013`; `50000`), and a computed critical x is rounded to a thousandth of σ.
+A result line too long for the canvas is carried over before an operator.
+
 ### probability-tree
 
 A tree diagram of successive random stages, for Probabilidade and ENEM: "uma
@@ -2877,6 +3195,28 @@ terminate within six places, otherwise rounded and marked `≈`.
 Up to 32 leaves and 6 levels; the canvas grows rather than crams. No
 tree editing beyond typed input; no continuous distributions; events are sets
 of leaves, so an event not expressible as paths or a count is written as paths.
+
+## answers: false
+
+The figure of the question: the tree, its stage headings and the branch
+probabilities the statement *gives*. Hidden: the path-product column and its
+heading, the highlighted event paths, every event sum and conditional in the
+panel. A branch whose probability is computed is also hidden: one left out of
+the input to be "1 minus the others", and — decision for the urn — **every**
+branch of an urn-built tree, since its fractions are counted from the urn and
+are exactly what "construa a árvore" asks for. The urn's contents are given, so
+a line under the tree restates them (`urna: 3 V · 2 A · sem reposição`). An
+exercise whose statement hands over the whole tree should type it with `root`
+and every `p` written out; those are kept. Events and `given` are still
+validated, but nothing of them is drawn.
+
+## Magnitudes
+
+An urn of thousands of balls writes `2999/6499`. In a fan of three or more the
+level branch's label must stay clear of the rising neighbour, which needs a
+longer branch and a taller row gap when the labels are wide (`wideFan`); the
+figure grows (27 leaves of 4-digit fractions is 1270 × 2263) and the tree stays
+under the 32-leaf limit and 4000 px.
 
 ### venn
 
@@ -2996,3 +3336,13 @@ With `shade`, the caption lists the shaded elements: `A − B = {a, b}`.
 
 Four or more sets (a circle diagram does not give all the regions), area-
 proportional diagrams, and shading by hatching (fills are one tint).
+
+## answers: false
+
+The empty diagram: the circles, the set names and the universe, nothing else.
+No shading (what to shade is the question), no region counts (the data are in
+the statement; the regions' values are the answer), no elements placed in
+regions (where each belongs is what "represente" asks) and no caption. With
+`elements` the circles keep the standard size, since nothing is written inside.
+The input is still solved, so contradictory data are refused either way. Counts
+up to seven digits fit their regions (checked at 250 000 and 1 234 567).

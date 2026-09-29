@@ -52,6 +52,7 @@ import { Board } from "../function-graph/board.ts";
 import { compileIn } from "../../math/expr.ts";
 import { contour } from "../../math/contour.ts";
 import { rk4Scalar, rk4Planar } from "../../math/numeric.ts";
+import { fitUnits, niceStep, ticksIn } from "../shared/scale.ts";
 import { Placer, aroundPoint, besidePolyline, rectAt, rectToPolyline, segmentHitsRect } from "../construction/place.ts";
 import type { Rect } from "../construction/place.ts";
 
@@ -94,9 +95,17 @@ export type FieldInputLevels = {
   gradientAt?: [number, number][];
 };
 
+type WithAnswers = { answers?: boolean };
+
 export type FieldInput = (FieldInputSlope | FieldInputVector | FieldInputLevels | FieldInputCharges) & {
   title?: string;
   locale?: Locale;
+  /**
+   * false: the figure an exercise GIVES -- the field's marks, the axes, the charges and the points a curve starts from,
+   * without the solution and flow curves, the level curves, the gradients, the field lines or the equipotentials.
+   * Default true.
+   */
+  answers?: boolean;
 };
 
 // ---- palette (consistent across all three kinds) --------------------------
@@ -114,8 +123,6 @@ const GUIDE = "#9AA3AE"; // grey -- construction guides, never a claim
 const MARGIN = 56;
 const RANGE_PAD_FRACTION = 0.08;
 const PLOT_TARGET_PX = 460;
-const MIN_UNIT = 26;
-const MAX_UNIT = 90;
 const SEGMENT_LEN_PX = 20; // slope marks: fixed length in PAGE space, ADR 0050
 const ARROW_MIN_PX = 3; // a near-zero vector draws a stub this long, or a dot below it
 const ARROW_DOT_R = 1.6;
@@ -123,19 +130,9 @@ const GRADIENT_LEN_PX = 26;
 
 // ---- small pure helpers, exported for their own tests ----------------------
 
-/** A tick step a reader counts by: the smallest of 1, 2, 5, 10 (x10^k) that keeps at most `maxLines` divisions across `span`. */
-export function niceStep(span: number, maxLines = 8): number {
-  const steps = [0.5, 1, 2, 5, 10, 20, 50, 100];
-  for (const s of steps) if (span / s <= maxLines) return s;
-  return steps[steps.length - 1]!;
-}
-
 /** Grid points at every multiple of `step` inside `[lo, hi]` -- the actual lattice intersections, not an independent sampling. */
 export function latticeIn(lo: number, hi: number, step: number): number[] {
-  const out: number[] = [];
-  const start = Math.ceil((lo - 1e-9) / step) * step;
-  for (let x = start; x <= hi + 1e-9; x += step) out.push(Math.round(x / step) * step + 0); // "+ 0" turns a rounded -0 into 0
-  return out;
+  return ticksIn(lo, hi, step).map((x) => x + 0); // "+ 0" turns a -0 into 0
 }
 
 /** ∇f at (x, y) by central differences -- the one gradient this preset ever computes, shared by both consumers (labels, if any, and the perpendicularity a caller may want to check). */
@@ -215,8 +212,10 @@ export function frameGeometry(xRange: [number, number], yRange: [number, number]
   const yMax = yRange[1] + padY;
   const spanX = xMax - xMin;
   const spanY = yMax - yMin;
-  const unit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, PLOT_TARGET_PX / Math.max(spanX, spanY)));
-  const tickStep = niceStep(Math.max(spanX, spanY));
+  // FITTED, not clamped: a range of 0,2 or of 5000 fills the same ~460px as a range of 8, and the lattice
+  // and tick steps (1, 2 or 5 x 10^k at any k) follow the span, so marks stay a readable distance apart.
+  const { xUnit: unit } = fitUnits(spanX, spanY, { targetWidth: PLOT_TARGET_PX, targetHeight: PLOT_TARGET_PX, equal: true });
+  const tickStep = niceStep(Math.max(spanX, spanY), 8);
   return { xMin, xMax, yMin, yMax, unit, tickStep, origin: { x: MARGIN - xMin * unit, y: MARGIN + yMax * unit } };
 }
 
@@ -297,10 +296,12 @@ function drawPoint(board: Board, placer: Placer, id: string, c: Point, label: st
 
 // ---- kind: slope ------------------------------------------------------------
 
-function expandSlope(input: FieldInputSlope, locale: Locale, title: string): FigureSpec {
+function expandSlope(input: FieldInputSlope & WithAnswers, locale: Locale, title: string): FigureSpec {
   const f = compileIn(input.f, ["x", "y"]);
   const density = input.density ?? 11;
-  const captionLines = (input.solutions ?? []).length * 3; // generous: a reading may wrap to more than two lines
+  const answers = input.answers !== false;
+  const solutions = input.solutions ?? [];
+  const captionLines = answers ? solutions.length * 3 : 0; // generous: a reading may wrap to more than two lines
   const built = buildBoard(input.x, input.y, locale, captionLines);
   const { board, frame, placer, at, unit } = built;
 
@@ -342,7 +343,8 @@ function expandSlope(input: FieldInputSlope, locale: Locale, title: string): Fig
 
   const readings: { id: string; text: string }[] = [];
   const solutionCurves: { id: string; canvasPts: Point[] }[] = [];
-  (input.solutions ?? []).forEach((s, i) => {
+  // answers: false keeps the marks and the point each curve starts from (y(x₀) = y₀ is a datum) and draws no curve.
+  (answers ? solutions : []).forEach((s, i) => {
     const [x0, y0] = s.at;
     const m0 = f(x0, y0);
     if (!Number.isFinite(m0)) throw new SpecError(`field.solutions[${i}].at = (${x0}, ${y0}): f is not finite there -- no solution curve starts on a singularity`);
@@ -371,7 +373,7 @@ function expandSlope(input: FieldInputSlope, locale: Locale, title: string): Fig
   void solutionCurves;
 
   // ---- points, last ----
-  (input.solutions ?? []).forEach((s, i) => {
+  solutions.forEach((s, i) => {
     drawPoint(board, placer, `solution-${i}-start`, at(s.at), undefined, SOLUTION);
   });
 
@@ -424,11 +426,13 @@ function stopNote(backward: string, forward: string): string {
  */
 const VECTOR_ARROW_FRACTION = 0.42;
 
-function expandVector(input: FieldInputVector, locale: Locale, title: string): FigureSpec {
+function expandVector(input: FieldInputVector & WithAnswers, locale: Locale, title: string): FigureSpec {
   const p = compileIn(input.p, ["x", "y"]);
   const q = compileIn(input.q, ["x", "y"]);
   const density = input.density ?? 11;
-  const captionLines = (input.flowLines ?? []).length * 3; // generous: a reading may wrap to more than two lines
+  const answers = input.answers !== false;
+  const flowLines = input.flowLines ?? [];
+  const captionLines = answers ? flowLines.length * 3 : 0; // generous: a reading may wrap to more than two lines
   const built = buildBoard(input.x, input.y, locale, captionLines);
   const { board, at, unit, placer } = built;
 
@@ -450,13 +454,13 @@ function expandVector(input: FieldInputVector, locale: Locale, title: string): F
 
   const maxMag = Math.max(...samples.map((s) => s.mag));
   const latticePx = step * unit;
-  const scale = maxMag > 1e-12 ? (latticePx * VECTOR_ARROW_FRACTION) / maxMag : 0;
+  const scale = maxMag > 0 ? (latticePx * VECTOR_ARROW_FRACTION) / maxMag : 0;
 
   const connectors: Connector[] = [];
   for (const s of samples) {
     const c = at([s.x, s.y]);
     const lenPx = s.mag * scale;
-    if (s.mag <= 1e-9 || lenPx < ARROW_MIN_PX) {
+    if (s.mag <= 1e-9 * maxMag || lenPx < ARROW_MIN_PX) {
       board.circle(c, ARROW_DOT_R, { fill: FIELD_INK, id: `mark-${s.x}-${s.y}` });
       continue;
     }
@@ -471,7 +475,7 @@ function expandVector(input: FieldInputVector, locale: Locale, title: string): F
 
   const readings: { id: string; text: string }[] = [];
   const flowCurves: { id: string; canvasPts: Point[] }[] = [];
-  (input.flowLines ?? []).forEach((s, i) => {
+  (answers ? flowLines : []).forEach((s, i) => {
     const [x0, y0] = s.at;
     const dx0 = p(x0, y0);
     const dy0 = q(x0, y0);
@@ -499,7 +503,7 @@ function expandVector(input: FieldInputVector, locale: Locale, title: string): F
   // ---- labels, once every flow line's own ink is registered --------------
   // Searched along the whole curve, not anchored at the initial point --
   // that point sits on the lattice among the field's own arrows.
-  (input.flowLines ?? []).forEach((s, i) => {
+  (answers ? flowLines : []).forEach((s, i) => {
     if (s.label === undefined) return;
     const id = `flow-${i}`;
     const canvasPts = flowCurves.find((c) => c.id === id)!.canvasPts;
@@ -512,7 +516,7 @@ function expandVector(input: FieldInputVector, locale: Locale, title: string): F
     placer.commit(rectAt(best.centre, w, h));
   });
 
-  (input.flowLines ?? []).forEach((s, i) => drawPoint(board, placer, `flow-${i}-start`, at(s.at), undefined, SOLUTION));
+  flowLines.forEach((s, i) => drawPoint(board, placer, `flow-${i}-start`, at(s.at), undefined, SOLUTION));
 
   const READING_LINE_H = 56; // generous: two text lines plus wrap slack
   readings.forEach((r, i) => {
@@ -532,17 +536,19 @@ function expandVector(input: FieldInputVector, locale: Locale, title: string): F
 
 // ---- kind: levels -----------------------------------------------------------
 
-function expandLevels(input: FieldInputLevels, locale: Locale, title: string): FigureSpec {
+function expandLevels(input: FieldInputLevels & WithAnswers, locale: Locale, title: string): FigureSpec {
   if (input.levels.length === 0) throw new SpecError("field(levels): levels must name at least one value");
   const f = compileIn(input.f, ["x", "y"]);
   const cells = input.cells ?? 80;
+  const answers = input.answers !== false;
   const built = buildBoard(input.x, input.y, locale, 0);
   const { board, at, placer, unit } = built;
 
   const box = { x: input.x, y: input.y };
   type Curve = { level: number; id: string; canvasPts: Point[] };
   const curves: Curve[] = [];
-  input.levels.forEach((level, li) => {
+  // answers: false is the plane a contour map is sketched on: the axes, and the points a gradient is asked at.
+  (answers ? input.levels : []).forEach((level, li) => {
     const lines = contour(f, box, { level, cells });
     lines.forEach((line, si) => {
       if (line.points.length < 2) return;
@@ -556,19 +562,22 @@ function expandLevels(input: FieldInputLevels, locale: Locale, title: string): F
       curves.push({ level, id, canvasPts });
     });
   });
-  if (curves.length === 0) {
+  if (answers && curves.length === 0) {
     throw new SpecError(`field(levels): none of the levels [${input.levels.join(", ")}] are attained anywhere inside the plotted box -- nothing to draw`);
   }
 
-  drawContours(board, placer, locale, curves, { stroke: FIELD_INK, text: FIELD_INK, width: 2 });
+  if (answers) drawContours(board, placer, locale, curves, { stroke: FIELD_INK, text: FIELD_INK, width: 2 });
 
   // Gradient arrows: ∇f by central differences, perpendicular to the level
   // curve through that point by construction (checked in
   // tests/field.test.ts, not merely asserted here).
   const gradPoints = input.gradientAt ?? [];
   const gradConnectors: Connector[] = [];
+  // A step in proportion to the range: 1e-4 is nothing to a range of 5000 and everything to one of 0,001.
+  const h = (Math.max(input.x[1] - input.x[0], input.y[1] - input.y[0]) * 1e-5) || 1e-4;
   gradPoints.forEach(([x, y], i) => {
-    const [gx, gy] = gradient(f, x, y);
+    if (!answers) return;
+    const [gx, gy] = gradient(f, x, y, h);
     const mag = magnitude(gx, gy);
     if (!Number.isFinite(mag) || mag <= 1e-9) return; // a critical point has no direction to draw
     const c = at([x, y]);
@@ -583,8 +592,8 @@ function expandLevels(input: FieldInputLevels, locale: Locale, title: string): F
 
   // Points: the gradient's own foot, last.
   gradPoints.forEach(([x, y], i) => {
-    const [gx, gy] = gradient(f, x, y);
-    if (!Number.isFinite(magnitude(gx, gy)) || magnitude(gx, gy) <= 1e-9) return;
+    const [gx, gy] = gradient(f, x, y, h);
+    if (!Number.isFinite(magnitude(gx, gy)) || (answers && magnitude(gx, gy) <= 1e-9)) return;
     drawPoint(board, placer, `grad-${i}-foot`, at([x, y]), undefined, GRADIENT);
   });
 
@@ -994,10 +1003,13 @@ function autoLevels(charges: FieldCharge[]): number[] {
   return [...rungs.map((r) => -r).reverse(), ...(both ? [0] : []), ...rungs];
 }
 
-function expandCharges(input: FieldInputCharges, locale: Locale, title: string): FigureSpec {
+function expandCharges(input: FieldInputCharges & WithAnswers, locale: Locale, title: string): FigureSpec {
   const { charges } = input;
-  const equipotentials = input.equipotentials === undefined ? [] : input.equipotentials === "auto" ? autoLevels(charges) : input.equipotentials;
-  const captionLines = equipotentials.length > 0 ? 2 : 1;
+  // answers: false is the configuration alone -- charges, names, the box. The field lines and the equipotentials are what
+  // "esboce as linhas de campo" asks for, and the null points are where they meet.
+  const answers = input.answers !== false;
+  const equipotentials = !answers || input.equipotentials === undefined ? [] : input.equipotentials === "auto" ? autoLevels(charges) : input.equipotentials;
+  const captionLines = !answers ? 0 : equipotentials.length > 0 ? 2 : 1;
   const built = buildBoard(input.x, input.y, locale, captionLines, true);
   const { board, at, placer, unit } = built;
   const rd = CHARGE_R_PX;
@@ -1012,8 +1024,8 @@ function expandCharges(input: FieldInputCharges, locale: Locale, title: string):
   });
 
   // ---- field lines --------------------------------------------------------
-  const lines = traceChargeLines(input);
-  if (lines.length === 0) throw new SpecError("field(charges): no field line could be drawn -- a charge sits too close to the edge of the plotted box");
+  const lines = answers ? traceChargeLines(input) : [];
+  if (answers && lines.length === 0) throw new SpecError("field(charges): no field line could be drawn -- a charge sits too close to the edge of the plotted box");
   // A line is drawn from its charge's CENTRE (the disc, drawn last, covers the
   // stub) and, on a sink, to the sink's centre: every line then passes through
   // the place its charge's name labels, which is what makes those lines the
@@ -1176,7 +1188,7 @@ function expandCharges(input: FieldInputCharges, locale: Locale, title: string):
   const panel = ["linhas de campo (k omitido)"];
   if (zeros.length > 0) panel[0] = `linhas de campo (k omitido); ${zeros.length === 1 ? "○ marca o ponto" : "○ marca os pontos"} onde E = 0`;
   if (equipotentials.length > 0) panel.push("linhas tracejadas: equipotenciais, V = Σ q/r (k omitido)");
-  panel.forEach((text, i) => {
+  (answers ? panel : []).forEach((text, i) => {
     board.label(text, built.width / 2, built.plotHeight + 22 + i * 20, { size: 12, colour: SOFT, id: `panel-${i}`, claim: false, freeStanding: true });
   });
 

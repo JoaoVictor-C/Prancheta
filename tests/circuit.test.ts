@@ -406,3 +406,32 @@ test("the panel variant of a dense circuit also passes every check", async () =>
   const result = await render(spec, { maxPasses: 3, raster: false });
   for (const check of result.manifest.checks) assert.ok(check.status === "pass" || check.status === "not-applicable", `${check.id} ${check.status}: ${check.detail}`);
 });
+
+// ---- answers: false --------------------------------------------------------------------------------
+
+const answerIds = (spec: FigureSpec): string[] =>
+  [...blocksOf(spec).map((b) => b.id ?? ""), ...marksOf(spec).map((m) => m.id ?? "")].filter((id) => /^(current-|panel-)|-reading$/.test(id));
+
+fixtures.forEach((filename) => {
+  test(`answers:false ${filename}: no current, reading, U, V or P is drawn, and every check passes`, async () => {
+    const input = { ...load(filename), answers: false, show: { ...load(filename).show, voltages: [["A", "B"]] as [string, string][], nodeVoltages: true, power: true } };
+    const spec = expandCircuit(input);
+    assert.deepEqual(answerIds(spec), [], filename);
+    // Nothing but givens: values of components (Ω, V, A of a source), names and node letters.
+    for (const b of blocksOf(spec)) assert.ok(!/^U|referência|fornecida|recebida/.test(b.label ?? ""), `${filename}: ${b.id} "${b.label}"`);
+    const result = await render(spec, { maxPasses: 3, raster: false });
+    for (const check of result.manifest.checks) assert.ok(check.status === "pass" || check.status === "not-applicable", `${filename}: ${check.id} ${check.status}: ${check.detail}`);
+  });
+});
+
+test("answers:false keeps the ground, the meter letters and the given values; answers:true is unchanged", () => {
+  const input = load("divider-voltmeter.json");
+  const hidden = expandCircuit({ ...input, answers: false });
+  const texts = blocksOf(hidden).map((b) => b.label);
+  assert.ok(texts.includes("V"), "the voltmeter's letter stays");
+  assert.ok(texts.some((t) => t?.includes("12 V")) && texts.some((t) => t?.includes("4 Ω")));
+  assert.deepEqual(answerIds(hidden), []);
+  const shown = expandCircuit(input);
+  assert.ok(answerIds(shown).some((id) => id.endsWith("-reading")));
+  assert.deepEqual(expandCircuit({ ...input, answers: true }), shown);
+});

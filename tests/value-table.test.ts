@@ -243,6 +243,50 @@ test("gap between name column and first value column is small", () => {
   assert.ok(gap < 50 && gap >= 0, `Gap between columns should be 0-50 pixels, got ${gap}`);
 });
 
+// --- answers: false ---------------------------------------------------------------
+
+test("answers:false draws empty cells, but keeps table frame and headers", () => {
+  const input: ValuesInput = {
+    xs: [-1, 0, 1],
+    functions: [{ name: "f", expr: "x^2 - 1" }],
+    answers: false,
+  };
+  const result = cells(input);
+  // With answers:false, computed cells should be empty (empty strings)
+  assert.deepEqual(result, [["", "", ""]]);
+});
+
+test("answers:true (default) draws computed cells with values", () => {
+  const input: ValuesInput = {
+    xs: [-1, 0, 1],
+    functions: [{ name: "f", expr: "x^2 - 1" }],
+    answers: true,
+  };
+  const result = cells(input);
+  // With answers:true, computed cells should contain values
+  assert.deepEqual(result, [["0", "−1", "0"]]);
+});
+
+test("answers:false fixture renders with every check passing", { timeout: 240000 }, async () => {
+  const rawInput = JSON.parse(readFileSync(join(dir, "quadratic-no-answers.json"), "utf8")) as ValueTableInput;
+  const input = rawInput as ValuesInput;
+  assert.ok(input.xs && input.functions, "fixture must have xs and functions");
+  const spec = expandValueTable(input);
+  const result = await render(spec, { raster: false });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
+  // Verify no computed cell text is present
+  const t = texts(input);
+  const xs = input.xs!.length;
+  const funcs = input.functions!.length;
+  for (let row = 0; row < funcs; row += 1) {
+    for (let col = 0; col < xs; col += 1) {
+      const cellText = t.get(`cell-${row}-${col}`) ?? "";
+      assert.equal(cellText, "", `cell-${row}-${col} should be empty`);
+    }
+  }
+});
+
 // --- rendering ---------------------------------------------------------------
 
 for (const name of fixtures) {

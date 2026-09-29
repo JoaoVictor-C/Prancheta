@@ -423,7 +423,9 @@ fixtures.forEach((filename) => {
       assert.ok(check.status === "pass" || check.status === "not-applicable", `${filename}: ${check.id} ${check.status}: ${check.detail}`);
     }
     const areas = result.manifest.checks.filter((c) => c.id === "area-matches-its-label");
-    assert.ok(areas.length >= 1 && areas.every((c) => c.status === "pass"), JSON.stringify(areas));
+    // the question's figure prints no probability, so there is no label whose area could be measured
+    if ((input as { answers?: boolean }).answers === false) assert.equal(areas.filter((c) => c.status === "fail").length, 0);
+    else assert.ok(areas.length >= 1 && areas.every((c) => c.status === "pass"), JSON.stringify(areas));
   });
 });
 
@@ -456,4 +458,63 @@ test("a title is derived from the law and the event when none is given", () => {
   assert.equal(expand({ kind: "normal", mean: 70, sd: 5, event: { between: [60, 75] } }).title, "X ~ N(70; 5²): P(60 < X < 75) = 0,8186");
   assert.equal(expand({ kind: "binomial", n: 10, p: 0.3, event: { equals: 3 } }).title, "X ~ B(10; 0,3): P(X = 3) = 0,2668");
   assert.equal(expand({ kind: "normal", event: { above: 1 }, title: "meu título" }).title, "meu título");
+});
+
+// ---- answers: false, and magnitudes ---------------------------------------------------------------
+
+const labelTexts = (spec: Spec): string[] => blocksOf(spec).map((b) => b.label ?? "");
+const passes = async (input: DistributionInput, what: string): Promise<void> => {
+  const result = await render(expandDistribution(input), { maxPasses: 3 });
+  for (const c of result.manifest.checks) assert.ok(c.status === "pass" || c.status === "not-applicable", `${what}: ${c.id} ${c.status}: ${c.detail}`);
+};
+
+test("answers:true is the default and changes nothing", () => {
+  const inp: DistributionInput = { kind: "normal", mean: 70, sd: 5, showZ: true, event: { between: [60, 75] } };
+  assert.deepEqual(expandDistribution({ ...inp, answers: true }), expandDistribution(inp));
+});
+
+test("answers:false: a normal keeps the curve, the shaded event and the boundaries, and prints no P, z or arithmetic", async () => {
+  const inp: DistributionInput = { kind: "normal", mean: 70, sd: 5, showZ: true, event: { between: [60, 75] }, answers: false };
+  const spec = expandDistribution(inp);
+  const texts = labelTexts(spec);
+  const all = texts.join("|");
+  assert.doesNotMatch(all, /P = |P\(|Φ|z₁|μ = |0,8|0,9|%/);
+  assert.ok(texts.includes("60") && texts.includes("75") && texts.includes("X ~ N(70; 5²)"));
+  assert.ok(!texts.some((t) => /^−?\d+,\d+$/.test(t) && t !== "0,5"), "no z value");
+  assert.ok(scene(spec).marks!.some((m) => m.id === "region-0"), "the event is still shaded");
+  assert.doesNotMatch(spec.title ?? "", /=/);
+  await passes(inp, "distribution answers:false");
+});
+
+test("answers:false: a two-tailed test given by alpha does not print its critical values", async () => {
+  const inp: DistributionInput = { kind: "normal", event: { tails: { alpha: 0.05 } }, answers: false };
+  const texts = labelTexts(expandDistribution(inp));
+  assert.ok(!texts.some((t) => /1,96|α/.test(t)), texts.join("|"));
+  await passes(inp, "distribution alpha tails");
+  // given as a critical z, the boundary is a datum and stays
+  assert.ok(labelTexts(expandDistribution({ kind: "normal", event: { tails: 1.96 }, answers: false })).includes("1,96"));
+});
+
+test("answers:false: a binomial keeps its bars and event; the normal approximation is not drawn", async () => {
+  const inp: DistributionInput = { kind: "binomial", n: 40, p: 0.3, approximation: "normal", showZ: true, event: { between: [10, 15] }, answers: false };
+  const spec = expandDistribution(inp);
+  const ids = (scene(spec).marks ?? []).map((m) => m.id);
+  assert.ok(!ids.includes("approx-curve") && ids.includes("event-region"));
+  const all = labelTexts(spec).join("|");
+  assert.doesNotMatch(all, /N\(|P\(|P =|aproxima|z₁/);
+  await passes(inp, "distribution binomial answers:false");
+});
+
+test("magnitudes: N(50000; 8000²) and N(0,01; 0,002²) label their boundaries in full and pass every check", async () => {
+  const big: DistributionInput = { kind: "normal", mean: 50000, sd: 8000, showZ: true, event: { between: [42000, 60000] } };
+  await passes(big, "N(50000; 8000²)");
+  const tinyInp: DistributionInput = { kind: "normal", mean: 0.01, sd: 0.002, showZ: true, event: { below: 0.0125 } };
+  const texts = labelTexts(expandDistribution(tinyInp));
+  assert.ok(texts.includes("0,0125"), texts.join("|"));
+  assert.ok(texts.includes("0,002") && texts.includes("0,018"), "ticks are μ ± kσ, written in full");
+  await passes(tinyInp, "N(0,01; 0,002²)");
+  const odd: DistributionInput = { kind: "normal", mean: 0.15, sd: 0.0125, showZ: true, event: { tails: { alpha: 0.05 } } };
+  const oddTexts = labelTexts(expandDistribution(odd));
+  assert.ok(oddTexts.includes("0,1125") && oddTexts.includes("0,1255") && oddTexts.includes("0,1745"), oddTexts.join("|"));
+  await passes(odd, "N(0,15; 0,0125²) tails");
 });

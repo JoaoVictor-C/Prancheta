@@ -62,9 +62,20 @@ export const approx = (value: number): Exact => ({ kind: "approx", value });
 
 /** A typed number: exact when it is a small-denominator rational (every decimal a student types is). */
 export function rat(x: number): Exact {
-  const f = asFraction(x);
+  const f = asFraction(x) ?? decimalFraction(x);
   if (f === null) return approx(x);
   return norm({ kind: "exact", terms: [{ r: 1, c: frac(f.p, f.q) }], pi: 0 });
+}
+
+/** A typed decimal ("0,003", "12345,678") as the fraction it is, for a magnitude `asFraction` does not reach. */
+function decimalFraction(x: number): Frac | null {
+  if (!Number.isFinite(x) || x === 0) return null;
+  for (let d = 0; d <= 15; d += 1) {
+    const p = Math.round(x * 10 ** d);
+    if (!safe(p, 10 ** d)) return null;
+    if (Math.abs(p / 10 ** d - x) <= 1e-12 * Math.abs(x)) return frac(p, 10 ** d);
+  }
+  return null;
 }
 
 export const PI: Exact = { kind: "exact", terms: [{ r: 1, c: { p: 1, q: 1 } }], pi: 1 };
@@ -136,14 +147,14 @@ export type Printed = { text: string; exact: boolean };
  * fraction (1/3); an inexact value prints to hundredths with exact = false.
  */
 export function print(e: Exact, locale: Locale = "pt-BR"): Printed {
-  if (e.kind === "approx") return { text: formatNumber(e.value, locale, { decimals: 2 }), exact: false };
+  if (e.kind === "approx") return { text: roundedText(e.value, locale), exact: false };
   if (e.terms.length === 0) return { text: "0", exact: true };
   const parts = e.terms.map((t, i) => {
     const neg = t.c.p < 0;
     const p = Math.abs(t.c.p);
     const q = t.c.q;
     let body: string;
-    if (t.r === 1 && e.pi === 0) body = formatNumber(p / q, locale);
+    if (t.r === 1 && e.pi === 0) body = plainText(p / q, locale);
     else {
       const coef = p === 1 ? "" : formatNumber(p, locale);
       body = `${coef}${t.r === 1 ? "" : `√${t.r}`}${e.pi === 1 ? "π" : ""}`;
@@ -153,6 +164,25 @@ export function print(e: Exact, locale: Locale = "pt-BR"): Printed {
     return neg ? ` ${MINUS} ${body}` : ` + ${body}`;
   });
   return { text: parts.join(""), exact: true };
+}
+
+/**
+ * A number the way formatNumber writes it, except below a hundredth, where formatNumber (whose tolerance is
+ * absolute) reads it as 0: three significant digits, trailing zeros dropped, the locale's decimal mark.
+ */
+function plainText(x: number, locale: Locale): string {
+  if (!(Math.abs(x) < 0.01) || x === 0) return formatNumber(x, locale);
+  const rounded = Number(x.toPrecision(3));
+  const decimals = Math.min(20, Math.max(0, 2 - Math.floor(Math.log10(Math.abs(rounded)))));
+  const body = Math.abs(rounded).toFixed(decimals).replace(/0+$/, "").replace(/\.$/, "");
+  return `${x < 0 ? MINUS : ""}${locale === "pt-BR" ? body.replace(".", ",") : body}`;
+}
+
+/** A value that is not exact: hundredths; three significant digits below a hundredth; whole units from a million up, where hundredths are false precision. */
+function roundedText(x: number, locale: Locale): string {
+  if (Math.abs(x) < 0.01 && x !== 0) return plainText(x, locale);
+  if (Math.abs(x) >= 1e6) return formatNumber(Math.round(x), locale);
+  return formatNumber(x, locale, { decimals: 2 });
 }
 
 /** "= 2√3" or "≈ 3,24": the relation and the value, ready to follow a formula. */

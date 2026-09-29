@@ -632,3 +632,84 @@ test("the area check reads the parallelogram: a wrong label would fail it", asyn
   const bad = await render(spec, { maxPasses: 2, raster: false });
   assert.ok(bad.manifest.checks.some((c) => c.id === "area-matches-its-label" && c.status === "fail"));
 });
+
+// ---- scale fitted to the box (review of 2026-09-29) ----------------------------------------------------
+
+function svgSize(svg: string): { w: number; h: number } {
+  const m = svg.match(/<svg[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"/);
+  assert.ok(m, "svg has a size");
+  return { w: Number(m![1]), h: Number(m![2]) };
+}
+
+const numericTexts = (svg: string): string[] => (svg.match(/<text[^>]*>[^<]*<\/text>/g) ?? []).map((t) => t.replace(/<[^>]+>/g, "")).filter((t) => /^[−-]?[\d.,]+$/.test(t));
+
+async function renderPassing(input: LinearMapInput) {
+  const result = await render(expandLinearMap(input), { maxPasses: 3, raster: false });
+  for (const check of result.manifest.checks) {
+    assert.ok(check.status === "pass" || check.status === "not-applicable", `${check.id} ${check.status}: ${check.detail}`);
+  }
+  return result;
+}
+
+test("probe: a stretch by [[200, 0], [0, 300]] fits a page (was 4556 x 6926px)", async () => {
+  const { svg } = await renderPassing({ matrix: [[200, 0], [0, 300]] });
+  const { w, h } = svgSize(svg);
+  assert.ok(w <= 1200 && h <= 1200 && w >= 300 && h >= 300, `${w} x ${h}`);
+  assert.ok(numericTexts(svg).length <= 24, `${numericTexts(svg).length} numbers`);
+  assert.match(svg, /60000/, "the area is still printed");
+  assert.match(svg, /T\(e/, "the image labels stay");
+});
+
+test("probe: huge and tiny maps, with eigen-lines and a shape, stay page-sized", async () => {
+  for (const input of [
+    { matrix: [[200, 10], [0, 300]], show: { eigen: true } },
+    { matrix: [[0.001, 0], [0, 0.002]] },
+    { matrix: [[1000, 0], [0, 1]], shapes: [{ points: [[0, 0], [1, 0], [0, 1]] as [number, number][], label: "ABC" }] },
+  ] as LinearMapInput[]) {
+    const { svg } = await renderPassing(input);
+    const { w, h } = svgSize(svg);
+    assert.ok(w <= 1600 && h <= 2000 && w >= 300, `${JSON.stringify(input.matrix)}: ${w} x ${h}`);
+  }
+});
+
+test("planeGeometry: whole-unit ticks for a small box, 1-2-5 steps at any larger magnitude", () => {
+  assert.equal(planeGeometry([-4, 5], [-1, 5]).step, 1);
+  assert.equal(planeGeometry([0, 300], [0, 200]).step, 50);
+  assert.ok(planeGeometry([0, 300], [0, 200]).plotWidth <= 700);
+  assert.ok(planeGeometry([0, 5000], [0, 5000]).plotHeight <= 700);
+});
+
+// ---- answers: false ---------------------------------------------------------------------------------------
+
+test("answers:false keeps the given (grid, e₁ e₂, the unit square, the shape) and hides every image and reading", async () => {
+  const input: LinearMapInput = {
+    matrix: [[2, 1], [1, 2]],
+    show: { grid: true, basis: true, unitSquare: true, eigen: true },
+    shapes: [{ points: [[1, 1], [3, 1], [1, 2]], label: "ABC" }],
+    points: [{ name: "P", at: [2, 1] }],
+  };
+  const solution = expandLinearMap(input);
+  const question = expandLinearMap({ ...input, answers: false });
+  const ids = (s: typeof solution): string[] => [...((s.root as Scene).marks ?? []).map((m) => m.id), ...((s.root as Scene).connectors ?? []).map((c) => c.id ?? "")];
+  const texts = (s: typeof solution): string[] => (s.root as Scene).children.filter((c): c is Block => "label" in c).map((c) => c.label ?? "");
+  for (const id of ["unit-square-image", "image-e1", "image-e2", "eigen-0", "shape-0-image"]) {
+    assert.ok(ids(solution).includes(id), `answers:true is unchanged: ${id}`);
+    assert.ok(!ids(question).includes(id), `answers:false has no ${id}`);
+  }
+  assert.ok(!ids(question).some((id) => id.startsWith("lattice-")), "the image lattice is an answer");
+  for (const id of ["unit-square", "basis-e1", "basis-e2", "shape-0"]) assert.ok(ids(question).includes(id), `the given ${id} stays`);
+  const q = texts(question).join("\n");
+  for (const gone of ["T(e₁)", "T(e₂)", "det", "autovalor", "λ", "′", "área", "S =", "colunas"]) assert.ok(!q.includes(gone), `no "${gone}" in the question figure`);
+  for (const kept of ["e₁", "e₂", "A", "T(x; y) = (2x + y; x + 2y)"]) assert.ok(q.includes(kept), `"${kept}" is given`);
+  await renderPassing({ ...input, answers: false });
+});
+
+test("answers:false on a named map states the map by its name, not its matrix", async () => {
+  const input: LinearMapInput = { named: { rotation: 90 }, shapes: [{ points: [[1, 1], [4, 1], [1, 3]], label: "ABC" }], answers: false };
+  const spec = expandLinearMap(input);
+  const q = (spec.root as Scene).children.filter((c): c is Block => "label" in c).map((c) => c.label!).join("\n");
+  assert.match(q, /rotação de 90°/);
+  assert.ok(!q.includes("matrix-a11") && !(spec.root as Scene).children.some((c) => "id" in c && (c as Block).id === "matrix-a11"), "no matrix cells");
+  assert.ok(!q.includes("A′") && !q.includes("B′"));
+  await renderPassing(input);
+});

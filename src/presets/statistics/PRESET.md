@@ -46,3 +46,27 @@ axis with dotted row guides. Horizontal only.
 
 Limits: horizontal boxplots only; at most 4 groups; the numbers in the panel are
 rounded to three decimals with "≈" when not exact (√n shown as `√5 ≈ 2,236`).
+
+## answers: false
+
+The figure of the question: the data are given, the exercise asks for the
+histogram, the boxplot or the measures. Kept: bars on the classes, the frame,
+axes and numbered ticks, the boxplot's box, whiskers, median line and outlier
+dots, the class column of the frequency table (with its headers), the group
+names and the conventions (`[a; b)`, the quartile method, what an outlier
+is). Hidden: the reading panel (n, x̄, Md, Mo, s², s, A, quartiles, IQR, fences,
+outliers), the frequency written over each bar, the Sturges derivation, the
+quartile labels, the computed columns of both tables (fᵢ, frᵢ, Fᵢ, xᵢ, dᵢ, Σ;
+n, x̄, Md, s, Q₁, Q₃, IQR, outliers — the cells stay, empty, for the student to
+fill) and the frequency polygon (a derived drawing an exercise asks for; its
+empty neighbouring classes go with it). The bars themselves stay: the classes
+and the drawing are the frame of "complete a tabela" and "leia o gráfico". An
+exercise that asks the student to *draw* the histogram should not use this
+figure for its statement.
+
+## Magnitudes
+
+Numbers below 0,1 are written to three significant figures rather than three
+decimals (a variance of 0,00000565 g² used to print as `0`), and `≈`/`=` is
+decided on the relative error. Ticks and classes follow the data's span at any
+magnitude (12 000 … 45 000, 0,001 … 0,009).
