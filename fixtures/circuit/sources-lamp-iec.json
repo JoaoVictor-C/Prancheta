@@ -1,0 +1,16 @@
+{
+  "preset": "circuit",
+  "title": "fonte de tensão, fonte de corrente e lâmpada (símbolos IEC)",
+  "nodes": { "p1": [0, 2], "A": [2, 2], "p2": [4, 2], "p3": [0, 0], "B": [2, 0], "p4": [4, 0] },
+  "components": [
+    { "id": "U1", "kind": "voltage-source", "from": "p3", "to": "p1", "value": 10 },
+    { "id": "L1", "kind": "lamp", "from": "p1", "to": "A", "value": 5 },
+    { "id": "S1", "kind": "switch", "from": "A", "to": "p2", "closed": true },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "B", "value": 10 },
+    { "id": "I1", "kind": "current-source", "from": "p4", "to": "p2", "value": 2 },
+    { "kind": "wire", "from": "p3", "to": "B" },
+    { "kind": "wire", "from": "B", "to": "p4" }
+  ],
+  "symbols": "iec",
+  "show": { "nodeVoltages": true, "power": true }
+}

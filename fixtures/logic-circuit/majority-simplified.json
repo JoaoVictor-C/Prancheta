@@ -1,0 +1,7 @@
+{
+  "preset": "logic-circuit",
+  "title": "Função maioria: canônica e simplificada",
+  "expr": "A'BC + AB'C + ABC' + ABC",
+  "output": "M",
+  "simplify": true
+}

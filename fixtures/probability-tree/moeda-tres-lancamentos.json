@@ -1,0 +1,18 @@
+{
+  "preset": "probability-tree",
+  "title": "uma moeda honesta lançada três vezes",
+  "stages": ["1º lançamento", "2º lançamento", "3º lançamento"],
+  "root": {
+    "children": [
+      { "label": "C", "p": "1/2", "children": [
+        { "label": "K", "p": "1/2", "children": [{ "label": "C", "p": "1/2" }, { "label": "K", "p": "1/2" }] },
+        { "label": "C", "p": "1/2", "children": [{ "label": "C", "p": "1/2" }, { "label": "K", "p": "1/2" }] }
+      ] },
+      { "label": "K", "p": "1/2", "children": [
+        { "label": "K", "p": "1/2", "children": [{ "label": "C", "p": "1/2" }, { "label": "K", "p": "1/2" }] },
+        { "label": "C", "p": "1/2", "children": [{ "label": "C", "p": "1/2" }, { "label": "K", "p": "1/2" }] }
+      ] }
+    ]
+  },
+  "events": [{ "name": "exatamente 2 caras", "count": { "of": "C", "is": 2 } }]
+}

@@ -1,0 +1,5 @@
+{
+  "preset": "distribution",
+  "kind": "normal",
+  "event": { "above": 1.96 }
+}

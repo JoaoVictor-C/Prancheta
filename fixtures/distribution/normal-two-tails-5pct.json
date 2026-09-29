@@ -1,0 +1,6 @@
+{
+  "preset": "distribution",
+  "kind": "normal",
+  "event": { "tails": { "alpha": 0.05 } },
+  "showZ": true
+}

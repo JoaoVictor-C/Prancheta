@@ -1,0 +1,15 @@
+{
+  "preset": "circuit",
+  "title": "resistores em paralelo",
+  "nodes": { "p1": [0, 2], "A": [2, 2], "p2": [4, 2], "p3": [0, 0], "B": [2, 0], "p4": [4, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "p3", "to": "p1", "value": 12 },
+    { "kind": "wire", "from": "p1", "to": "A" },
+    { "kind": "wire", "from": "A", "to": "p2" },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "B", "value": 6 },
+    { "id": "R2", "kind": "resistor", "from": "p2", "to": "p4", "value": 3 },
+    { "kind": "wire", "from": "p3", "to": "B" },
+    { "kind": "wire", "from": "B", "to": "p4" }
+  ],
+  "show": { "voltages": [["A", "B"]], "power": true }
+}

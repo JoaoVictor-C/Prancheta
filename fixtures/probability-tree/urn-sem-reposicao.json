@@ -1,0 +1,8 @@
+{
+  "preset": "probability-tree",
+  "title": "urna com 3 bolas vermelhas e 2 azuis, duas retiradas sem reposição",
+  "urn": { "V": 3, "A": 2 },
+  "draws": 2,
+  "replacement": false,
+  "events": [{ "name": "cores diferentes", "paths": [["V", "A"], ["A", "V"]] }]
+}

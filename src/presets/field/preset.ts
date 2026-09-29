@@ -3,7 +3,7 @@
  * (EDO's "campo de direções", Física's field-line diagrams, the 2D contour
  * map).
  *
- * Three figures share one gridded plane because they share one discipline:
+ * Three figures share one gridded plane because they share one discipline (a fourth, `charges`, is a bare board: ADR 0055):
  * every mark, every curve and every printed number is DERIVED from the
  * stated expression, never typed.
  *
@@ -42,7 +42,7 @@
  * always sees every line it might cross.
  */
 
-import type { Connector, Frame, FigureSpec, FramedPoint, GridSpec, Point, Scene } from "../../ir/types.ts";
+import type { Connector, Frame, FigureSpec, FramedPoint, GridSpec, LineStyle, Point, Scene } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { resolveInFrame, tickPlan } from "../../ir/frames.ts";
 import { LOCALES, formatNumber } from "../../locale/format.ts";
@@ -52,7 +52,7 @@ import { Board } from "../function-graph/board.ts";
 import { compileIn } from "../../math/expr.ts";
 import { contour } from "../../math/contour.ts";
 import { rk4Scalar, rk4Planar } from "../../math/numeric.ts";
-import { Placer, aroundPoint, besidePolyline, rectAt } from "../construction/place.ts";
+import { Placer, aroundPoint, besidePolyline, rectAt, rectToPolyline, segmentHitsRect } from "../construction/place.ts";
 import type { Rect } from "../construction/place.ts";
 
 // ---- input ---------------------------------------------------------------
@@ -94,7 +94,7 @@ export type FieldInputLevels = {
   gradientAt?: [number, number][];
 };
 
-export type FieldInput = (FieldInputSlope | FieldInputVector | FieldInputLevels) & {
+export type FieldInput = (FieldInputSlope | FieldInputVector | FieldInputLevels | FieldInputCharges) & {
   title?: string;
   locale?: Locale;
 };
@@ -187,7 +187,7 @@ function besideCurveInField(pts: Point[], w: number, h: number, ts: number[]): P
 type Built = {
   board: Board;
   frame: Frame & { origin: Point };
-  grid: GridSpec;
+  grid: GridSpec | undefined;
   placer: Placer;
   at: (p: [number, number]) => Point;
   unit: number;
@@ -220,7 +220,7 @@ export function frameGeometry(xRange: [number, number], yRange: [number, number]
   return { xMin, xMax, yMin, yMax, unit, tickStep, origin: { x: MARGIN - xMin * unit, y: MARGIN + yMax * unit } };
 }
 
-function buildBoard(xRange: [number, number], yRange: [number, number], locale: Locale, captionLines: number): Built {
+function buildBoard(xRange: [number, number], yRange: [number, number], locale: Locale, captionLines: number, bare = false): Built {
   const { xMin, xMax, yMin, yMax, unit, tickStep, origin } = frameGeometry(xRange, yRange);
   const spanX = xMax - xMin;
   const spanY = yMax - yMin;
@@ -232,23 +232,28 @@ function buildBoard(xRange: [number, number], yRange: [number, number], locale: 
   const width = plotWidth;
   const height = plotHeight + captionHeight;
 
-  const grid: GridSpec = {
-    x: { from: xMin, to: xMax, step: tickStep, origin: 0 },
-    y: { from: yMin, to: yMax, step: tickStep, origin: 0 },
-    locale,
-  };
+  // A `bare` board has the frame's affine map and nothing drawn from it: a
+  // charge diagram is a physics figure, and a textbook draws it without axes
+  // or numbers (ADR 0055).
+  const grid: GridSpec | undefined = bare
+    ? undefined
+    : {
+        x: { from: xMin, to: xMax, step: tickStep, origin: 0 },
+        y: { from: yMin, to: yMax, step: tickStep, origin: 0 },
+        locale,
+      };
   const frame: Frame & { origin: Point } = {
     id: "plane",
     origin,
     xUnit: unit,
     yUnit: unit,
-    grid,
+    ...(grid === undefined ? {} : { grid }),
   };
 
   const board = new Board(width, height, PAPER);
   board.addFrame(frame);
   const placer = new Placer({ x: 12, y: 8, width: width - 24, height: plotHeight - 12 });
-  for (const t of tickPlan(frame, grid)) {
+  for (const t of grid === undefined ? [] : tickPlan(frame, grid)) {
     const b = t.spots[0]!.box;
     board.reserve(b.x + b.width / 2, b.y + b.height / 2, b.width, b.height);
     placer.reserve(b);
@@ -256,8 +261,8 @@ function buildBoard(xRange: [number, number], yRange: [number, number], locale: 
   const at = (p: [number, number]): Point => resolveInFrame(frame, p[0], p[1]);
   // The axes are already traced as ink by `addFrame`; make them known to the
   // label placer too (not competing -- grid furniture never wins "nearest").
-  if (yMin <= 0 && yMax >= 0) placer.addInk("plane-axis-x", [at([xMin, 0]), at([xMax, 0])], false);
-  if (xMin <= 0 && xMax >= 0) placer.addInk("plane-axis-y", [at([0, yMin]), at([0, yMax])], false);
+  if (grid !== undefined && yMin <= 0 && yMax >= 0) placer.addInk("plane-axis-x", [at([xMin, 0]), at([xMax, 0])], false);
+  if (grid !== undefined && xMin <= 0 && xMax >= 0) placer.addInk("plane-axis-y", [at([0, yMin]), at([0, yMax])], false);
 
   return { board, frame, grid, placer, at, unit, width, height, plotHeight, tickStep };
 }
@@ -555,72 +560,7 @@ function expandLevels(input: FieldInputLevels, locale: Locale, title: string): F
     throw new SpecError(`field(levels): none of the levels [${input.levels.join(", ")}] are attained anywhere inside the plotted box -- nothing to draw`);
   }
 
-  // Each branch is labelled with its OWN level value, set INTO a gap cut in
-  // the branch -- the contour map's convention (matplotlib's clabel, every
-  // textbook's topographic map). Nothing is on a line: the ink under the
-  // label is removed, not covered. Beside the curve was the first design,
-  // and on a saddle's crowded branches it left every number floating between
-  // two curves, equally near both. Every branch carries its level, because
-  // a hyperbola's two halves are two curves on the page and a reader cannot
-  // know the unlabelled one is the same level. A fragment too short to hold
-  // its own label keeps no label; its longer siblings carry it.
-  const byLevel = new Map<number, Curve[]>();
-  for (const c of curves) {
-    if (!byLevel.has(c.level)) byLevel.set(c.level, []);
-    byLevel.get(c.level)!.push(c);
-  }
-  const gaps = new Map<string, Rect>();
-  const inline = new Map<string, { block: { annotates?: string }; at: Point }>();
-  for (const [level, group] of byLevel) {
-    const text = formatNumber(level, locale);
-    const style = { size: 12, weight: 700, colour: FIELD_INK };
-    const { w, h } = board.extent(text, style);
-    const gw = w + 4;
-    const gh = h + 2;
-    const anchors = group.filter((c) => pathLength(c.canvasPts) >= 4 * Math.max(gw, gh));
-    for (const curve of anchors) {
-      const spot = INLINE_TS.map((t) => pointAlong(curve.canvasPts, t)).find((pt) => placer.clearOf(rectAt(pt, gw, gh), curve.id));
-      if (spot === undefined) continue;
-      const block = board.label(text, spot.x, spot.y, { ...style, width: w });
-      const gap = rectAt(spot, gw, gh);
-      placer.commit(gap);
-      gaps.set(curve.id, gap);
-      inline.set(curve.id, { block, at: spot });
-    }
-  }
-  if (!curves.some((c) => gaps.has(c.id))) {
-    // Nowhere on any branch clears its neighbours: the old beside-the-curve
-    // placement, on the longest branch of each level, is the honest fallback.
-    for (const [level, group] of byLevel) {
-      const longest = group.reduce((p, q) => (pathLength(q.canvasPts) > pathLength(p.canvasPts) ? q : p));
-      const text = formatNumber(level, locale);
-      const style = { size: 12, weight: 700, colour: FIELD_INK };
-      const { w, h } = board.extent(text, style);
-      const best = placer.choose({ kind: "element", id: longest.id }, w, h, besidePolyline(longest.canvasPts, w, h, [0.5, 0.35, 0.65, 0.2, 0.8]));
-      const block = board.label(text, best.centre.x, best.centre.y, { ...style, width: w, fill: PAPER });
-      block.annotates = longest.id;
-      placer.commit(rectAt(best.centre, w, h));
-    }
-  }
-  for (const c of curves) {
-    const gap = gaps.get(c.id);
-    const pieces = gap === undefined ? [c.canvasPts] : cutOut(c.canvasPts, gap);
-    // The IR has no pen-up inside a mark, so a cut branch is two marks, the
-    // first keeping the branch's id. Its label names whichever piece is
-    // nearer -- both are the same curve, and the gap is the label.
-    const ids = pieces.map((_, k) => (k === 0 ? c.id : `${c.id}-${k}`));
-    pieces.forEach((piece, k) => board.poly(piece, { stroke: FIELD_INK, width: 2, id: ids[k]! }));
-    placer.removeInk(c.id);
-    for (const piece of pieces) placer.addInk(c.id, piece, true);
-    const label = inline.get(c.id);
-    if (label !== undefined) {
-      let best = 0;
-      pieces.forEach((piece, k) => {
-        if (distanceToPolyline(label.at, piece) < distanceToPolyline(label.at, pieces[best]!)) best = k;
-      });
-      label.block.annotates = ids[best]!;
-    }
-  }
+  drawContours(board, placer, locale, curves, { stroke: FIELD_INK, text: FIELD_INK, width: 2 });
 
   // Gradient arrows: ∇f by central differences, perpendicular to the level
   // curve through that point by construction (checked in
@@ -649,6 +589,113 @@ function expandLevels(input: FieldInputLevels, locale: Locale, title: string): F
   });
 
   return finalizeSpec(board, gradConnectors, title);
+}
+
+type ContourCurve = { level: number; id: string; canvasPts: Point[] };
+
+/** How a family of contour branches is drawn. */
+type ContourLook = {
+  stroke: string;
+  text: string;
+  width: number;
+  lineStyle?: LineStyle;
+  /** Fractions of a branch's length where a label is tried, in order; default `INLINE_TS`. */
+  tries?: number[];
+  /** Orders the spots tried, best first (larger is better), when the first that fits is not the best. */
+  rank?: (p: Point) => number;
+  /** Drop a level none of whose branches could be labelled: a reader cannot tell what it is. */
+  dropUnlabelled?: boolean;
+};
+
+/**
+ * Draws contour branches with each branch labelled by its own level, set into a gap cut in the branch (ADR 0050).
+ * Shared by `levels` and by the equipotentials of `charges`: the branches must already be known to `placer` as ink
+ * (so a gap is only cut where nothing else passes), and the placer is told about each gap it takes.
+ */
+function drawContours(board: Board, placer: Placer, locale: Locale, curves: ContourCurve[], look: ContourLook): Rect[] {
+  // Each branch is labelled with its OWN level value, set INTO a gap cut in
+  // the branch -- the contour map's convention (matplotlib's clabel, every
+  // textbook's topographic map). Nothing is on a line: the ink under the
+  // label is removed, not covered. Beside the curve was the first design,
+  // and on a saddle's crowded branches it left every number floating between
+  // two curves, equally near both. Every branch carries its level, because
+  // a hyperbola's two halves are two curves on the page and a reader cannot
+  // know the unlabelled one is the same level. A fragment too short to hold
+  // its own label keeps no label; its longer siblings carry it.
+  const byLevel = new Map<number, ContourCurve[]>();
+  for (const c of curves) {
+    if (!byLevel.has(c.level)) byLevel.set(c.level, []);
+    byLevel.get(c.level)!.push(c);
+  }
+  const gaps = new Map<string, Rect>();
+  const inline = new Map<string, { block: { annotates?: string }; at: Point }>();
+  for (const [level, group] of byLevel) {
+    const text = formatNumber(level, locale);
+    const style = { size: 12, weight: 700, colour: look.text };
+    const { w, h } = board.extent(text, style);
+    const gw = w + 4;
+    const gh = h + 2;
+    const anchors = group.filter((c) => pathLength(c.canvasPts) >= 4 * Math.max(gw, gh));
+    for (const curve of anchors) {
+      const tried = (look.tries ?? INLINE_TS).map((t) => pointAlong(curve.canvasPts, t));
+      if (look.rank !== undefined) {
+        const score = new Map(tried.map((pt) => [pt, look.rank!(pt)] as const));
+        tried.sort((a, b) => score.get(b)! - score.get(a)!);
+      }
+      const spot = tried.find((pt) => placer.clearOf(rectAt(pt, gw, gh), curve.id));
+      if (spot === undefined) continue;
+      const block = board.label(text, spot.x, spot.y, { ...style, width: w });
+      const gap = rectAt(spot, gw, gh);
+      placer.commit(gap);
+      gaps.set(curve.id, gap);
+      inline.set(curve.id, { block, at: spot });
+    }
+  }
+  if (!curves.some((c) => gaps.has(c.id))) {
+    // Nowhere on any branch clears its neighbours: the old beside-the-curve
+    // placement, on the longest branch of each level, is the honest fallback.
+    for (const [level, group] of byLevel) {
+      const longest = group.reduce((p, q) => (pathLength(q.canvasPts) > pathLength(p.canvasPts) ? q : p));
+      const text = formatNumber(level, locale);
+      const style = { size: 12, weight: 700, colour: look.text };
+      const { w, h } = board.extent(text, style);
+      const best = placer.choose({ kind: "element", id: longest.id }, w, h, besidePolyline(longest.canvasPts, w, h, [0.5, 0.35, 0.65, 0.2, 0.8]));
+      const block = board.label(text, best.centre.x, best.centre.y, { ...style, width: w, fill: PAPER });
+      block.annotates = longest.id;
+      placer.commit(rectAt(best.centre, w, h));
+    }
+  }
+  const dropped = new Set<string>();
+  if (look.dropUnlabelled === true && curves.some((c) => gaps.has(c.id))) {
+    for (const group of byLevel.values()) {
+      if (group.some((c) => gaps.has(c.id))) continue;
+      for (const c of group) {
+        dropped.add(c.id);
+        placer.removeInk(c.id);
+      }
+    }
+  }
+  for (const c of curves) {
+    if (dropped.has(c.id)) continue;
+    const gap = gaps.get(c.id);
+    const pieces = gap === undefined ? [c.canvasPts] : cutOut(c.canvasPts, gap);
+    // The IR has no pen-up inside a mark, so a cut branch is two marks, the
+    // first keeping the branch's id. Its label names whichever piece is
+    // nearer -- both are the same curve, and the gap is the label.
+    const ids = pieces.map((_, k) => (k === 0 ? c.id : `${c.id}-${k}`));
+    pieces.forEach((piece, k) => board.poly(piece, { stroke: look.stroke, width: look.width, id: ids[k]!, ...(look.lineStyle === undefined ? {} : { lineStyle: look.lineStyle }) }));
+    placer.removeInk(c.id);
+    for (const piece of pieces) placer.addInk(c.id, piece, true);
+    const label = inline.get(c.id);
+    if (label !== undefined) {
+      let best = 0;
+      pieces.forEach((piece, k) => {
+        if (distanceToPolyline(label.at, piece) < distanceToPolyline(label.at, pieces[best]!)) best = k;
+      });
+      label.block.annotates = ids[best]!;
+    }
+  }
+  return [...gaps.values()];
 }
 
 /** Where along a branch an inline label is tried, as fractions of its arc length. */
@@ -733,15 +780,452 @@ function pathLength(pts: Point[]): number {
   return len;
 }
 
+// ---- kind: charges ----------------------------------------------------------
+
+/**
+ * Electric field lines and equipotentials of point charges (ADR 0055).
+ *
+ * E = Σ qᵢ (p − cᵢ) / |p − cᵢ|³ and V = Σ qᵢ / |p − cᵢ|: k and every unit are
+ * omitted, because the figure shows SHAPES and the panel says so. A line is
+ * `rk4Planar` walked along E / |E| (arc length is the parameter), from a seed
+ * on a small circle around a source charge, and it ends where physics ends it:
+ * on entering a sink charge's disc, at the plotted box, or at a stagnation
+ * point where E vanishes -- never drawn through one.
+ */
+export type FieldCharge = { at: [number, number]; q: number; name?: string };
+
+export type FieldInputCharges = {
+  kind: "charges";
+  charges: FieldCharge[];
+  x: [number, number];
+  y: [number, number];
+  /** Lines leaving a charge of magnitude 1. Default 8; a charge of |q| draws round(|q| · this). */
+  linesPerUnitCharge?: number;
+  /** Levels of V = Σ q/r to draw dashed, or "auto" for a short symmetric ladder. */
+  equipotentials?: number[] | "auto";
+};
+
+// 11.5 keeps the disc inside the 24px `MARKER_EXTENT` (checks.ts) past which a closed mark stops being read as a point.
+const CHARGE_R_PX = 11.5;
+const CHARGE_POS = "#B42318"; // white on it: 6.5:1
+const CHARGE_NEG = "#1F4E9E"; // white on it: 8.6:1
+const LINE_INK = "#181B21";
+const EQUIPOTENTIAL = "#1E7A46";
+const DEFAULT_LINES_PER_UNIT = 8;
+
+/** E at (x, y): Σ q · r̂ / r². */
+export function electricField(charges: FieldCharge[], x: number, y: number): [number, number] {
+  let ex = 0;
+  let ey = 0;
+  for (const c of charges) {
+    const dx = x - c.at[0];
+    const dy = y - c.at[1];
+    const r2 = dx * dx + dy * dy;
+    const r3 = r2 * Math.sqrt(r2);
+    ex += (c.q * dx) / r3;
+    ey += (c.q * dy) / r3;
+  }
+  return [ex, ey];
+}
+
+/** V at (x, y): Σ q / r. */
+export function electricPotential(charges: FieldCharge[], x: number, y: number): number {
+  let v = 0;
+  for (const c of charges) v += c.q / Math.hypot(x - c.at[0], y - c.at[1]);
+  return v;
+}
+
+export type FieldLine = {
+  /** Index of the charge the line was seeded on. */
+  charge: number;
+  index: number;
+  /** +1 when the line runs along E from its seed (a positive source), -1 when it runs against E (a negative source, integrated backward). */
+  along: 1 | -1;
+  /** From the seed outward, in world coordinates. */
+  points: { x: number; y: number }[];
+  end: "sink" | "box" | "stagnation" | "limit";
+  /** Index of the charge it ended on, when `end` is "sink". */
+  sink?: number;
+  /** Where E = 0, when `end` is "stagnation": found by Newton's method from the line's last point, so a line reaches the point itself rather than stopping short of it. */
+  stagnation?: { x: number; y: number };
+};
+
+/** |E| as a share of Σ|qᵢ|/rᵢ²: how much of the field survives the charges' cancelling one another. */
+function fieldSurvival(charges: FieldCharge[], x: number, y: number): number {
+  const [ex, ey] = electricField(charges, x, y);
+  let sum = 0;
+  for (const c of charges) sum += Math.abs(c.q) / ((x - c.at[0]) ** 2 + (y - c.at[1]) ** 2);
+  return Math.hypot(ex, ey) / sum;
+}
+
+/** Below this survival a direction means nothing: the field has cancelled itself, as between two equal charges. */
+const STAGNATION_SURVIVAL = 0.04;
+
+/** The zero of E nearest `from`, by Newton's method with a central-difference Jacobian; undefined if it does not converge close by. */
+function findStagnation(charges: FieldCharge[], from: { x: number; y: number }, within: number): { x: number; y: number } | undefined {
+  let x = from.x;
+  let y = from.y;
+  const h = 1e-6;
+  for (let it = 0; it < 40; it += 1) {
+    const [ex, ey] = electricField(charges, x, y);
+    const [axp, ayp] = electricField(charges, x + h, y);
+    const [axm, aym] = electricField(charges, x - h, y);
+    const [bxp, byp] = electricField(charges, x, y + h);
+    const [bxm, bym] = electricField(charges, x, y - h);
+    const a = (axp - axm) / (2 * h);
+    const b = (bxp - bxm) / (2 * h);
+    const c = (ayp - aym) / (2 * h);
+    const d = (byp - bym) / (2 * h);
+    const det = a * d - b * c;
+    if (!Number.isFinite(det) || Math.abs(det) < 1e-14) return undefined;
+    x -= (d * ex - b * ey) / det;
+    y -= (-c * ex + a * ey) / det;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || Math.hypot(x - from.x, y - from.y) > within) return undefined;
+  }
+  return fieldSurvival(charges, x, y) < 1e-6 ? { x, y } : undefined;
+}
+
+/** The world radius of a charge's disc, the one radius that seeds a line and captures one. */
+export function chargeRadius(input: { x: [number, number]; y: [number, number] }): number {
+  return CHARGE_R_PX / frameGeometry(input.x, input.y).unit;
+}
+
+/**
+ * Every field line of the configuration, in world coordinates. Pure -- no
+ * drawing -- so the tests check the physics (Gauss: the lines ending on a
+ * sink are proportional to its charge) on the same lines the figure draws.
+ */
+export function traceChargeLines(input: Pick<FieldInputCharges, "charges" | "x" | "y" | "linesPerUnitCharge">): FieldLine[] {
+  const { charges } = input;
+  const total = charges.reduce((s, c) => s + c.q, 0);
+  const along: 1 | -1 = total >= 0 ? 1 : -1;
+  const rd = chargeRadius(input);
+  const span = Math.max(input.x[1] - input.x[0], input.y[1] - input.y[0]);
+  const perUnit = input.linesPerUnitCharge ?? DEFAULT_LINES_PER_UNIT;
+  const box = { x: input.x, y: input.y };
+  const out: FieldLine[] = [];
+
+  const system = (_t: number, xy: readonly [number, number]): readonly [number, number] => {
+    const [ex, ey] = electricField(charges, xy[0], xy[1]);
+    const m = Math.hypot(ex, ey);
+    if (!(fieldSurvival(charges, xy[0], xy[1]) > STAGNATION_SURVIVAL)) return [Number.NaN, Number.NaN];
+    return [(along * ex) / m, (along * ey) / m];
+  };
+
+  charges.forEach((c, ci) => {
+    if (Math.sign(c.q) !== along) return;
+    const n = Math.max(1, Math.round(Math.abs(c.q) * perUnit));
+    // One seed points at the nearest other charge, so a configuration that is
+    // symmetric about the line joining charges draws symmetric lines.
+    let phi0 = 0;
+    let nearest = Infinity;
+    charges.forEach((o, oi) => {
+      if (oi === ci) return;
+      const d = Math.hypot(o.at[0] - c.at[0], o.at[1] - c.at[1]);
+      if (d < nearest) {
+        nearest = d;
+        phi0 = Math.atan2(o.at[1] - c.at[1], o.at[0] - c.at[0]);
+      }
+    });
+    for (let k = 0; k < n; k += 1) {
+      const a = phi0 + (2 * Math.PI * k) / n;
+      const seed: [number, number] = [c.at[0] + rd * Math.cos(a), c.at[1] + rd * Math.sin(a)];
+      const step = span / 500;
+      const run = rk4Planar(system, 0, seed, Infinity, { bounds: box, step, maxLength: 8 * span, maxSteps: 6000 });
+      const pts = run.points;
+      let end: FieldLine["end"] = run.stopped === "boundary" ? "box" : run.stopped === "non-finite" ? "stagnation" : "limit";
+      let sink: number | undefined;
+      const kept: { x: number; y: number }[] = [pts[0]!];
+      for (let i = 1; i < pts.length; i += 1) {
+        const p = pts[i]!;
+        const prev = kept[kept.length - 1]!;
+        // A line that enters another charge's disc ends on its rim.
+        const hit = charges.findIndex((o, oi) => oi !== ci && Math.hypot(p.x - o.at[0], p.y - o.at[1]) <= rd);
+        if (hit >= 0) {
+          const o = charges[hit]!;
+          const d0 = Math.hypot(prev.x - o.at[0], prev.y - o.at[1]);
+          const d1 = Math.hypot(p.x - o.at[0], p.y - o.at[1]);
+          const f = d0 > rd && d0 !== d1 ? (d0 - rd) / (d0 - d1) : 1;
+          kept.push({ x: prev.x + (p.x - prev.x) * f, y: prev.y + (p.y - prev.y) * f });
+          end = "sink";
+          sink = hit;
+          break;
+        }
+        // A step that turns back on itself has stepped across a stagnation point.
+        if (kept.length >= 2) {
+          const a0 = kept[kept.length - 2]!;
+          const dot = (prev.x - a0.x) * (p.x - prev.x) + (prev.y - a0.y) * (p.y - prev.y);
+          if (dot < 0) {
+            end = "stagnation";
+            break;
+          }
+        }
+        kept.push(p);
+      }
+      if (kept.length < 2) continue;
+      let stagnation: { x: number; y: number } | undefined;
+      if (end === "stagnation") {
+        const last = kept[kept.length - 1]!;
+        const before = kept[kept.length - 2]!;
+        const z = findStagnation(charges, last, 8 * step);
+        // Only a zero AHEAD of the line, and inside the box, is where it stopped.
+        if (z !== undefined && (z.x - last.x) * (last.x - before.x) + (z.y - last.y) * (last.y - before.y) >= 0 && z.x >= input.x[0] && z.x <= input.x[1] && z.y >= input.y[0] && z.y <= input.y[1]) {
+          stagnation = z;
+          kept.push(z);
+        }
+      }
+      out.push({ charge: ci, index: k, along, points: kept, end, ...(sink === undefined ? {} : { sink }), ...(stagnation === undefined ? {} : { stagnation }) });
+    }
+  });
+  return out;
+}
+
+/** The default name of a charge: "q", "−q", "2q", "−2q", "0,5q" -- derived from q, never typed. */
+export function chargeName(q: number, locale: Locale): string {
+  const m = Math.abs(q);
+  return `${q < 0 ? "−" : ""}${m === 1 ? "" : formatNumber(m, locale)}q`;
+}
+
+/** A short ladder of equipotential levels, in units of the largest |q|, with 0 where the charges have both signs. */
+function autoLevels(charges: FieldCharge[]): number[] {
+  const u = Math.max(...charges.map((c) => Math.abs(c.q)));
+  const rungs = [0.25, 0.5, 1, 2].map((r) => r * u);
+  const both = charges.some((c) => c.q > 0) && charges.some((c) => c.q < 0);
+  return [...rungs.map((r) => -r).reverse(), ...(both ? [0] : []), ...rungs];
+}
+
+function expandCharges(input: FieldInputCharges, locale: Locale, title: string): FigureSpec {
+  const { charges } = input;
+  const equipotentials = input.equipotentials === undefined ? [] : input.equipotentials === "auto" ? autoLevels(charges) : input.equipotentials;
+  const captionLines = equipotentials.length > 0 ? 2 : 1;
+  const built = buildBoard(input.x, input.y, locale, captionLines, true);
+  const { board, at, placer, unit } = built;
+  const rd = CHARGE_R_PX;
+
+  charges.forEach((c, i) => {
+    charges.forEach((o, j) => {
+      const d = Math.hypot(o.at[0] - c.at[0], o.at[1] - c.at[1]);
+      if (j > i && d * unit < 2 * rd + 8) {
+        throw new SpecError(`field.charges[${i}] and charges[${j}] are ${d.toFixed(2)} apart: their discs would touch at this scale -- separate them or widen x/y`);
+      }
+    });
+  });
+
+  // ---- field lines --------------------------------------------------------
+  const lines = traceChargeLines(input);
+  if (lines.length === 0) throw new SpecError("field(charges): no field line could be drawn -- a charge sits too close to the edge of the plotted box");
+  // A line is drawn from its charge's CENTRE (the disc, drawn last, covers the
+  // stub) and, on a sink, to the sink's centre: every line then passes through
+  // the place its charge's name labels, which is what makes those lines the
+  // charge rather than rivals to the name (ADR 0028's place rule).
+  const canvasLines = lines.map((ln) => {
+    const pts = ln.points.map((pt) => at([pt.x, pt.y]));
+    const from = at(charges[ln.charge]!.at);
+    return ln.sink === undefined ? [from, ...pts] : [from, ...pts, at(charges[ln.sink]!.at)];
+  });
+  const lineIds = lines.map((ln) => `line-${ln.charge}-${ln.index}`);
+  canvasLines.forEach((pts, i) => placer.addInk(lineIds[i]!, pts, true));
+
+  // ---- arrowheads: small filled triangles on the line, pointing along E ----
+  const ARROW_LEN = 10;
+  const ARROW_HALF = 3.6;
+  const arrows: { id: string; ring: Point[] }[] = [];
+  canvasLines.forEach((pts, i) => {
+    const len = pathLength(pts);
+    if (len < 48) return;
+    const ts = len < 340 ? [0.5] : [0.34, 0.68];
+    ts.forEach((t, j) => {
+      const p = pointAlong(pts, t);
+      const a = pointAlong(pts, Math.max(0, t - 6 / len));
+      const b = pointAlong(pts, Math.min(1, t + 6 / len));
+      const m = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+      const s = lines[i]!.along;
+      const d = { x: (s * (b.x - a.x)) / m, y: (s * (b.y - a.y)) / m };
+      const n = { x: -d.y, y: d.x };
+      const tip = { x: p.x + d.x * (ARROW_LEN * 0.55), y: p.y + d.y * (ARROW_LEN * 0.55) };
+      const base = { x: p.x - d.x * (ARROW_LEN * 0.45), y: p.y - d.y * (ARROW_LEN * 0.45) };
+      const ring = [tip, { x: base.x + n.x * ARROW_HALF, y: base.y + n.y * ARROW_HALF }, { x: base.x - n.x * ARROW_HALF, y: base.y - n.y * ARROW_HALF }];
+      const id = `${lineIds[i]!}-arrow-${j}`;
+      arrows.push({ id, ring });
+      placer.addInk(id, [...ring, ring[0]!], false);
+    });
+  });
+
+  // ---- equipotentials ---------------------------------------------------
+  const V = (x: number, y: number): number => electricPotential(charges, x, y);
+  const rdWorld = rd / unit;
+  const curves: ContourCurve[] = [];
+  equipotentials.forEach((level, li) => {
+    contour(V, { x: input.x, y: input.y }, { level, cells: 160 }).forEach((line, si) => {
+      if (line.points.length < 2) return;
+      // A branch wholly inside a charge's disc would be drawn under it.
+      if (line.points.every((pt) => charges.some((c) => Math.hypot(pt.x - c.at[0], pt.y - c.at[1]) <= rdWorld * 1.25))) return;
+      const id = `equipotential-${li}-${si}`;
+      const canvasPts = line.points.map((pt) => at([pt.x, pt.y]));
+      // A sliver left where a circle just clips a corner of the box is not a curve a reader can follow.
+      if (pathLength(canvasPts) < 60) return;
+      placer.addInk(id, canvasPts, false);
+      curves.push({ level, id, canvasPts });
+    });
+  });
+  if (equipotentials.length > 0 && curves.length === 0) {
+    throw new SpecError(`field(charges): none of the equipotentials [${equipotentials.join(", ")}] are attained inside the plotted box`);
+  }
+
+  // Field lines first, then the equipotentials (thin, dashed, each level set
+  // into a gap in its branch), then arrowheads, then the charges.
+  canvasLines.forEach((pts, i) => board.poly(pts, { stroke: LINE_INK, width: 1.6, id: lineIds[i]! }));
+  const tries = Array.from({ length: 96 }, (_, k) => 0.5 + (k % 2 === 0 ? 1 : -1) * Math.ceil(k / 2) * 0.0104 + 0.0052 * (k % 2)).filter((t) => t > 0.02 && t < 0.98);
+  const labelGaps = curves.length === 0 ? [] : drawContours(board, placer, locale, curves, { stroke: EQUIPOTENTIAL, text: EQUIPOTENTIAL, width: 1.3, lineStyle: "dashed", tries, rank: (pt) => Math.min(...canvasLines.map((pts) => distanceToPolyline(pt, pts))), dropUnlabelled: input.equipotentials === "auto" });
+  arrows.forEach((ar) => board.poly(ar.ring, { stroke: LINE_INK, width: 1, fill: LINE_INK, close: true, id: ar.id }));
+
+  // ---- stagnation points: where a line stopped because E = 0 -------------------
+  const zeros: { x: number; y: number }[] = [];
+  for (const ln of lines) {
+    if (ln.stagnation !== undefined && !zeros.some((z) => Math.hypot(z.x - ln.stagnation!.x, z.y - ln.stagnation!.y) < 0.05)) zeros.push(ln.stagnation);
+  }
+  zeros.forEach((z, k) => {
+    const c = at([z.x, z.y]);
+    board.circle(c, 3.6, { fill: PAPER, stroke: LINE_INK, width: 1.5, id: `null-point-${k}` });
+    placer.addInk(`null-point-${k}`, [c], false, { c, r: 3.6 });
+  });
+
+  // ---- charges, last: a disc, its sign inside, its name beside -------------
+  charges.forEach((c, i) => {
+    const centre = at(c.at);
+    const id = `charge-${i}`;
+    board.circle(centre, rd, { fill: c.q > 0 ? CHARGE_POS : CHARGE_NEG, id });
+    placer.addInk(id, [centre], false, { c: centre, r: rd });
+    placer.commit(rectAt(centre, 2 * rd, 2 * rd));
+    // The sign is drawn, not typeset: strokes 6px either side of the centre,
+    // so it always sits inside a disc too small to hold a text box.
+    const arm = 5.5;
+    board.poly([{ x: centre.x - arm, y: centre.y }, { x: centre.x + arm, y: centre.y }], { stroke: "#FFFFFF", width: 2.4, id: `${id}-sign-h` });
+    if (c.q > 0) board.poly([{ x: centre.x, y: centre.y - arm }, { x: centre.x, y: centre.y + arm }], { stroke: "#FFFFFF", width: 2.4, id: `${id}-sign-v` });
+  });
+  charges.forEach((c, i) => {
+    const centre = at(c.at);
+    const name = c.name ?? chargeName(c.q, locale);
+    if (name === "") return;
+    const style = { size: 14, weight: 700, colour: INK };
+    const { w, h } = board.extent(name, style);
+    // Directions the lines leave (or arrive at) this charge in: the name goes between them.
+    const incident: number[] = [];
+    lines.forEach((ln, k) => {
+      if (ln.charge !== i && ln.sink !== i) return;
+      const pts = canvasLines[k]!;
+      const run = ln.charge === i ? pts : [...pts].reverse();
+      const q = run.find((pt) => Math.hypot(pt.x - centre.x, pt.y - centre.y) >= rd + 12);
+      if (q !== undefined) incident.push(Math.atan2(q.y - centre.y, q.x - centre.x));
+    });
+    const reach = Math.max(w, h);
+    const lineGap = (a: Point, b: Point): number => {
+      let best = Infinity;
+      for (let t = 0; t <= 1; t += 0.1) {
+        const p = { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+        for (const pts of canvasLines) best = Math.min(best, distanceToPolyline(p, pts));
+      }
+      return best;
+    };
+    const spots = aroundDisc(centre, rd, w, h, incident);
+    // What could be read as the owner instead: the arrowheads, the equipotentials, and every OTHER charge's disc.
+    const rivalsOf = (rect: Rect, own: number): boolean => {
+      for (const ar of arrows) if (rectToPolyline(rect, [...ar.ring, ar.ring[0]!]) < own + 1) return true;
+      for (const cv of curves) if (rectToPolyline(rect, cv.canvasPts) < own + 1) return true;
+      for (let j = 0; j < charges.length; j += 1) {
+        if (j !== i && pointToRectDistance(at(charges[j]!.at), rect) - rd < own + 1) return true;
+      }
+      return false;
+    };
+    let chosen: { at: Point; leader?: [Point, Point] } | undefined;
+    for (const spot of spots) {
+      const rect = rectAt(spot.centre, w, h);
+      if (!placer.clearOf(rect, "")) continue;
+      const near = pointToRectDistance(centre, rect);
+      if (near <= reach - 1) {
+        if (rivalsOf(rect, near)) continue;
+        chosen = { at: spot.centre };
+        break;
+      }
+      if (spot.gap >= 10) {
+        const p0 = { x: centre.x + spot.u.x * (rd + 5), y: centre.y + spot.u.y * (rd + 5) };
+        const p1 = { x: centre.x + spot.u.x * (rd + spot.gap), y: centre.y + spot.u.y * (rd + spot.gap) };
+        // The name is read as belonging to what its centre is nearest: the leader, so no line may be as near.
+        const toLeader = Math.hypot(spot.centre.x - p1.x, spot.centre.y - p1.y);
+        let nearestLine = Infinity;
+        for (const pts of canvasLines) nearestLine = Math.min(nearestLine, distanceToPolyline(spot.centre, pts));
+        if (lineGap(p0, p1) >= 2 && !labelGaps.some((g) => segmentHitsRect(p0, p1, { x: g.x - 3, y: g.y - 3, width: g.width + 6, height: g.height + 6 })) && nearestLine > toLeader + 2 && !rivalsOf(rect, toLeader)) {
+          chosen = { at: spot.centre, leader: [p0, p1] };
+          break;
+        }
+      }
+    }
+    const at0 = chosen?.at ?? placer.choose({ kind: "place", id: `charge-${i}`, at: centre }, w, h, spots.map((sp) => sp.centre)).centre;
+    const block = board.label(name, at0.x, at0.y, { ...style, width: w, fill: PAPER });
+    if (chosen?.leader !== undefined) {
+      const lid = `charge-${i}-leader`;
+      board.poly(chosen.leader, { stroke: SOFT, width: 1, id: lid });
+      block.annotates = lid;
+    } else {
+      block.annotatesPlace = centre;
+    }
+    placer.commit(rectAt(at0, w, h));
+  });
+
+  // ---- the panel: what the figure omits -------------------------------------
+  const panel = ["linhas de campo (k omitido)"];
+  if (zeros.length > 0) panel[0] = `linhas de campo (k omitido); ${zeros.length === 1 ? "○ marca o ponto" : "○ marca os pontos"} onde E = 0`;
+  if (equipotentials.length > 0) panel.push("linhas tracejadas: equipotenciais, V = Σ q/r (k omitido)");
+  panel.forEach((text, i) => {
+    board.label(text, built.width / 2, built.plotHeight + 22 + i * 20, { size: 12, colour: SOFT, id: `panel-${i}`, claim: false, freeStanding: true });
+  });
+
+  return finalizeSpec(board, [], title);
+}
+
+type DiscSpot = { centre: Point; gap: number; u: Point };
+
+/** Spots for a label beside a disc of radius `r`, the directions farthest from `incident` first, each at growing distance from the rim. */
+function aroundDisc(c: Point, r: number, w: number, h: number, incident: number[]): DiscSpot[] {
+  const dirs: { a: number; score: number }[] = [];
+  for (let k = 0; k < 120; k += 1) {
+    const a = (k * Math.PI * 2) / 120;
+    let gap = Math.PI;
+    for (const i of incident) {
+      let d = Math.abs(a - i) % (2 * Math.PI);
+      if (d > Math.PI) d = 2 * Math.PI - d;
+      gap = Math.min(gap, d);
+    }
+    dirs.push({ a, score: Math.min(gap, 1.2) - 0.05 * Math.sin(a) + 0.02 * Math.cos(a) });
+  }
+  dirs.sort((p, q) => q.score - p.score);
+  const out: DiscSpot[] = [];
+  for (const gap of [3, 5, 7, 10, 14, 20, 28, 38, 50, 64, 80, 100]) {
+    for (const d of dirs) {
+      const u = { x: Math.cos(d.a), y: Math.sin(d.a) };
+      const reach = Math.abs(u.x) * (w / 2) + Math.abs(u.y) * (h / 2);
+      out.push({ centre: { x: c.x + u.x * (r + gap + reach), y: c.y + u.y * (r + gap + reach) }, gap, u });
+    }
+  }
+  return out;
+}
+
+function pointToRectDistance(p: Point, r: Rect): number {
+  const dx = Math.max(r.x - p.x, 0, p.x - (r.x + r.width));
+  const dy = Math.max(r.y - p.y, 0, p.y - (r.y + r.height));
+  return Math.hypot(dx, dy);
+}
+
 // ---- entry point -------------------------------------------------------------
 
 export function expandField(input: FieldInput): FigureSpec {
   const locale = input.locale ?? "pt-BR";
-  const title = input.title ?? (input.kind === "slope" ? "campo de direções" : input.kind === "vector" ? "campo vetorial" : "curvas de nível");
+  const title = input.title ?? (input.kind === "slope" ? "campo de direções" : input.kind === "vector" ? "campo vetorial" : input.kind === "charges" ? "linhas de campo elétrico" : "curvas de nível");
   if (input.kind === "slope") return expandSlope(input, locale, title);
   if (input.kind === "vector") return expandVector(input, locale, title);
   if (input.kind === "levels") return expandLevels(input, locale, title);
-  throw new SpecError(`field.kind must be "slope", "vector" or "levels", got ${JSON.stringify((input as { kind?: unknown }).kind)}`);
+  if (input.kind === "charges") return expandCharges(input, locale, title);
+  throw new SpecError(`field.kind must be "slope", "vector", "levels" or "charges", got ${JSON.stringify((input as { kind?: unknown }).kind)}`);
 }
 
 // ---- validation ---------------------------------------------------------------
@@ -764,11 +1248,37 @@ function validatePoints(raw: Record<string, unknown>, key: string, path: string)
   });
 }
 
+function validateCharges(raw: Record<string, unknown>, path: string): void {
+  const xr = raw.x as [number, number];
+  const yr = raw.y as [number, number];
+  const list = v.nonEmptyArray(raw, "charges", path, "charges");
+  list.forEach((item, i) => {
+    const p = `${path}.charges[${i}]`;
+    const o = v.object(item, p);
+    if (!Array.isArray(o.at) || o.at.length !== 2) throw new SpecError(`${p}.at must be [x, y]`);
+    v.finite(o.at[0], `${p}.at[0]`);
+    v.finite(o.at[1], `${p}.at[1]`);
+    v.finite(o.q, `${p}.q`);
+    if (o.q === 0) throw new SpecError(`${p}.q is 0: a charge of zero has no field -- leave it out`);
+    v.optionalString(o, "name", p);
+    const [x, y] = o.at as [number, number];
+    if (!(x > xr[0] && x < xr[1] && y > yr[0] && y < yr[1])) throw new SpecError(`${p}.at = (${x}, ${y}) lies outside the plotted box x ${JSON.stringify(xr)}, y ${JSON.stringify(yr)}`);
+  });
+  if (raw.linesPerUnitCharge !== undefined) {
+    v.finite(raw.linesPerUnitCharge, `${path}.linesPerUnitCharge`);
+    if (!((raw.linesPerUnitCharge as number) >= 1)) throw new SpecError(`${path}.linesPerUnitCharge must be at least 1`);
+  }
+  const eq = raw.equipotentials;
+  if (eq !== undefined && eq !== "auto") {
+    v.array(raw, "equipotentials", path, "equipotentials").forEach((lv, i) => v.finite(lv, `${path}.equipotentials[${i}]`));
+  }
+}
+
 export function validateFieldInput(raw: Record<string, unknown>): void {
   const path = "field";
   v.optionalString(raw, "title", path);
   v.optionalEnum(raw, "locale", path, LOCALES);
-  v.optionalEnum(raw, "kind", path, ["slope", "vector", "levels"]);
+  v.optionalEnum(raw, "kind", path, ["slope", "vector", "levels", "charges"]);
   const kind = raw.kind;
   validateRange(raw, "x", path);
   validateRange(raw, "y", path);
@@ -789,8 +1299,10 @@ export function validateFieldInput(raw: Record<string, unknown>): void {
         v.finite(p[1], `${path}.gradientAt[${i}][1]`);
       });
     }
+  } else if (kind === "charges") {
+    validateCharges(raw, path);
   } else {
-    throw new SpecError(`${path}.kind must be "slope", "vector" or "levels"`);
+    throw new SpecError(`${path}.kind must be "slope", "vector", "levels" or "charges"`);
   }
   // Arithmetic, expression grammar and geometry are all exercised by
   // actually building the figure -- the same discipline every other preset

@@ -1,0 +1,18 @@
+{
+  "preset": "automaton",
+  "title": "AFD: palavras que terminam em ab",
+  "kind": "dfa",
+  "alphabet": ["a", "b"],
+  "states": ["q0", "q1", "q2"],
+  "start": "q0",
+  "accept": ["q2"],
+  "transitions": [
+    { "from": "q0", "on": "a", "to": "q1" },
+    { "from": "q0", "on": "b", "to": "q0" },
+    { "from": "q1", "on": "a", "to": "q1" },
+    { "from": "q1", "on": "b", "to": "q2" },
+    { "from": "q2", "on": "a", "to": "q1" },
+    { "from": "q2", "on": "b", "to": "q0" }
+  ],
+  "words": ["aab", "abab", "ba", ""]
+}

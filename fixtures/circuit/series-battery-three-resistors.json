@@ -1,0 +1,13 @@
+{
+  "preset": "circuit",
+  "title": "circuito série: bateria e três resistores",
+  "nodes": { "A": [0, 2], "B": [2, 2], "C": [4, 2], "D": [4, 0], "E": [0, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "E", "to": "A", "value": 12 },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "B", "value": 2 },
+    { "id": "R2", "kind": "resistor", "from": "B", "to": "C", "value": 4 },
+    { "id": "R3", "kind": "resistor", "from": "C", "to": "D", "value": 6 },
+    { "kind": "wire", "from": "D", "to": "E" }
+  ],
+  "show": { "voltages": [["A", "C"]] }
+}

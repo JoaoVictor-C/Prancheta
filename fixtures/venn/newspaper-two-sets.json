@@ -1,0 +1,7 @@
+{
+  "preset": "venn",
+  "title": "pesquisa com 100 pessoas: jornais A e B",
+  "sets": ["A", "B"],
+  "counts": { "total": 100, "A": 45, "B": 30, "A∩B": 12 },
+  "shade": "(A ∪ B)'"
+}

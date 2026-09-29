@@ -1,0 +1,6 @@
+{
+  "preset": "logic-circuit",
+  "title": "S = (A·B) + C′",
+  "expr": "(A and B) or not C",
+  "output": "S"
+}

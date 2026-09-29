@@ -1,0 +1,6 @@
+{
+  "preset": "distribution",
+  "kind": "poisson",
+  "lambda": 3,
+  "event": { "above": 1 }
+}

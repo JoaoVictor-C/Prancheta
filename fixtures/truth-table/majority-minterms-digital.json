@@ -1,0 +1,7 @@
+{
+  "preset": "truth-table",
+  "title": "Função maioria de três variáveis",
+  "notation": "digital",
+  "expressions": [{ "expr": "A B + A C + B C", "label": "S" }],
+  "minterms": true
+}

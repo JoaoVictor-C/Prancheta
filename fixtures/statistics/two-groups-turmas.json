@@ -1,0 +1,10 @@
+{
+  "preset": "statistics",
+  "kind": "boxplot",
+  "title": "notas da turma A e da turma B",
+  "variable": "Nota",
+  "data": [
+    { "label": "Turma A", "values": [1.5, 4.5, 5, 5.5, 6, 6, 6.5, 7, 7, 7.5, 8, 8, 8.5, 9, 9.5, 10] },
+    { "label": "Turma B", "values": [2, 3.5, 5, 5.5, 6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10, 10, 10] }
+  ]
+}

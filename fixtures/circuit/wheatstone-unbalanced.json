@@ -1,0 +1,18 @@
+{
+  "preset": "circuit",
+  "title": "ponte de Wheatstone desequilibrada",
+  "nodes": { "A": [0, 2], "C": [2, 2], "B": [4, 2], "a2": [0, 0], "D": [2, 0], "b2": [4, 0], "p": [0, -1], "q": [4, -1] },
+  "components": [
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "C", "value": 2 },
+    { "id": "R2", "kind": "resistor", "from": "C", "to": "B", "value": 4 },
+    { "id": "R3", "kind": "resistor", "from": "a2", "to": "D", "value": 4 },
+    { "id": "R4", "kind": "resistor", "from": "D", "to": "b2", "value": 2 },
+    { "id": "R5", "kind": "resistor", "from": "C", "to": "D", "value": 2 },
+    { "kind": "wire", "from": "A", "to": "a2" },
+    { "kind": "wire", "from": "B", "to": "b2" },
+    { "kind": "wire", "from": "a2", "to": "p" },
+    { "kind": "wire", "from": "b2", "to": "q" },
+    { "id": "E1", "kind": "battery", "from": "q", "to": "p", "value": 12 }
+  ],
+  "show": { "names": true, "voltages": [["C", "D"]] }
+}

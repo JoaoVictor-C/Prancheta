@@ -56,6 +56,24 @@ import { expandSequence, validateSequenceInput } from "./sequence/preset.ts";
 import type { SequenceInput } from "./sequence/preset.ts";
 import { expandLinearMap, validateLinearMapInput } from "./linear-map/preset.ts";
 import type { LinearMapInput } from "./linear-map/preset.ts";
+import { expandCircuit, validateCircuitInput } from "./circuit/preset.ts";
+import type { CircuitInput } from "./circuit/preset.ts";
+import { expandOptics, validateOpticsInput } from "./optics/preset.ts";
+import type { OpticsInput } from "./optics/preset.ts";
+import { expandAutomaton, validateAutomatonInput } from "./automaton/preset.ts";
+import type { AutomatonInput } from "./automaton/preset.ts";
+import { expandTruthTable, validateTruthTableInput } from "./truth-table/preset.ts";
+import type { TruthTableInput } from "./truth-table/preset.ts";
+import { expandLogicCircuit, validateLogicCircuitInput } from "./logic-circuit/preset.ts";
+import type { LogicCircuitInput } from "./logic-circuit/preset.ts";
+import { expandStatistics, validateStatisticsInput } from "./statistics/preset.ts";
+import type { StatisticsInput } from "./statistics/preset.ts";
+import { expandDistribution, validateDistributionInput } from "./distribution/preset.ts";
+import type { DistributionInput } from "./distribution/preset.ts";
+import { expandProbabilityTree, validateProbabilityTreeInput } from "./probability-tree/preset.ts";
+import type { ProbabilityTreeInput } from "./probability-tree/preset.ts";
+import { expandVenn, validateVennInput } from "./venn/preset.ts";
+import type { VennInput } from "./venn/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -92,6 +110,15 @@ export type PresetInput = (
   | ({ preset: "field" } & FieldInput)
   | ({ preset: "sequence" } & SequenceInput)
   | ({ preset: "linear-map" } & LinearMapInput)
+  | ({ preset: "circuit" } & CircuitInput)
+  | ({ preset: "optics" } & OpticsInput)
+  | ({ preset: "automaton" } & AutomatonInput)
+  | ({ preset: "truth-table" } & TruthTableInput)
+  | ({ preset: "logic-circuit" } & LogicCircuitInput)
+  | ({ preset: "statistics" } & StatisticsInput)
+  | ({ preset: "distribution" } & DistributionInput)
+  | ({ preset: "probability-tree" } & ProbabilityTreeInput)
+  | ({ preset: "venn" } & VennInput)
 ) &
   CommonPresetOptions;
 
@@ -151,6 +178,24 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandSequence(input);
     case "linear-map":
       return expandLinearMap(input);
+    case "circuit":
+      return expandCircuit(input);
+    case "optics":
+      return expandOptics(input);
+    case "automaton":
+      return expandAutomaton(input);
+    case "truth-table":
+      return expandTruthTable(input);
+    case "logic-circuit":
+      return expandLogicCircuit(input);
+    case "statistics":
+      return expandStatistics(input);
+    case "distribution":
+      return expandDistribution(input);
+    case "probability-tree":
+      return expandProbabilityTree(input);
+    case "venn":
+      return expandVenn(input);
   }
 }
 
@@ -209,6 +254,24 @@ export function validatePresetInput(input: PresetInput): void {
       return validateSequenceInput(raw);
     case "linear-map":
       return validateLinearMapInput(raw);
+    case "circuit":
+      return validateCircuitInput(raw);
+    case "optics":
+      return validateOpticsInput(raw);
+    case "automaton":
+      return validateAutomatonInput(raw);
+    case "truth-table":
+      return validateTruthTableInput(raw);
+    case "logic-circuit":
+      return validateLogicCircuitInput(raw);
+    case "statistics":
+      return validateStatisticsInput(raw);
+    case "distribution":
+      return validateDistributionInput(raw);
+    case "probability-tree":
+      return validateProbabilityTreeInput(raw);
+    case "venn":
+      return validateVennInput(raw);
   }
 }
 
@@ -234,7 +297,16 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "revolution" ||
     preset === "field" ||
     preset === "sequence" ||
-    preset === "linear-map"
+    preset === "linear-map" ||
+    preset === "circuit" ||
+    preset === "optics" ||
+    preset === "automaton" ||
+    preset === "truth-table" ||
+    preset === "logic-circuit" ||
+    preset === "statistics" ||
+    preset === "distribution" ||
+    preset === "probability-tree" ||
+    preset === "venn"
   );
 }
 
@@ -258,6 +330,15 @@ export type {
   FieldInput,
   SequenceInput,
   LinearMapInput,
+  CircuitInput,
+  OpticsInput,
+  AutomatonInput,
+  TruthTableInput,
+  LogicCircuitInput,
+  StatisticsInput,
+  DistributionInput,
+  ProbabilityTreeInput,
+  VennInput,
 };
 export type { PresetId };
 

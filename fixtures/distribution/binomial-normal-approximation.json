@@ -1,0 +1,9 @@
+{
+  "preset": "distribution",
+  "kind": "binomial",
+  "n": 50,
+  "p": 0.4,
+  "event": { "between": [18, 24] },
+  "approximation": "normal",
+  "showZ": true
+}

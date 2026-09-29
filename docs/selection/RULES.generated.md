@@ -474,3 +474,246 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 90
 - **Statement:** A graph has no coordinates; a transformation of the plane is nothing but coordinates.
+
+## S-electric-field-favours-field
+
+- **Axis:** structure
+- **When:** `electric-field`
+- **Preset:** `field`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** The field lines of point charges are drawn by the field preset: each charge seeds lines in proportion to |q|, every line is integrated by RK4 and ends on a charge of the other sign, at the box, or where E = 0.
+
+## S-electric-field-disqualifies-function-graph
+
+- **Axis:** structure
+- **When:** `electric-field`
+- **Preset:** `function-graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** function-graph draws curves y = f(x); a field line is integrated from the charges and is generally not a graph over x.
+
+## S-electric-field-disqualifies-vectors
+
+- **Axis:** structure
+- **When:** `electric-field`
+- **Preset:** `vectors`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** The vectors preset draws a few arrows to scale; field lines are curves that carry a direction, and their number is the charge.
+
+## S-circuit-favours-circuit
+
+- **Axis:** structure
+- **When:** `circuit`
+- **Preset:** `circuit`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A DC circuit is drawn by the circuit preset: symbols on the given layout, every current, reading and ddp solved by nodal analysis, and arrows pointing the way current actually flows.
+
+## S-circuit-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `circuit`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A graph lays out its own nodes and knows no Ohm's law; a circuit's drawing is given and its numbers are solved.
+
+## S-circuit-disqualifies-annotated-figure
+
+- **Axis:** structure
+- **When:** `circuit`
+- **Preset:** `annotated-figure`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** Callouts on a hand-drawn circuit would type the currents instead of solving them, and nothing would check which way an arrow points.
+
+## S-optics-favours-optics
+
+- **Axis:** structure
+- **When:** `optics`
+- **Preset:** `optics`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A ray diagram of a lens, a mirror or a plane interface is drawn by the optics preset, which computes the image and the refracted angle and constructs every ray from its own rule.
+
+## S-optics-disqualifies-vectors
+
+- **Axis:** structure
+- **When:** `optics`
+- **Preset:** `vectors`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** Rays are not vectors to add or decompose; a figure of rays and images is never drawn with vectors.
+
+## S-optics-disqualifies-annotated-figure
+
+- **Axis:** structure
+- **When:** `optics`
+- **Preset:** `annotated-figure`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** Hand-placed rays can be drawn to miss their own image; the optics preset makes that impossible.
+
+## S-automaton-favours-automaton
+
+- **Axis:** structure
+- **When:** `automaton`
+- **Preset:** `automaton`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** States with a start state, accepting states and transitions on symbols are drawn by the automaton preset, and whether a word is accepted is computed by running it, never typed.
+
+## S-automaton-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `automaton`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** An automaton is a graph whose meaning is its runs; the graph preset has no start arrow, no accepting states and no simulation.
+
+## S-automaton-disqualifies-labelled-blocks
+
+- **Axis:** structure
+- **When:** `automaton`
+- **Preset:** `labelled-blocks`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** States joined by labelled transitions are not stacked boxes.
+
+## S-boolean-favours-truth-table
+
+- **Axis:** structure
+- **When:** `boolean`
+- **Preset:** `truth-table`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A boolean function's values, classification, equivalence or minterms are a truth table, every cell computed from the expression.
+
+## S-boolean-disqualifies-value-table
+
+- **Axis:** structure
+- **When:** `boolean`
+- **Preset:** `value-table`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** value-table evaluates real functions at chosen points; a boolean function has every assignment of its variables, and V/F or 0/1 values.
+
+## S-logic-circuit-favours-logic-circuit
+
+- **Axis:** structure
+- **When:** `logic-circuit`
+- **Preset:** `logic-circuit`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A request to draw, implement or simulate a boolean function with gates is drawn by the logic-circuit preset, gates laid out from the expression tree.
+
+## S-logic-circuit-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `logic-circuit`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** Gates are not nodes: each has a shape that is its function, and wires run orthogonally to named pins.
+
+## S-data-favours-statistics
+
+- **Axis:** structure
+- **When:** `data`
+- **Preset:** `statistics`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Raw observations to group into classes or split at quartiles are summarised by the statistics preset: every frequency, quartile, mean and spread computed from the data.
+
+## S-data-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `data`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A chart plots values it is handed as separated bars; a histogram's touching bars are counts computed from the data.
+
+## S-distribution-favours-distribution
+
+- **Axis:** structure
+- **When:** `distribution`
+- **Preset:** `distribution`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A probability law with an event is drawn by the distribution preset: the region shaded, its probability computed and measured against the area drawn, and the standardisation printed.
+
+## S-distribution-disqualifies-function-graph
+
+- **Axis:** structure
+- **When:** `distribution`
+- **Preset:** `function-graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A density typed into function-graph leaves the bounds, the curve and the number free to disagree, and nothing does the standardisation.
+
+## S-distribution-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `distribution`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A chart draws data; the mass function of a named law with an event highlighted is computed from the law.
+
+## S-probability-tree-favours-probability-tree
+
+- **Axis:** structure
+- **When:** `probability-tree`
+- **Preset:** `probability-tree`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A sequence of random stages is drawn by the probability-tree preset, which checks that each node's branches sum to 1 and computes the path products, event sums and conditionals.
+
+## S-probability-tree-disqualifies-mindmap
+
+- **Axis:** structure
+- **When:** `probability-tree`
+- **Preset:** `mindmap`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A mindmap lays out a tree but does no arithmetic on it.
+
+## S-probability-tree-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `probability-tree`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A graph gives a tree layout without the arithmetic; the branch probabilities and path products are the whole point.
+
+## S-set-relations-favours-venn
+
+- **Axis:** structure
+- **When:** `set-relations`
+- **Preset:** `venn`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Overlapping sets, their unions, intersections, differences and head-counts by region are a Venn diagram, every region shaded or counted by computation.
+
+## S-set-relations-disqualifies-blocks
+
+- **Axis:** structure
+- **When:** `set-relations`
+- **Preset:** `labelled-blocks`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A stack of blocks cannot show that two sets share members.
+
+## S-set-relations-disqualifies-number-line
+
+- **Axis:** structure
+- **When:** `set-relations`
+- **Preset:** `number-line`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** Overlapping sets are not a subset of the real line; intervals are drawn by number-line.
