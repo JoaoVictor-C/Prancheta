@@ -101,7 +101,8 @@ export const MODULES: ModuleInfo[] = [
         note:
           "a reaction scheme; imports this module's own render() rather than computing " +
           "any chemistry of its own, and takes --name=glucose_combustion, photosynthesis, " +
-          "combustion_methane or esterification",
+          "combustion_methane, esterification, arrhenius_hcl, bronsted_nh3 or lewis_bf3_nh3; " +
+          "--display= (textbook formulas, verified against the computed ones), --equilibrium, --lone-pairs, --theme=print|light|dark",
       },
     ],
     dependencies: ["rdkit"],

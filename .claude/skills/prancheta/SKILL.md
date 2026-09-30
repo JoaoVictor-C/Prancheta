@@ -134,6 +134,14 @@ figure through the same formatter as its label (TeX inside math, text
 outside). The answer key is generated from `answer`, and the same field
 closes each worked solution -- never type an answer twice.
 
+A figure is also `{"spec": <any preset input>}` or `{"module": {"args":
+["modules/reaction/render.py", "--reaction=N.O>>[NH4+].[OH-]",
+"--display=NH3;H2O>>NH4+;OH-", "--equilibrium"]}}` -- a figure module run
+and verified as the `module` command runs it (molecules with
+`--lone-pairs`, reaction schemes). Chemistry text uses KaTeX's mhchem:
+`\(\ce{H2SO4 -> H+ + HSO4-}\)`. A chemistry example:
+`experiments/exercises/acidos-bases/lista.json`.
+
 Numbers the text and the figure share come from the exercise's `params`
 (ADR 0040): `{"a": 2, "b": "a + 1", "f(x)": "a*x^2", "A":
 "integral(f(x), x, 0, b)"}` -- numbers, expressions over other params, and

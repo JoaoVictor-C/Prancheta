@@ -133,3 +133,80 @@ test(
     assert.ok(verification.coverage["module-geometry-agrees"] > 0);
   },
 );
+
+test(
+  "--lone-pairs: water shows two pairs on O, ammonia one on N, BF3 three on each F and none on B; every check passes",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    const cases: [string, Record<string, number>][] = [
+      ["--smiles=O", { "atom-1": 2 }],
+      ["--name=ammonia", { "atom-1": 1 }],
+      ["--name=boron_trifluoride", { "atom-0": 3, "atom-2": 3, "atom-3": 3 }],
+    ];
+    for (const [arg, expected] of cases) {
+      const { output, verification } = await runAndVerifyModule({
+        command: "python",
+        args: ["modules/molecule/render.py", arg, "--lone-pairs"],
+        input: { width: 720, height: 520 },
+        timeoutMs: TIMEOUT_MS,
+      });
+      assert.deepEqual(
+        verification.checks.filter((c) => c.status === "fail"),
+        [],
+        `${arg}: no check should fail`,
+      );
+      const counts: Record<string, number> = {};
+      for (const e of output.elements) {
+        const m = /^(atom-\d+)-lp-\d+$/.exec(e.id);
+        if (m) counts[m[1]!] = (counts[m[1]!] ?? 0) + 1;
+      }
+      // Water and ammonia are drawn with their hydrogens explicit so the pairs
+      // have a real structure to sit on; only the heavy atom carries any
+      // (RDKit writes the hydrogens first, so the heavy atom is atom 1).
+      assert.deepEqual(counts, expected, arg);
+    }
+  },
+);
+
+test(
+  "--theme: print (white paper) is the default, dark keeps the original palette, both pass the contrast check; the canvas is trimmed to the drawing",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    for (const [flag, paper] of [[undefined, "#FFFFFF"], ["--theme=light", "#F3F5F9"], ["--theme=dark", "#0F1115"]] as const) {
+      const { output, verification } = await runAndVerifyModule({
+        command: "python",
+        args: ["modules/molecule/render.py", "--name=ethanol", ...(flag ? [flag] : [])],
+        input: { width: 720, height: 520 },
+        timeoutMs: TIMEOUT_MS,
+      });
+      assert.deepEqual(verification.checks.filter((c) => c.status === "fail"), []);
+      assert.ok(output.svg.includes(`fill="${paper}"`), `${flag ?? "default"} should paint ${paper}`);
+      const contrast = verification.checks.find((c) => c.id === "module-contrast-sufficient");
+      assert.equal(contrast!.status, "pass");
+      const height = Number(/<svg[^>]* height="(\d+)"/.exec(output.svg)![1]);
+      assert.ok(height < 200, `ethanol's canvas should hug its drawing, got height ${height}`);
+    }
+  },
+);
+
+test(
+  "atom labels are typeset: a charge is a superscript tspan with a real minus sign, an H count a subscript tspan",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    const { output, verification } = await runAndVerifyModule({
+      command: "python",
+      args: ["modules/molecule/render.py", "--smiles=F[B-](F)(F)[NH3+]"],
+      input: { width: 720, height: 520 },
+      timeoutMs: TIMEOUT_MS,
+    });
+    assert.deepEqual(verification.checks.filter((c) => c.status === "fail"), []);
+    assert.match(output.svg, /<tspan font-size="[\d.]+" dy="-[\d.]+">−<\/tspan>/);
+    assert.match(output.svg, /<tspan font-size="[\d.]+" dy="-[\d.]+">\+<\/tspan>/);
+    assert.match(output.svg, /<tspan font-size="[\d.]+" dy="[\d.]+">3<\/tspan>/);
+    const labels = output.elements.filter((e) => e.kind === "label").map((e) => e.claim);
+    assert.ok(labels.includes("atom 1 is B−"), JSON.stringify(labels));
+  },
+);

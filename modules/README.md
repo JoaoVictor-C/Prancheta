@@ -124,7 +124,18 @@ selecting flag is given.
 ### molecule
 - `--name=` `glucose` · `fructose` · `sucrose` · `caffeine` · `aspirin` ·
   `water` · `ethanol` · `benzene`
+  · `ammonia` · `boron_trifluoride`
 - `--smiles=CCO` — any SMILES string. Takes priority over `--name=`.
+- `--theme=print|light|dark` — `print` (white paper, near-black ink) is the
+  default; `light` is the same ink on a faint tint; `dark` is the original
+  palette. Contrast checks run against whichever is drawn.
+- `--lone-pairs` — each atom's non-bonding pairs as pairs of dots in the largest
+  gaps between its bonds (valence electrons − formal charge − bonds, halved:
+  N in NH₃ 1, O in H₂O 2, F in BF₃ 3, B in BF₃ none). Each pair is a declared
+  decoration `atom-<i>-lp-<k>`.
+- The canvas is trimmed to the drawing: `--width`/`--height` are a maximum the
+  structure is scaled down to fit, never a minimum. Charges are superscripts
+  with a real minus sign, H counts subscripts.
 
 ### plot
 - `fit.py --name=` `linear_fit_demo` · `quadratic_fit_demo`
@@ -140,6 +151,26 @@ selecting flag is given.
 - `--reaction=CCO.O>>CC=O` — SMILES, `.` between components, `>>` between
   sides.
 - `--conditions=heat, H2SO4` — free text, used with `--reaction=`.
+- Acid–base names: `arrhenius_hcl` (HCl + H₂O → H₃O⁺ + Cl⁻), `bronsted_nh3`
+  (NH₃ + H₂O ⇌ NH₄⁺ + OH⁻, equilibrium, display forms), `lewis_bf3_nh3`
+  (BF₃ + NH₃ → F₃B–NH₃, lone pairs).
+- `--display=NH3;H2O>>NH4+;OH-` — the textbook written form of each component,
+  `;` between components and `>>` between sides, mirroring the SMILES (one per
+  component in order, or one per distinct component; a component may be left
+  empty to keep the computed form). **Checked against what RDKit computed**:
+  the same element counts (hydrogens included) and the same net charge, or the
+  run is refused with an error naming both. Accepted: a trailing charge (`+`,
+  `2-`, `3+`, `SO42-`, `SO4 2-`, `SO4^2-`, `Ca+2`), Unicode sub/superscripts
+  (`NH₄⁺`), groups `Al(OH)3`, `–`/`-` as a bond and `·` as an adduct dot
+  (`CuSO4·5H2O`), which are ignored for counting. A coefficient is not written
+  here (repeat the component in `--reaction=`). Without it a conventional
+  automatic form is written: IUPAC element order for carbon-free species, H
+  first for oxoacids (HNO₃, H₂SO₄), OH⁻, and a donor–acceptor adduct as
+  F₃B–NH₃; everything else in Hill order. Digits are typeset as subscripts and
+  charges as superscripts (`−` is U+2212).
+- `--equilibrium` — ⇌ (two half-arrows) instead of →.
+- `--lone-pairs`, `--theme=` — as for `molecule`. The canvas is trimmed to the
+  equation and the structures.
 
 ### skewt
 - `--name=` `midlatitude_summer` · `unstable_afternoon`

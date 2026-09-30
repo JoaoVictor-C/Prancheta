@@ -244,7 +244,11 @@ test("the Cálculo 1 list's HTML is byte-for-byte what it was before computed te
   // Changed once, by ADR 0063: the page's style gained the bundled face's
   // @font-face and its body family became the bundled stack -- verified to
   // be the ONLY difference (undoing those two edits gives back 2f439e18...).
-  const BEFORE = "314eaa3f68b38ef73a7a15e95801b50987b8a782bdef3ea2fe6135668ba5e784";
+  // Changed again, for chemistry lists: the head loads KaTeX's mhchem
+  // extension (\ce{...}), and a figure is shrunk to the column but never
+  // enlarged past its own size -- verified the ONLY differences (undoing
+  // them gives back 314eaa3f...).
+  const BEFORE = "73c9187a584e3c1d1cc1451041e50829dce439464d774d5a73a9b705fb26e1ab";
   const { sheet, texts, figures } = resolveSheet(JSON.parse(readFileSync(LISTA, "utf8")));
   const map = new Map(
     figures.map((f) => [f.key, { src: `figures/${f.key}.svg`, caption: texts.get(f.captionKey), wide: f.figure.wide }] as const),

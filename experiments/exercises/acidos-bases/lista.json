@@ -1,0 +1,220 @@
+{
+  "name": "acidos-bases",
+  "title": "Lista de Exercícios — Ácidos e Bases",
+  "subtitle": "Teorias de Arrhenius · Brønsted–Lowry · Lewis",
+  "locale": "pt-BR",
+  "footer": "Química · Ácidos e bases",
+  "contentsNote": "<p style=\"margin:4pt 0 0\">Exercícios em dois níveis: <span class=\"tag easy\" style=\"margin-left:0\">fácil</span> <span class=\"tag mid\">médio</span>. Depois dos exercícios vêm um <b>gabarito rápido</b> e as <b>resoluções comentadas</b>.</p>",
+  "exercisesLead": "As três teorias não se contradizem: cada uma amplia a anterior. <b>Arrhenius</b> olha para o que a substância libera em água (H⁺ ou OH⁻); <b>Brønsted–Lowry</b> olha para quem doa e quem recebe próton (H⁺); <b>Lewis</b> olha para quem recebe e quem doa um par de elétrons. Nas figuras, os pares de pontos em volta de um átomo são pares de elétrons não ligantes.",
+  "answersLead": "Só as respostas finais, para conferir. O raciocínio completo está nas resoluções comentadas.",
+  "solutionsLead": "Cada resolução mostra o raciocínio: qual teoria usar, o que observar e onde é comum errar.",
+  "sections": [
+    {
+      "title": "1. Teoria de Arrhenius",
+      "exercises": [
+        {
+          "id": "1.1",
+          "level": "easy",
+          "statement": "<p>Segundo Arrhenius, classifique cada substância como <b>ácido</b>, <b>base</b> ou <b>nenhum dos dois</b>, quando dissolvida em água:</p><p style=\"text-align:center\">\\(\\ce{HNO3}\\) &nbsp;·&nbsp; \\(\\ce{KOH}\\) &nbsp;·&nbsp; \\(\\ce{CH4}\\) &nbsp;·&nbsp; \\(\\ce{Ca(OH)2}\\) &nbsp;·&nbsp; \\(\\ce{HBr}\\)</p>",
+          "answer": "Ácidos: \\(\\ce{HNO3}\\), \\(\\ce{HBr}\\). Bases: \\(\\ce{KOH}\\), \\(\\ce{Ca(OH)2}\\). Nenhum: \\(\\ce{CH4}\\).",
+          "solution": "<p>Para Arrhenius, <b>ácido</b> é a substância que, em água, <b>ioniza</b> liberando \\(\\ce{H+}\\) como único cátion; <b>base</b> é a que <b>dissocia</b> liberando \\(\\ce{OH-}\\) como único ânion.</p>$$\\ce{HNO3 ->[H2O] H+ + NO3-}$$$$\\ce{HBr ->[H2O] H+ + Br-}$$$$\\ce{KOH ->[H2O] K+ + OH-}$$$$\\ce{Ca(OH)2 ->[H2O] Ca^2+ + 2 OH-}$$<p>O metano, \\(\\ce{CH4}\\), tem hidrogênio mas não o libera em água: as ligações C–H são praticamente apolares. <b>Ter H na fórmula não faz de uma substância um ácido</b>; o que conta é liberar \\(\\ce{H+}\\) em água.</p>"
+        },
+        {
+          "id": "1.2",
+          "level": "easy",
+          "statement": "<p>A figura mostra o que acontece quando o cloreto de hidrogênio é borbulhado em água.</p>{{figure}}<p>a) Qual íon, formado na reação, caracteriza o \\(\\ce{HCl}\\) como ácido de Arrhenius?<br>b) Escreva a equação de dissociação do hidróxido de sódio, \\(\\ce{NaOH}\\), em água, e diga qual íon o caracteriza como base.</p>",
+          "figure": {
+            "module": {
+              "args": [
+                "modules/reaction/render.py",
+                "--reaction=Cl.O>>[OH3+].[Cl-]",
+                "--display=HCl;H2O>>H3O+;Cl-"
+              ]
+            },
+            "caption": "Ionização do HCl em água."
+          },
+          "answer": "a) \\(\\ce{H3O+}\\) (o \\(\\ce{H+}\\) em água). b) \\(\\ce{NaOH -> Na+ + OH-}\\); o íon \\(\\ce{OH-}\\).",
+          "solution": "<p>a) O \\(\\ce{H+}\\) liberado pelo HCl não fica livre: ele se liga a uma molécula de água e forma o <b>íon hidrônio</b>, \\(\\ce{H3O+}\\). Escrever \\(\\ce{H+}\\) ou \\(\\ce{H3O+}\\) é a mesma ideia; a segunda forma mostra que a água participa.</p>$$\\ce{HCl + H2O -> H3O+ + Cl-}$$<p>b) O NaOH é um composto iônico: em água ele não ioniza, ele <b>dissocia</b> (os íons já existiam no sólido e apenas se separam):</p>$$\\ce{NaOH(s) ->[H2O] Na+(aq) + OH-(aq)}$$<p>O íon característico das bases de Arrhenius é o <b>hidróxido</b>, \\(\\ce{OH-}\\).</p>"
+        },
+        {
+          "id": "1.3",
+          "level": "easy",
+          "statement": "<p>Uma solução aquosa de amônia, \\(\\ce{NH3}\\), tem caráter básico, mas a fórmula da amônia não tem o grupo OH. Como a teoria de Arrhenius explica a presença de \\(\\ce{OH-}\\) nessa solução? Escreva a equação.</p>",
+          "answer": "A amônia reage com a água: \\(\\ce{NH3 + H2O <=> NH4+ + OH-}\\).",
+          "solution": "<p>Na teoria de Arrhenius, a base precisaria liberar \\(\\ce{OH-}\\) próprio. A amônia não tem esse grupo; o \\(\\ce{OH-}\\) vem da <b>água</b>, que cede um próton à amônia:</p>$$\\ce{NH3 + H2O <=> NH4+ + OH-}$$<p>Antigamente se escrevia \\(\\ce{NH4OH}\\) (\"hidróxido de amônio\") para encaixar a amônia na teoria, mas essa substância não existe como molécula isolada. Esse é um dos limites da teoria de Arrhenius, e é exatamente o caso que a teoria de Brønsted–Lowry resolve (exercício 2.1).</p>"
+        },
+        {
+          "id": "1.4",
+          "level": "mid",
+          "statement": "<p>O ácido fosforoso, \\(\\ce{H3PO3}\\), tem três átomos de hidrogênio, mas em água libera no máximo dois \\(\\ce{H+}\\) (é um <b>diácido</b>). Observe a estrutura na figura e explique por quê. Em seguida, escreva as etapas de ionização do ácido sulfúrico, \\(\\ce{H2SO4}\\).</p>{{figure}}",
+          "figure": {
+            "module": {
+              "args": [
+                "modules/molecule/render.py",
+                "--smiles=[H]OP(=O)([H])O[H]",
+                "--lone-pairs"
+              ],
+              "width": 360,
+              "height": 300
+            },
+            "caption": "Estrutura do ácido fosforoso, H₃PO₃."
+          },
+          "answer": "Só são ionizáveis os H ligados a O; no H₃PO₃ um dos H está ligado ao P. \\(\\ce{H2SO4 -> H+ + HSO4-}\\) e \\(\\ce{HSO4- <=> H+ + SO4^2-}\\).",
+          "solution": "<p>Nos oxiácidos, os hidrogênios <b>ionizáveis</b> são os ligados ao <b>oxigênio</b>: a ligação O–H é bem polarizada (o O é muito eletronegativo), e o H sai como \\(\\ce{H+}\\). Na figura, dois H estão ligados a O e um está ligado diretamente ao <b>fósforo</b>. A ligação P–H é pouco polar e não ioniza, por isso:</p>$$\\ce{H3PO3 <=> H+ + H2PO3-}$$$$\\ce{H2PO3- <=> H+ + HPO3^2-}$$<p>O ácido sulfúrico tem dois H ligados a O e ioniza em duas etapas; a primeira é praticamente completa e a segunda, parcial:</p>$$\\ce{H2SO4 -> H+ + HSO4-}$$$$\\ce{HSO4- <=> H+ + SO4^2-}$$<p><b>Erro comum:</b> contar os H da fórmula para decidir quantos \\(\\ce{H+}\\) o ácido libera. É a estrutura que decide.</p>"
+        }
+      ]
+    },
+    {
+      "title": "2. Teoria de Brønsted–Lowry",
+      "exercises": [
+        {
+          "id": "2.1",
+          "level": "easy",
+          "statement": "<p>Na reação da figura, identifique o <b>ácido</b> e a <b>base</b> de Brønsted–Lowry nos reagentes e os dois <b>pares conjugados</b>.</p>{{figure}}",
+          "figure": {
+            "module": {
+              "args": [
+                "modules/reaction/render.py",
+                "--reaction=N.O>>[NH4+].[OH-]",
+                "--display=NH3;H2O>>NH4+;OH-",
+                "--equilibrium"
+              ]
+            },
+            "caption": "Amônia em água."
+          },
+          "answer": "Ácido: \\(\\ce{H2O}\\); base: \\(\\ce{NH3}\\). Pares: \\(\\ce{H2O}\\)/\\(\\ce{OH-}\\) e \\(\\ce{NH4+}\\)/\\(\\ce{NH3}\\).",
+          "solution": "<p>Para Brønsted–Lowry, <b>ácido doa próton</b> (\\(\\ce{H+}\\)) e <b>base recebe próton</b>. Siga o H⁺: a água perde um H e vira \\(\\ce{OH-}\\); a amônia ganha um H e vira \\(\\ce{NH4+}\\).</p>$$\\underset{\\text{base}}{\\ce{NH3}} + \\underset{\\text{ácido}}{\\ce{H2O}} \\;\\ce{<=>}\\; \\underset{\\text{ácido conjugado}}{\\ce{NH4+}} + \\underset{\\text{base conjugada}}{\\ce{OH-}}$$<p>Um <b>par conjugado</b> são duas espécies que diferem por exatamente <b>um</b> \\(\\ce{H+}\\): \\(\\ce{H2O}\\)/\\(\\ce{OH-}\\) e \\(\\ce{NH4+}\\)/\\(\\ce{NH3}\\). Repare que, aqui, a água é o <b>ácido</b>, e não é preciso nenhum \\(\\ce{OH-}\\) \"da amônia\": essa teoria explica o caso que Arrhenius não explicava (exercício 1.3).</p>"
+        },
+        {
+          "id": "2.2",
+          "level": "easy",
+          "statement": "<p>Complete com a espécie conjugada.</p><p>a) Base conjugada de: \\(\\ce{HNO3}\\), \\(\\ce{H2O}\\), \\(\\ce{HSO4-}\\), \\(\\ce{NH4+}\\).<br>b) Ácido conjugado de: \\(\\ce{NH3}\\), \\(\\ce{H2O}\\), \\(\\ce{CO3^2-}\\), \\(\\ce{HPO4^2-}\\).</p>",
+          "answer": "a) \\(\\ce{NO3-}\\), \\(\\ce{OH-}\\), \\(\\ce{SO4^2-}\\), \\(\\ce{NH3}\\). b) \\(\\ce{NH4+}\\), \\(\\ce{H3O+}\\), \\(\\ce{HCO3-}\\), \\(\\ce{H2PO4-}\\).",
+          "solution": "<p>A regra é uma só: a <b>base conjugada</b> tem <b>um H⁺ a menos</b> (a carga diminui em 1); o <b>ácido conjugado</b> tem <b>um H⁺ a mais</b> (a carga aumenta em 1).</p><p>a) \\(\\ce{HNO3 -> NO3-}\\); \\(\\ce{H2O -> OH-}\\); \\(\\ce{HSO4- -> SO4^2-}\\); \\(\\ce{NH4+ -> NH3}\\).<br>b) \\(\\ce{NH3 -> NH4+}\\); \\(\\ce{H2O -> H3O+}\\); \\(\\ce{CO3^2- -> HCO3-}\\); \\(\\ce{HPO4^2- -> H2PO4-}\\).</p><p><b>Confira sempre a carga:</b> tirar um H⁺ de \\(\\ce{HSO4-}\\) dá \\(\\ce{SO4^2-}\\), e não \\(\\ce{SO4-}\\).</p>"
+        },
+        {
+          "id": "2.3",
+          "level": "mid",
+          "statement": "<p>A água é chamada de <b>anfótera</b> (ou anfiprótica). Escreva uma reação em que a água atua como <b>base</b> e outra em que atua como <b>ácido</b>, e a reação de autoionização da água, indicando os pares conjugados.</p>",
+          "answer": "Base: \\(\\ce{HCl + H2O -> H3O+ + Cl-}\\). Ácido: \\(\\ce{NH3 + H2O <=> NH4+ + OH-}\\). Autoionização: \\(\\ce{H2O + H2O <=> H3O+ + OH-}\\).",
+          "solution": "<p>Com um ácido mais forte que ela, a água <b>recebe</b> o próton (é base):</p>$$\\ce{HCl + H2O -> H3O+ + Cl-}$$<p>Pares: \\(\\ce{HCl}\\)/\\(\\ce{Cl-}\\) e \\(\\ce{H3O+}\\)/\\(\\ce{H2O}\\). Com uma base mais forte que ela, a água <b>doa</b> o próton (é ácido):</p>$$\\ce{NH3 + H2O <=> NH4+ + OH-}$$<p>Pares: \\(\\ce{NH4+}\\)/\\(\\ce{NH3}\\) e \\(\\ce{H2O}\\)/\\(\\ce{OH-}\\). E a água reage com ela mesma — uma molécula é o ácido, a outra é a base:</p>$$\\ce{H2O + H2O <=> H3O+ + OH-}$$<p>Essa autoionização acontece em pequeníssima extensão (a 25 °C, \\([\\ce{H3O+}] = [\\ce{OH-}] = 10^{-7}\\) mol/L na água pura), e é a origem da escala de pH.</p>",
+          "solutionFigure": {
+            "module": {
+              "args": [
+                "modules/reaction/render.py",
+                "--reaction=Cl.O>>[OH3+].[Cl-]",
+                "--display=HCl;H2O>>H3O+;Cl-",
+                "--lone-pairs"
+              ]
+            },
+            "caption": "A água como base: o par de elétrons do O recebe o próton do HCl."
+          }
+        },
+        {
+          "id": "2.4",
+          "level": "mid",
+          "statement": "<p>O íon bicarbonato, \\(\\ce{HCO3-}\\), reage tanto com ácido clorídrico quanto com hidróxido de sódio. Escreva as duas equações iônicas e diga o papel do \\(\\ce{HCO3-}\\) em cada uma. Por que o bicarbonato de sódio é usado como antiácido?</p>",
+          "answer": "Com HCl: \\(\\ce{HCO3- + H3O+ -> H2CO3 + H2O}\\) (base). Com NaOH: \\(\\ce{HCO3- + OH- -> CO3^2- + H2O}\\) (ácido). É anfiprótico; no estômago neutraliza o excesso de ácido.",
+          "solution": "<p>Diante de um ácido, o bicarbonato <b>recebe</b> um próton (é base):</p>$$\\ce{HCO3- + H3O+ -> H2CO3 + H2O}$$<p>O ácido carbônico formado se decompõe: \\(\\ce{H2CO3 -> CO2 ^ + H2O}\\) — é o gás que se vê no antiácido efervescente. Diante de uma base, o bicarbonato <b>doa</b> um próton (é ácido):</p>$$\\ce{HCO3- + OH- -> CO3^2- + H2O}$$<p>Uma espécie que pode doar e receber próton é <b>anfiprótica</b>. Como antiácido, o \\(\\ce{NaHCO3}\\) atua como base: consome o \\(\\ce{H3O+}\\) em excesso do suco gástrico.</p>"
+        },
+        {
+          "id": "2.5",
+          "level": "mid",
+          "statement": "<p>O ácido clorídrico, \\(\\ce{HCl}\\), é um ácido forte; o ácido acético, \\(\\ce{CH3COOH}\\), é um ácido fraco. Qual das bases conjugadas, \\(\\ce{Cl-}\\) ou \\(\\ce{CH3COO-}\\), é a base mais forte? Justifique.</p>",
+          "answer": "\\(\\ce{CH3COO-}\\): quanto mais fraco o ácido, mais forte a sua base conjugada.",
+          "solution": "<p>Um ácido forte doa o próton com facilidade e praticamente não o recebe de volta: a reação inversa quase não ocorre. Logo sua base conjugada, \\(\\ce{Cl-}\\), tem tendência muito pequena a receber próton — é uma base <b>muito fraca</b>.</p>$$\\ce{HCl + H2O -> H3O+ + Cl-}$$<p>Já o ácido acético ioniza pouco: o equilíbrio fica deslocado para a esquerda, porque o \\(\\ce{CH3COO-}\\) <b>recaptura</b> o próton com facilidade.</p>$$\\ce{CH3COOH + H2O <=> H3O+ + CH3COO-}$$<p>Regra geral dos pares conjugados: <b>ácido forte ⇔ base conjugada fraca; ácido fraco ⇔ base conjugada mais forte</b>. Por isso uma solução de acetato de sódio é levemente básica, e uma de cloreto de sódio é neutra.</p>"
+        }
+      ]
+    },
+    {
+      "title": "3. Teoria de Lewis",
+      "exercises": [
+        {
+          "id": "3.1",
+          "level": "easy",
+          "statement": "<p>Segundo Lewis, classifique como <b>ácido</b> ou <b>base</b>:</p><p style=\"text-align:center\">\\(\\ce{BF3}\\) · \\(\\ce{NH3}\\) · \\(\\ce{H+}\\) · \\(\\ce{OH-}\\) · \\(\\ce{AlCl3}\\) · \\(\\ce{H2O}\\) · \\(\\ce{Fe^3+}\\) · \\(\\ce{CN-}\\)</p>",
+          "answer": "Ácidos: \\(\\ce{BF3}\\), \\(\\ce{H+}\\), \\(\\ce{AlCl3}\\), \\(\\ce{Fe^3+}\\). Bases: \\(\\ce{NH3}\\), \\(\\ce{OH-}\\), \\(\\ce{H2O}\\), \\(\\ce{CN-}\\).",
+          "solution": "<p>Para Lewis, <b>ácido recebe</b> um par de elétrons e <b>base doa</b> um par de elétrons, formando uma ligação coordenada. Procure:</p><p>• <b>Bases</b>: espécies com <b>par não ligante disponível</b> — \\(\\ce{NH3}\\) (um par no N), \\(\\ce{H2O}\\) (dois pares no O), \\(\\ce{OH-}\\) e \\(\\ce{CN-}\\) (ânions com pares disponíveis).<br>• <b>Ácidos</b>: espécies com <b>orbital vazio</b> ou deficiência de elétrons — \\(\\ce{BF3}\\) e \\(\\ce{AlCl3}\\) (B e Al ficam com só 6 elétrons na camada de valência), \\(\\ce{H+}\\) (nenhum elétron) e cátions metálicos como \\(\\ce{Fe^3+}\\).</p>"
+        },
+        {
+          "id": "3.2",
+          "level": "easy",
+          "statement": "<p>As figuras mostram as estruturas da amônia e do trifluoreto de boro, com os pares de elétrons não ligantes. Quantos pares não ligantes há no átomo central de cada uma? Qual delas pode <b>doar</b> um par de elétrons e qual pode <b>recebê-lo</b>?</p>{{figure}}{{figure2}}",
+          "figure": [
+            {
+              "module": {
+                "args": [
+                  "modules/molecule/render.py",
+                  "--smiles=[H]N([H])[H]",
+                  "--lone-pairs"
+                ],
+                "width": 360,
+                "height": 300
+              },
+              "caption": "Amônia, NH₃."
+            },
+            {
+              "module": {
+                "args": [
+                  "modules/molecule/render.py",
+                  "--smiles=FB(F)F",
+                  "--lone-pairs"
+                ],
+                "width": 360,
+                "height": 300
+              },
+              "caption": "Trifluoreto de boro, BF₃."
+            }
+          ],
+          "answer": "N do NH₃: 1 par (doa, base de Lewis). B do BF₃: nenhum par, só 6 elétrons de valência (recebe, ácido de Lewis).",
+          "solution": "<p>O nitrogênio tem 5 elétrons de valência: usa 3 nas ligações N–H e sobra <b>um par não ligante</b>. Esse par pode ser doado: \\(\\ce{NH3}\\) é <b>base de Lewis</b>.</p><p>O boro tem 3 elétrons de valência e usa todos nas três ligações B–F: fica com apenas <b>6 elétrons</b> ao redor (octeto incompleto) e <b>nenhum par não ligante</b>. O orbital vazio pode receber um par: \\(\\ce{BF3}\\) é <b>ácido de Lewis</b>. Os pares que aparecem na figura estão nos flúores, não no boro.</p>"
+        },
+        {
+          "id": "3.3",
+          "level": "mid",
+          "statement": "<p>A amônia reage com o trifluoreto de boro formando um composto de adição (figura). Explique a reação pela teoria de Lewis: quem é o ácido, quem é a base, e que tipo de ligação se forma? Essa reação pode ser explicada por Brønsted–Lowry?</p>{{figure}}",
+          "figure": {
+            "module": {
+              "args": [
+                "modules/reaction/render.py",
+                "--reaction=FB(F)F.N>>F[B-](F)(F)[NH3+]",
+                "--display=BF3;NH3>>F3B-NH3",
+                "--lone-pairs"
+              ]
+            },
+            "caption": "Formação do aduto F₃B–NH₃."
+          },
+          "answer": "BF₃ é o ácido (recebe o par), NH₃ é a base (doa o par do N); forma-se uma ligação coordenada (dativa) N→B. Não há transferência de H⁺, logo Brønsted–Lowry não a explica.",
+          "solution": "<p>O par não ligante do nitrogênio é doado ao orbital vazio do boro:</p>$$\\ce{BF3 + NH3 -> F3B-NH3}$$<p>• <b>Base de Lewis</b>: \\(\\ce{NH3}\\), doa o par.<br>• <b>Ácido de Lewis</b>: \\(\\ce{BF3}\\), recebe o par e completa o octeto do boro.<br>• A ligação N–B é <b>coordenada</b> (dativa): os dois elétrons vieram do mesmo átomo. Depois de formada, é uma ligação covalente comum. No produto, o N fica com carga formal +1 e o B com −1.</p><p>Nenhum próton muda de lugar, então a reação <b>não é</b> ácido–base de Brønsted–Lowry. É o exemplo clássico de que a teoria de Lewis é mais ampla.</p>"
+        },
+        {
+          "id": "3.4",
+          "level": "mid",
+          "statement": "<p>O cloreto de prata é pouco solúvel em água, mas se dissolve em solução de amônia porque se forma o íon complexo diaminprata(I):</p>$$\\ce{Ag+ + 2 NH3 -> [Ag(NH3)2]+}$$<p>Identifique o ácido e a base de Lewis e explique por que o íon \\(\\ce{Ag+}\\) pode ser um ácido mesmo sem ter hidrogênio.</p>",
+          "answer": "Ácido de Lewis: Ag⁺ (recebe pares em orbitais vazios); base de Lewis: NH₃ (doa o par do N). Na teoria de Lewis, ser ácido não depende de ter H.",
+          "solution": "<p>Cada molécula de \\(\\ce{NH3}\\) doa o par não ligante do nitrogênio ao \\(\\ce{Ag+}\\), formando duas ligações coordenadas N→Ag. O \\(\\ce{Ag+}\\) tem orbitais vazios capazes de receber esses pares: é o <b>ácido de Lewis</b>; a amônia é a <b>base de Lewis</b> (chamada de <b>ligante</b> na química de coordenação).</p><p>Nas teorias de Arrhenius e Brønsted–Lowry, o ácido precisa ter hidrogênio para liberar ou doar \\(\\ce{H+}\\). Em Lewis, o que define o ácido é <b>receber um par de elétrons</b>. Por isso cátions metálicos (\\(\\ce{Ag+}\\), \\(\\ce{Cu^2+}\\), \\(\\ce{Fe^3+}\\)) são ácidos de Lewis — e toda formação de complexo é uma reação ácido–base de Lewis.</p>"
+        }
+      ]
+    },
+    {
+      "title": "4. Comparando as três teorias",
+      "exercises": [
+        {
+          "id": "4.1",
+          "level": "mid",
+          "statement": "<p>Os gases cloreto de hidrogênio e amônia reagem formando uma fumaça branca de cloreto de amônio sólido:</p>$$\\ce{HCl(g) + NH3(g) -> NH4Cl(s)}$$<p>Essa é uma reação ácido–base segundo Arrhenius? E segundo Brønsted–Lowry? E segundo Lewis? Justifique cada resposta.</p>",
+          "answer": "Arrhenius: não (não ocorre em água). Brønsted–Lowry: sim (HCl doa H⁺ ao NH₃). Lewis: sim (o N do NH₃ doa um par ao H⁺).",
+          "solution": "<p><b>Arrhenius</b>: a definição exige solução aquosa (liberar H⁺ ou OH⁻ <i>em água</i>). A reação ocorre entre gases, e a amônia nem tem OH⁻. Pela teoria de Arrhenius, <b>não</b> é uma reação ácido–base.</p><p><b>Brønsted–Lowry</b>: o HCl <b>doa</b> um próton e o NH₃ <b>recebe</b>; pares \\(\\ce{HCl}\\)/\\(\\ce{Cl-}\\) e \\(\\ce{NH4+}\\)/\\(\\ce{NH3}\\). <b>Sim</b>, é ácido–base — a teoria não exige água.</p><p><b>Lewis</b>: o par não ligante do nitrogênio forma a nova ligação N–H com o próton: o NH₃ é base de Lewis e o H⁺ é o ácido. <b>Sim</b>.</p><p>Esse exemplo mostra a hierarquia: toda reação de Brønsted–Lowry é também de Lewis, mas não o contrário (exercício 3.3).</p>"
+        },
+        {
+          "id": "4.2",
+          "level": "mid",
+          "statement": "<p>Julgue cada afirmação como verdadeira (V) ou falsa (F), justificando as falsas.</p><p>a) Todo ácido de Arrhenius é também um ácido de Brønsted–Lowry.<br>b) Toda base de Brønsted–Lowry é também uma base de Lewis.<br>c) Todo ácido de Lewis é também um ácido de Brønsted–Lowry.<br>d) Numa reação ácido–base de Lewis sempre há transferência de H⁺.<br>e) Em água, o íon \\(\\ce{OH-}\\) é base de Brønsted–Lowry e também de Lewis.</p>",
+          "answer": "a) V · b) V · c) F · d) F · e) V",
+          "solution": "<p>a) <b>V</b>. Se uma substância libera H⁺ em água, ela está doando esse próton à água: é doadora de próton.<br>b) <b>V</b>. Para receber um próton, a base precisa de um par de elétrons para formar a ligação com o H⁺: logo doa par, é base de Lewis.<br>c) <b>F</b>. \\(\\ce{BF3}\\), \\(\\ce{AlCl3}\\) e \\(\\ce{Ag+}\\) são ácidos de Lewis e não têm próton para doar.<br>d) <b>F</b>. Em \\(\\ce{BF3 + NH3 -> F3B-NH3}\\) nenhum H⁺ é transferido; o que caracteriza Lewis é o par de elétrons.<br>e) <b>V</b>. Em \\(\\ce{H3O+ + OH- -> 2 H2O}\\), o OH⁻ recebe um próton (Brønsted) usando um par não ligante do oxigênio (Lewis).</p><p>Resumo: as definições são cada vez mais amplas — Arrhenius ⊂ Brønsted–Lowry ⊂ Lewis.</p>"
+        }
+      ]
+    }
+  ],
+  "closing": "<b>Resumo final.</b> <b>Arrhenius</b>: em água, ácido libera H⁺ (H₃O⁺) e base libera OH⁻. <b>Brønsted–Lowry</b>: ácido doa próton, base recebe próton; cada ácido tem sua base conjugada, e quanto mais forte um, mais fraco o outro. <b>Lewis</b>: ácido recebe par de elétrons, base doa par de elétrons, formando uma ligação coordenada — por isso BF₃ e cátions metálicos também são ácidos. Cada teoria contém a anterior."
+}

@@ -54,6 +54,12 @@ export type SheetFigure = {
   graph?: FunctionGraphInput;
   /** Or any figure input the render command accepts: raw IR or another preset. */
   spec?: unknown;
+  /**
+   * Or a figure module (modules/README.md), run and verified exactly as the
+   * `module` command runs it: a molecule, a reaction scheme, a map. Its
+   * drawing is the module's own SVG; its module checks are the sheet's.
+   */
+  module?: SheetModuleFigure;
   /** HTML; placeholders allowed. */
   caption?: string;
   /** Wider on the page. */
@@ -68,6 +74,15 @@ export type SheetFigure = {
 };
 
 export type ReadingsPlacement = "page" | "drawing";
+
+export type SheetModuleFigure = {
+  /** The interpreter. Default "python". */
+  command?: string;
+  /** Script path and flags, one argument each, e.g. ["modules/reaction/render.py", "--reaction=N.O>>[NH4+].[OH-]"]. */
+  args: string[];
+  width?: number;
+  height?: number;
+};
 
 export type SheetExercise = {
   /** "1.2" */
@@ -152,8 +167,19 @@ const LEVELS: Record<SheetLevel, string> = { easy: "fácil", mid: "médio", hard
 
 function figure(value: unknown, path: string): void {
   const f = v.object(value, path);
-  if ((f.graph === undefined) === (f.spec === undefined)) {
-    throw new SpecError(`${path} needs exactly one of "graph" (a function-graph input) or "spec"`);
+  const kinds = [f.graph, f.spec, f.module].filter((k) => k !== undefined).length;
+  if (kinds !== 1) {
+    throw new SpecError(`${path} needs exactly one of "graph" (a function-graph input), "spec" (any figure input) or "module" (a figure module)`);
+  }
+  if (f.module !== undefined) {
+    const m = v.object(f.module, `${path}.module`);
+    v.optionalString(m, "command", `${path}.module`);
+    if (!Array.isArray(m.args) || m.args.length === 0 || m.args.some((a) => typeof a !== "string")) {
+      throw new SpecError(`${path}.module.args must be a non-empty list of strings: the script, then its flags`);
+    }
+    for (const k of ["width", "height"] as const) {
+      if (m[k] !== undefined && (typeof m[k] !== "number" || !((m[k] as number) > 0))) throw new SpecError(`${path}.module.${k} must be a positive number`);
+    }
   }
   v.optionalString(f, "caption", path);
   v.optionalBoolean(f, "wide", path);
@@ -394,8 +420,10 @@ const STYLE = `
   ol.items { margin: 3pt 0; padding-left: 20pt; }
   ol.items li { margin: 1.5pt 0; }
   figure { margin: 7pt auto 3pt; text-align: center; break-inside: avoid; }
-  figure img { width: 84%; max-width: 510px; }
-  figure.wide img { width: 96%; max-width: 640px; }
+  /* A figure is shrunk to the column, never enlarged past its own size: a
+     small molecule stretched to 84% of the column filled a page. */
+  figure img { width: auto; height: auto; max-width: min(84%, 510px); }
+  figure.wide img { max-width: min(96%, 640px); }
   figcaption { font-size: 9pt; color: var(--soft); margin-top: 2pt; }
   .box { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8pt 12pt; margin: 8pt 0; break-inside: avoid; }
   .box h3 { margin-top: 2pt; }
@@ -532,6 +560,7 @@ function pushHead(out: string[], sheet: SheetInput, katex: string, title: string
 <title>${escape(title)}</title>
 <link rel="stylesheet" href="${katex}/katex.min.css">
 <script src="${katex}/katex.min.js"></script>
+<script src="${katex}/contrib/mhchem.min.js"></script>
 <script src="${katex}/contrib/auto-render.min.js"></script>
 <style>${STYLE}</style>
 </head>
@@ -831,7 +860,9 @@ export function resolveSheet(raw: unknown, overrides: SheetParamOverrides = {}):
       const sub = (f: SheetFigure, path: string): SheetFigure =>
         f.graph !== undefined
           ? { ...f, graph: substituteFigure(f.graph, env, `${path}.graph`) }
-          : { ...f, spec: substituteFigure(f.spec, env, `${path}.spec`) };
+          : f.module !== undefined
+            ? { ...f, module: substituteFigure(f.module, env, `${path}.module`) }
+            : { ...f, spec: substituteFigure(f.spec, env, `${path}.spec`) };
       const q = listOf(e.figure).map((f, k) => sub(f, `${e.id}.figure[${k}]`));
       const s = listOf(e.solutionFigure).map((f, k) => sub(f, `${e.id}.solutionFigure[${k}]`));
       own.set(e.id, { q, s });
@@ -902,9 +933,24 @@ export type FigureCache = Map<string, RenderedFigure>;
 /** Draw one resolved figure through the full pipeline -- its checks are the sheet's checks. */
 export async function renderSheetFigure(r: ResolvedFigure, cache?: FigureCache): Promise<RenderedFigure> {
   // The kind is part of the key: one input is two figures when the statement's copy hides its answers.
-  const key = `${r.kind}:${r.readings}:${JSON.stringify(r.figure.graph ?? r.figure.spec)}`;
+  const key = `${r.kind}:${r.readings}:${JSON.stringify(r.figure.graph ?? r.figure.module ?? r.figure.spec)}`;
   const hit = cache?.get(key);
   if (hit !== undefined) return hit;
+  if (r.figure.module !== undefined) {
+    // A module's figure is its own SVG, verified by the module checks; it has
+    // no answers to hide and no reading panel to lift.
+    const m = r.figure.module;
+    const { runAndVerifyModule } = await import("../modules/run.ts");
+    const { output, verification } = await runAndVerifyModule({
+      command: m.command ?? "python",
+      args: m.args,
+      input: { width: m.width ?? 720, height: m.height ?? 520 },
+    });
+    const fails = verification.checks.filter((c) => c.status === "fail");
+    const drawn = { svg: output.svg, failing: fails.map((c) => `${c.id} ${c.target ?? ""}: ${c.detail ?? ""}`), checkIds: fails.map((c) => c.id) };
+    cache?.set(key, drawn);
+    return drawn;
+  }
   const spec = figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`, r.kind === "q");
   // A panel scaled down with its figure is set at whatever size the column
   // leaves it -- 7pt for an optics or circuit panel. Lifted, it is page text.
