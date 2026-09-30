@@ -156,6 +156,11 @@ NBSP = chr(0xA0)  # between a coefficient and its formula: "2 NH3"
 TILE_MAX_W, TILE_MAX_H = 300.0, 230.0
 STRUCT_FONT = 18.0  # atom labels in the structure row
 STRUCT_BOND = 58.0  # bond length in the structure row
+# A mechanism draws its bonds longer, as textbooks do: an arrow from the
+# H-Cl bond onto Cl needs a visible stretch of bond to leave from. At 58 px
+# the line between the two labels was ~27 px, and any hook large enough to
+# read became a narrow loop.
+STRUCT_BOND_MECH = 78.0
 STRUCT_DOT = 2.7  # lone-pair dot radius in EVERY tile of the structure row (a bare ion's too): larger than a lone molecule's, it is read from further
 TILE_GAP = 30.0
 ARROW_W = 130.0
@@ -439,7 +444,8 @@ def render(
             # from the atom labels of its neighbours, which it is not.
             out = render_molecule(
                 TILE_MAX_W, TILE_MAX_H, drawn, misdeclare=False, theme=theme, lone_pairs=lone_pairs,
-                font_px=STRUCT_FONT, bond_px=STRUCT_BOND, dative=dative, dot_px=STRUCT_DOT, face=hints.get(i),
+                font_px=STRUCT_FONT, bond_px=STRUCT_BOND_MECH if arrow_list else STRUCT_BOND,
+                dative=dative, dot_px=STRUCT_DOT, face=hints.get(i),
             )
             drawn_tiles.append({"smiles": smiles, "out": out, "w": float(out["_size"][0]), "h": float(out["_size"][1])})
         return drawn_tiles

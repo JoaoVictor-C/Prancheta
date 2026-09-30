@@ -437,7 +437,44 @@ def plan(
             pairs = []
 
         best: tuple[float, dict[str, Any]] | None = None
-        for side in (-1.0, 1.0):
+        # A bond's pair moving onto one of its own atoms (H-Cl onto Cl) is
+        # the textbook's small C-shaped hook: it leaves the middle of the
+        # bond perpendicular to it, curls over, and comes in to the atom
+        # from the bond's side at a shallow angle -- landing on the atom's
+        # face beside the bond, never on top of it where its lone pairs sit.
+        # The generic apex arc dropped steeply onto the top of the atom and
+        # read as pointing at the dots.
+        hook = (
+            arrow.source.kind == "bond"
+            and arrow.target.kind == "atom"
+            and d_tile == s_tile
+            and d_idx in (arrow.src[0][1], arrow.src[1][1])
+        )
+        if hook:
+            bd = _unit(_sub(target_c, src_c))
+            out = (-bd[0], -bd[1])
+            for side in (-1.0, 1.0):
+                n = (-bd[1] * side, bd[0] * side)
+                p0 = _add(src_c, n, 4.0)
+                for a_rank, alpha in enumerate((0.55, 0.75, 0.95, 1.15)):
+                    v = _unit(_add((out[0] * math.cos(alpha), out[1] * math.cos(alpha)), n, math.sin(alpha)))
+                    if target_atom is not None and target_atom["labelled"]:
+                        p3 = _add(target_c, v, _exit(tuple(target_atom["box"]), v) + END_GAP)
+                    else:
+                        p3 = _add(target_c, v, 7.0)
+                    # Sized from its own chord: about a half-arc, never a
+                    # tall loop (fixed 24-36 px handles made candy canes).
+                    chord_len = _len(_sub(p3, p0))
+                    for h_rank, k in enumerate((0.55, 0.7, 0.85)):
+                        hh = min(max(k * chord_len, 10.0), 30.0)
+                        curve = [p0, _add(p0, n, hh), _add(p3, v, hh * 0.9), p3]
+                        cost = _cost(curve, arrow, s_tile, None, target_atom, d_tile, boxes, bonds, dots, drawn, frame, extra_boxes)
+                        cost += _head_on_dots(p3, v, dots) + 0.3 * h_rank + 0.15 * a_rank
+                        if cubic_point(curve, 0.5)[1] > max(p0[1], p3[1]) + 1:
+                            cost += 0.4  # above the bond reads first, as in print
+                        if best is None or cost < best[0] - 1e-9:
+                            best = (cost, {"curve": curve, "pair": None})
+        for side in (() if hook else (-1.0, 1.0)):
             # Bends as a fraction of the chord: textbook arrows are shallow arcs,
             # not loops (the first set, up to 0.75, read as circles).
             for h_rank, h in enumerate((0.18, 0.26, 0.36, 0.5)):
@@ -481,12 +518,7 @@ def plan(
                     # A head on a lone pair merges with its dots (they read
                     # as three dots and a blob): the tip, the base and both
                     # barbs must clear every dot. Near-hard, not a nudge.
-                    head_base = _add(p3, v, HEAD_LEN)
-                    side_v = (-v[1], v[0])
-                    head_pts = [p3, head_base, _add(head_base, side_v, HEAD_HALF), _add(head_base, side_v, -HEAD_HALF), _add(p3, v, HEAD_LEN / 2)]
-                    for (_dt, _pid, c, r) in dots:
-                        if min(_len(_sub(q, c)) for q in head_pts) < r + 3.0:
-                            cost += 60
+                    cost += _head_on_dots(p3, v, dots)
                     apex_y = cubic_point(curve, 0.5)[1]
                     cost += 0.35 * h_rank + (0.4 if apex_y > (p0[1] + p3[1]) / 2 + 1 else 0.0) + 0.2 * abs(twist)
                     if best is None or cost < best[0] - 1e-9:
@@ -499,6 +531,18 @@ def plan(
         drawn.append([cubic_point(curve, k / 30) for k in range(31)])
         results.append(_finish(curve, arrow, chosen["pair"], best[0]))
     return results
+
+
+def _head_on_dots(p3: Pt, v: Pt, dots: list[tuple[int, str, Pt, float]]) -> float:
+    """A head on a lone pair merges with its dots: its tip, base and both barbs must clear every dot. Near-hard."""
+    head_base = _add(p3, v, HEAD_LEN)
+    side_v = (-v[1], v[0])
+    head_pts = [p3, head_base, _add(head_base, side_v, HEAD_HALF), _add(head_base, side_v, -HEAD_HALF), _add(p3, v, HEAD_LEN / 2)]
+    cost = 0.0
+    for (_dt, _pid, c, r) in dots:
+        if min(_len(_sub(q, c)) for q in head_pts) < r + 3.0:
+            cost += 60
+    return cost
 
 
 def _cost(curve, arrow, s_tile, pair, target_atom, d_tile, boxes, bonds, dots, drawn, frame, extra_boxes) -> float:
