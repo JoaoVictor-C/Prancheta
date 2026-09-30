@@ -446,7 +446,7 @@ def plan(
                 n = (-chord[1] / L * side, chord[0] / L * side)
                 # A bond's pair moving onto one of its own atoms spans half a
                 # bond: without a floor on the bend it is a hook, not an arc.
-                bend = max(h * L, 17.0 + 5.0 * h_rank if arrow.source.kind == "bond" else 10.0)
+                bend = max(h * L, 24.0 + 5.0 * h_rank if arrow.source.kind == "bond" else 10.0)
                 apex = _add(((src_c[0] + target_c[0]) / 2, (src_c[1] + target_c[1]) / 2), n, bend)
                 if pairs:
                     pair = max(pairs, key=lambda p: p["u"][0] * _unit(_sub(apex, src_c))[0] + p["u"][1] * _unit(_sub(apex, src_c))[1])
@@ -459,10 +459,11 @@ def plan(
                     p0 = _add(src_c, n, 4.0)
                     t0 = _unit(_sub(apex, p0))
                 v0 = _unit(_sub(apex, target_c))
-                for twist in (0.0, -0.5, 0.5):
-                    # The head may come in a little to either side of the
-                    # apex direction: straight in can land on the target's
-                    # own lone pair.
+                for twist in (0.0, -0.3, 0.3, -0.6, 0.6, -0.9, 0.9, -1.2, 1.2):
+                    # The head may come in to either side of the apex
+                    # direction: straight in can land on the target's own
+                    # lone pair, and an atom with three pairs (Cl in HCl)
+                    # leaves only the gaps beside its bond free.
                     v = (v0[0] * math.cos(twist) - v0[1] * math.sin(twist), v0[0] * math.sin(twist) + v0[1] * math.cos(twist))
                     if target_atom is not None and target_atom["labelled"]:
                         p3 = _add(target_c, v, _exit(tuple(target_atom["box"]), v) + END_GAP)
@@ -477,10 +478,15 @@ def plan(
                     p1 = _add(p0, t0, arm0) if pairs else _add(p0, _sub(q, p0), 2 / 3)
                     curve = [p0, p1, _add(p3, _sub(q, p3), 2 / 3), p3]
                     cost = _cost(curve, arrow, s_tile, pair, target_atom, d_tile, boxes, bonds, dots, drawn, frame, extra_boxes)
+                    # A head on a lone pair merges with its dots (they read
+                    # as three dots and a blob): the tip, the base and both
+                    # barbs must clear every dot. Near-hard, not a nudge.
                     head_base = _add(p3, v, HEAD_LEN)
+                    side_v = (-v[1], v[0])
+                    head_pts = [p3, head_base, _add(head_base, side_v, HEAD_HALF), _add(head_base, side_v, -HEAD_HALF), _add(p3, v, HEAD_LEN / 2)]
                     for (_dt, _pid, c, r) in dots:
-                        if min(_len(_sub(p3, c)), _len(_sub(head_base, c))) < r + 4.0:
-                            cost += 8
+                        if min(_len(_sub(q, c)) for q in head_pts) < r + 3.0:
+                            cost += 60
                     apex_y = cubic_point(curve, 0.5)[1]
                     cost += 0.35 * h_rank + (0.4 if apex_y > (p0[1] + p3[1]) / 2 + 1 else 0.0) + 0.2 * abs(twist)
                     if best is None or cost < best[0] - 1e-9:
