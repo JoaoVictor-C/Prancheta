@@ -1,0 +1,7 @@
+{
+  "preset": "acid-base",
+  "kind": "distribution",
+  "name": "ácido fosfórico",
+  "pKa": [2.15, 7.2, 12.35],
+  "species": ["H₃PO₄", "H₂PO₄⁻", "HPO₄²⁻", "PO₄³⁻"]
+}

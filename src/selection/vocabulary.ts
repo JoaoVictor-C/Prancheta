@@ -146,8 +146,16 @@
  * difference, complement, head-counts by region -- drawn as circles in a
  * universe. Not a "set": that is an unordered bag of items with no relation
  * among its members. Not an "interval": a subset of the real line.
+ *
+ * "acid-base-equilibrium" is aqueous acid–base chemistry whose picture is
+ * computed from a constant, a concentration or a pH: a titration curve
+ * (pH against volume of titrant), the fraction of each species of a
+ * mono-, di- or triprotic acid against pH, the pH scale with substances
+ * and indicator ranges. Not a "function": the curve is the root of a
+ * charge balance, not a typed expression. Not "data" or "distribution":
+ * there are no observations and no probability law.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations", "acid-base-equilibrium"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -203,7 +211,8 @@ export type PresetId =
   | "statistics"
   | "distribution"
   | "probability-tree"
-  | "venn";
+  | "venn"
+  | "acid-base";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -345,6 +354,11 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "venn",
     implemented: true,
     summary: "Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong.",
+  },
+  {
+    id: "acid-base",
+    implemented: true,
+    summary: "Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻].",
   },
 ];
 

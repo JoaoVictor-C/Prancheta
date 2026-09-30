@@ -74,6 +74,8 @@ import { expandProbabilityTree, validateProbabilityTreeInput } from "./probabili
 import type { ProbabilityTreeInput } from "./probability-tree/preset.ts";
 import { expandVenn, validateVennInput } from "./venn/preset.ts";
 import type { VennInput } from "./venn/preset.ts";
+import { expandAcidBase, validateAcidBaseInput } from "./acid-base/preset.ts";
+import type { AcidBaseInput } from "./acid-base/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -107,7 +109,7 @@ export const ANSWER_AWARE: readonly string[] = [
   "value-table", "sign-chart", "number-line", "vectors", "unit-circle",
   "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map",
   "circuit", "optics", "automaton", "truth-table", "logic-circuit",
-  "statistics", "distribution", "probability-tree", "venn",
+  "statistics", "distribution", "probability-tree", "venn", "acid-base",
 ];
 
 export type PresetInput = (
@@ -139,6 +141,7 @@ export type PresetInput = (
   | ({ preset: "distribution" } & DistributionInput)
   | ({ preset: "probability-tree" } & ProbabilityTreeInput)
   | ({ preset: "venn" } & VennInput)
+  | ({ preset: "acid-base" } & AcidBaseInput)
 ) &
   CommonPresetOptions;
 
@@ -216,6 +219,8 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandProbabilityTree(input);
     case "venn":
       return expandVenn(input);
+    case "acid-base":
+      return expandAcidBase(input);
   }
 }
 
@@ -309,6 +314,8 @@ function validateOwn(preset: PresetInput["preset"], raw: Record<string, unknown>
       return validateProbabilityTreeInput(raw);
     case "venn":
       return validateVennInput(raw);
+    case "acid-base":
+      return validateAcidBaseInput(raw);
   }
 }
 
@@ -343,7 +350,8 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "statistics" ||
     preset === "distribution" ||
     preset === "probability-tree" ||
-    preset === "venn"
+    preset === "venn" ||
+    preset === "acid-base"
   );
 }
 
@@ -376,6 +384,7 @@ export type {
   DistributionInput,
   ProbabilityTreeInput,
   VennInput,
+  AcidBaseInput,
 };
 export type { PresetId };
 

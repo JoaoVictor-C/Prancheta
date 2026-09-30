@@ -385,6 +385,8 @@ test(
       "[O-]S(=O)(=O)[O-]": "SO4 2-",
       "FB(F)F": "BF3",
       "F[B-](F)(F)[NH3+]": "F3B–NH3",
+      "N->[Ag+]<-N": "[Ag(NH3)2]+",
+      "O->[Cu+2](<-O)(<-O)<-O": "[Cu(H2O)4]2+",
       "CC(=O)O": "CH3COOH",
       "OC[C@H]1O[C@H](O)[C@H](O)[C@@H](O)[C@@H]1O": "C6H12O6",
     };
@@ -407,5 +409,279 @@ test(
     const bad = runPython(["modules/reaction/render.py", "--name=arrhenius_hcl", "--theme=sepia"]);
     assert.notEqual(bad.status, 0);
     assert.match(bad.stderr, /unknown --theme/);
+  },
+);
+
+// --- curved electron-pushing arrows and complexes ------------------------------
+
+function arrowsOf(output: { elements: { id: string; kind: string; claim?: string; declaredBox?: Box }[] }) {
+  return output.elements.filter((e) => /^e-arrow-\d+$/.test(e.id));
+}
+
+test(
+  "lewis_bf3_nh3: one curved arrow from N's lone pair to B, a smooth cubic with a filled head, its declared box agreeing with the measured curve",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    const { output, verification } = await runReaction(["--name=lewis_bf3_nh3"]);
+    assertNoFailures(verification);
+    const arrows = arrowsOf(output);
+    assert.equal(arrows.length, 1);
+    assert.match(arrows[0]!.claim ?? "", /lp:2>1 .*empty valence orbital/);
+    assert.match(output.svg, /<path data-pr-id="e-arrow-0-curve" d="M [\d.]+ [\d.]+ C [\d. ]+"/);
+    assert.match(output.svg, /<g data-pr-id="e-arrow-0">.*?<polygon /s);
+    const agrees = verification.checks.find((c) => c.id === "module-geometry-agrees")!;
+    assert.equal(agrees.status, "pass");
+    // The curve is a declared drawable, so every label is tested against its stroke.
+    const measured = new Map(verification.measured.map((m) => [m.id, m]));
+    const curve = measured.get("e-arrow-0-curve")!;
+    assert.equal(curve.found, true);
+    const clear = verification.checks.find((c) => c.id === "module-labels-clear-of-strokes")!;
+    assert.equal(clear.status, "pass");
+    assert.ok(output.notes?.some((n) => n.includes("curved arrow(s) verified")));
+    // The arrow leaves N's pair in the NH3 tile (m1) and ends in the BF3 tile (m0):
+    // it starts right of where it ends, and it clears B's label.
+    const box = curve.box as Box;
+    const bLabel = measured.get("m0-atom-1-label")!.box as Box;
+    const nLabel = measured.get("m1-atom-1-label")!.box as Box;
+    assert.ok(box.x >= bLabel.x + bLabel.width - 1, "the head stops short of B");
+    assert.ok(box.x + box.width <= nLabel.x + 1, "the tail starts at N's pair, left of N");
+  },
+);
+
+test(
+  "bronsted_hcl_h2o and bronsted_nh3_h2o: a lone pair onto H across the plus sign, and the H-X bond onto X; every check passes in all three themes",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    for (const name of ["bronsted_hcl_h2o", "bronsted_nh3_h2o"]) {
+      for (const theme of ["print", "light", "dark"]) {
+        const { output, verification } = await runReaction([`--name=${name}`, `--theme=${theme}`]);
+        assertNoFailures(verification);
+        const arrows = arrowsOf(output);
+        assert.equal(arrows.length, 2, name);
+        assert.match(arrows[0]!.claim ?? "", /hydrogen bonded to another atom/);
+        assert.match(arrows[1]!.claim ?? "", /its own breaking bond/);
+        const contrast = verification.checks.find((c) => c.id === "module-contrast-sufficient")!;
+        assert.equal(contrast.status, "pass");
+      }
+    }
+    const { output } = await runReaction(["--name=bronsted_hcl_h2o"]);
+    const claims = output.elements.filter((e) => e.id.startsWith("eqn-")).map((e) => e.claim);
+    assert.deepEqual(claims, ["HCl", "H2O", "H3O+", "Cl−"], "atom maps address atoms; the formulas are the plain species");
+  },
+);
+
+test(
+  "--arrows is verified: no pair, too many pairs, a full octet, a missing bond, an unknown or ambiguous atom -- each refused naming the arrow",
+  { timeout: TIMEOUT_MS },
+  () => {
+    assertRdkitAvailable();
+    const script = "modules/reaction/render.py";
+    const bf3 = "--reaction=F[B:1](F)[F:3].[NH3:2]>>F[B-](F)(F)[NH3+]";
+    const cases: [string[], RegExp][] = [
+      [[bf3, "--arrows=lp:1>2"], /'lp:1>2': B of BF3 .* has no lone pair/],
+      [[bf3, "--arrows=lp:2>3"], /'lp:2>3': F of BF3 .* cannot take an electron pair/],
+      [[bf3, "--arrows=lp:2>9"], /no reactant atom carries map number 9; mapped atoms: 1 \(B/],
+      [[bf3, "--arrows=lp:2>H@2"], /has 3 H atoms, so 'H@2' is ambiguous/],
+      [[bf3, "--arrows=bond:1-2>1"], /no bond between B of BF3 .* and N of NH3/],
+      [[bf3, "--arrows=2>1"], /starts at a lone pair .* or a bond/],
+      [[bf3, "--arrows=lp:2>lp:1"], /ends at an atom or a bond, not at a lone pair/],
+      [[bf3, "--arrows=lp:2>B@5"], /names reactant component 5, but there are 2/],
+      [["--reaction=[Cl:1][H:2].[OH2:3]>>[OH3+].[Cl-]", "--arrows=lp:3>2;lp:3>2;lp:3>2"], /has 2 lone pair\(s\) and 3 arrows/],
+      [["--reaction=[NH3:1]->[Ag+]<-N.[H+:2]>>[NH4+].N->[Ag+]", "--arrows=lp:1>2"], /no lone pair to give \(its pair is already its dative bond\)/],
+    ];
+    for (const [args, pattern] of cases) {
+      const r = runPython([script, ...args]);
+      assert.notEqual(r.status, 0, args.join(" "));
+      assert.match(r.stderr, pattern, args.join(" "));
+    }
+  },
+);
+
+test(
+  "complex_silver_ammonia: Ag+ + 2NH3 -> [Ag(NH3)2]+, the display with brackets checked, the ligand N drawn without the pair it gave",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    const { output, verification } = await runReaction(["--name=complex_silver_ammonia"]);
+    assertNoFailures(verification);
+    const claims = output.elements.filter((e) => e.id.startsWith("eqn-")).map((e) => e.claim);
+    assert.deepEqual(claims, ["Ag+", "2 x NH3", "[Ag(NH3)2]+"]);
+    // Free NH3 (m1) keeps its pair; in the complex (m2) neither N has one.
+    assert.equal(output.elements.filter((e) => /^m1-atom-\d+-lp-/.test(e.id)).length, 1);
+    assert.equal(output.elements.filter((e) => /^m2-atom-\d+-lp-/.test(e.id)).length, 0);
+    assert.ok(output.elements.some((e) => e.id.startsWith("m2-bond-") && /dative bond/.test(e.claim ?? "")));
+    const wrong = runPython(["modules/reaction/render.py", "--reaction=[Ag+].N.N>>N->[Ag+]<-N", "--display=Ag+;NH3>>[Ag(NH3)3]+"]);
+    assert.notEqual(wrong.status, 0);
+    assert.match(wrong.stderr, /does not match/);
+  },
+);
+
+// --- hidden answers, state symbols, coefficients and balance, equal sizes --------
+
+const canvasOf = (svg: string) => [
+  Number(/<svg[^>]* width="(\d+)"/.exec(svg)![1]),
+  Number(/<svg[^>]* height="(\d+)"/.exec(svg)![1]),
+];
+
+test(
+  "--answers=false: the reactants, the arrow and a ? -- no product tile, the same canvas and the same reactant positions as the solution; true is the default",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    for (const name of ["bronsted_hcl_h2o", "arrhenius_hcl", "ammonia_sulfate", "esterification"]) {
+      const solution = await runReaction([`--name=${name}`]);
+      const explicit = await runReaction([`--name=${name}`, "--answers=true"]);
+      const question = await runReaction([`--name=${name}`, "--answers=false"]);
+      for (const r of [solution, explicit, question]) assertNoFailures(r.verification);
+      assert.equal(explicit.output.svg, solution.output.svg, `${name}: true is the default`);
+      assert.deepEqual(canvasOf(question.output.svg), canvasOf(solution.output.svg), `${name}: the question keeps the canvas`);
+      const eq = (o: typeof question.output) => o.elements.filter((e) => e.id.startsWith("eqn-"));
+      const lhs = (o: typeof question.output) => eq(o).filter((e) => e.id.startsWith("eqn-lhs"));
+      assert.deepEqual(lhs(question.output), lhs(solution.output), `${name}: the reactants are written as in the solution`);
+      assert.deepEqual(eq(question.output).filter((e) => e.id.startsWith("eqn-rhs")).map((e) => e.claim), ["?"], name);
+      assert.ok(eq(solution.output).filter((e) => e.id.startsWith("eqn-rhs")).length >= 1);
+      assert.ok(question.output.elements.some((e) => e.id === "reaction-arrow"));
+      // Tiles: the reactants' are the solution's, element for element; the products' are absent.
+      const tileIds = (o: typeof question.output) =>
+        new Set(o.elements.map((e) => /^(m\d+)-/.exec(e.id)?.[1]).filter(Boolean));
+      assert.ok(tileIds(question.output).size < tileIds(solution.output).size, `${name}: product tiles are not drawn`);
+      assert.ok(tileIds(question.output).size >= 1, `${name}: reactant tiles are drawn`);
+      const inSolution = new Map(solution.output.elements.map((e) => [e.id, e]));
+      for (const e of question.output.elements.filter((x) => /^m\d+-/.test(x.id))) {
+        assert.deepEqual(e, inSolution.get(e.id), `${name}: ${e.id} is where the solution has it`);
+      }
+      assert.ok(question.output.notes?.some((n) => n.includes("answers hidden")));
+    }
+    // The curved arrows belong to the reactants: they stay.
+    const q = await runReaction(["--name=bronsted_hcl_h2o", "--answers=false"]);
+    assert.equal(arrowsOf(q.output).length, 2);
+    assert.ok(q.output.notes?.some((n) => /2 curved arrow\(s\) of the reactants stay/.test(n)));
+    const bad = runPython(["modules/reaction/render.py", "--name=arrhenius_hcl", "--answers=perhaps"]);
+    assert.notEqual(bad.status, 0);
+    assert.match(bad.stderr, /unknown --answers/);
+  },
+);
+
+test(
+  "--states and --coefficients: 2 NH3(g) + H2SO4(aq) -> 2 NH4+(aq) + SO42-(aq) is written, its states typeset small, and checked to balance",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    const { output, verification } = await runReaction(["--name=ammonia_sulfate"]);
+    assertNoFailures(verification);
+    const claims = output.elements.filter((e) => e.id.startsWith("eqn-")).map((e) => e.claim);
+    assert.deepEqual(claims, ["2 x NH3(g)", "H2SO4(aq)", "2 x NH4+(aq)", "SO42−(aq)"]);
+    // The coefficient is one token with its formula, then a small state run on the baseline.
+    assert.match(output.svg, /2\u00a0NH<tspan[^>]*>3<\/tspan><tspan font-size="[\d.]+" dy="-6.00">\(g\)<\/tspan>/);
+    const stateSize = Number(/<tspan font-size="([\d.]+)" dy="-?[\d.]+">\(aq\)<\/tspan>/.exec(output.svg)![1]);
+    assert.ok(stateSize < 30 && stateSize > 15, `a state symbol is smaller than its formula (30), got ${stateSize}`);
+    // On the baseline: H2SO4's state undoes exactly the drop of the subscript 4 before it.
+    assert.match(output.svg, /dy="6.00">4<\/tspan><tspan font-size="[\d.]+" dy="-6.00">\(aq\)/);
+    assert.ok(
+      output.notes?.some((n) => /^balance: atoms and charge balance \(H 8, N 2, O 4, S 1; charge 0\)/.test(n)),
+      JSON.stringify(output.notes),
+    );
+    // Per-component values in --display's own layout: one per component as written, or per distinct component.
+    const byHand = await runReaction(["--reaction=N#N.[H][H]>>N", "--coefficients=;3>>2", "--states=g;g>>g"]);
+    assertNoFailures(byHand.verification);
+    assert.deepEqual(
+      byHand.output.elements.filter((e) => e.id.startsWith("eqn-")).map((e) => e.claim),
+      ["N2(g)", "3 x H2(g)", "2 x NH3(g)"],
+    );
+    const empty = await runReaction(["--reaction=N#N.[H][H]>>N", "--coefficients=1;3>>2", "--states=;l>>"]);
+    assert.deepEqual(
+      empty.output.elements.filter((e) => e.id.startsWith("eqn-")).map((e) => e.claim),
+      ["N2", "3 x H2(l)", "2 x NH3"],
+      "empty = none",
+    );
+    // Hidden answers hide the products' states and coefficients with them.
+    const q = await runReaction(["--name=ammonia_sulfate", "--answers=false"]);
+    assertNoFailures(q.verification);
+    assert.deepEqual(
+      q.output.elements.filter((e) => e.id.startsWith("eqn-")).map((e) => e.claim),
+      ["2 x NH3(g)", "H2SO4(aq)", "?"],
+    );
+  },
+);
+
+test(
+  "the equation is checked to balance when coefficients or --balanced are given: refused naming the element or the charge that differs; reported, not enforced, otherwise",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    const script = "modules/reaction/render.py";
+    const wrongAtoms = runPython([script, "--reaction=N#N.[H][H]>>N", "--coefficients=1;2>>2"]);
+    assert.notEqual(wrongAtoms.status, 0);
+    assert.match(wrongAtoms.stderr, /not balanced -- H: 4 on the left, 6 on the right/);
+    assert.doesNotMatch(wrongAtoms.stderr, /N:/, "N balances and is not blamed");
+    const wrongCharge = runPython([script, "--reaction=[Ag+].[Cl-]>>[Ag+].[Cl]", "--balanced"]);
+    assert.notEqual(wrongCharge.status, 0);
+    assert.match(wrongCharge.stderr, /not balanced -- charge: 0 on the left, \+1 on the right/);
+    const unbalancedSmiles = runPython([script, "--reaction=N#N.[H][H]>>N", "--balanced"]);
+    assert.notEqual(unbalancedSmiles.status, 0, "repetitions are the coefficients --balanced checks");
+    assert.match(unbalancedSmiles.stderr, /H: 2 on the left, 3 on the right/);
+    // Repeating a component and numbering it are two ways of one thing: never both.
+    const both = runPython([script, "--reaction=N#N.[H][H].[H][H].[H][H]>>N.N", "--coefficients=1;3>>2"]);
+    assert.notEqual(both.status, 0);
+    assert.match(both.stderr, /written 3 times .* not both/);
+    assert.match(runPython([script, "--reaction=N#N.[H][H]>>N", "--coefficients=1;x>>2"]).stderr, /not a whole number/);
+    assert.match(
+      runPython([script, "--reaction=N#N.[H][H]>>N", "--coefficients=1>>2"]).stderr,
+      /--coefficients has 1 value\(s\) on the left/,
+    );
+    assert.match(
+      runPython([script, "--reaction=N#N.[H][H]>>N", "--states=g;gas>>g"]).stderr,
+      /'gas' is not a state symbol; known: s, l, g, aq/,
+    );
+    assert.match(runPython([script, "--reaction=N#N.[H][H]>>N", "--states=g;g"]).stderr, /--states must mirror the reaction/);
+    // Backward compatible: an unbalanced reaction without either flag still draws, and the notes say so.
+    const asWritten = await runReaction(["--reaction=N#N.[H][H]>>N"]);
+    assertNoFailures(asWritten.verification);
+    assert.ok(
+      asWritten.output.notes?.some((n) => /not balanced as written \(H: 2 on the left, 3 on the right; N: 2 on the left, 1 on the right\)/.test(n)),
+      JSON.stringify(asWritten.output.notes),
+    );
+    // Balanced by repetition and checked: the glucose combustion.
+    const glucose = await runReaction(["--name=glucose_combustion", "--balanced"]);
+    assertNoFailures(glucose.verification);
+    assert.ok(glucose.output.notes?.some((n) => /^balance: atoms and charge balance/.test(n)));
+    // Charge counts as well as atoms: a balanced ionic equation.
+    const ionic = await runReaction(["--reaction=[Ag+].[Cl-]>>[Ag]Cl", "--balanced"]);
+    assertNoFailures(ionic.verification);
+  },
+);
+
+test(
+  "every tile uses one atom-label size and one dot size: a bare ion (Cl-) is drawn like the atom labels of its neighbours",
+  { timeout: TIMEOUT_MS },
+  async () => {
+    assertRdkitAvailable();
+    for (const name of ["arrhenius_hcl", "bronsted_hcl_h2o", "complex_silver_ammonia", "bronsted_nh3_h2o"]) {
+      const { output, verification } = await runReaction([`--name=${name}`]);
+      assertNoFailures(verification);
+      const labelSizes = new Set(
+        [...output.svg.matchAll(/<text data-pr-id="m\d+-atom-\d+-label"[^>]* font-size="([\d.]+)"/g)].map((m) => m[1]),
+      );
+      assert.equal(labelSizes.size, 1, `${name}: atom labels in more than one size: ${[...labelSizes]}`);
+      const dotRadii = new Set(
+        [...output.svg.matchAll(/<g data-pr-id="m\d+-atom-\d+-(?:lp|rad)-\d+"[^>]*>(.*?)<\/g>/g)].flatMap((g) =>
+          [...g[1]!.matchAll(/ r="([\d.]+)"/g)].map((m) => m[1]),
+        ),
+      );
+      if (name !== "arrhenius_hcl") {
+        assert.equal(dotRadii.size, 1, `${name}: dots in more than one size: ${[...dotRadii]}`);
+      }
+    }
+    // arrhenius_hcl: the Cl- tile is a bare ion, HCl and H3O+ have bonds; one size for all three.
+    const { output } = await runReaction(["--name=arrhenius_hcl"]);
+    const claims = output.elements.filter((e) => e.kind === "label" && /atom-\d+-label$/.test(e.id));
+    assert.ok(claims.some((l) => /is Cl−$/.test(l.claim ?? "")), "the bare ion is a label of its own");
+    assert.ok(claims.some((l) => /is Cl$/.test(l.claim ?? "")), "chlorine in HCl is a label");
+    const sizes = new Set(
+      claims.map((l) => new RegExp(`data-pr-id="${l.id}"[^>]* font-size="([\\d.]+)"`).exec(output.svg)![1]),
+    );
+    assert.equal(sizes.size, 1);
   },
 );

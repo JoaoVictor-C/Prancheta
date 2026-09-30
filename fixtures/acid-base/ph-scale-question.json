@@ -1,0 +1,11 @@
+{
+  "preset": "acid-base",
+  "kind": "ph-scale",
+  "answers": false,
+  "substances": [
+    { "name": "suco de limão", "pH": 2.2 },
+    { "name": "água pura", "pH": 7 },
+    { "name": "solução A", "H": 0.001 }
+  ],
+  "indicators": ["alaranjado de metila"]
+}

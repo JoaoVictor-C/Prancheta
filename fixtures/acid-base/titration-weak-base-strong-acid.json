@@ -1,0 +1,7 @@
+{
+  "preset": "acid-base",
+  "kind": "titration",
+  "analyte": { "type": "base", "strength": "weak", "name": "NH₃", "pKb": 4.75, "concentration": 0.1, "volume": 25 },
+  "titrant": { "concentration": 0.1, "name": "HCl" },
+  "indicators": ["vermelho de metila"]
+}

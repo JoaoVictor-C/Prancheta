@@ -1,0 +1,7 @@
+{
+  "preset": "acid-base",
+  "kind": "titration",
+  "analyte": { "type": "acid", "strength": "strong", "name": "HCl", "concentration": 0.1, "volume": 25 },
+  "titrant": { "concentration": 0.1, "name": "NaOH" },
+  "indicators": ["azul de bromotimol", "alaranjado de metila"]
+}

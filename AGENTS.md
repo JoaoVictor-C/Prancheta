@@ -112,6 +112,7 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `distribution` | Normal, binomial and Poisson laws with an event shaded: the region's area is the printed probability (measured), boundaries with x and z, two-sided tails with α/2, the normal approximation with continuity correction, and the standardisation and arithmetic computed. | yes |
 | `probability-tree` | Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves. | yes |
 | `venn` | Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong. | yes |
+| `acid-base` | Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻]. | yes |
 
 ## Figure modules
 
@@ -269,6 +270,7 @@ resources:
 | `prancheta://preset/distribution` | distribution preset |
 | `prancheta://preset/probability-tree` | probability-tree preset |
 | `prancheta://preset/venn` | venn preset |
+| `prancheta://preset/acid-base` | acid-base preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

@@ -1,0 +1,17 @@
+{
+  "preset": "acid-base",
+  "kind": "ph-scale",
+  "substances": [
+    { "name": "suco gástrico", "pH": 1.5 },
+    { "name": "suco de limão", "pH": 2.2 },
+    { "name": "refrigerante", "pH": 3 },
+    { "name": "café", "pH": 5 },
+    { "name": "água pura", "pH": 7 },
+    { "name": "sangue", "pH": 7.4 },
+    { "name": "bicarbonato", "pH": 8.3 },
+    { "name": "amônia doméstica", "pH": 11.6 },
+    { "name": "solução A", "H": 0.001 },
+    { "name": "solução B", "OH": 0.0001 }
+  ],
+  "indicators": ["fenolftaleína", "azul de bromotimol"]
+}

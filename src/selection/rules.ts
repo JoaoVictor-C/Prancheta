@@ -1014,6 +1014,41 @@ export const RULES: Rule[] = [
     statement:
       "Overlapping sets are not a subset of the real line; intervals are drawn by number-line.",
   },
+
+  // --- acid-base-equilibrium -------------------------------------------------
+  {
+    id: "S-acid-base-favours-acid-base",
+    axis: "structure",
+    when: "acid-base-equilibrium",
+    preset: "acid-base",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A titration curve, a species-distribution diagram or the pH scale is drawn by acid-base: every point is computed from the equilibrium (equivalence, half-equivalence, pKa crossings, pH from [H⁺]), never typed.",
+  },
+  {
+    id: "S-acid-base-disqualifies-function-graph",
+    axis: "structure",
+    when: "acid-base-equilibrium",
+    preset: "function-graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A titration curve typed into function-graph leaves the curve, the equivalence point and the pKa read at half-equivalence free to disagree, and a weak acid's curve has no closed form.",
+  },
+  {
+    id: "S-acid-base-disqualifies-chart",
+    axis: "structure",
+    when: "acid-base-equilibrium",
+    preset: "chart",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A chart draws values it is handed; the pH along a titration is the root of a balance at every volume.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

@@ -42,8 +42,14 @@ function markdownFiles(): string[] {
 function relativeLinks(markdown: string): string[] {
   const links: string[] = [];
   const pattern = /\]\(([^)\s]+)\)/g;
+  // Code is not a link: a SMILES like `F[B](F)(F)` in backticks reads as
+  // "[B](F)" to the pattern above. Fenced blocks and inline code spans are
+  // blanked out first (same length, so nothing else shifts).
+  const prose = markdown
+    .replace(/```[\s\S]*?```/g, (m) => " ".repeat(m.length))
+    .replace(/`[^`\n]*`/g, (m) => " ".repeat(m.length));
   let match: RegExpExecArray | null;
-  while ((match = pattern.exec(markdown)) !== null) {
+  while ((match = pattern.exec(prose)) !== null) {
     const target = match[1]!;
     if (/^[a-z]+:\/\//i.test(target)) continue;
     if (target.startsWith("#")) continue;

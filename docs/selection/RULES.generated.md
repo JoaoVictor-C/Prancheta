@@ -717,3 +717,30 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 90
 - **Statement:** Overlapping sets are not a subset of the real line; intervals are drawn by number-line.
+
+## S-acid-base-favours-acid-base
+
+- **Axis:** structure
+- **When:** `acid-base-equilibrium`
+- **Preset:** `acid-base`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A titration curve, a species-distribution diagram or the pH scale is drawn by acid-base: every point is computed from the equilibrium (equivalence, half-equivalence, pKa crossings, pH from [H⁺]), never typed.
+
+## S-acid-base-disqualifies-function-graph
+
+- **Axis:** structure
+- **When:** `acid-base-equilibrium`
+- **Preset:** `function-graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A titration curve typed into function-graph leaves the curve, the equivalence point and the pKa read at half-equivalence free to disagree, and a weak acid's curve has no closed form.
+
+## S-acid-base-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `acid-base-equilibrium`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A chart draws values it is handed; the pH along a titration is the root of a balance at every volume.

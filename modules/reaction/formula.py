@@ -295,7 +295,8 @@ def _adduct(mol: "Chem.Mol") -> str | None:
     """
     if any(a.GetSymbol() == "C" for a in mol.GetAtoms()):
         return None
-    bridges = [
+    datives = [b for b in mol.GetBonds() if _is_dative(b)]
+    bridges = datives or [
         b for b in mol.GetBonds()
         if b.GetBeginAtom().GetFormalCharge() * b.GetEndAtom().GetFormalCharge() < 0
     ]
@@ -303,7 +304,10 @@ def _adduct(mol: "Chem.Mol") -> str | None:
         return None
     bond = bridges[0]
     a, b = bond.GetBeginAtom(), bond.GetEndAtom()
-    acceptor, donor = (a, b) if a.GetFormalCharge() < 0 else (b, a)
+    if datives:
+        acceptor, donor = b, a  # RDKit writes a dative bond donor->acceptor
+    else:
+        acceptor, donor = (a, b) if a.GetFormalCharge() < 0 else (b, a)
     t_acc = _terminals(acceptor, donor.GetIdx())
     t_don = _terminals(donor, acceptor.GetIdx())
     if t_acc is None or t_don is None:
@@ -315,6 +319,50 @@ def _adduct(mol: "Chem.Mol") -> str | None:
         return _spell([(s, t[s]) for s in sorted(t, key=_order_key)])
 
     return f"{spelled(t_acc)}{acceptor.GetSymbol()}{EN_DASH}{donor.GetSymbol()}{spelled(t_don)}"
+
+
+def _is_dative(bond: "Chem.Bond") -> bool:
+    return str(bond.GetBondType()) in ("DATIVE", "DATIVEONE")
+
+
+def _complex(mol: "Chem.Mol", charge: int) -> str | None:
+    """[Ag(NH3)2]+ for a coordination entity: one central atom that every dative bond (donor->acceptor) ends at, and
+    ligands that are what is left when it is taken away. A ligand of one atom is written bare ([CoCl4]2-), one of
+    several in parentheses; identical ligands are counted. None when the molecule is not that shape."""
+    datives = [b for b in mol.GetBonds() if _is_dative(b)]
+    if not datives:
+        return None
+    centres = {b.GetEndAtomIdx() for b in datives}
+    if len(centres) != 1:
+        return None
+    centre = mol.GetAtomWithIdx(next(iter(centres)))
+    if any(b.GetBeginAtomIdx() == centre.GetIdx() or not _is_dative(b) for b in centre.GetBonds()):
+        return None
+    pieces = Chem.FragmentOnBonds(mol, [b.GetIdx() for b in centre.GetBonds()], addDummies=False)
+    ligands: list[str] = []
+    for frag_atoms in Chem.GetMolFrags(pieces, asMols=False, sanitizeFrags=False):
+        if centre.GetIdx() in frag_atoms:
+            if len(frag_atoms) != 1:
+                return None
+            continue
+        frag = Chem.RWMol(mol)
+        for idx in sorted(set(range(mol.GetNumAtoms())) - set(frag_atoms), reverse=True):
+            frag.RemoveAtom(idx)
+        lig = frag.GetMol()
+        try:
+            Chem.SanitizeMol(lig)
+        except Exception:
+            return None
+        lig_counts, _ = composition(lig)
+        ligands.append(auto_display(lig, lig_counts, 0))
+    order = list(dict.fromkeys(ligands))
+    body = centre.GetSymbol()
+    for lig in order:
+        n = ligands.count(lig)
+        single = len(re.findall(r"[A-Z]", lig)) == 1 and not re.search(r"\d", lig)
+        body += (lig if single else f"({lig})") + (str(n) if n > 1 else "")
+    charge_text = "" if charge == 0 else (str(abs(charge)) if abs(charge) > 1 else "") + ("+" if charge > 0 else "-")
+    return f"[{body}]{charge_text}"
 
 
 def auto_display(mol: "Chem.Mol", counts: Counter, charge: int) -> str:
@@ -336,6 +384,9 @@ def auto_display(mol: "Chem.Mol", counts: Counter, charge: int) -> str:
     adduct = _adduct(Chem.RemoveHs(mol)) if mol.GetNumBonds() else None
     if adduct:
         return adduct
+    entity = _complex(Chem.RemoveHs(mol), charge) if mol.GetNumBonds() else None
+    if entity:
+        return entity
 
     symbols = set(counts)
     if symbols == {"H", "O"} and counts["H"] == 1 and counts["O"] == 1:

@@ -37,7 +37,21 @@ export type ModuleEntry = {
   path: string;
   /** Present when a module has more than one entry point worth naming. */
   note?: string;
+  /**
+   * The script takes `--answers=false` and then draws what an exercise
+   * gives, hiding what it asks (the modules' side of the presets' `answers`
+   * option). A sheet adds the flag to every statement figure of such a
+   * script; a script without it would refuse an unknown flag.
+   */
+  answers?: boolean;
 };
+
+/** The repertoire entry for a script path, if any. */
+export function entryForScript(path: string): ModuleEntry | undefined {
+  const norm = path.replace(/\\/g, "/").replace(/^\.\//, "");
+  for (const m of MODULES) for (const e of m.entries) if (e.path === norm) return e;
+  return undefined;
+}
 
 export type ModuleInfo = {
   id: string;
@@ -95,9 +109,10 @@ export const MODULES: ModuleInfo[] = [
       "2D skeletal chemical structures from SMILES, with stereo wedges -- one molecule, " +
       "or a whole reaction scheme laid out as an equation and its participants.",
     entries: [
-      { path: "modules/molecule/render.py", note: "one molecule; takes the shortcuts below" },
+      { path: "modules/molecule/render.py", note: "one molecule; takes the shortcuts below", answers: true },
       {
         path: "modules/reaction/render.py",
+        answers: true,
         note:
           "a reaction scheme; imports this module's own render() rather than computing " +
           "any chemistry of its own, and takes --name=glucose_combustion, photosynthesis, " +

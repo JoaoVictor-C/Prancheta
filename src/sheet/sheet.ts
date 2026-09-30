@@ -941,9 +941,13 @@ export async function renderSheetFigure(r: ResolvedFigure, cache?: FigureCache):
     // no answers to hide and no reading panel to lift.
     const m = r.figure.module;
     const { runAndVerifyModule } = await import("../modules/run.ts");
+    const { entryForScript } = await import("../modules/repertoire.ts");
+    // A statement's figure hides its answers here too: "complete a reação"
+    // draws the products as "?". Only for scripts that declare the flag.
+    const hides = r.kind === "q" && entryForScript(m.args[0] ?? "")?.answers === true && !m.args.some((a) => a.startsWith("--answers"));
     const { output, verification } = await runAndVerifyModule({
       command: m.command ?? "python",
-      args: m.args,
+      args: hides ? [...m.args, "--answers=false"] : m.args,
       input: { width: m.width ?? 720, height: m.height ?? 520 },
     });
     const fails = verification.checks.filter((c) => c.status === "fail");

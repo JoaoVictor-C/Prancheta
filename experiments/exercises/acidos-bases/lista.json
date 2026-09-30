@@ -28,7 +28,8 @@
               "args": [
                 "modules/reaction/render.py",
                 "--reaction=Cl.O>>[OH3+].[Cl-]",
-                "--display=HCl;H2O>>H3O+;Cl-"
+                "--display=HCl;H2O>>H3O+;Cl-",
+                "--answers=true"
               ]
             },
             "caption": "Ionização do HCl em água."
@@ -77,7 +78,8 @@
                 "modules/reaction/render.py",
                 "--reaction=N.O>>[NH4+].[OH-]",
                 "--display=NH3;H2O>>NH4+;OH-",
-                "--equilibrium"
+                "--equilibrium",
+                "--answers=true"
               ]
             },
             "caption": "Amônia em água."
@@ -102,12 +104,10 @@
             "module": {
               "args": [
                 "modules/reaction/render.py",
-                "--reaction=Cl.O>>[OH3+].[Cl-]",
-                "--display=HCl;H2O>>H3O+;Cl-",
-                "--lone-pairs"
+                "--name=bronsted_hcl_h2o"
               ]
             },
-            "caption": "A água como base: o par de elétrons do O recebe o próton do HCl."
+            "caption": "A água como base: um par de elétrons do O captura o H do HCl, e o par da ligação H–Cl fica com o Cl."
           }
         },
         {
@@ -122,7 +122,17 @@
           "level": "mid",
           "statement": "<p>O ácido clorídrico, \\(\\ce{HCl}\\), é um ácido forte; o ácido acético, \\(\\ce{CH3COOH}\\), é um ácido fraco. Qual das bases conjugadas, \\(\\ce{Cl-}\\) ou \\(\\ce{CH3COO-}\\), é a base mais forte? Justifique.</p>",
           "answer": "\\(\\ce{CH3COO-}\\): quanto mais fraco o ácido, mais forte a sua base conjugada.",
-          "solution": "<p>Um ácido forte doa o próton com facilidade e praticamente não o recebe de volta: a reação inversa quase não ocorre. Logo sua base conjugada, \\(\\ce{Cl-}\\), tem tendência muito pequena a receber próton — é uma base <b>muito fraca</b>.</p>$$\\ce{HCl + H2O -> H3O+ + Cl-}$$<p>Já o ácido acético ioniza pouco: o equilíbrio fica deslocado para a esquerda, porque o \\(\\ce{CH3COO-}\\) <b>recaptura</b> o próton com facilidade.</p>$$\\ce{CH3COOH + H2O <=> H3O+ + CH3COO-}$$<p>Regra geral dos pares conjugados: <b>ácido forte ⇔ base conjugada fraca; ácido fraco ⇔ base conjugada mais forte</b>. Por isso uma solução de acetato de sódio é levemente básica, e uma de cloreto de sódio é neutra.</p>"
+          "solution": "<p>Um ácido forte doa o próton com facilidade e praticamente não o recebe de volta: a reação inversa quase não ocorre. Logo sua base conjugada, \\(\\ce{Cl-}\\), tem tendência muito pequena a receber próton — é uma base <b>muito fraca</b>.</p>$$\\ce{HCl + H2O -> H3O+ + Cl-}$$<p>Já o ácido acético ioniza pouco: o equilíbrio fica deslocado para a esquerda, porque o \\(\\ce{CH3COO-}\\) <b>recaptura</b> o próton com facilidade.</p>$$\\ce{CH3COOH + H2O <=> H3O+ + CH3COO-}$$<p>Regra geral dos pares conjugados: <b>ácido forte ⇔ base conjugada fraca; ácido fraco ⇔ base conjugada mais forte</b>. Por isso uma solução de acetato de sódio é levemente básica, e uma de cloreto de sódio é neutra.</p><p>O ácido acético ainda doa o próton (é um ácido, afinal) porque o acetato é estabilizado por <b>ressonância</b>: a carga negativa se divide entre os dois oxigênios (figura). Mesmo assim, o acetato continua bem mais básico que o \\(\\ce{Cl-}\\).</p>{{figure}}",
+          "solutionFigure": {
+            "module": {
+              "args": [
+                "modules/molecule/render.py",
+                "--name=acetate",
+                "--resonance"
+              ]
+            },
+            "caption": "As duas formas de ressonância do íon acetato: a carga −1 se reparte entre os dois O."
+          }
         }
       ]
     },
@@ -139,7 +149,7 @@
         {
           "id": "3.2",
           "level": "easy",
-          "statement": "<p>As figuras mostram as estruturas da amônia e do trifluoreto de boro, com os pares de elétrons não ligantes. Quantos pares não ligantes há no átomo central de cada uma? Qual delas pode <b>doar</b> um par de elétrons e qual pode <b>recebê-lo</b>?</p>{{figure}}{{figure2}}",
+          "statement": "<p>As figuras mostram o esqueleto das moléculas de amônia e de trifluoreto de boro. Complete as estruturas de Lewis com os pares de elétrons não ligantes. Quantos pares não ligantes há no átomo central de cada uma? Qual delas pode <b>doar</b> um par de elétrons e qual pode <b>recebê-lo</b>?</p>{{figure}}{{figure2}}",
           "figure": [
             {
               "module": {
@@ -166,6 +176,32 @@
               "caption": "Trifluoreto de boro, BF₃."
             }
           ],
+          "solutionFigure": [
+            {
+              "module": {
+                "args": [
+                  "modules/molecule/render.py",
+                  "--smiles=[H]N([H])[H]",
+                  "--lone-pairs"
+                ],
+                "width": 360,
+                "height": 300
+              },
+              "caption": "NH₃: um par não ligante no N."
+            },
+            {
+              "module": {
+                "args": [
+                  "modules/molecule/render.py",
+                  "--smiles=FB(F)F",
+                  "--lone-pairs"
+                ],
+                "width": 360,
+                "height": 300
+              },
+              "caption": "BF₃: nenhum par no B; três em cada F."
+            }
+          ],
           "answer": "N do NH₃: 1 par (doa, base de Lewis). B do BF₃: nenhum par, só 6 elétrons de valência (recebe, ácido de Lewis).",
           "solution": "<p>O nitrogênio tem 5 elétrons de valência: usa 3 nas ligações N–H e sobra <b>um par não ligante</b>. Esse par pode ser doado: \\(\\ce{NH3}\\) é <b>base de Lewis</b>.</p><p>O boro tem 3 elétrons de valência e usa todos nas três ligações B–F: fica com apenas <b>6 elétrons</b> ao redor (octeto incompleto) e <b>nenhum par não ligante</b>. O orbital vazio pode receber um par: \\(\\ce{BF3}\\) é <b>ácido de Lewis</b>. Os pares que aparecem na figura estão nos flúores, não no boro.</p>"
         },
@@ -179,10 +215,20 @@
                 "modules/reaction/render.py",
                 "--reaction=FB(F)F.N>>F[B-](F)(F)[NH3+]",
                 "--display=BF3;NH3>>F3B-NH3",
-                "--lone-pairs"
+                "--lone-pairs",
+                "--answers=true"
               ]
             },
             "caption": "Formação do aduto F₃B–NH₃."
+          },
+          "solutionFigure": {
+            "module": {
+              "args": [
+                "modules/reaction/render.py",
+                "--name=lewis_bf3_nh3"
+              ]
+            },
+            "caption": "A seta curva sai do par não ligante do N e termina no B, que tem o orbital vazio."
           },
           "answer": "BF₃ é o ácido (recebe o par), NH₃ é a base (doa o par do N); forma-se uma ligação coordenada (dativa) N→B. Não há transferência de H⁺, logo Brønsted–Lowry não a explica.",
           "solution": "<p>O par não ligante do nitrogênio é doado ao orbital vazio do boro:</p>$$\\ce{BF3 + NH3 -> F3B-NH3}$$<p>• <b>Base de Lewis</b>: \\(\\ce{NH3}\\), doa o par.<br>• <b>Ácido de Lewis</b>: \\(\\ce{BF3}\\), recebe o par e completa o octeto do boro.<br>• A ligação N–B é <b>coordenada</b> (dativa): os dois elétrons vieram do mesmo átomo. Depois de formada, é uma ligação covalente comum. No produto, o N fica com carga formal +1 e o B com −1.</p><p>Nenhum próton muda de lugar, então a reação <b>não é</b> ácido–base de Brønsted–Lowry. É o exemplo clássico de que a teoria de Lewis é mais ampla.</p>"
@@ -192,7 +238,16 @@
           "level": "mid",
           "statement": "<p>O cloreto de prata é pouco solúvel em água, mas se dissolve em solução de amônia porque se forma o íon complexo diaminprata(I):</p>$$\\ce{Ag+ + 2 NH3 -> [Ag(NH3)2]+}$$<p>Identifique o ácido e a base de Lewis e explique por que o íon \\(\\ce{Ag+}\\) pode ser um ácido mesmo sem ter hidrogênio.</p>",
           "answer": "Ácido de Lewis: Ag⁺ (recebe pares em orbitais vazios); base de Lewis: NH₃ (doa o par do N). Na teoria de Lewis, ser ácido não depende de ter H.",
-          "solution": "<p>Cada molécula de \\(\\ce{NH3}\\) doa o par não ligante do nitrogênio ao \\(\\ce{Ag+}\\), formando duas ligações coordenadas N→Ag. O \\(\\ce{Ag+}\\) tem orbitais vazios capazes de receber esses pares: é o <b>ácido de Lewis</b>; a amônia é a <b>base de Lewis</b> (chamada de <b>ligante</b> na química de coordenação).</p><p>Nas teorias de Arrhenius e Brønsted–Lowry, o ácido precisa ter hidrogênio para liberar ou doar \\(\\ce{H+}\\). Em Lewis, o que define o ácido é <b>receber um par de elétrons</b>. Por isso cátions metálicos (\\(\\ce{Ag+}\\), \\(\\ce{Cu^2+}\\), \\(\\ce{Fe^3+}\\)) são ácidos de Lewis — e toda formação de complexo é uma reação ácido–base de Lewis.</p>"
+          "solution": "<p>Cada molécula de \\(\\ce{NH3}\\) doa o par não ligante do nitrogênio ao \\(\\ce{Ag+}\\), formando duas ligações coordenadas N→Ag. O \\(\\ce{Ag+}\\) tem orbitais vazios capazes de receber esses pares: é o <b>ácido de Lewis</b>; a amônia é a <b>base de Lewis</b> (chamada de <b>ligante</b> na química de coordenação).</p><p>Nas teorias de Arrhenius e Brønsted–Lowry, o ácido precisa ter hidrogênio para liberar ou doar \\(\\ce{H+}\\). Em Lewis, o que define o ácido é <b>receber um par de elétrons</b>. Por isso cátions metálicos (\\(\\ce{Ag+}\\), \\(\\ce{Cu^2+}\\), \\(\\ce{Fe^3+}\\)) são ácidos de Lewis — e toda formação de complexo é uma reação ácido–base de Lewis.</p>{{figure}}",
+          "solutionFigure": {
+            "module": {
+              "args": [
+                "modules/reaction/render.py",
+                "--name=complex_silver_ammonia"
+              ]
+            },
+            "caption": "As setas N→Ag são as ligações coordenadas: o par de cada N passou a ser a ligação."
+          }
         }
       ]
     },
@@ -212,6 +267,55 @@
           "statement": "<p>Julgue cada afirmação como verdadeira (V) ou falsa (F), justificando as falsas.</p><p>a) Todo ácido de Arrhenius é também um ácido de Brønsted–Lowry.<br>b) Toda base de Brønsted–Lowry é também uma base de Lewis.<br>c) Todo ácido de Lewis é também um ácido de Brønsted–Lowry.<br>d) Numa reação ácido–base de Lewis sempre há transferência de H⁺.<br>e) Em água, o íon \\(\\ce{OH-}\\) é base de Brønsted–Lowry e também de Lewis.</p>",
           "answer": "a) V · b) V · c) F · d) F · e) V",
           "solution": "<p>a) <b>V</b>. Se uma substância libera H⁺ em água, ela está doando esse próton à água: é doadora de próton.<br>b) <b>V</b>. Para receber um próton, a base precisa de um par de elétrons para formar a ligação com o H⁺: logo doa par, é base de Lewis.<br>c) <b>F</b>. \\(\\ce{BF3}\\), \\(\\ce{AlCl3}\\) e \\(\\ce{Ag+}\\) são ácidos de Lewis e não têm próton para doar.<br>d) <b>F</b>. Em \\(\\ce{BF3 + NH3 -> F3B-NH3}\\) nenhum H⁺ é transferido; o que caracteriza Lewis é o par de elétrons.<br>e) <b>V</b>. Em \\(\\ce{H3O+ + OH- -> 2 H2O}\\), o OH⁻ recebe um próton (Brønsted) usando um par não ligante do oxigênio (Lewis).</p><p>Resumo: as definições são cada vez mais amplas — Arrhenius ⊂ Brønsted–Lowry ⊂ Lewis.</p>"
+        },
+        {
+          "id": "4.3",
+          "level": "mid",
+          "statement": "<p>A figura mostra a curva de titulação de 25 mL de ácido acético, \\(\\ce{CH3COOH}\\), 0,1 mol/L com \\(\\ce{NaOH}\\) 0,1 mol/L (\\(\\mathrm{p}K_a = 4{,}74\\)).</p>{{figure}}<p>a) Qual o volume de NaOH no ponto de equivalência?<br>b) O pH no ponto de equivalência é maior, menor ou igual a 7? Explique usando a teoria de Brønsted–Lowry.<br>c) Quanto vale o pH quando metade do ácido foi neutralizada? Por quê?</p>",
+          "figure": {
+            "spec": {
+              "preset": "acid-base",
+              "kind": "titration",
+              "analyte": {
+                "type": "acid",
+                "strength": "weak",
+                "name": "CH₃COOH",
+                "pKa": 4.74,
+                "concentration": 0.1,
+                "volume": 25
+              },
+              "titrant": {
+                "concentration": 0.1,
+                "name": "NaOH"
+              },
+              "indicators": [
+                "fenolftaleína"
+              ]
+            }
+          },
+          "answer": "a) 25 mL. b) Maior que 7 (≈ 8,72): o acetato formado é uma base de Brønsted e recebe próton da água. c) pH = pKa = 4,74.",
+          "solution": "<p>a) No ponto de equivalência, a quantidade de base adicionada iguala a de ácido: \\(n = 0{,}1 \\times 25 = 2{,}5\\) mmol, logo \\(V = 2{,}5 / 0{,}1 = 25\\) mL.</p><p>b) Nesse ponto, todo o ácido virou acetato, a <b>base conjugada</b> de um ácido fraco. Pela teoria de Brønsted–Lowry, o acetato recebe próton da água e libera \\(\\ce{OH-}\\):</p>$$\\ce{CH3COO- + H2O <=> CH3COOH + OH-}$$<p>Por isso a solução no ponto de equivalência é <b>básica</b>: pH ≈ 8,72 (figura). É o mesmo raciocínio do exercício 2.5, e é também por isso que o indicador certo é a fenolftaleína, que muda de cor nessa região.</p><p>c) Com metade do ácido neutralizada, \\([\\ce{CH3COOH}] = [\\ce{CH3COO-}]\\), e a expressão de \\(K_a\\) dá \\([\\ce{H3O+}] = K_a\\), ou seja, <b>pH = pKa = 4,74</b>. É assim que se mede o pKa de um ácido numa titulação.</p>{{figure}}",
+          "solutionFigure": {
+            "spec": {
+              "preset": "acid-base",
+              "kind": "titration",
+              "analyte": {
+                "type": "acid",
+                "strength": "weak",
+                "name": "CH₃COOH",
+                "pKa": 4.74,
+                "concentration": 0.1,
+                "volume": 25
+              },
+              "titrant": {
+                "concentration": 0.1,
+                "name": "NaOH"
+              },
+              "indicators": [
+                "fenolftaleína"
+              ]
+            }
+          }
         }
       ]
     }

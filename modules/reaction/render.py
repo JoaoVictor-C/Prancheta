@@ -15,7 +15,15 @@ correct -- the core measures that. See decision 0005.
 Flags: --name= / --reaction=, --conditions=, --theme=print|light|dark (print is
 the default), --display= (textbook form of each component, CHECKED against the
 computed formula: see formula.py), --equilibrium (a reversible arrow),
---lone-pairs (dots for non-bonding pairs in the structures), --misdeclare.
+--lone-pairs (dots for non-bonding pairs in the structures), --arrows= (curved
+electron-pushing arrows, verified: see arrows.py), --dative=arrow|line,
+--states=g;l>>aq;aq (state symbols, from the closed set s, l, g, aq),
+--coefficients=1;3>>2 (real stoichiometric coefficients, one per component;
+the equation is then CHECKED to balance in atoms and charge), --balanced (the
+same check on the coefficients the reaction SMILES implies by repeating a
+component), --answers=true|false (false: the products are not drawn, a "?"
+stands where they are; the curved arrows, which belong to the reactants, stay),
+--misdeclare.
 
 The canvas is trimmed to the drawing; the requested width/height are ignored
 except that the structures are never scaled above their natural size.
@@ -42,11 +50,13 @@ from render import (  # noqa: E402
     DEFAULT_THEME,
     bare_atom_hydrogens,
     render as render_molecule,
+    embed_tile,
     runs_plain,
     runs_svg,
     runs_width,
 )
 import formula  # noqa: E402
+import arrows as arrow_module  # noqa: E402
 
 from rdkit import Chem, RDLogger  # noqa: E402
 
@@ -96,28 +106,79 @@ NAMED: dict[str, dict[str, Any]] = {
         "display": "NH3;H2O>>NH4+;OH-",
         "equilibrium": True,
     },
+    # Atom maps ([B:1], [NH3:2]) only name atoms for the curved arrows; the
+    # formulas and the drawing are those of the plain species.
     "lewis_bf3_nh3": {
-        "reaction": "FB(F)F.N>>F[B-](F)(F)[NH3+]",
+        "reaction": "F[B:1](F)F.[NH3:2]>>F[B-](F)(F)[NH3+]",
         "conditions": "",
         "display": "BF3;NH3>>F3B-NH3",
         "lone_pairs": True,
+        "arrows": "lp:2>1",
+    },
+    "bronsted_hcl_h2o": {
+        "reaction": "[Cl:1][H:2].[OH2:3]>>[OH3+].[Cl-]",
+        "conditions": "",
+        "display": "HCl;H2O>>H3O+;Cl-",
+        "lone_pairs": True,
+        "arrows": "lp:3>2;bond:2-1>1",
+    },
+    "bronsted_nh3_h2o": {
+        "reaction": "[NH3:1].[H:2][OH:3]>>[NH4+].[OH-]",
+        "conditions": "",
+        "display": "NH3;H2O>>NH4+;OH-",
+        "equilibrium": True,
+        "lone_pairs": True,
+        "arrows": "lp:1>2;bond:2-3>3",
+    },
+    "complex_silver_ammonia": {
+        "reaction": "[Ag+].N.N>>N->[Ag+]<-N",
+        "conditions": "",
+        "display": "Ag+;NH3>>[Ag(NH3)2]+",
+        "lone_pairs": True,
+    },
+    # Equations with state symbols and numbered coefficients, checked to balance.
+    "haber_process": {
+        "reaction": "N#N.[H][H]>>N",
+        "conditions": "Fe, 450 °C",
+        "coefficients": "1;3>>2",
+        "states": "g;g>>g",
+    },
+    "ammonia_sulfate": {
+        "reaction": "N.OS(=O)(=O)O>>[NH4+].[O-]S(=O)(=O)[O-]",
+        "conditions": "",
+        "coefficients": "2;1>>2;1",
+        "states": "g;aq>>aq;aq",
     },
 }
+STATES = ("s", "l", "g", "aq")  # the closed set --states accepts
+NBSP = chr(0xA0)  # between a coefficient and its formula: "2 NH3"
 
 TILE_MAX_W, TILE_MAX_H = 300.0, 230.0
 STRUCT_FONT = 18.0  # atom labels in the structure row
 STRUCT_BOND = 58.0  # bond length in the structure row
+STRUCT_DOT = 2.7  # lone-pair dot radius in EVERY tile of the structure row (a bare ion's too): larger than a lone molecule's, it is read from further
 TILE_GAP = 30.0
 ARROW_W = 130.0
 PAD = 20.0
-ID_ATTR = re.compile(r'data-pr-id="([^"]*)"')
-BG_RECT = re.compile(r'<rect data-pr-bg="1"[^>]*/>')
 
 EQN_FONT = 30.0
 EQN_Y = 50.0
 EQN_GAP = 18.0
 PLUS_FONT = 24.0
 COEFF_BAND = 20.0  # room above the structures for a "6x" when some coefficient is above 1
+
+
+def strip_maps(token: str) -> str:
+    """The component without atom-map numbers ([NH3:2] -> N): maps only ADDRESS atoms (for --arrows), so the
+    formula, the display check, the textbook writer and the coefficient count all see the plain species."""
+    if ":" not in token:
+        return token
+    mol = Chem.MolFromSmiles(token)
+    if mol is None:
+        raise ValueError(f"not a valid SMILES string: {token!r}")
+    for atom in mol.GetAtoms():
+        atom.SetAtomMapNum(0)
+    return Chem.MolToSmiles(mol)
 
 
 def structural_smiles(smiles: str) -> str:
@@ -150,61 +211,24 @@ def auto_runs(mol: "Chem.Mol", counts: Counter, charge: int) -> list[formula.Run
     return formula.verify_display(text, counts, charge, hill_text(mol), "the automatic writer")
 
 
+def signed(n: int) -> str:
+    return f"{n:+d}" if n else "0"
+
+
 def est_text_width(text: str, font: float) -> float:
     """A layout budget for plain text, not a real measurement -- Python has no
     font engine, and the checks verify the rendered text, not this estimate."""
     return sum(font * 0.64 for _ in text)
 
 
-def embed(mol_output: dict[str, Any], tx: float, ty: float, prefix: str) -> tuple[str, list[dict[str, Any]]]:
-    """Wraps one molecule sub-render at (tx, ty), with every declared id and
-    declaredBox rewritten into this figure's shared id-space and canvas space.
-
-    The alternative -- letting each molecule keep its own bare ids -- breaks
-    the very first time two reactants declare "atom-0-label", which every
-    reaction with more than one component does. A collision here is silent:
-    the LAST element with a given id wins verification, and every earlier one
-    goes unchecked without any check ever reporting a failure. Prefixing is
-    the only fix that keeps the earlier ones checked at all.
-    """
-    svg = mol_output["svg"]
-    inner_start = svg.index(">", svg.index("<svg")) + 1
-    inner_end = svg.rindex("</svg>")
-    inner = svg[inner_start:inner_end]
-    # Drop this molecule's own background rect -- the reaction figure paints
-    # one shared background, and a second opaque rect per tile would occlude
-    # anything drawn behind it (a "+" sign, an earlier tile's overhang).
-    inner = BG_RECT.sub("", inner, count=1)
-    inner = ID_ATTR.sub(lambda m: f'data-pr-id="{prefix}-{m.group(1)}"', inner)
-    wrapped = f'<g transform="translate({tx:.2f} {ty:.2f})">{inner}</g>'
-
-    elements: list[dict[str, Any]] = []
-    for element in mol_output["elements"]:
-        entry: dict[str, Any] = {
-            "id": f"{prefix}-{element['id']}",
-            "kind": element["kind"],
-        }
-        if "claim" in element:
-            entry["claim"] = element["claim"]
-        if "owner" in element:
-            entry["owner"] = f"{prefix}-{element['owner']}"
-        if "declaredBox" in element:
-            box = element["declaredBox"]
-            entry["declaredBox"] = {
-                "x": round(box["x"] + tx, 2),
-                "y": round(box["y"] + ty, 2),
-                "width": box["width"],
-                "height": box["height"],
-            }
-        elements.append(entry)
-    return wrapped, elements
+embed = embed_tile  # the id/box rewriting lives with the molecule module, which the resonance row shares
 
 
-def parse_display(display: str, n_lhs_tokens: int, n_rhs_tokens: int) -> tuple[list[str], list[str]]:
+def parse_display(display: str, n_lhs_tokens: int, n_rhs_tokens: int, flag: str = "--display") -> tuple[list[str], list[str]]:
     """`A;B>>C;D` -> (["A", "B"], ["C", "D"]). Either side may be empty; so may a component."""
     if ">>" not in display:
         raise formula.DisplayError(
-            f"--display must mirror the reaction: components separated by ';' and the sides by '>>' (got {display!r})"
+            f"{flag} must mirror the reaction: components separated by ';' and the sides by '>>' (got {display!r})"
         )
     lhs, rhs = display.split(">>", 1)
     return [c.strip() for c in lhs.split(";")] if lhs.strip() else [], [
@@ -223,6 +247,12 @@ def render(
     display: str | None = None,
     equilibrium: bool = False,
     lone_pairs: bool = False,
+    arrows: str | None = None,
+    dative: str = "arrow",
+    answers: bool = True,
+    states: str | None = None,
+    coefficients: str | None = None,
+    balanced: bool = False,
 ) -> dict[str, Any]:
     if ">>" not in reaction:
         raise ValueError(f"not a reaction SMILES (expected 'A.B>>C.D'): {reaction!r}")
@@ -230,9 +260,18 @@ def render(
         raise ValueError(f"unknown theme {theme!r}; known: {', '.join(THEMES)}")
     ink, dim, paper = THEMES[theme]["ink"], THEMES[theme]["dim"], THEMES[theme]["bg"]
     lhs, rhs = reaction.split(">>", 1)
+    arrow_list = arrow_module.parse(arrows) if arrows else []
+    if arrow_list:
+        lone_pairs = True  # an arrow leaves a lone pair: the pairs must be drawn for it to leave from
+
+    # The first way each component was written, atom maps and all: that is what
+    # is drawn, so a map number in it still names an atom of the drawing.
+    mapped_form: dict[str, str] = {}
+    for token in [t for t in lhs.split(".") if t] + [t for t in rhs.split(".") if t]:
+        mapped_form.setdefault(strip_maps(token), token)
 
     def tokens_of(text: str) -> list[str]:
-        return [token for token in text.split(".") if token]
+        return [strip_maps(token) for token in text.split(".") if token]
 
     def side(text: str) -> list[tuple[str, int]]:
         toks = tokens_of(text)
@@ -245,6 +284,68 @@ def render(
 
     reactants, products = side(lhs), side(rhs)
 
+    def align(flag: str, text: str, given: list[str], side_name: str, toks: list[str]) -> list[tuple[str, str]]:
+        """A flag's per-component values, `A;B` for one side, matched to that side's components: one value per
+        component as written, or one per distinct component."""
+        unique = list(dict.fromkeys(toks))
+        if not given:
+            return []
+        if len(given) == len(toks):
+            pairs = list(zip(toks, given))
+        elif len(given) == len(unique):
+            pairs = list(zip(unique, given))
+        else:
+            raise formula.DisplayError(
+                f"{flag} has {len(given)} value(s) on the {side_name} side but the reaction has "
+                f"{len(toks)} component(s) ({len(unique)} distinct): give one per component, in order"
+            )
+        out: dict[str, str] = {}
+        for smiles, value in pairs:
+            if smiles in out and out[smiles] != value:
+                raise formula.DisplayError(f"{flag} gives the same component {smiles!r} two values on the {side_name} side: {out[smiles]!r} and {value!r}")
+            out[smiles] = value
+        return list(out.items())
+
+    # --- coefficients: numbers given here, or the repetitions counted above ------
+    if coefficients is not None:
+        c_lhs, c_rhs = parse_display(coefficients, 0, 0, "--coefficients")
+        numbered: list[list[tuple[str, int]]] = []
+        for side_name, text, given, current in (("left", lhs, c_lhs, reactants), ("right", rhs, c_rhs, products)):
+            toks = tokens_of(text)
+            for smiles, n in current:
+                if n > 1:
+                    raise formula.DisplayError(
+                        f"--coefficients: {smiles!r} is written {n} times on the {side_name} side of --reaction; write it "
+                        "once and give its coefficient there, not both"
+                    )
+            values = dict(align("--coefficients", text, given, side_name, toks))
+            row: list[tuple[str, int]] = []
+            for smiles, _ in current:
+                raw = values.get(smiles, "").strip()
+                if raw == "":
+                    row.append((smiles, 1))
+                    continue
+                if not re.fullmatch(r"[1-9]\d*", raw):
+                    raise formula.DisplayError(f"--coefficients: {raw!r} is not a whole number of 1 or more (component {smiles!r})")
+                row.append((smiles, int(raw)))
+            numbered.append(row)
+        reactants, products = numbered
+
+    # --- state symbols, from a closed set ---------------------------------------
+    state_of: dict[tuple[str, str], str] = {}
+    if states is not None:
+        s_lhs, s_rhs = parse_display(states, 0, 0, "--states")
+        for side_name, key, text, given in (("left", "lhs", lhs, s_lhs), ("right", "rhs", rhs, s_rhs)):
+            for smiles, value in align("--states", text, given, side_name, tokens_of(text)):
+                symbol = value.strip().strip("()").strip()
+                if symbol == "":
+                    continue
+                if symbol not in STATES:
+                    raise formula.DisplayError(
+                        f"--states: {value!r} is not a state symbol; known: {', '.join(STATES)}"
+                    )
+                state_of[(key, smiles)] = symbol
+
     # --- what each component is, computed; and what it is written as ---------
     computed: dict[str, tuple[Counter, int, str]] = {}
     for smiles, _ in reactants + products:
@@ -255,6 +356,32 @@ def render(
             raise ValueError(f"not a valid SMILES string: {smiles!r}")
         counts, charge = formula.composition(mol)
         computed[smiles] = (counts, charge, hill_text(mol))
+
+    # --- does the equation balance? Atoms (hydrogens included) and charge, from the computed formulas x coefficients
+    def totals(components: list[tuple[str, int]]) -> tuple[Counter, int]:
+        atoms: Counter = Counter()
+        charge_total = 0
+        for smiles, n in components:
+            counts, charge, _ = computed[smiles]
+            for element, k in counts.items():
+                atoms[element] += n * k
+            charge_total += n * charge
+        return atoms, charge_total
+
+    left_atoms, left_charge = totals(reactants)
+    right_atoms, right_charge = totals(products)
+    differences = [
+        f"{element}: {left_atoms[element]} on the left, {right_atoms[element]} on the right"
+        for element in sorted(set(left_atoms) | set(right_atoms))
+        if left_atoms[element] != right_atoms[element]
+    ]
+    if left_charge != right_charge:
+        differences.append(f"charge: {signed(left_charge)} on the left, {signed(right_charge)} on the right")
+    if differences and (coefficients is not None or balanced):
+        raise ValueError(
+            "the equation is not balanced -- " + "; ".join(differences)
+            + ("" if coefficients is not None else " (the coefficients are the repetitions in --reaction)")
+        )
 
     typed: dict[str, str] = {}  # smiles -> the display string the author gave it
     if display is not None:
@@ -301,30 +428,43 @@ def render(
             seen_smiles[smiles] = count
             order.append(smiles)
 
-    tiles: list[dict[str, Any]] = []
-    for i, smiles in enumerate(order):
-        drawn = structural_smiles(smiles)
-        params = Chem.SmilesParserParams()
-        params.removeHs = False  # explicit hydrogens are atoms here, not implicit counts
-        probe = Chem.MolFromSmiles(drawn, params)
-        # A species AddHs cannot turn into a real skeleton -- a bare ion like
-        # [Cl-] or [Na+], one atom and nothing to bond -- is a single label
-        # sized for sitting AMONG bond lines in a full structure; alone next to
-        # a full skeletal drawing that would read as barely there, so it is
-        # drawn at the equation's weight.
-        font_px = 34.0 if probe is not None and probe.GetNumAtoms() == 1 else STRUCT_FONT
-        out = render_molecule(
-            TILE_MAX_W, TILE_MAX_H, drawn, misdeclare=False, theme=theme, lone_pairs=lone_pairs, font_px=font_px,
-            bond_px=STRUCT_BOND,
-        )
-        tiles.append({"smiles": smiles, "out": out, "w": float(out["_size"][0]), "h": float(out["_size"][1])})
+    def draw_tiles(hints: dict[int, list[tuple[int, float, str]]]) -> list[dict[str, Any]]:
+        drawn_tiles: list[dict[str, Any]] = []
+        for i, smiles in enumerate(order):
+            drawn = structural_smiles(mapped_form.get(smiles, smiles))
+            # EVERY tile is drawn at one atom-label size and one dot size, a bare
+            # ion ([Cl-], [Ag+]) included. An earlier version drew a bare ion at the
+            # equation weight (34 px, bigger dots) so it would not look barely
+            # there beside a skeleton; it then read as a different kind of thing
+            # from the atom labels of its neighbours, which it is not.
+            out = render_molecule(
+                TILE_MAX_W, TILE_MAX_H, drawn, misdeclare=False, theme=theme, lone_pairs=lone_pairs,
+                font_px=STRUCT_FONT, bond_px=STRUCT_BOND, dative=dative, dot_px=STRUCT_DOT, face=hints.get(i),
+            )
+            drawn_tiles.append({"smiles": smiles, "out": out, "w": float(out["_size"][0]), "h": float(out["_size"][1])})
+        return drawn_tiles
+
+    tiles = draw_tiles({})
+    reactant_order = [smiles for smiles, _ in reactants]
+    if arrow_list:
+        if set(reactant_order) & {s for s, _ in products}:
+            raise ValueError("--arrows: a component that is both a reactant and a product cannot be addressed unambiguously")
+        # Arrows address the reactants as drawn (explicit hydrogens included),
+        # component n being the n-th reactant as written -- which is also the
+        # n-th tile, reactants coming first.
+        arrow_tiles = [
+            arrow_module.Tile(n + 1, runs_plain(written[smiles]), tiles[order.index(smiles)]["out"]["_mol"])
+            for n, smiles in enumerate(reactant_order)
+        ]
+        arrow_module.verify(arrow_list, arrow_tiles)
+        tiles = draw_tiles(arrow_module.face_hints(arrow_list))
 
     any_coefficient = any(seen_smiles[t["smiles"]] > 1 for t in tiles)
     row_h = max((t["h"] for t in tiles), default=0.0)
     row2_w = sum(t["w"] for t in tiles) + TILE_GAP * max(len(tiles) - 1, 0)
 
     # --- row 1: the equation, letters and numbers only -----------------------
-    def build_equation(x0: float) -> tuple[list[str], list[dict[str, Any]], float]:
+    def build_equation(x0: float, hide_products: bool = False) -> tuple[list[str], list[dict[str, Any]], float]:
         eq: list[str] = []
         els: list[dict[str, Any]] = []
         cursor = x0
@@ -344,11 +484,19 @@ def render(
 
         def place_side(components: list[tuple[str, int]], side_name: str) -> None:
             nonlocal token_index
+            if hide_products and side_name == "rhs":
+                # The question: what the products are is what is asked, so one "?" stands in for all of them.
+                place([("?", "n")], EQN_FONT, 700, ink, f"eqn-{side_name}-{token_index}", "?")
+                token_index += 1
+                return
             for i, (smiles, count) in enumerate(components):
                 if i > 0:
                     place([("+", "n")], PLUS_FONT, 400, dim, None, None)
-                runs = ([(str(count), "n")] if count > 1 else []) + written[smiles]
-                shown = runs_plain(written[smiles])
+                state = state_of.get((side_name, smiles))
+                state_runs: list[formula.Run] = [(f"({state})", "state")] if state else []
+                # "2 NH3": the coefficient, a no-break space, the formula: one token at one baseline.
+                runs = ([(f"{count}{NBSP}", "n")] if count > 1 else []) + written[smiles] + state_runs
+                shown = runs_plain(written[smiles]) + (f"({state})" if state else "")
                 place(
                     runs, EQN_FONT, 700, ink, f"eqn-{side_name}-{token_index}",
                     f"{count} x {shown}" if count > 1 else shown,
@@ -426,15 +574,42 @@ def render(
     _, _, eqn_end = build_equation(0.0)
     content_w = max(eqn_end, row2_w)
     canvas_w = round(content_w + 2 * PAD + 0.5)
-    equation, eq_elements, _ = build_equation((canvas_w - eqn_end) / 2)
+    # The question keeps the solution canvas and the solution x for every reactant: the equation is laid out as
+    # the full one and only what stands where the products are differs.
+    equation, eq_elements, _ = build_equation((canvas_w - eqn_end) / 2, hide_products=not answers)
     elements.extend(eq_elements)
 
     # --- row 2: a real structural drawing for EVERY participant ---------------
     row2_top = EQN_Y + 32.0 + (COEFF_BAND if any_coefficient else 0.0)
+
+    # Curved arrows are planned in the row's own frame (y = 0 at the row's
+    # top), because how far they arc above or below the tiles decides where
+    # the row goes and how tall the canvas is.
+    planned: list[dict[str, Any]] = []
+    arrow_bottom = 0.0
+    if arrow_list:
+        x = (canvas_w - row2_w) / 2
+        placed: list[arrow_module.Placed] = []
+        coeff_boxes: list[tuple[float, float, float, float]] = []
+        for tile in tiles:
+            ty_rel = (row_h - tile["h"]) / 2
+            placed.append(arrow_module.Placed(tile["out"]["_geometry"], x, ty_rel))
+            if seen_smiles[tile["smiles"]] > 1:
+                coeff_boxes.append((x + tile["w"] / 2 - 14, ty_rel - 12, x + tile["w"] / 2 + 14, ty_rel + 8))
+            x += tile["w"] + TILE_GAP
+        planned = arrow_module.plan(arrow_list, placed, (PAD / 2, canvas_w - PAD / 2), coeff_boxes)
+        top = min(p["box"][1] for p in planned)
+        if top < 4.0:
+            row2_top += 4.0 - top
+        arrow_bottom = max(p["box"][3] for p in planned) - row_h
     cursor = (canvas_w - row2_w) / 2
+    product_only = {smiles for smiles, _ in products} - {smiles for smiles, _ in reactants}
     for i, tile in enumerate(tiles):
         prefix = f"m{i}"
         ty = row2_top + (row_h - tile["h"]) / 2
+        if not answers and tile["smiles"] in product_only:
+            cursor += tile["w"] + TILE_GAP  # not drawn, but its room is kept
+            continue
         wrapped, mol_elements = embed(tile["out"], cursor, ty, prefix)
         structures.append(wrapped)
         elements.extend(mol_elements)
@@ -452,7 +627,12 @@ def render(
             )
         cursor += tile["w"] + TILE_GAP
 
-    canvas_h = round(row2_top + row_h + PAD * 0.4 + 0.5) if tiles else round(EQN_Y + PAD * 2)
+    canvas_h = round(row2_top + row_h + max(arrow_bottom, 0.0) + PAD * 0.4 + 0.5) if tiles else round(EQN_Y + PAD * 2)
+
+    arrow_svg = ""
+    if planned:
+        arrow_svg, arrow_elements = arrow_module.svg_and_elements(planned, ink, row2_top, lambda a: a.text)
+        elements.extend(arrow_elements)
 
     if misdeclare:
         elements.append(
@@ -474,12 +654,33 @@ def render(
         f'<rect x="0" y="0" width="{canvas_w}" height="{canvas_h}" fill="{paper}"/>'
         f'<g data-pr-layer="equation">{"".join(equation)}</g>'
         f'<g data-pr-layer="structures">{"".join(structures)}</g>'
-        f"</svg>"
+        + (f'<g data-pr-layer="electron-arrows">{arrow_svg}</g>' if arrow_svg else "")
+        + "</svg>"
     )
 
     notes = []
+    if differences:
+        notes.append("balance: not balanced as written (" + "; ".join(differences) + ") -- not checked, no --coefficients or --balanced")
+    else:
+        notes.append(
+            "balance: atoms and charge balance ("
+            + ", ".join(f"{k} {v}" for k, v in sorted(left_atoms.items()))
+            + f"; charge {signed(left_charge)})"
+        )
+    if state_of:
+        notes.append(f"state symbols from the closed set {', '.join(STATES)}: {len(state_of)} component(s)")
+    if not answers:
+        notes.append(
+            "answers hidden: the products are not drawn and a ? stands in the equation; "
+            + (f"{len(planned)} curved arrow(s) of the reactants stay" if planned else "no curved arrows")
+        )
     if display is not None and typed:
         notes.append(f"display forms checked against the computed formula: {len(typed)} component(s)")
+    if planned:
+        notes.append(
+            f"{len(planned)} curved arrow(s) verified: "
+            + "; ".join(f"{p['arrow'].text} ({p['arrow'].why})" for p in planned)
+        )
     if misdeclare:
         notes.append(
             "misdeclare mode: a phantom reagent label declared, and the arrow's own "
@@ -494,6 +695,16 @@ def main() -> int:
     misdeclare = "--misdeclare" in args
     equilibrium = "--equilibrium" in args
     lone_pairs = "--lone-pairs" in args
+    arrows = next((a.split("=", 1)[1] for a in args if a.startswith("--arrows=")), None)
+    states = next((a.split("=", 1)[1] for a in args if a.startswith("--states=")), None)
+    coefficients = next((a.split("=", 1)[1] for a in args if a.startswith("--coefficients=")), None)
+    balanced = "--balanced" in args
+    answers_arg = next((a.split("=", 1)[1].lower() for a in args if a.startswith("--answers=")), "true")
+    if answers_arg not in ("true", "false"):
+        raise SystemExit(f"unknown --answers={answers_arg!r}; known: true, false")
+    dative = next((a.split("=", 1)[1] for a in args if a.startswith("--dative=")), "arrow")
+    if dative not in ("arrow", "line"):
+        raise SystemExit(f"unknown --dative={dative!r}; known: arrow, line")
     reaction_arg = next((a for a in args if a.startswith("--reaction=")), None)
     name_arg = next((a for a in args if a.startswith("--name=")), None)
     display = next((a.split("=", 1)[1] for a in args if a.startswith("--display=")), None)
@@ -514,6 +725,9 @@ def main() -> int:
         display = display if display is not None else entry.get("display")
         equilibrium = equilibrium or bool(entry.get("equilibrium"))
         lone_pairs = lone_pairs or bool(entry.get("lone_pairs"))
+        arrows = arrows if arrows is not None else entry.get("arrows")
+        states = states if states is not None else entry.get("states")
+        coefficients = coefficients if coefficients is not None else entry.get("coefficients")
 
     raw = sys.stdin.read().strip()
     request = json.loads(raw) if raw else {}
@@ -532,6 +746,8 @@ def main() -> int:
         out = render(
             width, height, reaction, conditions, misdeclare,
             theme=theme, display=display, equilibrium=equilibrium, lone_pairs=lone_pairs,
+            arrows=arrows, dative=dative, answers=answers_arg == "true", states=states,
+            coefficients=coefficients, balanced=balanced,
         )
     except (formula.DisplayError, ValueError) as err:
         raise SystemExit(f"error: {err}")
