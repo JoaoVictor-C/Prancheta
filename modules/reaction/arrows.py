@@ -46,9 +46,9 @@ _NONMETALS = {
     "Te", "I", "Xe", "At", "Rn",
 }
 
-HEAD_LEN = 10.0
-HEAD_HALF = 4.4
-STROKE = 1.7
+HEAD_LEN = 7.5
+HEAD_HALF = 3.2
+STROKE = 1.4
 END_GAP = 4.0  # how far short of the target's label box the head's tip stops
 
 
@@ -438,13 +438,15 @@ def plan(
 
         best: tuple[float, dict[str, Any]] | None = None
         for side in (-1.0, 1.0):
-            for h_rank, h in enumerate((0.28, 0.4, 0.55, 0.75)):
+            # Bends as a fraction of the chord: textbook arrows are shallow arcs,
+            # not loops (the first set, up to 0.75, read as circles).
+            for h_rank, h in enumerate((0.18, 0.26, 0.36, 0.5)):
                 chord = _sub(target_c, src_c)
                 L = max(_len(chord), 1.0)
                 n = (-chord[1] / L * side, chord[0] / L * side)
                 # A bond's pair moving onto one of its own atoms spans half a
                 # bond: without a floor on the bend it is a hook, not an arc.
-                bend = max(h * L, 22.0 + 8.0 * h_rank if arrow.source.kind == "bond" else 18.0)
+                bend = max(h * L, 17.0 + 5.0 * h_rank if arrow.source.kind == "bond" else 10.0)
                 apex = _add(((src_c[0] + target_c[0]) / 2, (src_c[1] + target_c[1]) / 2), n, bend)
                 if pairs:
                     pair = max(pairs, key=lambda p: p["u"][0] * _unit(_sub(apex, src_c))[0] + p["u"][1] * _unit(_sub(apex, src_c))[1])
