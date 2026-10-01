@@ -1,0 +1,838 @@
+{
+  "name": "calculo-medio-dificil",
+  "title": "Lista de Exercícios — Limites, Taxa Média de Variação e Derivadas",
+  "subtitle": "Cálculo 1 · níveis médio e difícil",
+  "locale": "pt-BR",
+  "footer": "Cálculo 1 · Médio e difícil",
+  "contentsNote": "<p style=\"margin:4pt 0 0\">Dez exercícios por tema, todos de nível <span class=\"tag mid\">médio</span> ou <span class=\"tag hard\">difícil</span> (cinco de cada). Depois dos exercícios vêm um <b>gabarito rápido</b> e as <b>resoluções comentadas</b>.</p>",
+  "cover": [
+    "<h3>Fórmulas de apoio</h3><table class=\"ref\"><tr><th>Ideia</th><th>Fórmula</th></tr><tr><td>Taxa média de variação em \\([a,b]\\)</td><td>\\(\\text{TMV}=\\dfrac{f(b)-f(a)}{b-a}\\)</td></tr><tr><td>Derivada pela definição</td><td>\\(f'(a)=\\displaystyle\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}\\)</td></tr><tr><td>Regra da potência, soma e múltiplo</td><td>\\((x^n)'=nx^{n-1},\\ (cf\\pm g)'=cf'\\pm g'\\)</td></tr><tr><td>Produto e quociente</td><td>\\((uv)'=u'v+uv',\\ \\left(\\frac uv\\right)'=\\frac{u'v-uv'}{v^2}\\)</td></tr><tr><td>Cadeia</td><td>\\((f(g(x)))'=f'(g(x))\\,g'(x)\\)</td></tr><tr><td>Limite fundamental</td><td>\\(\\displaystyle\\lim_{u\\to0}\\frac{\\sin u}{u}=1\\)</td></tr></table>"
+  ],
+  "exercisesLead": "Tente resolver sozinho antes de olhar o gabarito. Nas figuras, as bolinhas fechadas (●) pertencem ao gráfico e as abertas (○) não. Como a vírgula é usada nos decimais, as coordenadas são separadas por ponto e vírgula: \\((2;\\,5)\\).",
+  "answersLead": "Só as respostas finais, para conferir. O raciocínio está nas resoluções.",
+  "solutionsLead": "Cada resolução mostra o raciocínio completo e onde é comum errar.",
+  "sections": [
+    {
+      "title": "1. Limites",
+      "exercises": [
+        {
+          "id": "1.1",
+          "level": "mid",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to 2}\\frac{x^2-5x+6}{x^2-4}\\).</p>",
+          "answer": "\\(-\\tfrac14\\)",
+          "solution": "<p>Substituir \\(x=2\\) dá \\(\\tfrac00\\): é indeterminação, então fatore e simplifique o fator \\((x-2)\\), que é justamente o que zera.</p>$$\\frac{x^2-5x+6}{x^2-4}=\\frac{(x-2)(x-3)}{(x-2)(x+2)}=\\frac{x-3}{x+2}\\quad(x\\neq2).$$<p>O limite só olha para \\(x\\) perto de 2, não igual a 2, então a simplificação é válida: \\(\\displaystyle\\lim_{x\\to2}\\frac{x-3}{x+2}=\\frac{-1}{4}\\).</p>"
+        },
+        {
+          "id": "1.2",
+          "level": "mid",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to 0}\\frac{\\sqrt{x+9}-3}{x}\\).</p>",
+          "answer": "\\(\\tfrac16\\)",
+          "solution": "<p>Outra indeterminação \\(\\tfrac00\\). Com raiz, multiplique pelo <b>conjugado</b>:</p>$$\\frac{\\sqrt{x+9}-3}{x}\\cdot\\frac{\\sqrt{x+9}+3}{\\sqrt{x+9}+3}=\\frac{(x+9)-9}{x\\,(\\sqrt{x+9}+3)}=\\frac{1}{\\sqrt{x+9}+3}.$$<p>Agora substitua \\(x=0\\): \\(\\dfrac{1}{3+3}=\\dfrac16\\).</p>"
+        },
+        {
+          "id": "1.3",
+          "level": "mid",
+          "statement": "<p>Calcule os limites no infinito:</p><ol class=\"items\" type=\"a\"><li>\\(\\displaystyle\\lim_{x\\to +\\infty}\\frac{3x^2-x+1}{2x^2+5}\\)</li><li>\\(\\displaystyle\\lim_{x\\to -\\infty}\\frac{5x^3+2x}{x^3-7}\\)</li><li>\\(\\displaystyle\\lim_{x\\to +\\infty}\\frac{4x+1}{x^2+3}\\)</li></ol>",
+          "answer": "a) \\(\\tfrac32\\); b) \\(5\\); c) \\(0\\)",
+          "solution": "<p>Divida numerador e denominador pela maior potência de \\(x\\) do denominador; todo termo do tipo \\(\\tfrac{c}{x^k}\\) tende a 0.</p><p><b>a)</b> \\(\\dfrac{3-\\frac1x+\\frac1{x^2}}{2+\\frac5{x^2}}\\to\\dfrac32\\).</p><p><b>b)</b> \\(\\dfrac{5+\\frac2{x^2}}{1-\\frac7{x^3}}\\to 5\\) (o sinal de \\(x\\) não importa, pois o grau é igual e só sobram os coeficientes líderes).</p><p><b>c)</b> O grau do numerador (1) é menor que o do denominador (2): \\(\\dfrac{\\frac4x+\\frac1{x^2}}{1+\\frac3{x^2}}\\to0\\).</p>"
+        },
+        {
+          "id": "1.4",
+          "level": "mid",
+          "statement": "<p>O gráfico mostra uma função \\(f\\) que tem um salto em \\(x=2\\). Obtenha, lendo a figura:</p>{{figure}}<ol class=\"items\" type=\"a\"><li>\\(\\displaystyle\\lim_{x\\to2^-}f(x)\\) e \\(\\displaystyle\\lim_{x\\to2^+}f(x)\\)</li><li>\\(\\displaystyle\\lim_{x\\to2}f(x)\\) existe? Justifique.</li><li>\\(f(2)\\)</li><li>\\(\\displaystyle\\lim_{x\\to0}f(x)\\)</li></ol>",
+          "answer": "a) \\(3\\) e \\(1\\); b) não existe; c) \\(4\\); d) \\(1\\)",
+          "solution": "<p><b>a)</b> Pela esquerda o gráfico se aproxima da altura 3 (bolinha aberta); pela direita, da altura 1 (outra bolinha aberta). <b>b)</b> Os limites laterais são diferentes (\\(3\\neq1\\)), logo o limite <b>não existe</b>. <b>c)</b> O ponto fechado em \\(x=2\\) está na altura 4, então \\(f(2)=4\\) — um valor que não coincide com nenhum dos lados, o que não muda nada: o limite ignora o valor no ponto. <b>d)</b> Em \\(x=0\\) a função é \\(x+1\\), contínua: o limite é \\(0+1=1\\).</p>",
+          "figure": {
+            "graph": {
+              "title": "Figura 1.4: gráfico de f perto de x = 2",
+              "x": {
+                "range": [
+                  -1.5,
+                  5
+                ],
+                "unit": 78
+              },
+              "y": {
+                "range": [
+                  -1,
+                  6
+                ],
+                "unit": 50
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "pieces": [
+                    {
+                      "expr": "x + 1",
+                      "domain": [
+                        -1,
+                        2
+                      ]
+                    },
+                    {
+                      "expr": "(x - 2)^2 + 1",
+                      "domain": [
+                        2,
+                        4.3
+                      ]
+                    }
+                  ],
+                  "label": {
+                    "text": "y = f(x)",
+                    "at": [
+                      4.1,
+                      4.6
+                    ],
+                    "towards": [
+                      "L",
+                      "U",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "esq",
+                  "at": {
+                    "of": "f",
+                    "x": 2,
+                    "side": "left"
+                  },
+                  "style": "open",
+                  "guides": true
+                },
+                {
+                  "id": "dir",
+                  "at": {
+                    "of": "f",
+                    "x": 2,
+                    "side": "right"
+                  },
+                  "style": "open",
+                  "guides": true
+                },
+                {
+                  "id": "f2",
+                  "at": [
+                    2,
+                    4
+                  ],
+                  "colour": "key",
+                  "guides": true
+                }
+              ]
+            },
+            "caption": "Figura 1.4: gráfico de \\(f\\) perto de \\(x = 2\\)."
+          }
+        },
+        {
+          "id": "1.5",
+          "level": "mid",
+          "statement": "<p>Use \\(\\displaystyle\\lim_{u\\to0}\\frac{\\sin u}{u}=1\\) para calcular:</p><ol class=\"items\" type=\"a\"><li>\\(\\displaystyle\\lim_{x\\to0}\\frac{\\sin 3x}{5x}\\)</li><li>\\(\\displaystyle\\lim_{x\\to0}\\frac{1-\\cos x}{x^2}\\)</li></ol>",
+          "answer": "a) \\(\\tfrac35\\); b) \\(\\tfrac12\\)",
+          "solution": "<p><b>a)</b> Escreva \\(\\dfrac{\\sin3x}{5x}=\\dfrac35\\cdot\\dfrac{\\sin3x}{3x}\\). Com \\(u=3x\\to0\\), a fração tende a 1; o resultado é \\(\\tfrac35\\).</p><p><b>b)</b> Multiplique por \\(1+\\cos x\\):</p>$$\\frac{1-\\cos x}{x^2}\\cdot\\frac{1+\\cos x}{1+\\cos x}=\\frac{\\sin^2x}{x^2(1+\\cos x)}=\\Big(\\frac{\\sin x}{x}\\Big)^2\\cdot\\frac1{1+\\cos x}\\to1^2\\cdot\\frac12=\\frac12.$$"
+        },
+        {
+          "id": "1.6",
+          "level": "hard",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to1}\\frac{x^3-1}{\\sqrt x-1}\\).</p>",
+          "answer": "\\(6\\)",
+          "solution": "<p>Há duas fatorações disponíveis. Como \\(x-1=(\\sqrt x-1)(\\sqrt x+1)\\) e \\(x^3-1=(x-1)(x^2+x+1)\\):</p>$$\\frac{x^3-1}{\\sqrt x-1}=\\frac{(\\sqrt x-1)(\\sqrt x+1)(x^2+x+1)}{\\sqrt x-1}=(\\sqrt x+1)(x^2+x+1).$$<p>Em \\(x=1\\): \\((1+1)(1+1+1)=6\\). (Alternativa: troque \\(u=\\sqrt x\\), e o limite vira \\(\\lim_{u\\to1}\\frac{u^6-1}{u-1}=6\\).)</p>"
+        },
+        {
+          "id": "1.7",
+          "level": "hard",
+          "statement": "<p>Calcule \\(\\displaystyle\\lim_{x\\to+\\infty}\\left(\\sqrt{x^2+4x}-x\\right)\\). Cuidado: não é \\(\\infty-\\infty=0\\).</p>",
+          "answer": "\\(2\\)",
+          "solution": "<p>A diferença \\(\\infty-\\infty\\) é indeterminada. Multiplique e divida pelo conjugado:</p>$$\\sqrt{x^2+4x}-x=\\frac{(x^2+4x)-x^2}{\\sqrt{x^2+4x}+x}=\\frac{4x}{\\sqrt{x^2+4x}+x}.$$<p>Divida por \\(x\\) (com \\(x>0\\), \\(\\sqrt{x^2+4x}/x=\\sqrt{1+4/x}\\)): \\(\\dfrac{4}{\\sqrt{1+\\frac4x}+1}\\to\\dfrac{4}{1+1}=2\\).</p>"
+        },
+        {
+          "id": "1.8",
+          "level": "hard",
+          "statement": "<p>Determine \\(a\\) e \\(b\\) para que \\(\\displaystyle\\lim_{x\\to3}\\frac{x^2+ax+b}{x-3}=5\\).</p>",
+          "answer": "\\(a=-1\\) e \\(b=-6\\)",
+          "solution": "<p>O denominador tende a 0. Para o limite ser finito, o numerador também deve tender a 0 (senão a fração explodiria): \\(9+3a+b=0\\), ou seja \\(b=-9-3a\\).</p><p>Então \\(x^2+ax+b\\) tem a raiz 3 e fatora como \\((x-3)(x+c)=x^2+(c-3)x-3c\\), e o limite vale \\(\\displaystyle\\lim_{x\\to3}(x+c)=3+c=5\\Rightarrow c=2\\).</p><p>Comparando os coeficientes: \\(a=c-3=-1\\) e \\(b=-3c=-6\\). Conferência: \\(x^2-x-6=(x-3)(x+2)\\), e o limite é \\(3+2=5\\). ✔</p>"
+        },
+        {
+          "id": "1.9",
+          "level": "hard",
+          "statement": "<p>Considere \\(f(x)=\\dfrac{x^2-1}{x^2-x-2}\\), cujo gráfico está abaixo.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>\\(\\displaystyle\\lim_{x\\to-1}f(x)\\). Por que \\(f\\) não é definida em \\(x=-1\\) e mesmo assim o limite existe?</li><li>\\(\\displaystyle\\lim_{x\\to2^-}f(x)\\) e \\(\\displaystyle\\lim_{x\\to2^+}f(x)\\)</li><li>\\(\\displaystyle\\lim_{x\\to\\pm\\infty}f(x)\\)</li><li>Escreva as equações das assíntotas.</li></ol>",
+          "answer": "a) \\(\\tfrac23\\); b) \\(-\\infty\\) e \\(+\\infty\\); c) \\(1\\); d) \\(x=2\\) e \\(y=1\\)",
+          "solution": "<p>Fatore: \\(f(x)=\\dfrac{(x-1)(x+1)}{(x-2)(x+1)}=\\dfrac{x-1}{x-2}\\) para \\(x\\neq-1,\\,2\\).</p><p><b>a)</b> O fator \\((x+1)\\) some na simplificação: em \\(x=-1\\) há um <b>buraco</b> (bolinha aberta no gráfico). O limite é \\(\\dfrac{-1-1}{-1-2}=\\dfrac23\\), mas \\(f(-1)\\) não existe.</p><p><b>b)</b> Perto de 2 o numerador \\(x-1\\) vale cerca de \\(1>0\\); o denominador \\(x-2\\) é negativo à esquerda e positivo à direita. Logo \\(\\lim_{x\\to2^-}f=-\\infty\\) e \\(\\lim_{x\\to2^+}f=+\\infty\\).</p><p><b>c)</b> Graus iguais: o limite é a razão dos coeficientes líderes, \\(1\\), nos dois sentidos.</p><p><b>d)</b> Vertical: \\(x=2\\) (os limites infinitos de b). Horizontal: \\(y=1\\). Em \\(x=-1\\) não há assíntota, só um buraco.</p>",
+          "figure": {
+            "graph": {
+              "title": "Figura 1.9: gráfico de f",
+              "x": {
+                "range": [
+                  -5,
+                  7
+                ],
+                "unit": 50
+              },
+              "y": {
+                "range": [
+                  -3,
+                  5
+                ],
+                "unit": 50
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "(x^2 - 1)/(x^2 - x - 2)",
+                  "asymptotes": true,
+                  "holes": true,
+                  "label": {
+                    "text": "y = f(x)",
+                    "at": 3.3,
+                    "towards": [
+                      "U",
+                      "R"
+                    ]
+                  }
+                }
+              ]
+            },
+            "caption": "Figura 1.9: gráfico de \\(f(x)=\\dfrac{x^2-1}{x^2-x-2}\\)."
+          }
+        },
+        {
+          "id": "1.10",
+          "level": "hard",
+          "statement": "<p>Sejam \\(a,b\\in\\mathbb R\\) e $$f(x)=\\begin{cases}\\dfrac{x^2-1}{x-1}, & x<1\\\\[2mm] ax+b, & 1\\le x\\le3\\\\[2mm] \\dfrac{x^2-9}{x-3}, & x>3.\\end{cases}$$ Determine \\(a\\) e \\(b\\) para que \\(f\\) seja contínua em todos os pontos.</p>",
+          "answer": "\\(a=2\\) e \\(b=0\\)",
+          "solution": "<p>Cada pedaço é contínuo no seu intervalo; só os pontos de emenda, \\(x=1\\) e \\(x=3\\), exigem cuidado. Continuidade ali significa: limite esquerdo = valor = limite direito.</p><p><b>Em \\(x=1\\):</b> \\(\\displaystyle\\lim_{x\\to1^-}\\frac{x^2-1}{x-1}=\\lim_{x\\to1^-}(x+1)=2\\), e \\(f(1)=a+b\\). Logo \\(a+b=2\\).</p><p><b>Em \\(x=3\\):</b> \\(\\displaystyle\\lim_{x\\to3^+}\\frac{x^2-9}{x-3}=\\lim_{x\\to3^+}(x+3)=6\\), e \\(f(3)=3a+b\\). Logo \\(3a+b=6\\).</p><p>Subtraindo as equações: \\(2a=4\\Rightarrow a=2\\) e \\(b=0\\).</p>"
+        }
+      ]
+    },
+    {
+      "title": "2. Taxa média de variação",
+      "exercises": [
+        {
+          "id": "2.1",
+          "level": "mid",
+          "statement": "<p>Seja \\(f(x)=x^2-3x\\), e sejam \\(A\\) e \\(B\\) os pontos do gráfico de abscissas 1 e 4.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Calcule a taxa média de variação de \\(f\\) em \\([1,4]\\) e interprete-a na figura.</li><li>Calcule a TMV em \\([0,3]\\). O que o resultado revela sobre a secante?</li></ol>",
+          "answer": "a) \\(2\\); b) \\(0\\)",
+          "solution": "<p><b>a)</b> \\(f(1)=-2\\) e \\(f(4)=4\\). \\(\\text{TMV}=\\dfrac{4-(-2)}{4-1}=\\dfrac63=2\\). É a <b>inclinação da secante \\(AB\\)</b>: em média, \\(y\\) sobe 2 unidades a cada unidade de \\(x\\).</p><p><b>b)</b> \\(f(0)=0\\) e \\(f(3)=0\\): \\(\\text{TMV}=\\dfrac{0-0}{3}=0\\). A secante é horizontal — a função sobe e desce, e a variação média se cancela, apesar de \\(f\\) não ser constante.</p>",
+          "figure": {
+            "graph": {
+              "title": "Figura 2.1: a parábola e a secante AB",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 90
+              },
+              "y": {
+                "range": [
+                  -4.5,
+                  6
+                ],
+                "unit": 46
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 3x",
+                  "label": {
+                    "text": "y = f(x)",
+                    "at": [
+                      -0.8,
+                      3.04
+                    ],
+                    "towards": [
+                      "R",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "sec",
+                  "through": [
+                    "A",
+                    "B"
+                  ],
+                  "domain": [
+                    0.3,
+                    4.4
+                  ],
+                  "colour": "ask",
+                  "style": "dashed"
+                }
+              ],
+              "points": [
+                {
+                  "id": "A",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "A{coords}",
+                  "towards": [
+                    "D",
+                    "L",
+                    "R"
+                  ],
+                  "guides": true
+                },
+                {
+                  "id": "B",
+                  "at": {
+                    "of": "f",
+                    "x": 4
+                  },
+                  "label": "B{coords}",
+                  "towards": [
+                    "U",
+                    "L",
+                    "NW"
+                  ],
+                  "guides": true
+                }
+              ]
+            },
+            "caption": "Figura 2.1: \\(f(x)=x^2-3x\\) e a secante pelos pontos de abscissas 1 e 4."
+          }
+        },
+        {
+          "id": "2.2",
+          "level": "mid",
+          "statement": "<p>Uma partícula se move em linha reta com posição \\(s(t)=t^3-6t^2+9t\\) (metros, \\(t\\) em segundos).</p><ol class=\"items\" type=\"a\"><li>Calcule a velocidade média nos intervalos \\([0,2]\\), \\([2,4]\\) e \\([1,3]\\).</li><li>Calcule a velocidade média em \\([0,4]\\). Ela quer dizer que a partícula andou sempre no mesmo sentido? Ela está sempre se movendo para frente?</li></ol>",
+          "answer": "a) \\(1\\), \\(1\\) e \\(-2\\) m/s; b) \\(1\\) m/s; não",
+          "solution": "<p>Velocidade média é a TMV da posição. Valores: \\(s(0)=0\\), \\(s(1)=4\\), \\(s(2)=2\\), \\(s(3)=0\\), \\(s(4)=4\\).</p><p><b>a)</b> \\([0,2]\\): \\(\\frac{2-0}{2}=1\\). \\([2,4]\\): \\(\\frac{4-2}{2}=1\\). \\([1,3]\\): \\(\\frac{0-4}{2}=-2\\) m/s (o sinal negativo: no saldo, voltou).</p><p><b>b)</b> \\([0,4]\\): \\(\\frac{4-0}{4}=1\\) m/s. <b>Não</b>: a média só compara os extremos. A posição vai de 0 a 4 (\\(t=1\\)), volta a 0 (\\(t=3\\)) e sobe a 4 de novo; o movimento inclui trechos de recuo que a média esconde.</p>"
+        },
+        {
+          "id": "2.3",
+          "level": "mid",
+          "statement": "<p>Um capital de R&#36; 1.000,00 rende 10% ao ano a juros compostos: \\(C(t)=1000\\cdot1{,}1^{\\,t}\\).</p><ol class=\"items\" type=\"a\"><li>Calcule a TMV de \\(C\\) em \\([0,2]\\) e em \\([2,4]\\), em R&#36; por ano.</li><li>Por que a segunda é maior? Compare com juros simples \\(S(t)=1000(1+0{,}1t)\\).</li></ol>",
+          "answer": "a) R&#36; 105,00/ano e R&#36; 127,05/ano",
+          "solution": "<p><b>a)</b> \\(C(0)=1000\\), \\(C(2)=1210\\), \\(C(4)=1464{,}10\\). \\([0,2]\\): \\(\\frac{1210-1000}{2}=105\\). \\([2,4]\\): \\(\\frac{1464{,}10-1210}{2}=127{,}05\\).</p><p><b>b)</b> Nos juros compostos o rendimento incide também sobre os juros já acumulados, então o capital cresce cada vez mais rápido: a TMV aumenta com o tempo. Nos juros simples \\(S(t)=1000+100t\\), a TMV é <b>constante</b> e vale R&#36; 100,00/ano em qualquer intervalo.</p>"
+        },
+        {
+          "id": "2.4",
+          "level": "mid",
+          "statement": "<p>O gráfico mostra \\(f(x)=x^3-6x^2+9x\\) e os pontos \\(A\\), \\(B\\) e \\(C\\), de abscissas 0, 1 e 3.</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Calcule a TMV de \\(f\\) em \\([0,1]\\) e em \\([1,3]\\).</li><li>O que o sinal de cada resultado diz sobre \\(f\\)?</li><li>A TMV em \\([0,3]\\) é 0. Isso significa que \\(f\\) é constante em \\([0,3]\\)?</li></ol>",
+          "answer": "a) \\(4\\) e \\(-2\\); c) não",
+          "solution": "<p><b>a)</b> \\(f(0)=0\\), \\(f(1)=4\\), \\(f(3)=0\\). \\([0,1]\\): \\(\\frac{4-0}{1}=4\\). \\([1,3]\\): \\(\\frac{0-4}{2}=-2\\).</p><p><b>b)</b> TMV positiva: em média \\(f\\) cresce em \\([0,1]\\) (a secante \\(AB\\) sobe). TMV negativa: em média \\(f\\) decresce em \\([1,3]\\) (a secante \\(BC\\) desce).</p><p><b>c)</b> Não: \\(f\\) sobe até \\(B\\) e depois cai. TMV 0 só diz que o valor final é igual ao inicial.</p>",
+          "figure": {
+            "graph": {
+              "title": "Figura 2.4: as secantes AB e BC",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 85
+              },
+              "y": {
+                "range": [
+                  -2.5,
+                  6
+                ],
+                "unit": 50
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^3 - 6x^2 + 9x",
+                  "domain": [
+                    -0.2,
+                    4.4
+                  ],
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      4.15,
+                      5.6
+                    ],
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "AB",
+                  "through": [
+                    "A",
+                    "B"
+                  ],
+                  "domain": [
+                    -0.1,
+                    1.5
+                  ],
+                  "colour": "ask",
+                  "style": "dashed"
+                },
+                {
+                  "id": "BC",
+                  "through": [
+                    "B",
+                    "C"
+                  ],
+                  "domain": [
+                    0.8,
+                    3.0
+                  ],
+                  "colour": "warm",
+                  "style": "dotted"
+                }
+              ],
+              "points": [
+                {
+                  "id": "A",
+                  "at": {
+                    "of": "f",
+                    "x": 0
+                  },
+                  "label": "A{coords}",
+                  "towards": [
+                    "D",
+                    "R",
+                    "SE"
+                  ]
+                },
+                {
+                  "id": "B",
+                  "at": {
+                    "of": "f",
+                    "x": 1
+                  },
+                  "label": "B{coords}",
+                  "towards": [
+                    "R",
+                    "NE",
+                    "SE"
+                  ]
+                },
+                {
+                  "id": "C",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "C{coords}",
+                  "towards": [
+                    "D",
+                    "SE",
+                    "R"
+                  ]
+                }
+              ]
+            },
+            "caption": "Figura 2.4: as secantes AB e BC."
+          }
+        },
+        {
+          "id": "2.5",
+          "level": "mid",
+          "statement": "<p>Seja \\(f(x)=x^2+kx+3\\). Sabendo que a TMV de \\(f\\) em \\([1,3]\\) é igual a 6, determine \\(k\\) e a equação da reta secante que passa pelos pontos de abscissas 1 e 3.</p>",
+          "answer": "\\(k=2\\); \\(y=6x\\)",
+          "solution": "<p>\\(f(1)=4+k\\) e \\(f(3)=12+3k\\). Então \\(\\dfrac{f(3)-f(1)}{3-1}=\\dfrac{8+2k}{2}=4+k=6\\Rightarrow k=2\\).</p><p>Com \\(k=2\\): \\(f(1)=6\\) e \\(f(3)=18\\). A secante tem inclinação 6 e passa por \\((1;\\,6)\\): \\(y-6=6(x-1)\\Rightarrow y=6x\\). Conferência no outro ponto: \\(6\\cdot3=18\\). ✔</p>"
+        },
+        {
+          "id": "2.6",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=\\dfrac1x\\).</p><ol class=\"items\" type=\"a\"><li>Mostre que a TMV de \\(f\\) em \\([a,a+h]\\) é \\(-\\dfrac{1}{a(a+h)}\\) (\\(a>0,\\ h\\neq0\\)).</li><li>Calcule-a para \\(a=2\\) e \\(h=1\\), \\(h=0{,}1\\) e \\(h=0{,}01\\).</li><li>Para onde tendem esses valores quando \\(h\\to0\\)? O que o número representa geometricamente?</li></ol>",
+          "answer": "b) \\(-\\tfrac16\\), \\(-\\tfrac5{21}\\approx-0{,}238\\), \\(\\approx-0{,}2494\\); c) \\(-\\tfrac14\\)",
+          "solution": "<p><b>a)</b> \\(\\dfrac{\\frac1{a+h}-\\frac1a}{h}=\\dfrac{\\frac{a-(a+h)}{a(a+h)}}{h}=\\dfrac{-h}{h\\,a(a+h)}=-\\dfrac1{a(a+h)}\\).</p><p><b>b)</b> Com \\(a=2\\): \\(h=1\\): \\(-\\frac1{2\\cdot3}=-\\frac16\\). \\(h=0{,}1\\): \\(-\\frac{1}{2\\cdot2{,}1}=-\\frac5{21}\\approx-0{,}238\\). \\(h=0{,}01\\): \\(-\\frac1{2\\cdot2{,}01}\\approx-0{,}2488\\).</p><p><b>c)</b> Tendem a \\(-\\frac1{2\\cdot2}=-\\frac14\\): a inclinação da reta <b>tangente</b> a \\(y=1/x\\) em \\(x=2\\), que é o limite das secantes.</p>"
+        },
+        {
+          "id": "2.7",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^3\\).</p><ol class=\"items\" type=\"a\"><li>Mostre que a TMV de \\(f\\) em \\([a,b]\\) é \\(a^2+ab+b^2\\).</li><li>Determine \\(b>1\\) tal que a TMV de \\(f\\) em \\([1,b]\\) seja igual a 7.</li></ol>",
+          "answer": "b) \\(b=2\\)",
+          "solution": "<p><b>a)</b> \\(\\dfrac{b^3-a^3}{b-a}=\\dfrac{(b-a)(b^2+ab+a^2)}{b-a}=a^2+ab+b^2\\) (\\(a\\neq b\\)).</p><p><b>b)</b> Com \\(a=1\\): \\(1+b+b^2=7\\Rightarrow b^2+b-6=0\\Rightarrow(b+3)(b-2)=0\\). Como \\(b>1\\), \\(b=2\\). Conferência: \\(\\frac{8-1}{2-1}=7\\). ✔</p>"
+        },
+        {
+          "id": "2.8",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^2-4x\\). Mostre que a TMV de \\(f\\) em \\([x,\\,x+h]\\) vale \\(2x+h-4\\). Depois, ache todos os \\(x\\) tais que a TMV em \\([x,\\,x+2]\\) é zero, e explique o resultado em termos do gráfico.</p>",
+          "answer": "\\(x=1\\)",
+          "solution": "<p>\\(\\dfrac{(x+h)^2-4(x+h)-(x^2-4x)}{h}=\\dfrac{2xh+h^2-4h}{h}=2x+h-4\\).</p><p>Com \\(h=2\\): \\(2x+2-4=2x-2=0\\Rightarrow x=1\\). O intervalo é \\([1,3]\\), simétrico em torno de \\(x=2\\), a abscissa do vértice: \\(f(1)=f(3)=-3\\), e por isso a secante é horizontal.</p>"
+        },
+        {
+          "id": "2.9",
+          "level": "hard",
+          "statement": "<p>Um carro percorre os primeiros 60 km de uma viagem a 40 km/h e os 60 km seguintes a 60 km/h.</p><ol class=\"items\" type=\"a\"><li>Calcule o tempo gasto em cada trecho.</li><li>Calcule a velocidade média em toda a viagem (a TMV da posição). Ela é igual a 50 km/h, a média das duas velocidades? Justifique.</li></ol>",
+          "answer": "a) \\(1{,}5\\) h e \\(1\\) h; b) \\(48\\) km/h",
+          "solution": "<p><b>a)</b> \\(60/40=1{,}5\\) h e \\(60/60=1\\) h.</p><p><b>b)</b> A TMV da posição é variação total por tempo total: \\(\\dfrac{120}{1{,}5+1}=\\dfrac{120}{2{,}5}=48\\) km/h. Não é 50: o carro passou <b>mais tempo</b> na velocidade menor, então esta pesa mais (é a média harmônica, e não a aritmética, das velocidades).</p>"
+        },
+        {
+          "id": "2.10",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^2\\).</p><ol class=\"items\" type=\"a\"><li>Mostre que a TMV de \\(f\\) em \\([a,b]\\) é \\(a+b\\).</li><li>Ache o intervalo \\([a,\\,a+4]\\) em que a TMV é 10.</li><li>Mostre que a TMV em \\([a,b]\\) é igual à inclinação da reta tangente (\\(2x\\)) no ponto médio de \\([a,b]\\).</li></ol>",
+          "answer": "b) \\([3,7]\\)",
+          "solution": "<p><b>a)</b> \\(\\dfrac{b^2-a^2}{b-a}=b+a\\).</p><p><b>b)</b> \\(a+(a+4)=10\\Rightarrow a=3\\); o intervalo é \\([3,7]\\). Conferência: \\(\\frac{49-9}{4}=10\\). ✔</p><p><b>c)</b> O ponto médio é \\(m=\\frac{a+b}2\\) e \\(2m=a+b\\): para a parábola, a inclinação da secante coincide com a da tangente no ponto médio.</p>"
+        }
+      ]
+    },
+    {
+      "title": "3. Derivadas",
+      "exercises": [
+        {
+          "id": "3.1",
+          "level": "mid",
+          "statement": "<p>Seja \\(f(x)=x^2-3x\\) e \\(P={{fig.P}}\\).</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Use a definição \\(f'(a)=\\lim_{h\\to0}\\frac{f(a+h)-f(a)}{h}\\) para calcular \\(f'(2)\\).</li><li>Escreva a equação da reta tangente em \\(P\\).</li></ol>",
+          "answer": "a) \\(1\\); b) \\(y=x-4\\)",
+          "solution": "<p><b>a)</b> \\(f(2+h)-f(2)=(4+4h+h^2-6-3h)-(-2)=h+h^2\\). Então \\(f'(2)=\\lim_{h\\to0}\\dfrac{h+h^2}{h}=\\lim_{h\\to0}(1+h)=1\\).</p><p><b>b)</b> \\(y-(-2)=1\\cdot(x-2)\\Rightarrow y=x-4\\).</p>",
+          "figure": {
+            "graph": {
+              "title": "Figura 3.1: a reta tangente em P",
+              "x": {
+                "range": [
+                  -1,
+                  5
+                ],
+                "unit": 90
+              },
+              "y": {
+                "range": [
+                  -4,
+                  6
+                ],
+                "unit": 45
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2 - 3x",
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      4.5,
+                      4.9
+                    ],
+                    "towards": [
+                      "L",
+                      "D"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t",
+                  "tangent": {
+                    "of": "f",
+                    "at": 2
+                  },
+                  "domain": [
+                    0.6,
+                    4.6
+                  ],
+                  "colour": "warm",
+                  "label": {
+                    "text": "tangente em P",
+                    "at": 4.2,
+                    "towards": [
+                      "D",
+                      "R"
+                    ]
+                  }
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": {
+                    "of": "f",
+                    "x": 2
+                  },
+                  "label": "P{coords}",
+                  "towards": [
+                    "D",
+                    "SW",
+                    "L"
+                  ],
+                  "guides": true
+                }
+              ]
+            },
+            "caption": "Figura 3.1: \\(f(x)=x^2-3x\\) e a tangente em \\(P\\)."
+          }
+        },
+        {
+          "id": "3.2",
+          "level": "mid",
+          "statement": "<p>Use a definição para provar que, se \\(f(x)=\\dfrac1x\\), então \\(f'(x)=-\\dfrac1{x^2}\\). Em seguida, escreva a reta tangente a \\(y=1/x\\) em \\(x=2\\).</p>",
+          "answer": "\\(f'(x)=-\\tfrac1{x^2}\\); \\(y=-\\tfrac x4+1\\)",
+          "solution": "<p>\\(\\dfrac{\\frac1{x+h}-\\frac1x}{h}=\\dfrac{-h}{h\\,x(x+h)}=-\\dfrac1{x(x+h)}\\to-\\dfrac1{x^2}\\) quando \\(h\\to0\\).</p><p>Em \\(x=2\\): \\(f(2)=\\tfrac12\\) e \\(f'(2)=-\\tfrac14\\). Reta: \\(y-\\tfrac12=-\\tfrac14(x-2)\\Rightarrow y=-\\tfrac x4+1\\).</p>"
+        },
+        {
+          "id": "3.3",
+          "level": "mid",
+          "statement": "<p>Pela definição, calcule \\(f'(4)\\) para \\(f(x)=\\sqrt x\\). (Dica: multiplique pelo conjugado.)</p>",
+          "answer": "\\(\\tfrac14\\)",
+          "solution": "<p>\\(\\dfrac{\\sqrt{4+h}-2}{h}\\cdot\\dfrac{\\sqrt{4+h}+2}{\\sqrt{4+h}+2}=\\dfrac{h}{h(\\sqrt{4+h}+2)}=\\dfrac1{\\sqrt{4+h}+2}\\to\\dfrac14\\).</p>"
+        },
+        {
+          "id": "3.4",
+          "level": "mid",
+          "statement": "<p>Derive, usando a regra da potência (reescreva antes, se preciso):</p><ol class=\"items\" type=\"a\"><li>\\(f(x)=5x^4-3x^2+7x-2\\)</li><li>\\(g(x)=3\\sqrt x+\\dfrac{2}{x^2}\\)</li><li>\\(h(x)=\\dfrac{x^2+1}{x}\\)</li></ol>",
+          "answer": "a) \\(20x^3-6x+7\\); b) \\(\\dfrac3{2\\sqrt x}-\\dfrac4{x^3}\\); c) \\(1-\\dfrac1{x^2}\\)",
+          "solution": "<p><b>a)</b> \\(f'(x)=20x^3-6x+7\\).</p><p><b>b)</b> \\(g=3x^{1/2}+2x^{-2}\\Rightarrow g'=\\tfrac32x^{-1/2}-4x^{-3}=\\dfrac3{2\\sqrt x}-\\dfrac4{x^3}\\).</p><p><b>c)</b> \\(h=x+x^{-1}\\Rightarrow h'=1-x^{-2}=1-\\dfrac1{x^2}\\).</p>"
+        },
+        {
+          "id": "3.5",
+          "level": "mid",
+          "statement": "<p>Seja \\(f(x)=x^3-3x^2-9x+5\\).</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Calcule \\(f'(x)\\).</li><li>Encontre os pontos do gráfico em que a reta tangente é horizontal.</li><li>Qual é a inclinação da tangente em \\(x=0\\)?</li></ol>",
+          "answer": "a) \\(3x^2-6x-9\\); b) \\((-1;\\,10)\\) e \\((3;\\,-22)\\); c) \\(-9\\)",
+          "solution": "<p><b>a)</b> \\(f'(x)=3x^2-6x-9=3(x^2-2x-3)=3(x-3)(x+1)\\).</p><p><b>b)</b> Tangente horizontal \\(\\iff f'(x)=0\\iff x=-1\\) ou \\(x=3\\). \\(f(-1)=-1-3+9+5=10\\) e \\(f(3)=27-27-27+5=-22\\): os pontos \\(A\\) e \\(B\\) da figura.</p><p><b>c)</b> \\(f'(0)=-9\\): a tangente em \\(x=0\\) desce acentuadamente.</p>",
+          "figure": {
+            "graph": {
+              "title": "Figura 3.5: tangentes horizontais",
+              "x": {
+                "range": [
+                  -3,
+                  5
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -26,
+                  16
+                ],
+                "unit": 11,
+                "labelEvery": 5
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^3 - 3x^2 - 9x + 5",
+                  "domain": [
+                    -2.5,
+                    4.6
+                  ],
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      4.7,
+                      5
+                    ],
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t1",
+                  "tangent": {
+                    "of": "f",
+                    "at": -1
+                  },
+                  "domain": [
+                    -2.6,
+                    -0.6
+                  ],
+                  "colour": "warm",
+                  "style": "dashed"
+                },
+                {
+                  "id": "t2",
+                  "tangent": {
+                    "of": "f",
+                    "at": 3
+                  },
+                  "domain": [
+                    1.5,
+                    4.8
+                  ],
+                  "colour": "ask",
+                  "style": "dotted"
+                }
+              ],
+              "points": [
+                {
+                  "id": "A",
+                  "at": {
+                    "of": "f",
+                    "x": -1
+                  },
+                  "label": "A{coords}",
+                  "towards": [
+                    "R",
+                    "NE",
+                    "U"
+                  ]
+                },
+                {
+                  "id": "B",
+                  "at": {
+                    "of": "f",
+                    "x": 3
+                  },
+                  "label": "B{coords}",
+                  "towards": [
+                    "R",
+                    "SE",
+                    "D"
+                  ]
+                }
+              ]
+            },
+            "caption": "Figura 3.5: \\(f(x)=x^3-3x^2-9x+5\\) e as tangentes horizontais."
+          }
+        },
+        {
+          "id": "3.6",
+          "level": "hard",
+          "statement": "<p>Derive:</p><ol class=\"items\" type=\"a\"><li>\\(h(x)=(x^2+1)(x^3-2x)\\), de duas maneiras: expandindo e pela regra do produto \\((uv)'=u'v+uv'\\).</li><li>\\(g(x)=\\dfrac{x^2-1}{x^2+1}\\), pela regra do quociente \\(\\left(\\dfrac uv\\right)'=\\dfrac{u'v-uv'}{v^2}\\). Calcule \\(g'(1)\\).</li></ol>",
+          "answer": "a) \\(5x^4-3x^2-2\\); b) \\(\\dfrac{4x}{(x^2+1)^2}\\), \\(g'(1)=1\\)",
+          "solution": "<p><b>a)</b> Expandindo: \\(h=x^5-x^3-2x\\Rightarrow h'=5x^4-3x^2-2\\). Pelo produto: \\(2x(x^3-2x)+(x^2+1)(3x^2-2)=2x^4-4x^2+3x^4+x^2-2=5x^4-3x^2-2\\). ✔</p><p><b>b)</b> \\(g'=\\dfrac{2x(x^2+1)-(x^2-1)2x}{(x^2+1)^2}=\\dfrac{4x}{(x^2+1)^2}\\). Em \\(x=1\\): \\(\\dfrac{4}{4}=1\\).</p>"
+        },
+        {
+          "id": "3.7",
+          "level": "hard",
+          "statement": "<p>Use a regra da cadeia \\((f\\circ g)'=f'(g)\\,g'\\):</p><ol class=\"items\" type=\"a\"><li>\\(f(x)=(3x^2-1)^4\\). Calcule \\(f'(1)\\).</li><li>\\(g(x)=\\sqrt{x^2+9}\\). Calcule \\(g'(4)\\).</li></ol>",
+          "answer": "a) \\(f'(x)=24x(3x^2-1)^3\\), \\(f'(1)=192\\); b) \\(g'(x)=\\dfrac{x}{\\sqrt{x^2+9}}\\), \\(g'(4)=\\tfrac45\\)",
+          "solution": "<p><b>a)</b> \\(f'(x)=4(3x^2-1)^3\\cdot6x=24x(3x^2-1)^3\\). \\(f'(1)=24\\cdot2^3=192\\).</p><p><b>b)</b> \\(g'(x)=\\dfrac1{2\\sqrt{x^2+9}}\\cdot2x=\\dfrac x{\\sqrt{x^2+9}}\\). \\(g'(4)=\\dfrac4{\\sqrt{25}}=\\dfrac45\\).</p>"
+        },
+        {
+          "id": "3.8",
+          "level": "hard",
+          "statement": "<p>Pelo ponto \\(P{{fig.P}}\\) passam duas retas tangentes à parábola \\(y=x^2\\).</p>{{figure}}<ol class=\"items\" type=\"a\"><li>Mostre que a tangente em \\(x=a\\) tem equação \\(y=2ax-a^2\\).</li><li>Determine os pontos de tangência \\(T_1\\) e \\(T_2\\) impondo que a reta passe por \\(P\\), e as equações das tangentes.</li></ol>",
+          "answer": "b) \\(a=\\pm2\\): \\(T_1(2;\\,4)\\), \\(T_2(-2;\\,4)\\); \\(y=4x-4\\) e \\(y=-4x-4\\)",
+          "solution": "<p><b>a)</b> \\(f'(a)=2a\\) e \\(f(a)=a^2\\): \\(y-a^2=2a(x-a)\\Rightarrow y=2ax-a^2\\).</p><p><b>b)</b> A reta passa por \\(P\\) se \\(-4=2a\\cdot0-a^2\\Rightarrow a^2=4\\Rightarrow a=\\pm2\\). Pontos: \\(T_1(2;\\,4)\\) e \\(T_2(-2;\\,4)\\). Retas: \\(a=2\\Rightarrow y=4x-4\\); \\(a=-2\\Rightarrow y=-4x-4\\). Ambas cortam o eixo \\(y\\) em \\(-4\\). ✔</p>",
+          "figure": {
+            "graph": {
+              "title": "Figura 3.8: tangentes por um ponto externo",
+              "x": {
+                "range": [
+                  -4,
+                  4
+                ],
+                "unit": 70
+              },
+              "y": {
+                "range": [
+                  -6,
+                  8
+                ],
+                "unit": 33,
+                "labelEvery": 2
+              },
+              "functions": [
+                {
+                  "id": "f",
+                  "expr": "x^2",
+                  "domain": [
+                    -2.8,
+                    2.8
+                  ],
+                  "label": {
+                    "text": "y = {expr}",
+                    "at": [
+                      0.9,
+                      0.81
+                    ],
+                    "towards": [
+                      "L",
+                      "U"
+                    ]
+                  }
+                }
+              ],
+              "lines": [
+                {
+                  "id": "t1",
+                  "tangent": {
+                    "of": "f",
+                    "at": 2
+                  },
+                  "domain": [
+                    0,
+                    3.2
+                  ],
+                  "colour": "warm",
+                  "style": "dashed"
+                },
+                {
+                  "id": "t2",
+                  "tangent": {
+                    "of": "f",
+                    "at": -2
+                  },
+                  "domain": [
+                    -3.2,
+                    0
+                  ],
+                  "colour": "ask",
+                  "style": "dotted"
+                }
+              ],
+              "points": [
+                {
+                  "id": "P",
+                  "at": [
+                    0,
+                    -4
+                  ],
+                  "label": "P{coords}",
+                  "towards": [
+                    "R",
+                    "SE",
+                    "D"
+                  ]
+                },
+                {
+                  "id": "T1",
+                  "at": {
+                    "of": "f",
+                    "x": 2
+                  },
+                  "label": "T₁{coords}",
+                  "towards": [
+                    "R",
+                    "SE",
+                    "D"
+                  ]
+                },
+                {
+                  "id": "T2",
+                  "at": {
+                    "of": "f",
+                    "x": -2
+                  },
+                  "label": "T₂{coords}",
+                  "towards": [
+                    "L",
+                    "SW",
+                    "D"
+                  ]
+                }
+              ]
+            },
+            "caption": "Figura 3.8: as duas tangentes a \\(y=x^2\\) que passam por \\(P\\)."
+          }
+        },
+        {
+          "id": "3.9",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=x^5-4x^3+2x\\).</p><ol class=\"items\" type=\"a\"><li>Calcule \\(f'\\), \\(f''\\), \\(f'''\\) e \\(f^{(4)}\\).</li><li>Calcule \\(f''(1)\\) e \\(f'''(2)\\).</li><li>Qual é \\(f^{(5)}\\)? E \\(f^{(6)}\\)? O que se pode dizer de \\(f^{(n)}\\) para \\(n\\ge6\\)?</li></ol>",
+          "answer": "b) \\(-4\\) e \\(216\\); c) \\(120\\), \\(0\\) e \\(0\\)",
+          "solution": "<p><b>a)</b> \\(f'=5x^4-12x^2+2\\); \\(f''=20x^3-24x\\); \\(f'''=60x^2-24\\); \\(f^{(4)}=120x\\).</p><p><b>b)</b> \\(f''(1)=20-24=-4\\); \\(f'''(2)=240-24=216\\).</p><p><b>c)</b> \\(f^{(5)}=120\\) (constante) e \\(f^{(6)}=0\\), e daí em diante: a \\(n\\)-ésima derivada de um polinômio de grau \\(n-1\\) ou menor é identicamente nula.</p>"
+        },
+        {
+          "id": "3.10",
+          "level": "hard",
+          "statement": "<p>Seja \\(f(x)=\\dfrac1x=x^{-1}\\).</p><ol class=\"items\" type=\"a\"><li>Calcule \\(f'\\), \\(f''\\), \\(f'''\\) e \\(f^{(4)}\\) e descubra o padrão.</li><li>Escreva uma fórmula para \\(f^{(n)}(x)\\) e calcule \\(f^{(5)}(1)\\).</li></ol>",
+          "answer": "a) \\(-x^{-2},\\ 2x^{-3},\\ -6x^{-4},\\ 24x^{-5}\\); b) \\(f^{(n)}(x)=\\dfrac{(-1)^n\\,n!}{x^{n+1}}\\), \\(f^{(5)}(1)=-120\\)",
+          "solution": "<p><b>a)</b> \\(f'=-x^{-2}\\); \\(f''=2x^{-3}\\); \\(f'''=-6x^{-4}\\); \\(f^{(4)}=24x^{-5}\\).</p><p><b>b)</b> O sinal alterna (\\((-1)^n\\)), os coeficientes são \\(1,1,2,6,24=n!\\) e o expoente é \\(-(n+1)\\): \\(f^{(n)}(x)=\\dfrac{(-1)^n\\,n!}{x^{n+1}}\\). Para \\(n=5\\), \\(x=1\\): \\(-120\\).</p>"
+        }
+      ]
+    }
+  ],
+  "closing": "<b>Resumo.</b> Limite: para onde a função aponta. TMV: inclinação da secante. Derivada: limite das TMV quando o intervalo encolhe, a inclinação da tangente."
+}
