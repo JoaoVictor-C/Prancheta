@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="784" height="564" viewBox="0 0 784 564">
+<title>Regra do quociente: q = g/u lida como g = q·u</title>
+<rect x="0" y="0" width="784" height="564" fill="#0F1115"/>
+<g id="pr-boxes">
+<g id="antiga">
+<title>q · u = g  (área conhecida)</title>
+<rect data-pr-id="antiga" x="203" y="173" width="298" height="198" rx="5" fill="rgb(22, 36, 61)" stroke="rgb(91, 141, 239)" stroke-width="2"/>
+</g>
+<g id="topo">
+<title>q · Δu</title>
+<rect data-pr-id="topo" x="203" y="113" width="298" height="58" rx="5" fill="rgb(42, 36, 24)" stroke="rgb(233, 196, 106)" stroke-width="2"/>
+</g>
+<g id="lado">
+<title>Δq · u</title>
+<rect data-pr-id="lado" x="503" y="173" width="88" height="198" rx="5" fill="rgb(42, 36, 24)" stroke="rgb(233, 196, 106)" stroke-width="2"/>
+</g>
+<g id="canto">
+<title>Δq · Δu</title>
+<rect data-pr-id="canto" x="503" y="113" width="88" height="58" rx="5" fill="rgb(46, 27, 22)" stroke="rgb(231, 111, 81)" stroke-width="2"/>
+</g>
+<g id="conta">
+<title>Δg = q·Δu + Δq·u + Δq·Δu   ⇒   q′ = (g′ − q·u′) / u = (g′·u − g·u′) / u²</title>
+<rect data-pr-id="conta" x="73" y="453" width="638" height="62" rx="5" fill="rgb(20, 22, 27)" stroke="rgb(42, 49, 61)" stroke-width="2"/>
+</g>
+<g id="callout-1">
+<title>largura q = g/u</title>
+<rect data-pr-id="callout-1" x="282" y="404" width="140" height="18.84" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="callout-2">
+<title>+ Δq (o que queremos)</title>
+<rect data-pr-id="callout-2" x="552" y="400" width="150" height="18.84" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="callout-3">
+<title>altura u(x)</title>
+<rect data-pr-id="callout-3" x="52" y="262" width="100" height="18.84" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="callout-4">
+<title>+ Δu</title>
+<rect data-pr-id="callout-4" x="72" y="132" width="60" height="18.84" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+<g id="callout-5">
+<title>pedacinho de 2ª ordem: some quando Δx → 0</title>
+<rect data-pr-id="callout-5" x="617" y="42" width="125" height="56.53" rx="6" fill="rgba(0, 0, 0, 0)"/>
+</g>
+</g>
+<g id="pr-connectors">
+<g id="callout-1--leader">
+<desc>Connects callout-1 to a point</desc>
+<path data-pr-id="callout-1--leader" d="M 352 401 L 352 381" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 352 372 L 354.7 381 L 349.3 381 Z" fill="#6B7789"/>
+</g>
+<g id="callout-2--leader">
+<desc>Connects callout-2 to a point</desc>
+<path data-pr-id="callout-2--leader" d="M 600.45 397 L 555.15 375.81" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 547 372 L 556.3 373.37 L 554.01 378.26 Z" fill="#6B7789"/>
+</g>
+<g id="callout-3--leader">
+<desc>Connects callout-3 to a point</desc>
+<path data-pr-id="callout-3--leader" d="M 155 271.73 L 193 271.95" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 202 272 L 192.98 274.65 L 193.02 269.25 Z" fill="#6B7789"/>
+</g>
+<g id="callout-4--leader">
+<desc>Connects callout-4 to a point</desc>
+<path data-pr-id="callout-4--leader" d="M 135 141.61 L 193 141.95" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 202 142 L 192.98 144.65 L 193.02 139.25 Z" fill="#6B7789"/>
+</g>
+<g id="callout-5--leader">
+<desc>Connects callout-5 to canto</desc>
+<path data-pr-id="callout-5--leader" d="M 621.75 101.53 L 602.91 111.73" fill="none" stroke="#6B7789" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 595 116.01 L 601.63 109.35 L 604.2 114.1 Z" fill="#6B7789"/>
+</g>
+</g>
+<g id="pr-text">
+<g id="antiga--label">
+<desc>Labels antiga</desc>
+<text data-pr-id="antiga--label" x="352" y="204" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(220, 232, 255)" text-anchor="middle" xml:space="preserve">q · u = g  (área conhecida)</text>
+</g>
+<g id="topo--label">
+<desc>Labels topo</desc>
+<text data-pr-id="topo--label" x="352" y="144" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(246, 236, 210)" text-anchor="middle" xml:space="preserve">q · Δu</text>
+</g>
+<g id="lado--label">
+<desc>Labels lado</desc>
+<text data-pr-id="lado--label" x="547" y="204" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(246, 236, 210)" text-anchor="middle" xml:space="preserve">Δq · u</text>
+</g>
+<g id="canto--label">
+<desc>Labels canto</desc>
+<text data-pr-id="canto--label" x="547" y="144" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(251, 221, 211)" text-anchor="middle" xml:space="preserve">Δq · Δu</text>
+</g>
+<g id="conta--label">
+<desc>Labels conta</desc>
+<text data-pr-id="conta--label" x="391.99" y="484" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="15" fill="rgb(154, 164, 178)" text-anchor="middle" xml:space="preserve">Δg = q·Δu + Δq·u + Δq·Δu   ⇒   q′ = (g′ − q·u′) / u = (g′·u − g·u′) / u²</text>
+</g>
+<g id="callout-1--label">
+<desc>Labels callout-1</desc>
+<text data-pr-id="callout-1--label" x="282" y="417" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="13" fill="rgb(230, 233, 239)" text-anchor="start" xml:space="preserve">largura q = g/u</text>
+</g>
+<g id="callout-2--label">
+<desc>Labels callout-2</desc>
+<text data-pr-id="callout-2--label" x="552" y="413" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="13" fill="rgb(230, 233, 239)" text-anchor="start" xml:space="preserve">+ Δq (o que queremos)</text>
+</g>
+<g id="callout-3--label">
+<desc>Labels callout-3</desc>
+<text data-pr-id="callout-3--label" x="52" y="275" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="13" fill="rgb(230, 233, 239)" text-anchor="start" xml:space="preserve">altura u(x)</text>
+</g>
+<g id="callout-4--label">
+<desc>Labels callout-4</desc>
+<text data-pr-id="callout-4--label" x="72" y="145" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="13" fill="rgb(230, 233, 239)" text-anchor="start" xml:space="preserve">+ Δu</text>
+</g>
+<g id="callout-5--label">
+<desc>Labels callout-5</desc>
+<text data-pr-id="callout-5--label" x="617" y="55" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="13" fill="rgb(230, 233, 239)" text-anchor="start" xml:space="preserve">pedacinho de 2ª</text>
+<text data-pr-id="callout-5--label" x="617" y="73.84" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="13" fill="rgb(230, 233, 239)" text-anchor="start" xml:space="preserve">ordem: some</text>
+<text data-pr-id="callout-5--label" x="617" y="92.69" font-family="&quot;Inter&quot;, &quot;Prancheta Sans&quot;, &quot;Segoe UI&quot;, &quot;Noto Sans&quot;, system-ui, sans-serif" font-size="13" fill="rgb(230, 233, 239)" text-anchor="start" xml:space="preserve">quando Δx → 0</text>
+</g>
+</g>
+</svg>
