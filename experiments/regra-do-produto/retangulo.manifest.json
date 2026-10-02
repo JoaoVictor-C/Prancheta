@@ -1,0 +1,716 @@
+{
+  "version": 1,
+  "title": "Regra do produto: f = g·u como área de um retângulo",
+  "figure": {
+    "width": 764,
+    "height": 484
+  },
+  "elements": [
+    {
+      "id": "antiga",
+      "kind": "box",
+      "box": {
+        "x": 192,
+        "y": 172,
+        "width": 300,
+        "height": 200
+      }
+    },
+    {
+      "id": "topo",
+      "kind": "box",
+      "box": {
+        "x": 192,
+        "y": 112,
+        "width": 300,
+        "height": 60
+      }
+    },
+    {
+      "id": "lado",
+      "kind": "box",
+      "box": {
+        "x": 492,
+        "y": 172,
+        "width": 90,
+        "height": 200
+      }
+    },
+    {
+      "id": "canto",
+      "kind": "box",
+      "box": {
+        "x": 492,
+        "y": 112,
+        "width": 90,
+        "height": 60
+      }
+    },
+    {
+      "id": "callout-1",
+      "kind": "box",
+      "box": {
+        "x": 282,
+        "y": 407,
+        "width": 120,
+        "height": 18.84
+      }
+    },
+    {
+      "id": "callout-2",
+      "kind": "box",
+      "box": {
+        "x": 512,
+        "y": 407,
+        "width": 60,
+        "height": 18.84
+      }
+    },
+    {
+      "id": "callout-3",
+      "kind": "box",
+      "box": {
+        "x": 52,
+        "y": 262,
+        "width": 100,
+        "height": 18.84
+      }
+    },
+    {
+      "id": "callout-4",
+      "kind": "box",
+      "box": {
+        "x": 72,
+        "y": 132,
+        "width": 60,
+        "height": 18.84
+      }
+    },
+    {
+      "id": "callout-5",
+      "kind": "box",
+      "box": {
+        "x": 602,
+        "y": 42,
+        "width": 125,
+        "height": 56.53
+      }
+    },
+    {
+      "id": "callout-1--leader",
+      "kind": "connector",
+      "box": {
+        "x": 342,
+        "y": 372,
+        "width": 0,
+        "height": 32
+      },
+      "ownerId": "callout-1",
+      "joins": [
+        "callout-1"
+      ]
+    },
+    {
+      "id": "callout-2--leader",
+      "kind": "connector",
+      "box": {
+        "x": 537,
+        "y": 372,
+        "width": 3.601981089599235,
+        "height": 32
+      },
+      "ownerId": "callout-2",
+      "joins": [
+        "callout-2"
+      ]
+    },
+    {
+      "id": "callout-3--leader",
+      "kind": "connector",
+      "box": {
+        "x": 155,
+        "y": 271.76155555555556,
+        "width": 37,
+        "height": 0.2384444444444398
+      },
+      "ownerId": "callout-3",
+      "joins": [
+        "callout-3"
+      ]
+    },
+    {
+      "id": "callout-4--leader",
+      "kind": "connector",
+      "box": {
+        "x": 135,
+        "y": 141.63266666666667,
+        "width": 57,
+        "height": 0.3673333333333346
+      },
+      "ownerId": "callout-4",
+      "joins": [
+        "callout-4"
+      ]
+    },
+    {
+      "id": "callout-5--leader",
+      "kind": "connector",
+      "box": {
+        "x": 585,
+        "y": 101.53,
+        "width": 23.930368718198906,
+        "height": 13.46388235294117
+      },
+      "ownerId": "callout-5",
+      "joins": [
+        "callout-5",
+        "canto"
+      ]
+    },
+    {
+      "id": "antiga--label",
+      "kind": "text",
+      "ownerId": "antiga",
+      "box": {
+        "x": 284.17,
+        "y": 189,
+        "width": 115.63999999999999,
+        "height": 19
+      },
+      "lines": [
+        "g · u  (área em x)"
+      ]
+    },
+    {
+      "id": "topo--label",
+      "kind": "text",
+      "ownerId": "topo",
+      "box": {
+        "x": 321.47,
+        "y": 129,
+        "width": 41.05000000000001,
+        "height": 19
+      },
+      "lines": [
+        "g · Δu"
+      ]
+    },
+    {
+      "id": "lado--label",
+      "kind": "text",
+      "ownerId": "lado",
+      "box": {
+        "x": 516.47,
+        "y": 189,
+        "width": 41.049999999999955,
+        "height": 19
+      },
+      "lines": [
+        "Δg · u"
+      ]
+    },
+    {
+      "id": "canto--label",
+      "kind": "text",
+      "ownerId": "canto",
+      "box": {
+        "x": 511.36,
+        "y": 129,
+        "width": 51.26999999999998,
+        "height": 19
+      },
+      "lines": [
+        "Δg · Δu"
+      ]
+    },
+    {
+      "id": "callout-1--label",
+      "kind": "text",
+      "ownerId": "callout-1",
+      "box": {
+        "x": 282,
+        "y": 408,
+        "width": 71.19999999999999,
+        "height": 16
+      },
+      "lines": [
+        "largura g(x)"
+      ]
+    },
+    {
+      "id": "callout-2--label",
+      "kind": "text",
+      "ownerId": "callout-2",
+      "box": {
+        "x": 512,
+        "y": 408,
+        "width": 29.090000000000032,
+        "height": 16
+      },
+      "lines": [
+        "+ Δg"
+      ]
+    },
+    {
+      "id": "callout-3--label",
+      "kind": "text",
+      "ownerId": "callout-3",
+      "box": {
+        "x": 52,
+        "y": 263,
+        "width": 62.7,
+        "height": 16
+      },
+      "lines": [
+        "altura u(x)"
+      ]
+    },
+    {
+      "id": "callout-4--label",
+      "kind": "text",
+      "ownerId": "callout-4",
+      "box": {
+        "x": 72,
+        "y": 133,
+        "width": 28.810000000000002,
+        "height": 16
+      },
+      "lines": [
+        "+ Δu"
+      ]
+    },
+    {
+      "id": "callout-5--label",
+      "kind": "text",
+      "ownerId": "callout-5",
+      "box": {
+        "x": 602,
+        "y": 43,
+        "width": 101.22000000000003,
+        "height": 53.69
+      },
+      "lines": [
+        "pedacinho de 2ª",
+        "ordem: some",
+        "quando Δx → 0"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "callout-1--leader",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "callout-2--leader",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "callout-3--leader",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "callout-4--leader",
+      "status": "pass"
+    },
+    {
+      "id": "connector-clear-of-boxes",
+      "target": "callout-5--leader",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "antiga--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "antiga--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "antiga--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "antiga--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "topo--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "topo--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "topo--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "topo--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "lado--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "lado--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "lado--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "lado--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "canto--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "canto--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "canto--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "canto--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "callout-1--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "callout-1--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "callout-1--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "callout-1--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "callout-2--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "callout-2--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "callout-2--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "callout-2--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "callout-3--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "callout-3--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "callout-3--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "callout-3--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "callout-4--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "callout-4--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "callout-4--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "callout-4--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-fits-box",
+      "target": "callout-5--label",
+      "status": "pass"
+    },
+    {
+      "id": "label-within-shape",
+      "target": "callout-5--label",
+      "status": "not-applicable",
+      "detail": "rect shape; text-fits-box already covers this"
+    },
+    {
+      "id": "text-clear-of-other-boxes",
+      "target": "callout-5--label",
+      "status": "pass"
+    },
+    {
+      "id": "text-clear-of-ink",
+      "target": "callout-5--label",
+      "status": "pass"
+    },
+    {
+      "id": "boxes-do-not-overlap",
+      "target": "figure",
+      "status": "pass",
+      "examined": 36,
+      "detail": "resolved 36 pair(s); 7 needed an overlap test"
+    },
+    {
+      "id": "content-within-canvas",
+      "target": "figure",
+      "status": "pass",
+      "examined": 23,
+      "detail": "examined 23 element(s)"
+    },
+    {
+      "id": "effect-within-canvas",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no element carries an effect that reaches past its own bounds"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "antiga--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "12.58:1 against rgb(22, 36, 61)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "topo--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "13.08:1 against rgb(42, 36, 24)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "lado--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "13.08:1 against rgb(42, 36, 24)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "canto--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "12.76:1 against rgb(46, 27, 22)"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "callout-1--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "15.54:1 against #0F1115"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "callout-2--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "15.54:1 against #0F1115"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "callout-3--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "15.54:1 against #0F1115"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "callout-4--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "15.54:1 against #0F1115"
+    },
+    {
+      "id": "contrast-sufficient",
+      "target": "callout-5--label",
+      "status": "pass",
+      "examined": 1,
+      "detail": "15.54:1 against #0F1115"
+    },
+    {
+      "id": "categorical-colours-distinguishable",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no categoryGroup has two or more members to compare"
+    },
+    {
+      "id": "tick-labels-do-not-collide",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no axis tick labels found"
+    },
+    {
+      "id": "constraints-satisfied",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no constraints declared"
+    },
+    {
+      "id": "declared-size-honoured",
+      "target": "figure",
+      "status": "pass",
+      "examined": 9,
+      "detail": "every declared size was honoured across 9 block(s)"
+    },
+    {
+      "id": "annotation-nearest-its-owner",
+      "target": "figure",
+      "status": "pass",
+      "examined": 5,
+      "detail": "every annotation is nearest what it names across 5 label(s)"
+    },
+    {
+      "id": "sweep-matches-its-label",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: nothing in this figure draws a swept angle"
+    },
+    {
+      "id": "length-matches-its-label",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no line or arrow is annotated with a stated length"
+    },
+    {
+      "id": "area-matches-its-label",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no closed region is annotated with a stated area"
+    },
+    {
+      "id": "label-nearest-its-place",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no block names a place"
+    },
+    {
+      "id": "label-declares-what-it-names",
+      "target": "figure",
+      "status": "pass",
+      "examined": 5,
+      "detail": "every one of 5 bare label(s) names something or is declared free-standing (0 free-standing)"
+    },
+    {
+      "id": "backing-hides-no-ink",
+      "target": "figure",
+      "status": "pass",
+      "examined": 4,
+      "detail": "no backing hides a line it does not name across 4 backed label(s)"
+    },
+    {
+      "id": "arc-is-circular",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: the figure draws no arcs"
+    },
+    {
+      "id": "axis-number-present",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no axis declares a required number"
+    },
+    {
+      "id": "series-distinguishable-without-colour",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: fewer than two series are declared"
+    },
+    {
+      "id": "curve-label-nearest-its-curve",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no label names a series"
+    },
+    {
+      "id": "feature-on-its-curve",
+      "target": "figure",
+      "status": "not-applicable",
+      "examined": 0,
+      "detail": "not applicable: no mark claims to lie on anything"
+    }
+  ],
+  "repairs": [],
+  "passes": 1,
+  "unrepaired": [],
+  "warnings": [],
+  "ok": true
+}
