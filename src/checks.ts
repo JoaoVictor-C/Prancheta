@@ -64,6 +64,11 @@ export type CheckId =
   // paper backing, and the backing then erased the line under it.
   | "backing-hides-no-ink"
   | "content-within-canvas"
+  // A canvas the size of a building is not a figure (review of 2026-09-29):
+  // a sequence aₙ = 1000n drawn at a fixed pixels-per-unit came out 396 280px
+  // tall and passed every other check, because every other check measures
+  // the figure against itself.
+  | "canvas-size-sane"
   | "connector-clear-of-boxes"
   | "boxes-do-not-overlap"
   | "effect-within-canvas"
@@ -218,6 +223,7 @@ export function runChecks(figure: LaidOutFigure): Check[] {
       : boxesDoNotOverlap(boxes)),
   );
   checks.push(contentWithinCanvas(figure));
+  checks.push(canvasSizeSane(figure));
   checks.push(effectWithinCanvas(figure));
   checks.push(...contrastSufficient(figure, boxes));
   checks.push(categoricalColoursDistinguishable(boxes));
@@ -911,6 +917,21 @@ function ownBounds(element: LaidOutFigure["elements"][number]): Rect {
     );
   }
   return unionRects(element.lines.map((line) => line.box));
+}
+
+/** The largest side a figure may have, in CSS pixels: an A4 page is about 800 wide and 1100 tall, and a sheet scales a figure to its column. */
+export const CANVAS_MAX_SIDE = 4000;
+/** Below this a figure cannot hold a label and its ink. */
+export const CANVAS_MIN_SIDE = 60;
+
+function canvasSizeSane(figure: LaidOutFigure): Check {
+  const { width, height } = figure;
+  const problems: string[] = [];
+  if (width > CANVAS_MAX_SIDE || height > CANVAS_MAX_SIDE) problems.push(`${Math.round(width)}×${Math.round(height)}px exceeds ${CANVAS_MAX_SIDE}px on a side -- the scale was fixed per unit and not fitted to the data`);
+  if (width < CANVAS_MIN_SIDE || height < CANVAS_MIN_SIDE) problems.push(`${Math.round(width)}×${Math.round(height)}px is under ${CANVAS_MIN_SIDE}px on a side`);
+  return problems.length === 0
+    ? { id: "canvas-size-sane", target: "figure", status: "pass" }
+    : { id: "canvas-size-sane", target: "figure", status: "fail", detail: problems.join("; ") };
 }
 
 function contentWithinCanvas(figure: LaidOutFigure): Check {
@@ -1746,6 +1767,15 @@ function placesOf(figure: LaidOutFigure): Map<string, Point> {
 type StatedLength = { value: number; resolution: number; unit: string | null };
 
 /**
+ * A label as the drawing sets it, minus the narrow no-break spaces that group
+ * digits ("12 000"): `\s` matches them, so a grouped number would otherwise
+ * read as a number followed by a unit and the label would never be checked.
+ */
+function ungrouped(text: string): string {
+  return text.replace(/(\d)\u202f(?=\d{3}(?!\d))/g, "$1");
+}
+
+/**
  * The length a label states, or null when it states none.
  *
  * Read as the project's own formatter writes numbers (ADR 0023): pt-BR, so a
@@ -1769,7 +1799,7 @@ type StatedLength = { value: number; resolution: number; unit: string | null };
  * the way its sign says is a different claim this check does not make.
  */
 function statedLength(text: string): StatedLength | null {
-  let t = text.trim().replaceAll("−", "-").replaceAll(" ", " ");
+  let t = ungrouped(text).trim().replaceAll("−", "-").replaceAll(" ", " ");
   const equals = t.lastIndexOf("=");
   if (equals >= 0) t = t.slice(equals + 1).trim();
   // An exact root -- "√13", "2√13", "3√2/2" -- is a stated length too, and
@@ -1987,7 +2017,7 @@ type StatedArea = { value: number; resolution: number; exact: boolean };
  * to read, exactly as in the length check, so it is refused here too.
  */
 function statedArea(text: string): StatedArea | null {
-  let t = text.trim().replaceAll("−", "-");
+  let t = ungrouped(text).trim().replaceAll("−", "-");
   const equals = t.lastIndexOf("=");
   if (equals >= 0) {
     t = t.slice(equals + 1).trim();

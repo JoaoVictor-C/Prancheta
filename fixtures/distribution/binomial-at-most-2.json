@@ -1,0 +1,7 @@
+{
+  "preset": "distribution",
+  "kind": "binomial",
+  "n": 10,
+  "p": 0.3,
+  "event": { "below": 2 }
+}

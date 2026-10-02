@@ -66,6 +66,14 @@ export type UnitCircleInput = {
   angles: (string | UnitCircleAngleInput)[];
   /** Print I, II, III, IV in each quadrant. Default false. */
   quadrantLabels?: boolean;
+  /**
+   * Default true. With false the figure is the exercise's QUESTION: the circle, the axes, each given angle with
+   * its name, its radius OP, its arc and the arc's degree value stay; every computed result goes -- the printed
+   * cos and sin at the feet of a projection, the tangent segment with its extension and "tg θ = …", and the
+   * symmetric points (finding π − θ, π + θ, 2π − θ is the question). The dashed projection guides stay: they
+   * are the construction, not a value.
+   */
+  answers?: boolean;
 };
 
 // ---- angle parsing ------------------------------------------------------------
@@ -264,6 +272,7 @@ export function expandUnitCircle(input: UnitCircleInput): FigureSpec {
     throw new SpecError("unit-circle.angles must be a non-empty array");
   }
 
+  const showAnswers = input.answers ?? true;
   const points: PlacedAngle[] = [];
   input.angles.forEach((raw, i) => {
     const e = normalizeEntry(raw);
@@ -284,7 +293,7 @@ export function expandUnitCircle(input: UnitCircleInput): FigureSpec {
       projection: e.projection ?? false,
       tangent: e.tangent ?? false,
     });
-    for (const kind of symmetricKindsOf(e)) {
+    for (const kind of showAnswers ? symmetricKindsOf(e) : []) {
       const dTheta = derivedTheta(kind, theta);
       points.push({
         id: `${id}-${kind}`,
@@ -483,7 +492,7 @@ export function expandUnitCircle(input: UnitCircleInput): FigureSpec {
       if (Math.abs(pt.y - cy) > 1) board.poly([pt, side], { stroke: FAINT, width: 1.2, lineStyle: "dashed" });
     }
 
-    if (p.tangent) {
+    if (p.tangent && showAnswers) {
       const t = Math.tan(p.theta);
       tangents.set(p.id, t);
       const tanFoot: Point = { x: cx + R, y: cy };
@@ -635,7 +644,7 @@ export function expandUnitCircle(input: UnitCircleInput): FigureSpec {
       angleLabel.annotates = arcId;
     }
 
-    if (p.projection) {
+    if (p.projection && showAnswers) {
       const cosV = Math.cos(p.theta);
       const sinV = Math.sin(p.theta);
       const foot: Point = { x: pt.x, y: cy };
@@ -679,7 +688,7 @@ export function expandUnitCircle(input: UnitCircleInput): FigureSpec {
       sinBlock.annotatesPlace = side;
     }
 
-    if (p.tangent) {
+    if (p.tangent && showAnswers) {
       const t = tangents.get(p.id)!;
       const tanTop: Point = { x: cx + R, y: cy - t * R };
       const tanText = formatTrigValue(t, locale);
@@ -773,6 +782,7 @@ export function validateUnitCircleInput(raw: Record<string, unknown>): void {
   v.optionalEnum(raw, "locale", path, LOCALES);
   v.optionalNumber(raw, "radius", path);
   v.optionalBoolean(raw, "quadrantLabels", path);
+  v.optionalBoolean(raw, "answers", path);
   const angles = v.nonEmptyArray(raw, "angles", path, "angles (a string, or {angle, ...})");
   angles.forEach((a, i) => validateAngleEntry(a, `${path}.angles[${i}]`));
   expandUnitCircle(raw as unknown as UnitCircleInput);

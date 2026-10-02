@@ -46,11 +46,15 @@ An element that declares no `level` is set as `body`, so every spec written befo
 
 ## What is bundled, and what is a wish
 
-This repository ships **one** face: Inter, in `assets/fonts`, under the OFL. Every other family named in a pack is a *preference inside a stack*, never a promise — `editorial` asks for Iowan Old Style and will take Palatino, then Georgia, then Times, then whatever the host calls `serif`.
+This repository ships **one** face: Inter, in `assets/fonts`, under the OFL, loaded everywhere as **"Prancheta Sans"** (ADR 0063) — the text optical size, weights 400 to 700, one WOFF file that the measuring browser, `embed`, `outline` and the presets' planning all read. It is the default face of every theme, every preset and every sans level of every pack. Every other family named in a pack is a *preference inside a stack*, never a promise — `editorial` asks for Iowan Old Style and will take Palatino, then Georgia, then Times, then whatever the host calls `serif`.
 
-So `selfContained` is **derived**, not asserted per pack: a pack is self-contained only when *every* level's first choice is bundled. The first draft hand-marked `grotesk` as self-contained because five of its six levels use Inter — its `mono` level does not, and a pack that is portable at five levels out of six is not portable. The `type` command names exactly which levels will fall back.
+So `selfContained` is **derived**, not asserted per pack: a pack is self-contained only when *every* level's first choice is bundled. The first draft hand-marked `grotesk` as self-contained because five of its six levels use Inter — its `mono` level does not, and a pack that is portable at five levels out of six is not portable. The `type` command names exactly which levels will fall back. (Those levels used to name `"Inter"`, which asks the *host* for Inter — a face the measuring browser never loaded, so they were drawn in Segoe UI. They name "Prancheta Sans" now.)
 
-This matters because a substituted face has different metrics, and the figure was measured with the face this machine had. `fontEmbed: "outline"` converts every glyph to a path and removes the question entirely; `"embed"` inlines the bundled face. Neither is the default, because both cost bytes.
+This matters because a substituted face has different metrics, and the figure was measured with the face this machine had. `fontEmbed: "embed"` — the default since ADR 0063 — inlines the bundled face, about 330 KB of base64 per SVG; `"outline"` converts every glyph to a path and removes the question entirely; `"none"` only names the face, and is for a viewer known to have it.
+
+## Kerning is off
+
+Figure text is set without kerning, in the mirror and in the exported SVG alike (ADR 0063). A glyph then sits at the sum of the advances before it, which is what `outline` draws and what a preset computes when it plans a label before any browser exists (`src/layout/text-metrics.ts`). The cost is that "AV" or "P(" is set a little looser than Inter would set it; the gain is that the width a preset planned is the width Chromium lays out, within a pixel, on every OS.
 
 ## Tracking is measured, not just drawn
 

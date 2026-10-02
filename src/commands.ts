@@ -107,9 +107,10 @@ const renderCommand: Command = {
       name: "fontEmbed",
       type: "string",
       description:
-        "\"embed\" inlines the bundled font as a base64 @font-face; \"outline\" converts " +
-        "every glyph to a filled path with zero runtime font dependency. Default \"none\".",
-      default: "none",
+        "\"embed\" (the default) inlines the bundled font as a base64 @font-face, so the SVG draws " +
+        "what was measured anywhere; \"outline\" converts every glyph to a filled path with zero " +
+        "runtime font dependency; \"none\" only names the font (smaller, host-dependent).",
+      default: "embed",
     },
     {
       name: "pdf",
@@ -131,7 +132,7 @@ const renderCommand: Command = {
     const parsed: unknown = JSON.parse(await readFile(specPath, "utf8"));
     const spec = parseFigureInput(parsed);
 
-    const fontEmbed = String(args.fontEmbed ?? "none");
+    const fontEmbed = String(args.fontEmbed ?? "embed");
     if (fontEmbed !== "none" && fontEmbed !== "embed" && fontEmbed !== "outline") {
       throw new Error(`--fontEmbed must be "none", "embed" or "outline", got "${fontEmbed}"`);
     }
@@ -466,6 +467,17 @@ const moduleCommand: Command = {
     });
     const elapsed = Date.now() - started;
     const { verification, output } = result;
+    // --out was declared and never used: the drawing only reached callers
+    // through `data`. It is written now, named after --name= or the script.
+    const { mkdir, writeFile } = await import("node:fs/promises");
+    const { basename, join } = await import("node:path");
+    const argList = toStringArray(args.args).flatMap((a) => a.split(","));
+    const named = argList.find((a) => a.startsWith("--name="))?.slice("--name=".length);
+    const stem = (named ?? basename(argList[0] ?? "module").replace(/\.[a-z]+$/i, "")).replace(/[^A-Za-z0-9_-]/g, "_");
+    const outDir = String(args.out ?? "out");
+    await mkdir(outDir, { recursive: true });
+    await writeFile(join(outDir, `${stem}.svg`), output.svg, "utf8");
+    await writeFile(join(outDir, `${stem}.verification.json`), JSON.stringify(verification, null, 2), "utf8");
 
     const failed = verification.checks.filter((check) => check.status === "fail");
     const lines: string[] = [
@@ -482,6 +494,7 @@ const moduleCommand: Command = {
       );
     }
     for (const note of output.notes ?? []) lines.push(`  note ${note}`);
+    lines.push(`  wrote ${join(outDir, `${stem}.svg`)}`);
     lines.push(
       "",
       "Checked for malformation, not misrepresentation: a reversed colour scale, " +

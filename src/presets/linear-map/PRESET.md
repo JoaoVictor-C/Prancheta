@@ -121,3 +121,11 @@ passing every check.
 Maps of R³ (`space` has the axes; the matrix work is not here), a non-linear
 map (a translation moves the origin), and the composition of two maps — give
 their product as the matrix.
+
+## answers: false
+
+An exercise on a linear map gives the map and asks for its image, so the question's figure keeps what is given and draws none of what is asked. Kept: the plane with its ticks, the basis e₁ e₂, the original unit square, the original shapes with their vertex letters, the original points, and the map as typed (the matrix and `T(x; y) = …`). A map given by `named` is stated by its name ("T: rotação de 90°") and its matrix is not printed, since finding it is a usual question. Hidden: the image lattice, T(e₁) and T(e₂), the unit square's image and its area S, the eigen-lines, the image line of a singular map, every shape's and point's image and primed name, det A and tr A, and every reading beneath the plane (the columns, the eigenvalues and eigenvectors, the image areas, the primed coordinates). The plotted box is still fitted to the images, so the question and its solution share one page and a reader can draw the answer on it.
+
+## Scale
+
+One unit on both axes, fitted so the larger span of the box is about 460px (at most 90px per unit): `[[200, 0], [0, 300]]` is a page-sized plane, not 6926px. The unit square is then honestly small (its arrows and names drop out where they would be under 4px), while the image, its area and the tick numbers stay legible. Ticks are whole units while the box is a few units wide and 1, 2 or 5 × 10ᵏ beyond.

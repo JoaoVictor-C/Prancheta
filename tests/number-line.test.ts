@@ -196,6 +196,40 @@ test("validation refuses what cannot be drawn", () => {
   assert.throws(() => expandNumberLine({} as NumberLineInput), /give either/);
 });
 
+// --- answers: false ---------------------------------------------------------------
+
+test("answers:false draws the axis line and row names, but no intervals", () => {
+  const input: NumberLineInput = { set: "[-2, 3)", answers: false };
+  const spec = expandNumberLine(input);
+  const marks = (spec.root as Scene).marks ?? [];
+  // The axis line should be drawn (thin reference stroke)
+  const axisLine = marks.find((m) => m.id?.startsWith("row-"));
+  // But no interval marks (endpoints, arrows, thick lines) should exist
+  const intervals = marks.filter((m) => m.id?.includes("-lo-") || m.id?.includes("-hi-"));
+  assert.equal(intervals.length, 0, "no interval marks should be drawn with answers:false");
+});
+
+test("answers:true (default) draws intervals with endpoints", () => {
+  const input: NumberLineInput = { set: "[-2, 3)" };
+  const spec = expandNumberLine(input);
+  const marks = (spec.root as Scene).marks ?? [];
+  // Interval endpoints should be drawn
+  const intervals = marks.filter((m) => m.id?.includes("-lo-") || m.id?.includes("-hi-"));
+  assert.ok(intervals.length > 0, "interval marks should be drawn with answers:true");
+});
+
+test("answers:false renders with every check passing", { timeout: 240000 }, async () => {
+  const input: NumberLineInput = { set: "x < 5 ou x > -5", answers: false };
+  const spec = expandNumberLine(input);
+  const result = await render(spec, { raster: false });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
+  // Verify no interval marks exist
+  const marks = (spec.root as Scene).marks ?? [];
+  const intervals = marks.filter((m) => m.id?.includes("-lo-") || m.id?.includes("-hi-"));
+  assert.equal(intervals.length, 0, "no interval marks should be present with answers:false");
+});
+
 // --- rendering ---------------------------------------------------------------
 
 for (const name of fixtures) {

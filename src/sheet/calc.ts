@@ -627,7 +627,7 @@ export function spellForExpression(value: number): string {
   let body: string;
   let atomic: boolean;
   if (e.form === "rational") {
-    body = formatNumber(abs, "en");
+    body = formatNumber(abs, "en", { grouping: false });
     atomic = !body.includes("/");
   } else if (e.form === "sqrt") {
     body = `sqrt(${e.n})`;

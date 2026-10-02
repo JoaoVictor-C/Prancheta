@@ -106,9 +106,10 @@ test("validation refuses non-integer n", () => {
   assert.throws(() => validateSequenceInput(bad as Record<string, unknown>), /must be an integer >= 1/);
 });
 
-test("validation refuses range > 60 terms", () => {
-  const bad = { term: "1/n", n: [1, 61] };
-  assert.throws(() => validateSequenceInput(bad as Record<string, unknown>), /maximum is 60/);
+test("validation refuses range > 500 terms, accepts 500", () => {
+  const bad = { term: "1/n", n: [1, 501] };
+  assert.throws(() => validateSequenceInput(bad as Record<string, unknown>), /maximum is 500/);
+  assert.doesNotThrow(() => validateSequenceInput({ term: "1/n", n: [1, 500] }));
 });
 
 test("validation refuses non-finite term value", () => {
@@ -256,4 +257,65 @@ fixtures.forEach((filename) => {
       );
     }
   });
+});
+
+// ---- scale fitted to the data (review of 2026-09-29) ------------------------
+
+function size(svg: string): { w: number; h: number } {
+  const m = svg.match(/<svg[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"/);
+  assert.ok(m, "svg has a size");
+  return { w: Number(m![1]), h: Number(m![2]) };
+}
+
+function numericLabels(svg: string): string[] {
+  return (svg.match(/<text[^>]*>[^<]*<\/text>/g) ?? []).map((t) => t.replace(/<[^>]+>/g, "")).filter((t) => /^[−-]?[\d.,]+$/.test(t));
+}
+
+async function renderOk(input: SequenceInput) {
+  const spec = expandSequence(input);
+  const result = await render(spec, { maxPasses: 3, raster: false });
+  for (const check of result.manifest.checks) {
+    assert.ok(check.status === "pass" || check.status === "not-applicable", `${check.id} failed with: ${check.detail}`);
+  }
+  return result;
+}
+
+test("probe: aₙ = 1000n over 1..10 fits its value range (was 396 280px tall)", async () => {
+  const { svg } = await renderOk({ term: "1000*n", n: [1, 10], show: "terms" });
+  const { w, h } = size(svg);
+  assert.ok(w <= 1200 && h <= 1200 && h >= 200, `${w} x ${h}`);
+  assert.ok(numericLabels(svg).length <= 24);
+});
+
+test("probe: aₙ = 1/n over 1..500 fits and labels n sparsely (was 11 120px wide, 1010 labels)", async () => {
+  const { svg } = await renderOk({ term: "1/n", n: [1, 500], show: "terms" });
+  const { w, h } = size(svg);
+  assert.ok(w <= 1200 && h <= 1200, `${w} x ${h}`);
+  assert.ok(numericLabels(svg).length <= 24, `${numericLabels(svg).length} numbers`);
+  const spec = expandSequence({ term: "1/n", n: [1, 500], show: "terms" });
+  assert.strictEqual((spec.root as Scene).marks!.filter((m) => m.id.startsWith("terms-")).length, 500, "every term keeps its dot");
+});
+
+test("probe: a tiny value range (1e-6 n) and a large one stay page-sized", async () => {
+  for (const term of ["0.000001*n", "1e7/n"]) {
+    const { svg } = await renderOk({ term, n: [1, 20], show: "terms" });
+    const { w, h } = size(svg);
+    assert.ok(w <= 1200 && h <= 1200 && w >= 200 && h >= 200, `${term}: ${w} x ${h}`);
+  }
+});
+
+// ---- answers: false --------------------------------------------------------
+
+test("answers:false keeps the dots and the frame, and draws no limit line or value", async () => {
+  const base: SequenceInput = { term: "1/2^n", n: [1, 10], show: "both", limit: true };
+  const solution = expandSequence(base);
+  const question = expandSequence({ ...base, answers: false });
+  const qs = question.root as Scene;
+  const ss = solution.root as Scene;
+  assert.ok(ss.marks!.some((m) => m.id === "limit-line-sums"), "answers:true is unchanged");
+  assert.ok(!qs.marks!.some((m) => m.id.startsWith("limit-line")), "no limit line");
+  assert.ok(!qs.children.some((c) => "label" in c && typeof c.label === "string" && c.label.startsWith("lim")), "no limit label");
+  assert.strictEqual(qs.marks!.filter((m) => m.id.startsWith("terms-")).length, 10);
+  assert.strictEqual(qs.marks!.filter((m) => m.id.startsWith("sums-")).length, 10);
+  await renderOk({ ...base, answers: false });
 });

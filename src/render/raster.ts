@@ -14,6 +14,12 @@ export async function rasterise(
   svg: string,
   size: { width: number; height: number },
   scale = 2,
+  /**
+   * An `@font-face` rule for the page, when the SVG names a face it does not
+   * carry ("none" mode). An SVG that embeds its font, or outlines it, is drawn
+   * with nothing added, so the PNG still proves what the file itself holds.
+   */
+  fontFace = "",
 ): Promise<Buffer> {
   const width = Math.max(1, Math.ceil(size.width));
   const height = Math.max(1, Math.ceil(size.height));
@@ -24,6 +30,7 @@ export async function rasterise(
   try {
     await page.setContent(
       `<!doctype html><html><head><meta charset="utf-8"><style>
+         ${fontFace}
          html, body { margin: 0; padding: 0; }
          /* Greyscale AA: subpixel rendering would put colour fringes on glyphs
             that are meant to be monochrome, and those fringes survive into the

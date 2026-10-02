@@ -1,0 +1,8 @@
+{
+  "preset": "acid-base",
+  "kind": "distribution",
+  "name": "ácido acético",
+  "pKa": 4.74,
+  "species": ["CH₃COOH", "CH₃COO⁻"],
+  "pH": 5.5
+}

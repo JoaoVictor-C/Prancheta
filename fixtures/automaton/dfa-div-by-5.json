@@ -1,0 +1,23 @@
+{
+  "preset": "automaton",
+  "title": "AFD: binários divisíveis por 5",
+  "kind": "dfa",
+  "alphabet": ["0", "1"],
+  "states": ["r0", "r1", "r2", "r3", "r4"],
+  "start": "r0",
+  "accept": ["r0"],
+  "transitions": [
+    { "from": "r0", "on": "0", "to": "r0" },
+    { "from": "r0", "on": "1", "to": "r1" },
+    { "from": "r1", "on": "0", "to": "r2" },
+    { "from": "r1", "on": "1", "to": "r3" },
+    { "from": "r2", "on": "0", "to": "r4" },
+    { "from": "r2", "on": "1", "to": "r0" },
+    { "from": "r3", "on": "0", "to": "r1" },
+    { "from": "r3", "on": "1", "to": "r2" },
+    { "from": "r4", "on": "0", "to": "r3" },
+    { "from": "r4", "on": "1", "to": "r4" }
+  ],
+  "layout": "circle",
+  "words": ["1010", "1111", "110010"]
+}

@@ -94,3 +94,12 @@ panel.
   one.
 - A slice outside the interval.
 - A camera that looks along the axis, or sees the cross-sections edge-on.
+
+## answers: false
+
+"Calcule o volume" gives the region and the axis; the volume and the integral that leads to it are the answer. With `answers: false` the panel (the method's integral and the volume) is not printed, and the slice's labels lose the expressions they equal: R(x) = √x becomes R, r(x) = … becomes r, h(x) = … becomes h; dx stays. Kept: the solid with its rims, sections and axis, the highlighted slice and the plane view with the region, its curves' equations `y = f(x)`, the axis line and its equation, and the representative rectangle. The slice is kept on purpose: it helps read the solid and it is not a number; the method it implies (discs, washers, shells) is visible, the price of a figure a student can use.
+
+## Scale
+
+Both views are fitted to the shape, not drawn at a fixed number of pixels per unit: √x on [0, 400] is a 1224 × 269 page, not 28 007 × 3122. The 3D view keeps one scale on all axes (about 420px on its longer side, up to 1,6 times that for a very elongated solid so the slice keeps room for a label). The plane view is equal-scaled up to a 3 to 1 plane; a longer one has its shorter axis stretched to hold 3 to 1 (its tick numbers give the scale), since a 340 × 14px strip cannot carry a label. Ticks are 1, 2 or 5 × 10ᵏ at any magnitude.
+Known limit: a region extremely thin against its length (x to 0,0004 under √x) still draws, but the plane view's curve label can sit on the curve.

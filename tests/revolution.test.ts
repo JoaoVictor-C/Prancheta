@@ -193,3 +193,61 @@ for (const file of readdirSync(fixturesDir).filter((f) => f.endsWith(".json"))) 
     assert.deepEqual(failing.map((c) => `${c.id} [${c.target}] ${c.detail ?? ""}`), []);
   });
 }
+
+// ---- scale fitted to the solid (review of 2026-09-29) --------------------------------------
+
+function svgSize(svg: string): { w: number; h: number } {
+  const m = svg.match(/<svg[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"/);
+  assert.ok(m, "svg has a size");
+  return { w: Number(m![1]), h: Number(m![2]) };
+}
+
+async function renderPassing(input: RevolutionInput) {
+  const result = await render(expandRevolution(input), { raster: false, maxPasses: 3 });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.deepEqual(failing.map((c) => `${c.id} ${c.detail ?? ""}`), []);
+  return result;
+}
+
+test("probe: √x on [0, 400] about the x axis fits a page (was 28 007 x 3122px)", async () => {
+  const { svg } = await renderPassing({ region: { of: "sqrt(x)", from: 0, to: 400 }, axis: "x" });
+  const { w, h } = svgSize(svg);
+  assert.ok(w <= 1600 && h <= 1000 && w >= 400 && h >= 150, `${w} x ${h}`);
+  assert.match(svg, /80000π/, "the volume is still exact");
+});
+
+test("probe: long and wide regions, and shells about a far axis, stay page-sized", async () => {
+  for (const input of [
+    { region: { of: "sqrt(x)", from: 0, to: 40 }, axis: "x" },
+    { region: { of: "x", from: 0, to: 1000 }, axis: "y" },
+    { region: { between: ["x", "x^2"], from: 0, to: 1 }, axis: { y: 300 } },
+  ] as RevolutionInput[]) {
+    const { svg } = await renderPassing(input).catch((e: Error) => {
+      // a region the preset refuses for its own reasons is not this probe's business
+      if (/crosses|one side|ONE side/.test(e.message)) return { svg: '<svg width="1" height="1">' };
+      throw e;
+    });
+    const { w, h } = svgSize(svg);
+    assert.ok(w <= 2400 && h <= 1600, `${JSON.stringify(input.region)}: ${w} x ${h}`);
+  }
+});
+
+// ---- answers: false --------------------------------------------------------------------------
+
+test("answers:false keeps the solid, the region and the axis, and prints neither expressions nor the volume", async () => {
+  const input: RevolutionInput = { region: { between: ["x", "x^2"] }, axis: "x", slice: { at: 0.6 } };
+  const solution = expandRevolution(input);
+  const question = expandRevolution({ ...input, answers: false });
+  const labels = (s: typeof solution): string[] => ((s.root as { children: { label?: string }[] }).children).map((c) => c.label ?? "").filter((t) => t !== "");
+  const sol = labels(solution).join("\n");
+  const q = labels(question).join("\n");
+  assert.match(sol, /R\(x\) = x/, "answers:true is unchanged");
+  assert.match(sol, /π/);
+  assert.ok(!/R\(x\) =|r\(x\) =|π|Arruelas|V =/.test(q), `no expression or volume in the question: ${q}`);
+  assert.match(q, /y = x²/, "the region's curves are given");
+  await renderPassing({ ...input, answers: false });
+  const shells: RevolutionInput = { region: { of: "x - x^2", from: 0, to: 1 }, axis: "y", answers: false };
+  const qs = labels(expandRevolution(shells)).join("\n");
+  assert.ok(!/h\(x\) =|r\(x\) =|π/.test(qs), qs);
+  await renderPassing(shells);
+});

@@ -1,0 +1,21 @@
+{
+  "preset": "probability-tree",
+  "title": "moeda viciada, P(cara) = 0,6, lançada quatro vezes",
+  "root": { "children": [
+    { "label": "C", "p": 0.6, "children": [
+      { "label": "C", "p": 0.6, "children": [
+        { "label": "C", "p": 0.6, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] },
+        { "label": "K", "p": 0.4, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] } ] },
+      { "label": "K", "p": 0.4, "children": [
+        { "label": "C", "p": 0.6, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] },
+        { "label": "K", "p": 0.4, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] } ] } ] },
+    { "label": "K", "p": 0.4, "children": [
+      { "label": "C", "p": 0.6, "children": [
+        { "label": "C", "p": 0.6, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] },
+        { "label": "K", "p": 0.4, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] } ] },
+      { "label": "K", "p": 0.4, "children": [
+        { "label": "C", "p": 0.6, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] },
+        { "label": "K", "p": 0.4, "children": [{ "label": "C", "p": 0.6 }, { "label": "K", "p": 0.4 }] } ] } ] }
+  ] },
+  "events": [{ "name": "pelo menos 3 caras", "count": { "of": "C", "atLeast": 3 } }]
+}

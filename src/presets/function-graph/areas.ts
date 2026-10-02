@@ -15,6 +15,7 @@
  */
 
 import type { Point } from "../../ir/types.ts";
+import { pointInPolygon } from "../../geometry/hit.ts";
 import { NumericError, integrate } from "../../math/numeric.ts";
 import { criticalPoints } from "../sign-chart/preset.ts";
 import { sampleParametric } from "./curves.ts";
@@ -157,33 +158,6 @@ function round(x: number): string {
 // ---- polygon arithmetic in canvas pixels (for the label search) ------------
 
 export type PxBox = { x: number; y: number; hw: number; hh: number };
-
-export function pointInPolygon(p: Point, poly: Point[]): boolean {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i, i += 1) {
-    const a = poly[i]!;
-    const b = poly[j]!;
-    if (a.y > p.y !== b.y > p.y && p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x) inside = !inside;
-  }
-  return inside;
-}
-
-export function distanceToSegment(p: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len2 = dx * dx + dy * dy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
-}
-
-/** Distance from p to a polyline (closed: including the edge back to the start). */
-export function distanceToPolyline(p: Point, pts: Point[], closed: boolean): number {
-  if (pts.length === 1) return Math.hypot(p.x - pts[0]!.x, p.y - pts[0]!.y);
-  let best = Infinity;
-  const n = closed ? pts.length : pts.length - 1;
-  for (let i = 0; i < n; i += 1) best = Math.min(best, distanceToSegment(p, pts[i]!, pts[(i + 1) % pts.length]!));
-  return best;
-}
 
 function segmentCrossesBox(a: Point, b: Point, box: PxBox): boolean {
   const lo = { x: box.x - box.hw, y: box.y - box.hh };

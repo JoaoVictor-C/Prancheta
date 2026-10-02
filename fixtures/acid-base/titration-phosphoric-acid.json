@@ -1,0 +1,6 @@
+{
+  "preset": "acid-base",
+  "kind": "titration",
+  "analyte": { "type": "acid", "strength": "weak", "name": "H₃PO₄", "pKa": [2.15, 7.2, 12.35], "concentration": 0.1, "volume": 25 },
+  "titrant": { "concentration": 0.1, "name": "NaOH" }
+}

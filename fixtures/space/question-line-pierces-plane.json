@@ -1,0 +1,13 @@
+{
+  "preset": "space",
+  "title": "Determine o ponto I em que a reta r fura o plano π",
+  "answers": false,
+  "points": [
+    { "name": "A", "at": [2, 1, 0] },
+    { "name": "B", "at": [2, 3, 2] },
+    { "name": "I", "intersection": ["r", "π"] }
+  ],
+  "lines": [{ "name": "r", "through": ["A", "B"] }],
+  "planes": [{ "name": "π", "equation": "2x + y + 2z = 8" }],
+  "measures": [{ "angle": ["r", "π"] }, { "distance": ["A", "π"] }]
+}

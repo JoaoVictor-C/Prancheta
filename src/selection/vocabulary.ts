@@ -96,8 +96,66 @@
  * |det A|), to a shape or a point, which lines it keeps (eigen-lines) and
  * which line it collapses the plane onto. Not a "vector": vectors are
  * added and scaled; here one matrix carries the whole plane.
+ *
+ * "electric-field" is the field of point charges -- its field lines, which
+ * leave positive charges and end on negative ones in a number proportional
+ * to the charge, and its equipotentials. Not a "vector": a few arrows to
+ * scale are not the field. Drawn by the field preset, kind "charges".
+ *
+ * "circuit" is a DC electric circuit with its layout given as nodes on a
+ * grid -- resistors, lamps, batteries, sources, switches, ideal meters --
+ * whose currents, potential differences, readings and powers are the
+ * question. Not a "graph": a graph's layout is computed and its edges
+ * carry no physics; here the drawing is given and every number is solved.
+ *
+ * "optics" is a geometric-optics ray diagram: a thin lens or a mirror with
+ * an object and the image it forms, or a ray meeting a plane boundary
+ * between two media. The image, its nature and the refracted angle are
+ * consequences of f, p and the indices. Not a "scene": rays drawn by hand
+ * can miss their own image.
+ *
+ * "automaton" is a finite automaton (DFA or NFA) -- states, a start state,
+ * accepting states, transitions on symbols -- whose meaning is which words
+ * it accepts. Not a "graph": a graph has no start arrow, no accepting
+ * states and no run on a word.
+ *
+ * "boolean" is a boolean function of named variables whose VALUES are
+ * asked for: a truth table, a tautology, an equivalence, minterms.
+ * "logic-circuit" is the same kind of function to be BUILT from gates:
+ * AND, OR, NOT, NAND, NOR, XOR symbols, simplified or simulated. The tell
+ * is the verb: tabular, classificar, provar equivalência vs. desenhar o
+ * circuito, implementar com portas, simular.
+ *
+ * "data" is a list of raw observations -- heights, grades, waiting times --
+ * whose distribution must be summarised: grouped into classes, split at
+ * quartiles, reduced to a mean and a spread. Not a "series": a series is
+ * values to plot as given; here nothing to plot is given, it is computed.
+ *
+ * "distribution" is a probability law -- normal, binomial, Poisson -- with an
+ * event on it whose probability is the answer: an area under the bell, the
+ * mass of some bars, two critical tails. Not a "function": the density is
+ * named, not typed, and the answer is the region's measure.
+ *
+ * "probability-tree" is a sequence of random stages whose outcomes multiply
+ * along a path -- urn draws, coin tosses, a diagnostic test. The content is
+ * the arithmetic on the tree: branches summing to 1, path products, events
+ * as sums of paths, conditionals. Not a "hierarchy": a hierarchy's tree is
+ * its meaning; here the tree only carries the numbers.
+ *
+ * "set-relations" is how several sets overlap -- union, intersection,
+ * difference, complement, head-counts by region -- drawn as circles in a
+ * universe. Not a "set": that is an unordered bag of items with no relation
+ * among its members. Not an "interval": a subset of the real line.
+ *
+ * "acid-base-equilibrium" is aqueous acid–base chemistry whose picture is
+ * computed from a constant, a concentration or a pH: a titration curve
+ * (pH against volume of titrant), the fraction of each species of a
+ * mono-, di- or triprotic acid against pH, the pH scale with substances
+ * and indicator ranges. Not a "function": the curve is the root of a
+ * charge balance, not a typed expression. Not "data" or "distribution":
+ * there are no observations and no probability law.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations", "acid-base-equilibrium"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -144,7 +202,17 @@ export type PresetId =
   | "revolution"
   | "field"
   | "sequence"
-  | "linear-map";
+  | "linear-map"
+  | "circuit"
+  | "optics"
+  | "automaton"
+  | "truth-table"
+  | "logic-circuit"
+  | "statistics"
+  | "distribution"
+  | "probability-tree"
+  | "venn"
+  | "acid-base";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -230,7 +298,7 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
   {
     id: "field",
     implemented: true,
-    summary: "Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed.",
+    summary: "Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed; and the field lines and equipotentials of point charges, seeded in proportion to each charge.",
   },
   {
     id: "sequence",
@@ -241,6 +309,56 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "linear-map",
     implemented: true,
     summary: "Linear maps of the plane from a matrix or a named rotation, reflection, shear, scale or projection: the image lattice, T(e₁) and T(e₂), the unit square with |det A| measured, eigen-lines, and shapes mapped to primed vertices.",
+  },
+  {
+    id: "circuit",
+    implemented: true,
+    summary: "DC circuits from a given node layout: conventional symbols, branch currents solved by nodal analysis and drawn with arrows in their true direction, meter readings, U_AB, node potentials and powers.",
+  },
+  {
+    id: "optics",
+    implemented: true,
+    summary: "Geometric optics: thin lenses and spherical or plane mirrors with the image computed by Gauss and the principal rays constructed (virtual images dashed), and refraction and total internal reflection at a plane interface by Snell.",
+  },
+  {
+    id: "automaton",
+    implemented: true,
+    summary: "Finite automata (DFA, NFA with ε) in Sipser style, with each listed word run through the automaton: its path or state sets and aceita/rejeita computed.",
+  },
+  {
+    id: "truth-table",
+    implemented: true,
+    summary: "Truth tables of boolean expressions, every cell computed, with subexpression columns, tautology/contradiction/contingency, equivalence, and minterms with a Quine–McCluskey minimal form.",
+  },
+  {
+    id: "logic-circuit",
+    implemented: true,
+    summary: "Gate diagrams built from a boolean expression in distinctive-shape symbols, with fan-out dots, optional Quine–McCluskey simplification and a simulation printing every wire's value.",
+  },
+  {
+    id: "statistics",
+    implemented: true,
+    summary: "Histograms (Sturges or given classes, frequency table, polygon) and boxplots (quartiles by a stated method, 1,5·IQR whiskers, outliers, groups side by side) of raw data, with n, mean, median, mode, variance, standard deviation and IQR computed.",
+  },
+  {
+    id: "distribution",
+    implemented: true,
+    summary: "Normal, binomial and Poisson laws with an event shaded: the region's area is the printed probability (measured), boundaries with x and z, two-sided tails with α/2, the normal approximation with continuity correction, and the standardisation and arithmetic computed.",
+  },
+  {
+    id: "probability-tree",
+    implemented: true,
+    summary: "Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves.",
+  },
+  {
+    id: "venn",
+    implemented: true,
+    summary: "Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong.",
+  },
+  {
+    id: "acid-base",
+    implemented: true,
+    summary: "Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻].",
   },
 ];
 

@@ -1,0 +1,8 @@
+{
+  "preset": "acid-base",
+  "kind": "titration",
+  "answers": false,
+  "analyte": { "type": "acid", "strength": "weak", "name": "CH₃COOH", "pKa": 4.74, "concentration": 0.1, "volume": 25 },
+  "titrant": { "concentration": 0.1, "name": "NaOH" },
+  "indicators": ["fenolftaleína"]
+}

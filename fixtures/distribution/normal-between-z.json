@@ -1,0 +1,8 @@
+{
+  "preset": "distribution",
+  "kind": "normal",
+  "mean": 70,
+  "sd": 5,
+  "event": { "between": [60, 75] },
+  "showZ": true
+}

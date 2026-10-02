@@ -21,6 +21,7 @@ import { LOCALES } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import {
   GeometryError,
   add,
@@ -50,6 +51,7 @@ import {
   sub,
 } from "../../geometry/vec.ts";
 import type { Line3, Plane3, Vec2, Vec3 } from "../../geometry/vec.ts";
+import { fitUnits, niceStep, ticksIn, widenToTicks } from "../shared/scale.ts";
 import { makeCamera, project, projectDirection } from "../../geometry/projection.ts";
 import type { Camera, CameraSpec } from "../../geometry/projection.ts";
 import { clipLineToBox, clipPolygon, clipPolygonToBox, splitByVisibility } from "./visibility.ts";
@@ -119,6 +121,13 @@ export type SpaceInput = {
   lines?: SpaceLineDef[];
   planes?: SpacePlaneDef[];
   measures?: SpaceMeasure[];
+  /**
+   * Default true. With false the figure is the exercise's question: typed points keep their coordinates, and no
+   * computed result is printed -- the readings panel keeps only what was typed (a typed point's or vector's
+   * components) and drops every distance, angle, position, equation, length and derived coordinate; a derived
+   * point keeps its dot and its name, never its coordinates; a plane's intercept numbers go.
+   */
+  answers?: boolean;
 };
 
 // ---- palette -----------------------------------------------------------------
@@ -138,8 +147,19 @@ const PERP = "#2F6B3A";
 // ---- sizes (canvas px) ------------------------------------------------------------
 
 const TARGET = 470;
+/** Pixels per tick step, bounded: the step itself is fitted to the data's magnitude (shared/scale.ts). */
 const MIN_UNIT = 26;
 const MAX_UNIT = 90;
+/** The most tick intervals an axis may span before the step grows to 2, 5, 10 ... times its size. */
+const MAX_TICK_INTERVALS = 9;
+
+/**
+ * The tick step for data spanning `span`: 1, 2 or 5 x 10^k at any magnitude, never finer than the decade the
+ * span sits in (a point at (3; 4; 5) is numbered 1, 2, 3 ... not 0,5, 1 ...; one at (3000; 4000; 5000) by 1000).
+ */
+function tickStep(span: number): number {
+  return Math.max(niceStep(span, MAX_TICK_INTERVALS), 10 ** Math.floor(Math.log10(span / 1.25)));
+}
 const PAD = 70;
 const DOT_R = 3.4;
 const HEAD_LEN = 11;
@@ -237,6 +257,17 @@ export function nicePointOnPlaneLine(e1: Linear, e2: Linear, fallback: Vec3): Ve
 // ---- the build ------------------------------------------------------------------
 
 export function expandSpace(input: SpaceInput): FigureSpec {
+  // A typed point's label is its name and its coordinates. Long coordinates (0,0005; 1234,5) make a box no
+  // spot on a crowded page can hold while still naming its own point, so the points whose label found no clear
+  // spot are drawn again with the coordinates in the panel and the name alone beside the dot.
+  const failed: string[] = [];
+  const first = buildSpace(input, new Set(), failed);
+  if (failed.length === 0) return first;
+  return buildSpace(input, new Set(failed), []);
+}
+
+function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: string[]): FigureSpec {
+  const showAnswers = input.answers ?? true;
   const locale = input.locale ?? "pt-BR";
   const camera = geom("camera", () => makeCamera(input.camera ?? "cavalier"));
 
@@ -457,11 +488,13 @@ export function expandSpace(input: SpaceInput): FigureSpec {
     if (key === "distance") {
       const value = measureDistance(A, B, path);
       const printed = printExact(value, locale);
-      readings.push(`d(${a}, ${b}) ${eqOrApprox(printed)} ${printed.text}`);
+      if (showAnswers) readings.push(`d(${a}, ${b}) ${eqOrApprox(printed)} ${printed.text}`);
     } else if (key === "angle") {
-      readings.push(measureAngle(A, B, path, locale));
+      const reading = measureAngle(A, B, path, locale);
+      if (showAnswers) readings.push(reading);
     } else if (key === "position") {
-      readings.push(describePosition(A, B, path));
+      const reading = describePosition(A, B, path);
+      if (showAnswers) readings.push(reading);
     } else {
       if (A.kind !== "line" || B.kind !== "line") throw new SpecError(`${path}.commonPerpendicular needs two lines`);
       const rel = geom(path, () => relativePosition3(A.line, B.line));
@@ -471,7 +504,7 @@ export function expandSpace(input: SpaceInput): FigureSpec {
       const [f1, f2] = geom(path, () => closestPoints3(A.line, B.line));
       perpendiculars.push({ from: f1, to: f2, l1: A.line, l2: B.line, id: `perp-${i}` });
       const printed = printExact(distance(f1, f2), locale);
-      readings.push(`${a} e ${b}: reversas; perpendicular comum de ${printTriple(f1, locale).text} a ${printTriple(f2, locale).text}; d(${a}, ${b}) ${eqOrApprox(printed)} ${printed.text}`);
+      if (showAnswers) readings.push(`${a} e ${b}: reversas; perpendicular comum de ${printTriple(f1, locale).text} a ${printTriple(f2, locale).text}; d(${a}, ${b}) ${eqOrApprox(printed)} ${printed.text}`);
     }
   }
 
@@ -485,13 +518,18 @@ export function expandSpace(input: SpaceInput): FigureSpec {
   // own to frame; otherwise a far intercept (y = 8) would stretch the patch
   // across the page and wedge every point against its edge.
   const framed = pointsList.length + vectorsList.length > 0;
+  // "Far" is relative to the figure: 12 tick steps of the data so far, not 12 units.
+  const extentSpan = Math.max(...[0, 1, 2].map((i) => Math.max(...extent.map((p) => p[i]!)) - Math.min(...extent.map((p) => p[i]!))));
+  const interceptsOf = (pl: PlaneObj): number[] => [pl.eq.a, pl.eq.b, pl.eq.c].map((c) => (Math.abs(c) < 1e-12 ? 0 : Math.abs(pl.eq.d / c))).filter((t) => t > 0);
+  const nearest = Math.min(Infinity, ...planesList.flatMap(interceptsOf));
+  const farLimit = 12 * Math.max(1, framed && extentSpan > 0 ? tickStep(extentSpan) : nearest);
   for (const pl of planesList) {
     if (framed && pl.def.patch !== "octant" && pl.def.intercepts !== true) continue;
     const cs = [pl.eq.a, pl.eq.b, pl.eq.c];
     cs.forEach((c, i) => {
       if (Math.abs(c) < 1e-12) return;
       const t = -pl.eq.d / c;
-      if (Math.abs(t) <= 12) {
+      if (Math.abs(t) <= farLimit) {
         const p: [number, number, number] = [0, 0, 0];
         p[i] = t;
         extent.push(p);
@@ -501,12 +539,23 @@ export function expandSpace(input: SpaceInput): FigureSpec {
   for (const l of linesList) extent.push(l.line.point);
   const lo: [number, number, number] = [0, 0, 0];
   const hi: [number, number, number] = [0, 0, 0];
+  // The tick step is 1, 2 or 5 x 10^k fitted to the data's own span, so a
+  // point at (3000; 4000; 5000) or (0,001; 0,002; 0,003) is a figure of
+  // about ten intervals a side, like (3; 4; 5), and not 5000 ticks or none.
+  const dataSpan = Math.max(
+    1e-300,
+    ...[0, 1, 2].map((i) => {
+      const cs = extent.map((p) => p[i]!);
+      return Math.max(...cs) - Math.min(...cs);
+    }),
+  );
+  const step = tickStep(dataSpan);
   for (let i = 0; i < 3; i += 1) {
     const cs = extent.map((p) => p[i]!);
     const min = Math.min(...cs);
     const max = Math.max(...cs);
-    lo[i] = min < -1e-9 ? Math.floor(min) - 1 : 0;
-    hi[i] = Math.max(2, Math.ceil(max - 1e-9) + 1);
+    lo[i] = min < -1e-9 * step ? widenToTicks(min, min, step)[0] - step : 0;
+    hi[i] = Math.max(2 * step, widenToTicks(max, max, step)[1] + step);
   }
   const axesKeys = ["x", "y", "z"] as const;
   axesKeys.forEach((k, i) => {
@@ -522,12 +571,13 @@ export function expandSpace(input: SpaceInput): FigureSpec {
   // Lines and plane patches run a little past the region on every side, so
   // a line reads as a line and not as a segment that happens to stop at an
   // axis, and a patch is not cut flush with a coordinate plane.
-  const drawBox: Box3 = { lo: [lo[0] - 1, lo[1] - 1, lo[2] - 1], hi: [hi[0] + 0.6, hi[1] + 0.6, hi[2] + 0.6] };
+  const drawBox: Box3 = { lo: [lo[0] - step, lo[1] - step, lo[2] - step], hi: [hi[0] + 0.6 * step, hi[1] + 0.6 * step, hi[2] + 0.6 * step] };
 
   // ---- 4. geometry in R³ ----
   type Seg = { id: string; group: string; a: Vec3; b: Vec3; colour: string; width: number; skip: Set<string>; occludable: boolean; dashed?: boolean };
   const segs: Seg[] = [];
   const patches: (Patch & { colour: string; name: string; group: string; label: string })[] = [];
+  const compactable = new Map<string, string>();
   const dots: { id: string; p: Vec3; colour: string; name?: string; text?: string; small?: boolean }[] = [];
   const arrows: { id: string; group: string; tail: Vec3; head: Vec3; colour: string; name: string }[] = [];
   const rightAngles: { id: string; pts: Vec3[] }[] = [];
@@ -538,7 +588,7 @@ export function expandSpace(input: SpaceInput): FigureSpec {
     const a: [number, number, number] = [0, 0, 0];
     const b: [number, number, number] = [0, 0, 0];
     a[i] = lo[i]!;
-    b[i] = hi[i]! + AXIS_EXTRA;
+    b[i] = hi[i]! + AXIS_EXTRA * step;
     axisSegs.push({ i, a, b });
     segs.push({ id: `axis-${axesKeys[i]}`, group: `axis-${axesKeys[i]}`, a, b, colour: AXIS, width: 1.5, skip: new Set(), occludable: true });
   }
@@ -612,10 +662,10 @@ export function expandSpace(input: SpaceInput): FigureSpec {
       [pl.eq.a, pl.eq.b, pl.eq.c].forEach((c, i) => {
         if (Math.abs(c) < 1e-12) return;
         const t = -pl.eq.d / c;
-        if (t < lo[i]! - 1e-9 || t > hi[i]! + AXIS_EXTRA + 1e-9) return;
+        if (t < lo[i]! - 1e-9 * step || t > hi[i]! + (AXIS_EXTRA + 1e-9) * step) return;
         const p: [number, number, number] = [0, 0, 0];
         p[i] = t;
-        dots.push({ id: `${patch.id}-int-${axesKeys[i]}`, p, colour: patch.colour, text: printExact(t, locale).text, small: true });
+        dots.push({ id: `${patch.id}-int-${axesKeys[i]}`, p, colour: patch.colour, ...(showAnswers ? { text: printExact(t, locale).text } : {}), small: true });
       });
     }
   });
@@ -645,6 +695,9 @@ export function expandSpace(input: SpaceInput): FigureSpec {
   // Vectors.
   vectorsList.forEach((vec, k) => {
     if (length(vec.d) <= 1e-12) throw new SpecError(`vectors: "${vec.name}" is the zero vector -- there is no arrow to draw`);
+    // A cross product or a sum is what "calcule u × v" asks for: its arrow is
+    // the answer, as the vectors preset already treats derived vectors.
+    if (!showAnswers && vec.derived) return;
     const head = add(vec.tail, vec.d);
     const colour = vec.derived ? VECTOR_DERIVED : VECTOR_TYPED;
     arrows.push({ id: `vec-${k}`, group: `vec-${k}`, tail: vec.tail, head, colour, name: vec.def.label ?? vec.name });
@@ -667,11 +720,12 @@ export function expandSpace(input: SpaceInput): FigureSpec {
     // A typed point shows its coordinates by default (they are short and
     // they are the exercise); a derived one shows its name, and its computed
     // coordinates go to the readings panel beside its derivation.
-    const showCoords = def.coords ?? pt.derivation === undefined;
+    const showCoords = pt.derivation !== undefined && !showAnswers ? false : compact.has(pt.name) ? false : def.coords ?? pt.derivation === undefined;
     const text = showCoords ? `${pt.def.label ?? pt.name}${coords.exact ? "" : " ≈ "}${coords.text}` : pt.def.label ?? pt.name;
     dots.push({ id: `pt-${k}`, p: pt.p, colour: INK, name: pt.name, text });
+    if (showCoords && def.coords === undefined && pt.derivation === undefined) compactable.set(`pt-${k}`, pt.name);
     if (pt.derivation !== undefined) {
-      readings.unshift(`${pt.name} = ${pt.derivation} ${coords.exact ? "=" : "≈"} ${coords.text}`);
+      if (showAnswers) readings.unshift(`${pt.name} = ${pt.derivation} ${coords.exact ? "=" : "≈"} ${coords.text}`);
     } else if (!showCoords) {
       readings.unshift(`${pt.name} ${coords.exact ? "=" : "≈"} ${coords.text}`);
     }
@@ -695,11 +749,11 @@ export function expandSpace(input: SpaceInput): FigureSpec {
   }
 
   // Readings for the objects themselves.
-  for (const pl of planesList) {
+  for (const pl of showAnswers ? planesList : []) {
     const t = planeEquationText(pl.eq, locale);
     readings.push(`${pl.name}: ${t.text}${t.exact ? "" : " (coeficientes arredondados)"}`);
   }
-  for (const l of linesList) {
+  for (const l of showAnswers ? linesList : []) {
     const dir = l.derived ? simplestDirection(l.line.direction as [number, number, number]) : l.line.direction;
     const p0 = printTriple(l.line.point, locale);
     const dd = printTriple(dir, locale);
@@ -710,7 +764,9 @@ export function expandSpace(input: SpaceInput): FigureSpec {
     const comps = printTriple(vec.d, locale);
     const len = printExact(length(vec.d), locale);
     const der = vec.derivation === undefined || vec.derivation.replace(/\s/g, "") === vec.name.replace(/\s/g, "") ? "" : ` = ${vec.derivation}`;
-    readings.push(`${vec.name}${der} = ${comps.text}; |${vec.name}| ${eqOrApprox(len)} ${len.text}`);
+    if (showAnswers) readings.push(`${vec.name}${der} = ${comps.text}; |${vec.name}| ${eqOrApprox(len)} ${len.text}`);
+    // The question keeps what was typed: components of a vector given by them, never |v| or a derived vector's.
+    else if (vec.derivation === undefined) readings.push(`${vec.name}${der} = ${comps.text}`);
   }
 
   // ---- 5. visibility ----
@@ -744,14 +800,17 @@ export function expandSpace(input: SpaceInput): FigureSpec {
   const uMax = Math.max(...us);
   const vMin = Math.min(...vs);
   const vMax = Math.max(...vs);
-  const unit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, TARGET / Math.max(uMax - uMin, vMax - vMin, 1e-9)));
-  const board0 = new Board(1, 1, PAPER);
-  const captionStyle = { size: 13, colour: SOFT };
-  const captionW = Math.max(0, ...readings.map((r) => board0.extent(r, captionStyle).w));
+  const unit = fitUnits(uMax - uMin, vMax - vMin, { targetWidth: TARGET, targetHeight: TARGET, equal: true, maxUnit: MAX_UNIT / step, minUnit: MIN_UNIT / step }).xUnit;
+  // One reading a line, never wrapped: a triple or an equation parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((text) => ({ text: [{ text }], wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const captionW = readingPanel.width;
   const plotW = Math.ceil((uMax - uMin) * unit + 2 * PAD);
   const width = Math.max(plotW, Math.ceil(captionW + 48));
   const plotH = Math.ceil((vMax - vMin) * unit + 2 * PAD);
-  const captionH = readings.length > 0 ? readings.length * CAPTION_LINE_H + 18 : 0;
+  const captionH = readingPanel.empty ? 0 : readingPanel.height + 18;
   const height = plotH + captionH;
   const ox = (width - (uMax - uMin) * unit) / 2 - uMin * unit;
   const oy = PAD + vMax * unit;
@@ -817,12 +876,12 @@ export function expandSpace(input: SpaceInput): FigureSpec {
       unitDir[i] = 1;
       const dir = pageDir(unitDir);
       const n = { x: -dir.y, y: dir.x };
-      for (let t = Math.ceil(lo[i]!); t <= Math.floor(hi[i]!); t += 1) {
+      for (const t of ticksIn(lo[i]!, hi[i]!, step)) {
         if (t === 0) continue;
         const p: [number, number, number] = [0, 0, 0];
         p[i] = t;
         const c = page(p);
-        const id = `tick-${axesKeys[i]}-${t < 0 ? "m" : ""}${Math.abs(t)}`;
+        const id = `tick-${axesKeys[i]}-${t < 0 ? "m" : ""}${String(Math.abs(t)).replace(/[.+-]/g, "_")}`;
         const pts = [{ x: c.x - n.x * TICK_HALF, y: c.y - n.y * TICK_HALF }, { x: c.x + n.x * TICK_HALF, y: c.y + n.y * TICK_HALF }];
         board.poly(pts, { stroke: AXIS, width: 1.2, id });
         placer.addInk(id, id, pts);
@@ -852,6 +911,7 @@ export function expandSpace(input: SpaceInput): FigureSpec {
     // An optional label (the origin's "O") is left out rather than set
     // where it would read as naming something else.
     if (optional && best.cost > 0) return;
+    if (best.cost > 0 && own !== null && compactable.has(own)) failed.push(compactable.get(own)!);
     if (optional) placer.reserve({ x: best.centre.x - w / 2, y: best.centre.y - h / 2, width: w, height: h });
     board.label(text, best.centre.x, best.centre.y, { ...style, width: w, id, annotatesPlace: { x: p.x, y: p.y } });
   };
@@ -945,16 +1005,7 @@ export function expandSpace(input: SpaceInput): FigureSpec {
   }
 
   // ---- 9. the readings panel ----
-  readings.forEach((text, i) => {
-    board.label(text, 24 + (width - 48) / 2, plotH + 12 + i * CAPTION_LINE_H, {
-      ...captionStyle,
-      align: "start",
-      width: width - 48,
-      id: `reading-${i}`,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  readingPanel.draw(board, { left: 24, top: plotH + 2, cut: plotH });
 
   const spec = board.spec(input.title ?? "geometria analítica no espaço");
   const scene = spec.root as Scene;

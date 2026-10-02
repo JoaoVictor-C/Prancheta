@@ -94,3 +94,27 @@ is not for points, lines and planes on axes (use
 - **When a label has no honest spot**, a printed length is shown as its
   symbol alone (`g`) and its value moves to the panel. This happens when
   the full label (`g = 13`) would sit nearer another line.
+
+## Scale
+
+Pixels per unit are fitted to the largest dimension: solids of 1 to 30
+lengths draw as they always did, and any other magnitude scales its bounds by
+its decade, so a cone of r = 3000 and h = 4000, a cube of edge 0,003 and a cone
+of r = 2 and h = 4 are the same figure. Small and large values print with
+their digits (`a = 0,003`, `D = 3√3/1000`, `V ≈ 7238229473871`), never as
+`0,00`. A typed decimal is exact whatever its magnitude.
+
+## answers: false
+
+`"answers": false` draws the exercise's question. Every solid keeps the
+dimensions it was GIVEN, drawn and labelled; nothing computed is drawn or
+printed. Kept: the solid, its vertex letters, the edge of a cube or prism, the
+three dimensions of a box, r and h of a cylinder, r of a cone or sphere, the
+`height` of a prism, cylinder, pyramid or cone typed by its height, the
+`slant` of a pyramid or cone typed by its slant, and the equator of a sphere.
+Hidden: the space and face diagonals (and their right-angle mark), a base
+apothem, a height or slant the dimensions did not state (a cone typed by its
+slant does not show h), every length of a derived solid (the radius of an
+inscribed sphere), and the whole panel: `measures`, `volume` and `area`. The
+derivation line of a derived solid keeps only its relation ("inscrita no
+cubo"), not its formula.

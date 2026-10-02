@@ -1,0 +1,12 @@
+{
+  "preset": "space",
+  "title": "Calcule u × v",
+  "answers": false,
+  "axes": { "ticks": true },
+  "vectors": [
+    { "name": "u", "components": [2, 1, 0] },
+    { "name": "v", "components": [0, 2, 1], "box": "floor" },
+    { "name": "u × v", "cross": ["u", "v"] }
+  ],
+  "measures": [{ "angle": ["u", "v"] }]
+}

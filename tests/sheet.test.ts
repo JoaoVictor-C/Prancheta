@@ -206,3 +206,26 @@ test("a marker for a figure that does not exist is refused", () => {
   sheet.sections[0]!.exercises[0]!.statement += "{{figure2}}";
   assert.throws(() => validateSheet(sheet), /marks \{\{figure2\}\} but the exercise has 1 figure/);
 });
+
+test("a figure is exactly one of graph, spec or module; a module figure names its script and flags", () => {
+  const withFigure = (f: unknown): SheetInput => {
+    const sheet = small();
+    (sheet.sections[0]!.exercises[0] as { figure: unknown }).figure = f;
+    return sheet;
+  };
+  assert.doesNotThrow(() => validateSheet(withFigure({ module: { args: ["modules/molecule/render.py", "--smiles=N", "--lone-pairs"] } })));
+  assert.throws(() => validateSheet(withFigure({ module: { args: [] } })), /module\.args must be a non-empty list of strings/);
+  assert.throws(() => validateSheet(withFigure({ module: { args: ["x.py"], width: -1 } })), /module\.width must be a positive number/);
+  assert.throws(
+    () => validateSheet(withFigure({ spec: { preset: "venn", sets: ["A", "B"] }, module: { args: ["x.py"] } })),
+    /exactly one of "graph".*"spec".*"module"/,
+  );
+});
+
+test("the page head loads KaTeX's mhchem extension, so \ce{...} formulas render", async () => {
+  const out = mkdtempSync(join(tmpdir(), "prancheta-sheet-"));
+  await buildSheet(small(), { out, katex: STUB, pages: false, pdf: false, source: "{}" });
+  const html = readFileSync(join(out, "teste.html"), "utf8");
+  assert.match(html, /contrib\/mhchem\.min\.js/);
+  assert.ok(html.indexOf("mhchem.min.js") < html.indexOf("auto-render.min.js"), "mhchem registers \ce before auto-render runs");
+});

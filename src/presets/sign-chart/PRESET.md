@@ -31,3 +31,17 @@ The sign table of a function — the *quadro de sinais*: where f, f′, f″ or 
 ## What is not covered
 
 A root outside `search` is not found, and neither is a hole the function does not visibly skip (write it in `undefinedAt`). The value printed at a critical point is f there; limits at ±∞ and at poles are not computed — the arrows say which way f goes, not where it ends.
+
+## answers: false
+
+In an exercise sheet, the question's figure passes `answers: false` (set automatically
+by the sheet dispatcher for ANSWER_AWARE presets); the solution figure draws the same
+input with the default `answers: true`. When `answers: false`:
+
+- **Sign chart**: the row names and variable name remain, the structure (frame, column
+  dividers) stays; all critical points and computed signs/values are hidden. No intervals
+  are marked: the question is where to draw them. The header row with boundaries (-∞, 
+  critical points, +∞) is omitted.
+
+This is the "study the sign" figure — the student must find the roots and poles and fill in
+the signs and values herself.

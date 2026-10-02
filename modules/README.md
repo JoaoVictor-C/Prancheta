@@ -124,7 +124,37 @@ selecting flag is given.
 ### molecule
 - `--name=` `glucose` · `fructose` · `sucrose` · `caffeine` · `aspirin` ·
   `water` · `ethanol` · `benzene`
+  · `ammonia` · `boron_trifluoride`
 - `--smiles=CCO` — any SMILES string. Takes priority over `--name=`.
+- `--theme=print|light|dark` — `print` (white paper, near-black ink) is the
+  default; `light` is the same ink on a faint tint; `dark` is the original
+  palette. Contrast checks run against whichever is drawn.
+- `--lone-pairs` — each atom's non-bonding pairs as pairs of dots, Lewis-dot
+  style: on a SIDE of the atom (above, below, left, right; a corner only when
+  the sides are taken), away from its bonds, the two dots parallel to that side
+  (valence electrons − formal charge − the atom's own bonding electrons −
+  radicals, halved: N in NH₃ 1, O in H₂O 2, F in BF₃ 3, B in BF₃ none, O⁻ in
+  nitrate 3, S in H₂SO₄ none, S in SF₄ 1). A dative bond's donor has given the
+  pair that is the bond (H₃N→Ag⁺: no pair on N); a radical electron is one dot
+  (`atom-<i>-rad-<k>`). A heteroatom with pairs or a charge gets its hydrogens
+  as real atoms, so F₃B–NH₃'s N⁺ is an atom, not an "NH₃⁺" group label. Each
+  pair is a declared decoration `atom-<i>-lp-<k>`.
+- `--dative=arrow|line` — a dative bond (`N->[Ag+]<-N`) as an arrow from donor
+  to acceptor (default; shaft and filled head in one declared `<path>`) or a
+  plain line. A label whose bonds all leave to the right is written H-first
+  (`H₃N→Ag⁺`).
+- `--resonance` — the resonance forms (RDKit's enumeration, never typed) in a
+  row joined by double-headed arrows, lone pairs and charges per form, one set
+  of 2D coordinates for all (only bonds, charges and pairs move); at most four
+  forms, and the notes say how many there are. `--name=` `nitrate` ·
+  `carbonate` · `acetate` · `ozone`, or any `--smiles=`.
+- `--answers=true|false` — `false` hides lone pairs, radical dots and formal
+  charges and keeps the skeleton (the statement of a "draw the Lewis structure"
+  exercise; the solution is the default). With `--resonance`, the structure as
+  written alone.
+- The canvas is trimmed to the drawing: `--width`/`--height` are a maximum the
+  structure is scaled down to fit, never a minimum. Charges are superscripts
+  with a real minus sign, H counts subscripts.
 
 ### plot
 - `fit.py --name=` `linear_fit_demo` · `quadratic_fit_demo`
@@ -140,6 +170,64 @@ selecting flag is given.
 - `--reaction=CCO.O>>CC=O` — SMILES, `.` between components, `>>` between
   sides.
 - `--conditions=heat, H2SO4` — free text, used with `--reaction=`.
+- Acid–base names: `arrhenius_hcl` (HCl + H₂O → H₃O⁺ + Cl⁻), `bronsted_nh3`
+  (NH₃ + H₂O ⇌ NH₄⁺ + OH⁻, equilibrium, display forms), `lewis_bf3_nh3`
+  (BF₃ + NH₃ → F₃B–NH₃, lone pairs, the N-pair→B curved arrow),
+  `bronsted_hcl_h2o` and `bronsted_nh3_h2o` (a lone pair onto the H across the
+  plus sign, the H–X bond onto X), `complex_silver_ammonia`
+  (Ag⁺ + 2NH₃ → [Ag(NH₃)₂]⁺).
+- `--arrows=lp:2>1;bond:2-3>3` — curved electron-pushing arrows on the
+  reactant side, `;` between arrows, each `SOURCE>TARGET`. SOURCE is
+  `lp:ATOM` (a lone pair) or `bond:ATOM-ATOM`; TARGET is `ATOM` or
+  `bond:ATOM-ATOM`. ATOM is an atom-map number from the reaction SMILES
+  (`F[B:1](F)F.[NH3:2]>>...`; maps only address atoms, formulas ignore them)
+  or `Sym@C`, the only `Sym` atom of reactant component C (1-based). **Verified**,
+  or refused naming the arrow: the source pair exists (the lone-pair count
+  above, dative bonds included) and no atom gives more pairs than it has, a
+  source bond exists, the target can take a pair (a bonded H, a cation, a metal,
+  an atom short of an octet such as B in BF₃, or an atom of the breaking source
+  bond), a target bond exists and touches the source. Turns on `--lone-pairs`.
+  Each arrow is a smooth cubic from just outside the pair's dots (or the bond's
+  middle) to just short of the target's label, bent to whichever side keeps it
+  off other ink, with a filled head (two electrons); tiles are turned (and,
+  without wedges, mirrored) so the two ends face each other. Declared as
+  `e-arrow-<k>` (a `<g>`, box = curve's true extent ∪ head) and
+  `e-arrow-<k>-curve` (the `<path>` itself, so `module-labels-clear-of-strokes`
+  tests every label against it). Mechanism sense is not checked.
+- `--display=` accepts brackets for a coordination entity (`[Ag(NH3)2]+`),
+  and the automatic writer produces one for a complex with dative bonds.
+- `--dative=arrow|line` — as for `molecule`.
+- `--display=NH3;H2O>>NH4+;OH-` — the textbook written form of each component,
+  `;` between components and `>>` between sides, mirroring the SMILES (one per
+  component in order, or one per distinct component; a component may be left
+  empty to keep the computed form). **Checked against what RDKit computed**:
+  the same element counts (hydrogens included) and the same net charge, or the
+  run is refused with an error naming both. Accepted: a trailing charge (`+`,
+  `2-`, `3+`, `SO42-`, `SO4 2-`, `SO4^2-`, `Ca+2`), Unicode sub/superscripts
+  (`NH₄⁺`), groups `Al(OH)3`, `–`/`-` as a bond and `·` as an adduct dot
+  (`CuSO4·5H2O`), which are ignored for counting. A coefficient is not written
+  here (repeat the component in `--reaction=`). Without it a conventional
+  automatic form is written: IUPAC element order for carbon-free species, H
+  first for oxoacids (HNO₃, H₂SO₄), OH⁻, and a donor–acceptor adduct as
+  F₃B–NH₃; everything else in Hill order. Digits are typeset as subscripts and
+  charges as superscripts (`−` is U+2212).
+- `--equilibrium` — ⇌ (two half-arrows) instead of →.
+- `--states=g;l>>aq;aq` — state symbols after each formula, `(g)`, in a smaller
+  size; the layout of `--display`, empty = none, closed set `s`, `l`, `g`, `aq`.
+- `--coefficients=1;3>>2` — stoichiometric coefficients, one per component
+  (`3 H₂`, and `3x` over the structure); do not also repeat the component in
+  `--reaction=`. With it, or with `--balanced` (the repetitions count as
+  coefficients), the equation is **checked to balance** in atoms and charge and
+  refused naming the element or charge that differs; otherwise balance is only
+  reported in the notes. Named: `haber_process`, `ammonia_sulfate`.
+- `--answers=true|false` — `false` draws the statement: reactants, arrow and
+  conditions with a `?` where the products are, no product tile, the same canvas
+  and reactant positions as the solution; the curved arrows stay (they start at
+  the reactants). Default `true`.
+- Every tile is drawn at one atom-label size (18) and one dot size, a bare ion
+  included.
+- `--lone-pairs`, `--theme=` — as for `molecule`. The canvas is trimmed to the
+  equation and the structures.
 
 ### skewt
 - `--name=` `midlatitude_summer` · `unstable_afternoon`

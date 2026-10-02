@@ -1,0 +1,1 @@
+{ "preset": "optics", "kind": "interface", "n1": { "name": "ar", "n": 1 }, "n2": { "name": "vidro", "n": 1.5 }, "theta1": 45, "reflected": false }

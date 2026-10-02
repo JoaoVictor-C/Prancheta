@@ -135,6 +135,15 @@ about rectangles, not projected faces).
 | sequences and series: `sequence` preset (unjoined terms, independent limits) | [0051](decisions/0051-sequences.md) | done 2026-09-28 |
 | linear maps: `linear-map` preset (matrix or named map, image lattice, \|det A\| measured, eigen-lines) | [0052](decisions/0052-linear-maps.md) | done 2026-09-28; Phase 4 complete |
 | powers of e in the exact snapper (`= e` for (1 + 1/n)ⁿ) | — | done 2026-09-28 |
+| DC circuits: `circuit` preset (given layout, MNA solver, current arrows in their true direction) | [0053](decisions/0053-circuits.md) | done 2026-09-28 |
+| ray optics: `optics` preset (lenses and mirrors by Gauss, Snell and total internal reflection) | [0054](decisions/0054-ray-optics.md) | done 2026-09-28; dashed extensions drawn per segment, no core line-style change needed |
+| electric field lines and equipotentials: `field` kind `charges` | [0055](decisions/0055-electric-field-lines.md) | done 2026-09-28 |
+| finite automata: `automaton` preset (DFA/NFA, acceptance by simulation, subset construction) | [0056](decisions/0056-automata.md) | done 2026-09-28 |
+| boolean logic: `truth-table` and `logic-circuit` presets on `src/math/boolean.ts` (Quine–McCluskey) | [0057](decisions/0057-boolean-logic.md) | done 2026-09-28 |
+| histograms and boxplots: `statistics` preset on `src/math/statistics.ts` | [0058](decisions/0058-descriptive-statistics.md) | done 2026-09-29 |
+| normal, binomial and Poisson events: `distribution` preset on `src/math/probability.ts` | [0059](decisions/0059-probability-distributions.md) | done 2026-09-29 |
+| probability trees: `probability-tree` preset (urns, exact fractions, Bayes) | [0060](decisions/0060-probability-trees.md) | done 2026-09-29 |
+| Venn diagrams: `venn` preset (shaded expressions, inclusion–exclusion) | [0061](decisions/0061-venn-diagrams.md) | done 2026-09-29; Phase 5 complete |
 | corpus coverage audit | — | not started |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each

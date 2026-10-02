@@ -1,0 +1,16 @@
+{
+  "preset": "circuit",
+  "title": "amperímetro e chave aberta",
+  "nodes": { "p1": [0, 2], "A": [2, 2], "p2": [4, 2], "m": [4, 1], "p3": [0, 0], "B": [2, 0], "p4": [4, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "p3", "to": "p1", "value": 12 },
+    { "id": "A1", "kind": "ammeter", "from": "p1", "to": "A" },
+    { "kind": "wire", "from": "A", "to": "p2" },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "B", "value": 6 },
+    { "id": "S1", "kind": "switch", "from": "p2", "to": "m", "closed": false },
+    { "id": "R2", "kind": "resistor", "from": "m", "to": "p4", "value": 3 },
+    { "kind": "wire", "from": "p3", "to": "B" },
+    { "kind": "wire", "from": "B", "to": "p4" }
+  ],
+  "show": { "voltages": [["A", "B"]] }
+}

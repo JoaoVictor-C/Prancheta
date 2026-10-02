@@ -9,22 +9,33 @@
  * preset that did not look for ink while placing would hand the check a
  * figure it already knew would fail.
  *
- * Text is sized by a deliberately generous estimate rather than measured --
- * a preset expands synchronously, before any browser exists. Generous is the
- * safe direction: a box a little too wide costs whitespace, a box too narrow
- * costs a wrap that the repair loop then has to undo.
+ * Text is set in the bundled face and sized by that face's own advance
+ * widths (ADR 0063): a preset expands synchronously, before any browser
+ * exists, but it reads the same font file the browser will lay the label out
+ * in, so a planned width is the drawn width on every OS. A label's box is the
+ * measured line plus `LABEL_SLACK` (shared/text.ts) -- margin by choice, no
+ * longer a hedge against not knowing the font.
  */
 
-import type { Block, FigureSpec, Frame, LineStyle, Mark, Point } from "../../ir/types.ts";
+import type { Block, FigureSpec, Frame, LineStyle, Mark, Point, Readings } from "../../ir/types.ts";
 import { resolveInFrame } from "../../ir/frames.ts";
+import { labelWidth } from "../shared/text.ts";
+import { BUNDLED_FONT_STACK } from "../../export/fonts.ts";
 
 export type Box = { x: number; y: number; hw: number; hh: number };
 
 type Ink = { ax: number; ay: number; bx: number; by: number; owner: string | undefined };
 
 const INK_CELL = 24;
-const SANS = "Segoe UI, Noto Sans, system-ui, sans-serif";
-const SERIF = "Palatino Linotype, Book Antiqua, Georgia, Times New Roman, serif";
+/**
+ * Every label is set in the bundled face. There used to be a serif for a
+ * variable name (the x of an axis, a set's name, a truth table's inputs):
+ * Palatino on Windows, whatever the host resolved elsewhere, and the one face
+ * in a figure nothing could measure. It is gone rather than bundled (ADR 0063):
+ * `serif: true` now sets the name in the bundled face, which it keeps as a
+ * statement of what the label is.
+ */
+const SANS = BUNDLED_FONT_STACK;
 
 /** One rendered line box at the theme's 1.45 line-height, plus ink slack. */
 export const lineBox = (fs: number, lines = 1): number => lines * fs * 1.45 + 3;
@@ -63,6 +74,7 @@ export type LabelOptions = {
   align?: "start" | "center" | "end";
   weight?: number;
   tracking?: number;
+  /** A variable's name. Kept as a statement of what the label is; set in the bundled face like every label (ADR 0063). */
   serif?: boolean;
   width?: number;
   id?: string;
@@ -102,6 +114,8 @@ export class Board {
   frames: Frame[] = [];
   taken: Box[] = [];
   ink: Ink[] = [];
+  /** The reading panel as data (ADR 0062), set by shared/panel.ts when a panel is drawn. */
+  readings: Readings | undefined;
   private inkGrid: Map<string, number[]> | null = null;
   private n = 0;
 
@@ -261,17 +275,20 @@ export class Board {
     this.taken.push(this.box(cx, cy, w, h));
   }
 
-  /** A generous guess at a set line, so a declared box is never too narrow. */
-  measure(text: string, fs: number, tracking = 0.1): number {
-    const longest = Math.max(...text.split("\n").map((l) => [...l].length));
-    return Math.ceil(longest * (fs * 0.56 + tracking) + 10);
+  /**
+   * The box width for a set line: its width in the bundled face, measured,
+   * plus `LABEL_SLACK`. Pass the weight the label is drawn at -- bold is
+   * wider.
+   */
+  measure(text: string, fs: number, tracking = 0.1, weight = 400): number {
+    return labelWidth(text, fs, tracking, weight);
   }
 
   /** The box a label of this text and size would occupy. */
   extent(text: string, o: LabelOptions = {}): { w: number; h: number } {
     const size = o.size ?? 13;
     return {
-      w: o.width ?? this.measure(text, size, o.tracking ?? 0.1),
+      w: o.width ?? this.measure(text, size, o.tracking ?? 0.1, o.weight ?? 400),
       h: Math.ceil(lineBox(size, text.split("\n").length)),
     };
   }
@@ -296,7 +313,7 @@ export class Board {
       textAlign: o.align ?? "center",
       verticalAlign: "center",
       textColor: o.colour ?? "#181B21",
-      fontFamily: o.serif ? SERIF : SANS,
+      fontFamily: SANS,
       fontSize: size,
       fontWeight: o.weight ?? 400,
       letterSpacing: o.tracking ?? 0.1,
@@ -352,6 +369,7 @@ export class Board {
     return {
       version: 1,
       title,
+      ...(this.readings === undefined ? {} : { readings: this.readings }),
       canvas: { padding: 0, background: this.background, theme: "print" },
       root: {
         type: "scene",

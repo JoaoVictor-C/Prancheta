@@ -11,23 +11,31 @@
  */
 
 import { SpecError } from "../../ir/types.ts";
-import { MINUS, asFraction, formatNumber, snapExact, writeExact } from "../../locale/format.ts";
+import { MINUS, asFraction, formatNumber, formatSignificant, snapExact, writeExact } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
-import { sqrtLabel } from "../vectors/preset.ts";
+import { denominatorOf, sqrtLabel } from "../../locale/write.ts";
+import { gcd } from "../../math/integer.ts";
+import type { Printed } from "../../locale/write.ts";
 
-/** A computed number as text, and whether that text IS the number (false: rounded). */
-export type Printed = { text: string; exact: boolean };
+export type { Printed };
 
 /** Largest denominator tried when reading a squared value as a fraction. */
 const MAX_SQUARE_DEN = 1000;
 
 function squareIsRational(x: number): boolean {
-  const s = x * x;
-  for (let d = 1; d <= MAX_SQUARE_DEN; d += 1) {
-    const p = s * d;
-    if (Math.abs(p - Math.round(p)) <= 1e-9 * Math.max(1, p)) return true;
-  }
-  return false;
+  return denominatorOf(x * x, MAX_SQUARE_DEN) !== 0;
+}
+
+/**
+ * Below this a number is not a hundredth-rounded value: locale/format.ts reads
+ * anything under its own tolerance as zero and "0,00" would stand for 0,0005.
+ */
+const SMALL = 0.01;
+
+/** A small number to three significant digits, decimal mark of the locale, trailing zeros dropped; exact when that IS the number. */
+function printSmall(x: number, locale: Locale): Printed {
+  const rounded = Number(x.toPrecision(3));
+  return { text: formatSignificant(x, 3, locale), exact: Math.abs(rounded - x) <= 1e-9 * Math.abs(x) };
 }
 
 /**
@@ -37,6 +45,7 @@ function squareIsRational(x: number): boolean {
  */
 export function printExact(x: number, locale: Locale = "pt-BR"): Printed {
   if (!Number.isFinite(x)) throw new SpecError(`cannot print ${x}`);
+  if (Math.abs(x) < SMALL && Math.abs(x) > 1e-12) return printSmall(x, locale);
   const snapped = snapExact(x, 1e-9);
   if (snapped.exact && snapped.form === "rational") return { text: formatNumber(snapped.value, locale), exact: true };
   if (squareIsRational(x)) {
@@ -110,10 +119,6 @@ function parseSide(raw: string, whole: string): { x: number; y: number; z: numbe
     first = false;
   }
   return acc;
-}
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
 
 /**

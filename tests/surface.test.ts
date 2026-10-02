@@ -172,7 +172,7 @@ test("the tangent plane of x² + y² at (1, 1) is z = 2x + 2y − 2, its coeffic
 
 test("the tangent-plane fixture prints the plane and P's computed height in the panel", () => {
   const scene = expandSurface(fixture("paraboloid-tangent-plane.json")).root as Scene;
-  const readings = scene.children.filter((b) => String(b.id).startsWith("reading-")).map((b) => (b as { label: string }).label);
+  const readings = scene.children.filter((b) => String(b.id).startsWith("panel-")).map((b) => (b as { label: string }).label);
   assert.ok(readings.includes("P = (1; 1; 2)"), readings.join(" | "));
   assert.ok(readings.includes("plano tangente em P: z = 2x + 2y − 2"), readings.join(" | "));
   assert.ok((scene.marks ?? []).some((m) => m.id.startsWith("t-")));
@@ -209,7 +209,7 @@ test("f is never drawn across a jump: no cell of sign(x) straddles x = 0", () =>
 
 test("a hemisphere's cells outside the disc are holes, and the panel says so", () => {
   const scene = expandSurface({ expr: "sqrt(4 - x^2 - y^2)", x: [-2, 2], y: [-2, 2] }).root as Scene;
-  const readings = scene.children.filter((b) => String(b.id).startsWith("reading-")).map((b) => (b as { label: string }).label);
+  const readings = scene.children.filter((b) => String(b.id).startsWith("panel-")).map((b) => (b as { label: string }).label);
   assert.ok(readings.some((r) => r.includes("nunca emenda")), readings.join(" | "));
 });
 
@@ -249,3 +249,54 @@ for (const file of readdirSync(fixturesDir).filter((f) => f.endsWith(".json"))) 
     );
   });
 }
+
+// ---- page scale fitted to the drawing (review of 2026-09-29) ---------------------------------
+
+function svgSize(svg: string): { w: number; h: number } {
+  const m = svg.match(/<svg[^>]*width="([\d.]+)"[^>]*height="([\d.]+)"/);
+  assert.ok(m, "svg has a size");
+  return { w: Number(m![1]), h: Number(m![2]) };
+}
+async function renderPassing(input: SurfaceInput) {
+  const result = await render(expandSurface(input), { raster: false, maxPasses: 3 });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.deepEqual(failing.map((c) => `${c.id} ${c.detail ?? ""}`), []);
+  return result;
+}
+
+test("probe: x² + y² over [-100, 100]² fits a page (was 5046 x 5543px)", async () => {
+  const { svg } = await renderPassing({ expr: "x^2 + y^2", x: [-100, 100], y: [-100, 100] });
+  const { w, h } = svgSize(svg);
+  assert.ok(w <= 900 && h <= 1000 && w >= 300 && h >= 300, `${w} x ${h}`);
+});
+
+test("probe: the same surface at [-0,01, 0,01] and [-1000, 1000] is page-sized, and ticks stay few", async () => {
+  const sizes: { w: number; h: number }[] = [];
+  for (const r of [0.01, 1, 1000]) {
+    const { svg } = await renderPassing({ expr: "x^2 + y^2", x: [-r, r], y: [-r, r], axes: { ticks: true } });
+    sizes.push(svgSize(svg));
+    const numbers = (svg.match(/<text[^>]*>[^<]*<\/text>/g) ?? []).map((t) => t.replace(/<[^>]+>/g, "")).filter((t) => /^[−-]?[\d.,]+$/.test(t));
+    assert.ok(numbers.length <= 24, `${r}: ${numbers.length} tick numbers`);
+  }
+  for (const s of sizes) assert.ok(s.w >= 400 && s.w <= 900 && s.h >= 400 && s.h <= 900, JSON.stringify(sizes));
+});
+
+// ---- answers: false ----------------------------------------------------------------------------
+
+test("answers:false keeps the surface and the point's place and name, and hides the plane, derivatives, z and level values", async () => {
+  const input: SurfaceInput = { expr: "x^2 + y^2", x: [-2, 2], y: [-2, 2], z: [0, 5], point: { name: "P", x: 1, y: 1, tangentPlane: true }, levels: [1, 4] };
+  const solution = expandSurface(input);
+  const question = expandSurface({ ...input, answers: false });
+  const ids = (s: typeof solution): string[] => ((s.root as Scene).marks ?? []).map((m) => m.id);
+  const labels = (s: typeof solution): string => (s.root as { children: { label?: string }[] }).children.map((c) => c.label ?? "").join("\n");
+  assert.ok(ids(solution).some((i) => i.startsWith("plane-edge")) && ids(solution).some((i) => i.startsWith("level-")), "answers:true is unchanged");
+  assert.match(labels(solution), /plano tangente/);
+  assert.ok(!ids(question).some((i) => i.startsWith("plane-edge") || i.startsWith("level-") || i.startsWith("guide-")), "no plane, level curve or guide");
+  const q = labels(question);
+  assert.ok(!/plano tangente|fx|fy|curvas de nível|c = /.test(q), q);
+  assert.ok(!/= \(1; 1; 2\)/.test(q), "no z of the point");
+  assert.match(q, /P: x = 1; y = 1/);
+  assert.match(q, /z = f\(x; y\)/, "the function is given");
+  assert.ok(ids(question).includes("point"), "the point is drawn");
+  await renderPassing({ ...input, answers: false });
+});

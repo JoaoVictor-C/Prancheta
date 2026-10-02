@@ -1,0 +1,8 @@
+{
+  "preset": "acid-base",
+  "kind": "distribution",
+  "name": "ácido carbônico",
+  "pKa": [6.35, 10.33],
+  "species": ["H₂CO₃", "HCO₃⁻", "CO₃²⁻"],
+  "pH": 7.4
+}

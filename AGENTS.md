@@ -100,9 +100,19 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
 | `surface` | Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact. | yes |
 | `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
-| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed. | yes |
+| `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed; and the field lines and equipotentials of point charges, seeded in proportion to each charge. | yes |
 | `sequence` | Sequences aₙ and partial sums Sₙ as unjoined dots on a numbered plane, each limit computed and drawn as its own dashed line, exact when it snaps. | yes |
 | `linear-map` | Linear maps of the plane from a matrix or a named rotation, reflection, shear, scale or projection: the image lattice, T(e₁) and T(e₂), the unit square with |det A| measured, eigen-lines, and shapes mapped to primed vertices. | yes |
+| `circuit` | DC circuits from a given node layout: conventional symbols, branch currents solved by nodal analysis and drawn with arrows in their true direction, meter readings, U_AB, node potentials and powers. | yes |
+| `optics` | Geometric optics: thin lenses and spherical or plane mirrors with the image computed by Gauss and the principal rays constructed (virtual images dashed), and refraction and total internal reflection at a plane interface by Snell. | yes |
+| `automaton` | Finite automata (DFA, NFA with ε) in Sipser style, with each listed word run through the automaton: its path or state sets and aceita/rejeita computed. | yes |
+| `truth-table` | Truth tables of boolean expressions, every cell computed, with subexpression columns, tautology/contradiction/contingency, equivalence, and minterms with a Quine–McCluskey minimal form. | yes |
+| `logic-circuit` | Gate diagrams built from a boolean expression in distinctive-shape symbols, with fan-out dots, optional Quine–McCluskey simplification and a simulation printing every wire's value. | yes |
+| `statistics` | Histograms (Sturges or given classes, frequency table, polygon) and boxplots (quartiles by a stated method, 1,5·IQR whiskers, outliers, groups side by side) of raw data, with n, mean, median, mode, variance, standard deviation and IQR computed. | yes |
+| `distribution` | Normal, binomial and Poisson laws with an event shaded: the region's area is the printed probability (measured), boundaries with x and z, two-sided tails with α/2, the normal approximation with continuity correction, and the standardisation and arithmetic computed. | yes |
+| `probability-tree` | Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves. | yes |
+| `venn` | Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong. | yes |
+| `acid-base` | Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻]. | yes |
 
 ## Figure modules
 
@@ -137,7 +147,9 @@ are read off them (`{"of": "f", "x": 3}`), tangents and secants are computed
 label is a template filled from those values -- `"P{coords}"` prints
 `P(3; 9)`. A coordinate pair typed into a label is refused. Numbers are
 written by one pt-BR formatter (decimal comma, `(2,5; 7,25)`, the minus
-`−`, `17/3` rather than `5,667`). Axis numbers are never dropped,
+`−`, `17/3` rather than `5,667`; from five integer digits a narrow
+no-break space groups them, `12 000`, and a nonzero value is never written
+as `0` -- `0,000215`). Axis numbers are never dropped,
 the zero line is always drawn when the range contains zero, and the legend
 finds its own free space. Four checks hold it to that: `axis-number-present`,
 `series-distinguishable-without-colour` (label every curve on the drawing or
@@ -166,6 +178,14 @@ figure through the same formatter as its label (TeX inside math, text
 outside). The answer key is generated from `answer`, and the same field
 closes each worked solution -- never type an answer twice.
 
+A figure is also `{"spec": <any preset input>}` or `{"module": {"args":
+["modules/reaction/render.py", "--reaction=N.O>>[NH4+].[OH-]",
+"--display=NH3;H2O>>NH4+;OH-", "--equilibrium"]}}` -- a figure module run
+and verified as the `module` command runs it (molecules with
+`--lone-pairs`, reaction schemes). Chemistry text uses KaTeX's mhchem:
+`\(\ce{H2SO4 -> H+ + HSO4-}\)`. A chemistry example:
+`experiments/exercises/acidos-bases/lista.json`.
+
 Numbers the text and the figure share come from the exercise's `params`
 (ADR 0040): `{"a": 2, "b": "a + 1", "f(x)": "a*x^2", "A":
 "integral(f(x), x, 0, b)"}` -- numbers, expressions over other params, and
@@ -183,6 +203,13 @@ it): figures, HTML, an A4 PDF, a PNG per page (PyMuPDF), and the source. The
 command fails, naming each one, on a KaTeX error, a broken image or a figure
 that failed a check. Look at the page PNGs before handing a sheet over: green
 checks do not mean legible.
+
+A figure's reading panel -- the computed lines a preset prints under its
+drawing (a circuit's U_AB and powers, a lens's Gauss arithmetic) --
+is lifted out of the drawing and set as page text under the image, with real
+subscripts, at the page's size (ADR 0062); scaled with the figure it would
+come out near 7pt. `"readings": "drawing"` on a figure, or on the sheet,
+keeps it inside the drawing.
 
 Fresh numbers for revision (ADR 0041, 0042): give an exercise
 `"variants": {"domains": {"b": {"int": [1, 4]}, "a": {"choice": ["1/2", 1,
@@ -234,6 +261,16 @@ resources:
 | `prancheta://preset/field` | field preset |
 | `prancheta://preset/sequence` | sequence preset |
 | `prancheta://preset/linear-map` | linear-map preset |
+| `prancheta://preset/circuit` | circuit preset |
+| `prancheta://preset/optics` | optics preset |
+| `prancheta://preset/automaton` | automaton preset |
+| `prancheta://preset/truth-table` | truth-table preset |
+| `prancheta://preset/logic-circuit` | logic-circuit preset |
+| `prancheta://preset/statistics` | statistics preset |
+| `prancheta://preset/distribution` | distribution preset |
+| `prancheta://preset/probability-tree` | probability-tree preset |
+| `prancheta://preset/venn` | venn preset |
+| `prancheta://preset/acid-base` | acid-base preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

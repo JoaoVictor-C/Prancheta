@@ -21,15 +21,19 @@ import { ExprError, compileTree, constantValue, parseIn, pretty } from "../../ma
 import { contour } from "../../math/contour.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
+import type { TextRun } from "../../ir/types.ts";
 import { GeometryError, normalize } from "../../geometry/vec.ts";
 import type { Vec2, Vec3 } from "../../geometry/vec.ts";
 import { makeCamera, project, projectDirection } from "../../geometry/projection.ts";
 import type { Camera, CameraSpec } from "../../geometry/projection.ts";
-import { MARGIN, SpacePlacer, aroundPlace, besideRun, pointToPolyline, segmentHitsRect } from "../space/placer.ts";
+import { MARGIN, SpacePlacer, aroundPlace, besideRun } from "../space/placer.ts";
+import { fitUnits, niceStep } from "../shared/scale.ts";
 import { printExact, printTriple, typesANumber } from "../space/numbers.ts";
 import { boxEdges } from "../space/preset.ts";
 import { Occluder, cellNormal, clipLineToZ, densify, meshOf, painterSort, planeCells, sampleGrid, surfaceCells, tangentAt, visibleRuns } from "./mesh.ts";
 import type { Cell, Fn2, LinePoint, Range, Stacking, Tangent } from "./mesh.ts";
+import { distanceToPolyline, segmentHitsRect } from "../../geometry/hit.ts";
 
 // ---- input --------------------------------------------------------------------
 
@@ -60,6 +64,8 @@ export type SurfaceInput = {
   floor?: Bound;
   /** A point on the surface: (x, y) typed, z computed. */
   point?: { name?: string; x: Bound; y: Bound; guide?: boolean; tangentPlane?: boolean };
+  /** false: the question's figure -- the surface as given; no tangent plane or printed derivatives, no z of the point, no level values. Default true. */
+  answers?: boolean;
 };
 
 // ---- palette -------------------------------------------------------------------
@@ -80,8 +86,6 @@ const PLANE: [string, string] = ["#6FA06F", "#DCEFD9"];
 // ---- sizes (canvas px) -----------------------------------------------------------
 
 const TARGET = 500;
-const MIN_UNIT = 18;
-const MAX_UNIT = 200;
 const PAD = 64;
 const DOT_R = 3.6;
 const HEAD_LEN = 11;
@@ -144,14 +148,6 @@ export function niceBelow(x: number, span: number): number {
   return Math.floor(x / step + 1e-9) * step;
 }
 
-/** A tick step of 1, 2 or 5 × 10ⁿ giving at most `most` ticks over `span`. */
-export function tickStep(span: number, most = 5): number {
-  const raw = span / most;
-  const p = 10 ** Math.floor(Math.log10(raw));
-  for (const m of [1, 2, 5, 10]) if (m * p >= raw) return m * p;
-  return 10 * p;
-}
-
 // ---- tangent plane, printed --------------------------------------------------
 
 export type PrintedPlane = { fx: number; fy: number; z0: number; d: number; text: string; exact: boolean; fxText: string; fyText: string };
@@ -206,6 +202,10 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   const locale = input.locale ?? "pt-BR";
   if (typeof input.expr !== "string" || input.expr.trim() === "") throw new SpecError(`surface.expr must be an expression in x and y, like "x^2 + y^2"`);
   const { f, text: fText } = compileSurface(input.expr);
+  // answers: false: the surface, its domain, the point's place and name are the
+  // given. Not drawn or printed: the tangent plane and every derivative, the
+  // point's z and its guides, the level curves and their values.
+  const hide = input.answers === false;
   const xr = rangeOf(input.x, "x");
   const yr = rangeOf(input.y, "y");
 
@@ -259,7 +259,8 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   const W = (p: Vec3): Vec3 => [p[0], p[1], p[2] * k];
 
   // ---- 3. the point, its tangent plane ----
-  const readings: string[] = [];
+  // A reading is plain text, or runs when it needs a real subscript (f_x, f_y).
+  const readings: (string | TextRun[])[] = [];
   const sep = locale === "pt-BR" ? "; " : ", ";
   let P: { name: string; p: Vec3; tangent: Tangent | null } | null = null;
   if (input.point !== undefined) {
@@ -273,7 +274,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
     if (!Number.isFinite(z0)) throw new SpecError(`point: f is not defined at (${x0}, ${y0})`);
     if (z0 < zlo - 1e-12 || z0 > zhi + 1e-12) throw new SpecError(`point: f(${x0}, ${y0}) = ${z0} is outside the visible range z ∈ [${zlo}, ${zhi}]`);
     let tangent: Tangent | null = null;
-    if (pt.tangentPlane === true) {
+    if (pt.tangentPlane === true && !hide) {
       const t = tangentAt(f, x0, y0);
       if ("refused" in t) throw new SpecError(`point.tangentPlane: ${t.refused}`);
       tangent = t;
@@ -324,7 +325,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
     if (above > 0 && below > 0) {
       throw new SpecError(
         `point.tangentPlane: the surface crosses its tangent plane near ${P.name} (it lies above it in some directions and below in others, as at a saddle point). ` +
-          "The painter's order cannot stack two surfaces that cross -- draw this one with the matplotlib module (modules/plot)",
+          "The painter's order cannot stack two surfaces that cross -- no module draws it yet (modules/plot fits least squares only); choose a point off the saddle or draw the plane without its tangency",
       );
     }
     if (top > 0 && under > 0) {
@@ -355,8 +356,8 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   }
   const levels = input.levels ?? [];
   const levelsOn = input.levelsOn ?? "both";
-  const onFloor = levels.length > 0 && levelsOn !== "surface";
-  const onSurface = levels.length > 0 && levelsOn !== "floor";
+  const onFloor = !hide && levels.length > 0 && levelsOn !== "surface";
+  const onSurface = !hide && levels.length > 0 && levelsOn !== "floor";
   const floorRect: Vec3[] = [
     [xr[0], yr[0], floor],
     [xr[1], yr[0], floor],
@@ -374,7 +375,9 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   const uMax = Math.max(...us);
   const vMin = Math.min(...vs);
   const vMax = Math.max(...vs);
-  const unit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, TARGET / Math.max(uMax - uMin, vMax - vMin, 1e-9)));
+  // Fitted to the page extent of the drawing (x and y are already in world
+  // units, so a domain of [-100, 100] draws as big as one of [-1, 1]).
+  const { xUnit: unit } = fitUnits(Math.max(uMax - uMin, 1e-9), Math.max(vMax - vMin, 1e-9), { equal: true, targetWidth: TARGET, targetHeight: TARGET });
   const occ = new Occluder(camera, k, cells, INSET_PX / unit, stacking);
   const step = STEP_PX / unit;
   const pageU = (p: Vec3): Vec2 => project(camera, W(p));
@@ -510,37 +513,41 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   }
 
   // The point's guides: down (or up) to the xy-plane, then to the axes.
-  if (P !== null && input.point?.guide !== false) {
+  if (P !== null && input.point?.guide !== false && !hide) {
     boxEdges(P.p, "floor").forEach(([a, b], n) => addRuns(`guide-${n}`, "guide", free([a, b]), GUIDE, 1.1, true));
   }
 
   // ---- 7. the page ----
-  const board0 = new Board(1, 1, PAPER);
-  const captionStyle = { size: 13, colour: SOFT };
   const eqOr = (exact: boolean): string => (exact ? "=" : "≈");
   readings.push(`z = f(x${sep}y) = ${fText}`);
   if (stated && (zlo > fMin || zhi < fMax)) readings.push(`cortada em ${formatNumber(zlo, locale)} ≤ z ≤ ${formatNumber(zhi, locale)}`);
-  if (levels.length > 0) {
+  if (levels.length > 0 && !hide) {
     readings.push(`curvas de nível f(x${sep}y) = c: c = ${levels.map((c) => formatNumber(c, locale)).join(sep)}${onFloor ? ` (projetadas em z = ${formatNumber(floor, locale)})` : ""}`);
   }
   let plane: PrintedPlane | null = null;
   if (P !== null) {
     const coords = printTriple(P.p, locale);
-    readings.push(`${P.name} = ${coords.text.replace(/^\(/, `(`)}${coords.exact ? "" : " (z arredondado)"}`);
+    if (hide) readings.push(`${P.name}: x = ${printExact(P.p[0], locale).text}${sep}y = ${printExact(P.p[1], locale).text}`);
+    else readings.push(`${P.name} = ${coords.text.replace(/^\(/, `(`)}${coords.exact ? "" : " (z arredondado)"}`);
     if (P.tangent !== null) {
       plane = printTangentPlane(P.tangent, P.p[0], P.p[1], locale);
       const at = `(${printExact(P.p[0], locale).text}${sep}${printExact(P.p[1], locale).text})`;
-      readings.push(`fx${at} ${eqOr(plane.exact)} ${plane.fxText}${sep}fy${at} ${eqOr(plane.exact)} ${plane.fyText}`);
+      readings.push([{ text: "f" }, { text: "x", script: "sub" }, { text: `${at} ${eqOr(plane.exact)} ${plane.fxText}${sep}f` }, { text: "y", script: "sub" }, { text: `${at} ${eqOr(plane.exact)} ${plane.fyText}` }]);
       readings.push(`plano tangente em ${P.name}: ${plane.text}`);
     }
   }
   if (mesh.holes > 0) readings.push(`f não está definida (ou salta) em parte de [${formatNumber(xr[0], locale)}${sep}${formatNumber(xr[1], locale)}] × [${formatNumber(yr[0], locale)}${sep}${formatNumber(yr[1], locale)}]: ali o desenho para, nunca emenda`);
   if (Math.abs(k - 1) > 1e-9) readings.push(`eixo z desenhado na escala ${formatNumber(k, locale, { decimals: 2 })} : 1`);
-  const captionW = Math.max(0, ...readings.map((r) => board0.extent(r, captionStyle).w));
+  // One reading a line, never wrapped: an equation parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((r) => ({ text: typeof r === "string" ? [{ text: r }] : r, wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const captionW = readingPanel.width;
   const plotW = Math.ceil((uMax - uMin) * unit + 2 * PAD);
   const width = Math.max(plotW, Math.ceil(captionW + 48));
   const plotH = Math.ceil((vMax - vMin) * unit + 2 * PAD);
-  const height = plotH + readings.length * CAPTION_LINE_H + 18;
+  const height = plotH + readingPanel.height + 18;
   const ox = (width - (uMax - uMin) * unit) / 2 - uMin * unit;
   const oy = PAD + vMax * unit;
   const page = (p: Vec3): Point => {
@@ -626,7 +633,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
       [Math.min(0, floor), Math.max(0, zhi)],
     ];
     ranges.forEach((r, n) => {
-      const st = tickStep(r[1] - r[0]);
+      const st = niceStep(r[1] - r[0], 5);
       const d: [number, number, number] = [0, 0, 0];
       d[n] = 1;
       const dir = pageDir(d);
@@ -637,7 +644,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
         p[n] = t;
         if (occ.hidden(p, occ.free(p))) continue;
         const c = page(p);
-        const id = `tick-${axisNames[n]}-${t < 0 ? "m" : ""}${formatNumber(Math.abs(t), "en").replace(/\./g, "_")}`;
+        const id = `tick-${axisNames[n]}-${t < 0 ? "m" : ""}${formatNumber(Math.abs(t), "en", { grouping: false }).replace(/\./g, "_")}`;
         const pts = [
           { x: c.x - nrm.x * TICK_HALF, y: c.y - nrm.y * TICK_HALF },
           { x: c.x + nrm.x * TICK_HALF, y: c.y + nrm.y * TICK_HALF },
@@ -695,9 +702,9 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
           const to = { x: target.x + d.x * len, y: target.y + d.y * len };
           if (labelRects.some((r) => segmentHitsRect(from, to, r))) continue;
           // The label must be nearer its leader than anything else drawn.
-          const toLeader = pointToPolyline(centre, [from, to]);
+          const toLeader = distanceToPolyline(centre, [from, to]);
           const reachBox = { x: centre.x, y: centre.y, width: 0, height: 0 };
-          if (inkPx.some((l) => near(l, reachBox, toLeader + 4) && pointToPolyline(centre, l.pts) < toLeader + 4)) continue;
+          if (inkPx.some((l) => near(l, reachBox, toLeader + 4) && distanceToPolyline(centre, l.pts) < toLeader + 4)) continue;
           // Prefer a leader that crosses few lines, then a short one.
           let crossings = 0;
           const span = { x: Math.min(from.x, to.x), y: Math.min(from.y, to.y), width: Math.abs(to.x - from.x), height: Math.abs(to.y - from.y) };
@@ -714,7 +721,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
           let along = 0;
           for (const t of [0.2, 0.4, 0.6, 0.8]) {
             const q = { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
-            if (inkPx.some((l) => l.group !== "fill" && near(l, { x: q.x, y: q.y, width: 0, height: 0 }, 3) && pointToPolyline(q, l.pts) < 3)) along += 1;
+            if (inkPx.some((l) => l.group !== "fill" && near(l, { x: q.x, y: q.y, width: 0, height: 0 }, 3) && distanceToPolyline(q, l.pts) < 3)) along += 1;
           }
           if (along >= 2) continue;
           const cost = crossings * 200 + along * 60 + len;
@@ -823,16 +830,7 @@ export function expandSurface(input: SurfaceInput): FigureSpec {
   }
 
   // ---- 11. the readings panel ----
-  readings.forEach((text, i) => {
-    board.label(text, 24 + (width - 48) / 2, plotH + 12 + i * CAPTION_LINE_H, {
-      ...captionStyle,
-      align: "start",
-      width: width - 48,
-      id: `reading-${i}`,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  readingPanel.draw(board, { left: 24, top: plotH + 2, cut: plotH });
 
   const spec = board.spec(input.title ?? `z = ${fText}`);
   const scene = spec.root as Scene;

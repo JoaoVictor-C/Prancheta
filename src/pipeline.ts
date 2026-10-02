@@ -18,8 +18,9 @@ import { normalise } from "./ir/normalise.ts";
 import { applyStyle } from "./effects/styles.ts";
 import { applyType } from "./typography-apply.ts";
 import { buildHtml } from "./layout/html.ts";
+import { DEFAULT_FONT_EMBED } from "./layout/html.ts";
 import type { FontEmbedMode, HtmlOptions } from "./layout/html.ts";
-import { lineNeedsTextFallback, loadOutlineFont } from "./export/fonts.ts";
+import { bundledFontFaceCssSync, lineNeedsTextFallback, loadOutlineFont } from "./export/fonts.ts";
 import { rasterisePdf } from "./export/pdf.ts";
 import type { PdfOptions } from "./export/pdf.ts";
 import { buildConnectors, buildMarks, collectScenes, placeScenes } from "./layout/place.ts";
@@ -48,6 +49,7 @@ import { attachRotations, attachBoxRotation } from "./geometry/rotate.ts";
 import { attachPaints } from "./paint/apply.ts";
 import { buildManifest } from "./manifest.ts";
 import type { Manifest } from "./manifest.ts";
+import { liftReadings } from "./presets/shared/panel.ts";
 import { resolveTheme } from "./theme.ts";
 
 export type RenderResult = {
@@ -73,9 +75,10 @@ export type RenderOptions = {
   maxScale?: number;
   /**
    * "embed" inlines the bundled font as a base64 @font-face; "outline"
-   * converts every glyph to a filled path with zero runtime font dependency.
-   * Default "none": renders exactly as before this option existed. See
-   * decision 0008 for why the mirror measures against the bundled font too.
+   * converts every glyph to a filled path with zero runtime font dependency;
+   * "none" only names it. Default "embed" (ADR 0063): the SVG then draws what
+   * was measured wherever it is opened. See decision 0008 for why the mirror
+   * measures against the bundled font in every mode.
    */
   fontEmbed?: FontEmbedMode;
   /** Also produce a PDF alongside the SVG and PNG. Unset: no PDF is built. */
@@ -91,6 +94,13 @@ export type RenderOptions = {
    * caller that genuinely needs the pixels keeps them regardless.
    */
   raster?: boolean;
+  /**
+   * "omit": draw the figure WITHOUT its reading panel, cropped to where the
+   * figure proper ends (ADR 0062) -- for a caller that sets `spec.readings`
+   * as text of its own, as a sheet does. Default "draw". A figure with no
+   * readings is drawn unchanged either way.
+   */
+  readings?: "draw" | "omit";
 };
 
 // Every render wants the same Chromium: subpixel AA off so monochrome glyphs
@@ -142,7 +152,7 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
   const repairEnabled = options.repair !== false;
   const maxPasses = repairEnabled ? Math.max(1, options.maxPasses ?? 3) : 1;
   const budget = newBudget(options.maxScale ?? 3);
-  const fontEmbed = options.fontEmbed ?? "none";
+  const fontEmbed = options.fontEmbed ?? DEFAULT_FONT_EMBED;
 
   const browser = await acquireBrowser();
 
@@ -159,7 +169,8 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
     // a packed effect is indistinguishable from a hand-written one, which is
     // exactly the point -- it goes through the same bleed arithmetic and the
     // same effect-within-canvas check.
-    let working = normalise(applyType(applyStyle(spec))).spec;
+    const drawn = options.readings === "omit" ? liftReadings(spec).spec : spec;
+    let working = normalise(applyType(applyStyle(drawn))).spec;
     const repairs: RepairEdit[] = [];
     let unrepaired: { check: Check; why: string }[] = [];
     let pass = 0;
@@ -216,9 +227,13 @@ export async function render(spec: FigureSpec, options: RenderOptions = {}): Pro
 
     const svg = toSvg(figure, working.title, { fontEmbed });
     const rasterWanted = options.raster ?? process.env.PRANCHETA_SKIP_RASTER !== "1";
-    const png = rasterWanted ? await rasterise(browser, svg, figure, options.scale ?? 2) : undefined;
+    // A "none" SVG names the bundled face without carrying it, so the page
+    // that draws its PNG and PDF supplies it: those files are artefacts in
+    // their own right, and should show the figure that was measured.
+    const fontFace = fontEmbed === "none" ? bundledFontFaceCssSync() : undefined;
+    const png = rasterWanted ? await rasterise(browser, svg, figure, options.scale ?? 2, fontFace) : undefined;
     const pdf =
-      options.pdf === undefined ? undefined : await rasterisePdf(browser, svg, figure, options.pdf);
+      options.pdf === undefined ? undefined : await rasterisePdf(browser, svg, figure, options.pdf, fontFace);
     const manifest = buildManifest(figure, {
       title: working.title,
       warnings,
@@ -417,6 +432,7 @@ export function toLaidOutFigure(
         y: line.y,
         box: line.box,
         baselineUncertain: line.baselineUncertain,
+        ...(line.runs === undefined ? {} : { runs: line.runs }),
       })),
     });
   }

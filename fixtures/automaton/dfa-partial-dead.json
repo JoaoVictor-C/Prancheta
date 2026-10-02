@@ -1,0 +1,16 @@
+{
+  "preset": "automaton",
+  "title": "AFD parcial: a seguido de b's, sem estado morto desenhado",
+  "kind": "dfa",
+  "partial": true,
+  "alphabet": ["a", "b", "c"],
+  "states": ["q0", "q1", "q2"],
+  "start": "q0",
+  "accept": ["q1", "q2"],
+  "transitions": [
+    { "from": "q0", "on": "a", "to": "q1" },
+    { "from": "q1", "on": "b", "to": "q1" },
+    { "from": "q1", "on": "c", "to": "q2" }
+  ],
+  "words": ["abbc", "ab", "ba", "acb"]
+}

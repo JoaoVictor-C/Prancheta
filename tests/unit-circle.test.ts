@@ -343,3 +343,35 @@ for (const name of fixtures) {
     assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
   });
 }
+
+// --- answers: false ---------------------------------------------------------
+
+test("answers:false hides cos/sin values, tg label and symmetric points; keeps the given angle and arc", () => {
+  const input: UnitCircleInput = {
+    angles: [{ angle: "π/4", arc: true, projection: true, tangent: true, symmetric: true }],
+    answers: false,
+  };
+  const on = labels({ ...input, answers: true });
+  const off = labels(input);
+  assert.ok(on.some((t) => t.startsWith("tg θ")));
+  assert.ok(on.includes("√2/2"));
+  assert.ok(on.includes("3π/4"));
+  assert.ok(!off.some((t) => t.startsWith("tg")), off.join("|"));
+  assert.ok(!off.includes("√2/2"));
+  assert.ok(!off.includes("3π/4") && !off.includes("5π/4") && !off.includes("7π/4"));
+  assert.ok(off.includes("π/4"));
+  assert.ok(off.includes("45°"));
+  assert.equal(marks(input).some((m) => m.from !== undefined && typeof m.from === "object" && "frame" in m.from && m.from.frame === "radius"), false);
+});
+
+test("answers:true is the default and unchanged", () => {
+  const input: UnitCircleInput = { angles: [{ angle: "π/6", projection: true, tangent: true }] };
+  assert.deepEqual(labels(input), labels({ ...input, answers: true }));
+});
+
+test("answers:false fixture renders with every check passing", { timeout: 240000 }, async () => {
+  const input = JSON.parse(readFileSync(join(dir, "question-no-answers.json"), "utf8")) as UnitCircleInput;
+  const result = await render(expandUnitCircle(input), { raster: false });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
+});

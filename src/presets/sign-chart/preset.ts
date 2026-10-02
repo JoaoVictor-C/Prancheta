@@ -21,11 +21,12 @@
 import type { FigureSpec, Point } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { ExprError, compile, derivative } from "../../math/expr.ts";
-import { LOCALES, MINUS, formatNumber, snapExact, writeExact } from "../../locale/format.ts";
+import { LOCALES, MINUS } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
+import { writeSnapped } from "../../locale/write.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -48,6 +49,8 @@ export type SignChartInput = {
   rows?: (SignRowKind | { row: SignRowKind; label?: string })[];
   /** Factors of a product, each its own sign row above the others: the inequality table. */
   factors?: { label: string; expr: string }[];
+  /** When false, draw only row names and the column structure but leave signs and values empty. Default true. */
+  answers?: boolean;
 };
 
 // ---- palette ---------------------------------------------------------------
@@ -172,7 +175,7 @@ export function criticalPoints(g: Fn, a: number, b: number): Critical[] {
  * helper (ADR 0040) at a root finder's precision.
  */
 export function exactLabel(value: number, locale: Locale): string {
-  return writeExact(snapExact(value, 1e-9), locale);
+  return writeSnapped(value, 1e-9, locale);
 }
 
 // ---- the build -------------------------------------------------------------
@@ -204,6 +207,7 @@ export function expandSignChart(input: SignChartInput): FigureSpec {
   const variable = input.variable ?? "x";
   const name = input.name ?? "f";
   const [a, b] = input.search ?? [-10, 10];
+  const answers = input.answers ?? true;
   let f: Fn;
   try {
     f = compile(input.expr, variable);
@@ -267,9 +271,9 @@ export function expandSignChart(input: SignChartInput): FigureSpec {
 
   // Geometry.
   const probe = new Board(10, 10, PAPER);
-  const labelW = Math.max(...rows.map((r) => probe.measure(r.label, 14)), probe.measure(variable, 15)) + 20;
+  const labelW = Math.max(...rows.map((r) => probe.measure(r.label, 14, 0.1, 600)), probe.measure(variable, 15, 0.1, 600)) + 20;
   const headers = xs.map((c) => exactLabel(c.x, locale));
-  const critW = headers.map((h) => Math.max(40, probe.measure(h, 14) + 10));
+  const critW = headers.map((h) => Math.max(40, probe.measure(h, 14, 0.1, 600) + 10));
   const tableX = M + labelW;
   // Column centres: left edge, then interval, critical, interval, ..., right edge.
   const centres: { intervals: number[]; crit: number[]; left: number; right: number } = {
@@ -305,12 +309,14 @@ export function expandSignChart(input: SignChartInput): FigureSpec {
   // is read by its row and its column, not by what it sits beside, so none
   // of the proximity checks applies to it. Said once per label below rather
   // than defaulted, so a label added here later has to say what it is.
-  // Header.
+  // Header. When answers:false, only show the variable name; hide the critical points.
   const hy = M + HEADER / 2;
   board.label(variable, M + labelW / 2, hy, { freeStanding: true, size: 15, weight: 600, serif: true, colour: INK });
-  board.label(`${MINUS}∞`, centres.left, hy, { freeStanding: true, size: 14, colour: SOFT });
-  board.label("+∞", centres.right, hy, { freeStanding: true, size: 14, colour: SOFT });
-  headers.forEach((h, i) => board.label(h, centres.crit[i]!, hy, { freeStanding: true, size: 14, weight: 600, colour: INK, id: `x-${i + 1}` }));
+  if (answers) {
+    board.label(`${MINUS}∞`, centres.left, hy, { freeStanding: true, size: 14, colour: SOFT });
+    board.label("+∞", centres.right, hy, { freeStanding: true, size: 14, colour: SOFT });
+    headers.forEach((h, i) => board.label(h, centres.crit[i]!, hy, { freeStanding: true, size: 14, weight: 600, colour: INK, id: `x-${i + 1}` }));
+  }
 
   // Frame: rule under the header, the label column's edge, a line between rows.
   board.poly([{ x: M, y: M + HEADER }, { x: right, y: M + HEADER }], { stroke: RULE, width: 1.5 });
@@ -323,33 +329,35 @@ export function expandSignChart(input: SignChartInput): FigureSpec {
     if (ri > 0) board.poly([{ x: M, y: top }, { x: right, y: top }], { stroke: LIGHT, width: 1 });
     board.label(row.label, M + labelW / 2, cy, { freeStanding: true, size: 14, weight: 600, colour: INK, align: "start", width: labelW - 16 });
 
-    // Each critical column: 0, a double bar, or a thin dashed rule.
-    xs.forEach((c, i) => {
-      const x = centres.crit[i]!;
-      const isRoot = row.roots.some((r) => near(r, c.x));
-      if (c.pole) {
-        for (const dx of [-2.5, 2.5]) {
-          board.poly([{ x: x + dx, y: top + 4 }, { x: x + dx, y: top + h - 4 }], { stroke: INK, width: 1.3 });
+    // Each critical column: 0, a double bar, or a thin dashed rule. Hidden when answers:false.
+    if (answers) {
+      xs.forEach((c, i) => {
+        const x = centres.crit[i]!;
+        const isRoot = row.roots.some((r) => near(r, c.x));
+        if (c.pole) {
+          for (const dx of [-2.5, 2.5]) {
+            board.poly([{ x: x + dx, y: top + 4 }, { x: x + dx, y: top + h - 4 }], { stroke: INK, width: 1.3 });
+          }
+        } else if (isRoot && row.kind !== "variation" && row.kind !== "concavity") {
+          board.label("0", x, cy, { freeStanding: true, size: 15, weight: 600, colour: INK });
+        } else if (row.kind !== "variation") {
+          board.poly([{ x, y: top + 4 }, { x, y: top + h - 4 }], { stroke: LIGHT, width: 1, lineStyle: "dashed" });
         }
-      } else if (isRoot && row.kind !== "variation" && row.kind !== "concavity") {
-        board.label("0", x, cy, { freeStanding: true, size: 15, weight: 600, colour: INK });
-      } else if (row.kind !== "variation") {
-        board.poly([{ x, y: top + 4 }, { x, y: top + h - 4 }], { stroke: LIGHT, width: 1, lineStyle: "dashed" });
-      }
-    });
-
-    if (row.kind === "variation") drawVariation(board, row, f, xs, centres, mids, top, h, locale);
-    else {
-      mids.forEach((m, i) => {
-        const s = Math.sign(row.g(m));
-        const text = row.kind === "concavity" ? (s > 0 ? "∪" : "∩") : s > 0 ? "+" : MINUS;
-        board.label(text, centres.intervals[i]!, cy, { freeStanding: true,
-          size: row.kind === "concavity" ? 18 : 17,
-          weight: 700,
-          colour: s > 0 ? PLUS : MINUS_COLOUR,
-          id: `sign-${ri + 1}-${i + 1}`,
-        });
       });
+
+      if (row.kind === "variation") drawVariation(board, row, f, xs, centres, mids, top, h, locale);
+      else {
+        mids.forEach((m, i) => {
+          const s = Math.sign(row.g(m));
+          const text = row.kind === "concavity" ? (s > 0 ? "∪" : "∩") : s > 0 ? "+" : MINUS;
+          board.label(text, centres.intervals[i]!, cy, { freeStanding: true,
+            size: row.kind === "concavity" ? 18 : 17,
+            weight: 700,
+            colour: s > 0 ? PLUS : MINUS_COLOUR,
+            id: `sign-${ri + 1}-${i + 1}`,
+          });
+        });
+      }
     }
     top += h;
   }

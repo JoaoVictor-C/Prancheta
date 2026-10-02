@@ -172,3 +172,7 @@ curves only as part of the 3D figure.
   plane at a saddle point, or a figure that needs a colour-mapped height
   bar. `modules/plot` is the precedent; a surface module would declare its
   drawing and be measured by the core like any other.
+
+  **Correction (2026-09-29):** no such module exists. `modules/plot` fits
+  least squares and has no 3D mode, so the refusal no longer names it as a
+  fallback; it says nothing draws these surfaces yet.

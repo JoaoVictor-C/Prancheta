@@ -52,3 +52,7 @@ Every point's own label names its point the same way (`annotatesPlace`, ADR 0035
 - A symmetric point never carries its own arc, projection or tangent — request those on a primary angle entry instead.
 - OP (and the tangent's dashed extension of it) is drawn only for a primary angle with `arc` or `tangent`. A plain `projection`-only point draws no OP: there is no arc or tangent construction for it to connect to, and drawing one anyway crowds the sin label of a *symmetric pair* sharing that same sin value (30°/150°, 45°/135°, ...) — their sin labels sit on the axis side opposite their own point by design (continuing the direction their own guide already travels), which is exactly where the other point's OP would run.
 - The circle is always the unit circle (radius 1 in math terms, `radius` px on the canvas); there is no scaled or off-centre circle here.
+
+## answers: false
+
+`"answers": false` draws the exercise's question ("determine sen, cos and tg of π/4"). Kept: the circle, the axes, every given angle with its name, OP, the angle arc with its degree value, the dashed projection guides (the construction, not a value), quadrant letters. Hidden: the printed cos and sin at the feet of a projection, the tangent segment with its dashed extension and `tg θ = …`, and every symmetric point (π − θ, π + θ, 2π − θ are what such an exercise asks the reader to find). The canvas keeps the size the answered figure has, so question and solution line up.

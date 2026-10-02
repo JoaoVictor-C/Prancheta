@@ -56,6 +56,10 @@ Example: `"(-1)^n / n"` for the alternating harmonic series.
 
 - n must be integers in the range [1, ∞).
 - All term values must be finite (no ±∞, no NaN).
-- Maximum 60 terms (to keep rendering fast).
+- Maximum 500 terms. Both scales are fitted to the data (a plot is about 420-720px wide however many terms, and about 420px tall however large or small the values); n is labelled every 1, 2, 5, 10 ... terms so at most about 12 numbers appear, and dots shrink (to 1,5px radius) as they crowd, but every term keeps its dot.
 - Empty or reversed ranges are refused.
 - A series' limit is computed only at integer n — the term expression is not assumed continuous (`(-1)^n/n` is not defined at a fractional n), so both the terms' limit and the partial sums' (series') limit are read off an integer-indexed approach to infinity, never a continuous one.
+
+## answers: false
+
+The dots are what the exercise gives (the sequence, or its partial sums); what it asks for is the limit. With `answers: false` the dashed limit lines and their "lim aₙ = …" / "lim Sₙ = …" labels are not drawn. The limit is still computed and still counts toward the value range, so the question's figure and the solution's figure share one scale; the frame, axes, dots and (for `both`) the legend are unchanged.

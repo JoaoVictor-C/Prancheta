@@ -1,0 +1,8 @@
+{
+  "preset": "truth-table",
+  "title": "Terceiro excluído e contradição",
+  "notation": "logic",
+  "expressions": ["p or not p", "p and not p", "(p and (p -> q)) -> q"],
+  "showSubexpressions": true,
+  "classify": true
+}

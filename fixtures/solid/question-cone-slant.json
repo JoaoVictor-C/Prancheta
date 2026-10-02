@@ -1,0 +1,8 @@
+{
+  "preset": "solid",
+  "title": "Determine a geratriz, o volume e a área total do cone",
+  "answers": false,
+  "solids": [
+    { "kind": "cone", "radius": 2, "height": 4, "labels": true, "show": ["height", "radius", "slant"], "readings": ["measures", "volume", "area"] }
+  ]
+}

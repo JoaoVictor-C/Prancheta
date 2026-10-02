@@ -49,7 +49,8 @@ test("a pack sets family, size, weight and tracking from the element's level", (
   assert.equal(b.fontSize, 46);
   assert.equal(b.fontWeight, 700);
   assert.equal(b.letterSpacing, -1.2);
-  assert.match(b.fontFamily!, /Inter/);
+  // grotesk is the bundled face, named as the mirror loads it (ADR 0063), not a host "Inter"
+  assert.match(b.fontFamily!, /^"Prancheta Sans"/);
 });
 
 test("an element that declares its own size keeps it, and gets the rest of the step", () => {

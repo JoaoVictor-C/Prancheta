@@ -1,0 +1,10 @@
+{
+  "preset": "field",
+  "title": "campo de direções de dy/dx = x − y, o enunciado: esboce a solução por y(0) = 3",
+  "kind": "slope",
+  "f": "x - y",
+  "x": [-4, 4],
+  "y": [-4, 4],
+  "solutions": [{ "at": [0, 3] }],
+  "answers": false
+}

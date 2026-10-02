@@ -106,3 +106,18 @@ as inconclusive rather than snapped to a plausible-looking number.
 except the x-schedule column, which is printed at the exact decimal width the step
 actually is — `formatNumber`'s own "shortest honest form" would round 0,9999 to 1 and
 make the fourth decimal step indistinguishable from `at`.
+
+## answers: false
+
+In an exercise sheet, the question's figure passes `answers: false` (set automatically
+by the sheet dispatcher for ANSWER_AWARE presets); the solution figure draws the same
+input with the default `answers: true`. When `answers: false`:
+
+- **Values table**: the table frame, headers, variable name, and x-values remain; every
+  computed cell is drawn empty (same size and position, no text) so the reader sees the
+  structure and can fill it in.
+- **Limit table**: as above for the x-values and function-value row; the conclusion line
+  is hidden (the question is what the limit is).
+
+This is the "complete the table" figure — a useful exercise where the computation discipline
+of `value-table` pins the setup while the student supplies the values.

@@ -22,9 +22,17 @@
  * machine does not push a glyph onto a line the estimate said it cleared.
  */
 
-import type { Point } from "../../ir/types.ts";
-
-export type Rect = { x: number; y: number; width: number; height: number };
+import type { Point, Rect } from "../../ir/types.ts";
+import {
+  candidatesBeside,
+  distanceToPolyline,
+  distanceToSegment,
+  pointToRect,
+  rectAt,
+  rectToPolyline,
+  rectsMeet,
+  segmentHitsRect,
+} from "../../geometry/hit.ts";
 
 /** Clearance kept between a label's box and any ink or other box. */
 export const MARGIN = 3;
@@ -37,79 +45,6 @@ type Ink = {
   /** A point's dot: counts as passing through its own point (ADR 0035's marker rule). */
   dot?: { c: Point; r: number };
 };
-
-export function pointToSegment(p: Point, a: Point, b: Point): number {
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  const len2 = dx * dx + dy * dy;
-  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2));
-  return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
-}
-
-export function pointToPolyline(p: Point, pts: Point[]): number {
-  if (pts.length === 1) return Math.hypot(p.x - pts[0]!.x, p.y - pts[0]!.y);
-  let best = Infinity;
-  for (let i = 0; i < pts.length - 1; i += 1) best = Math.min(best, pointToSegment(p, pts[i]!, pts[i + 1]!));
-  return best;
-}
-
-export function pointToRect(p: Point, r: Rect): number {
-  const dx = Math.max(r.x - p.x, 0, p.x - (r.x + r.width));
-  const dy = Math.max(r.y - p.y, 0, p.y - (r.y + r.height));
-  return Math.hypot(dx, dy);
-}
-
-/** Liang–Barsky: does segment ab pass through rect r? */
-export function segmentHitsRect(a: Point, b: Point, r: Rect): boolean {
-  let t0 = 0;
-  let t1 = 1;
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  for (const [p, q] of [
-    [-dx, a.x - r.x],
-    [dx, r.x + r.width - a.x],
-    [-dy, a.y - r.y],
-    [dy, r.y + r.height - a.y],
-  ] as const) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
-    }
-    const t = q / p;
-    if (p < 0) {
-      if (t > t1) return false;
-      if (t > t0) t0 = t;
-    } else {
-      if (t < t0) return false;
-      if (t < t1) t1 = t;
-    }
-  }
-  return true;
-}
-
-function rectToSegment(r: Rect, a: Point, b: Point): number {
-  if (segmentHitsRect(a, b, r)) return 0;
-  const corners = [
-    { x: r.x, y: r.y },
-    { x: r.x + r.width, y: r.y },
-    { x: r.x, y: r.y + r.height },
-    { x: r.x + r.width, y: r.y + r.height },
-  ];
-  return Math.min(pointToRect(a, r), pointToRect(b, r), ...corners.map((c) => pointToSegment(c, a, b)));
-}
-
-export function rectToPolyline(r: Rect, pts: Point[]): number {
-  if (pts.length === 1) return pointToRect(pts[0]!, r);
-  let best = Infinity;
-  for (let i = 0; i < pts.length - 1; i += 1) best = Math.min(best, rectToSegment(r, pts[i]!, pts[i + 1]!));
-  return best;
-}
-
-function rectsMeet(a: Rect, b: Rect, pad: number): boolean {
-  return a.x - pad < b.x + b.width && b.x - pad < a.x + a.width && a.y - pad < b.y + b.height && b.y - pad < a.y + a.height;
-}
-
-export const rectAt = (c: Point, w: number, h: number): Rect => ({ x: c.x - w / 2, y: c.y - h / 2, width: w, height: h });
 
 export type Claim = { kind: "place"; id: string; at: Point } | { kind: "element"; id: string };
 
@@ -144,12 +79,12 @@ export class Placer {
     const out: number[] = [];
     for (const ink of this.ink) {
       if (ink.dot !== undefined) continue;
-      if (pointToPolyline(at, ink.pts) > 1) continue;
+      if (distanceToPolyline(at, ink.pts) > 1) continue;
       // Walk 14px along the polyline each way from the point nearest `at`.
       let best = 0;
       let bestD = Infinity;
       for (let i = 0; i < ink.pts.length - 1; i += 1) {
-        const d = pointToSegment(at, ink.pts[i]!, ink.pts[i + 1]!);
+        const d = distanceToSegment(at, ink.pts[i]!, ink.pts[i + 1]!);
         if (d < bestD) {
           bestD = d;
           best = i;
@@ -200,7 +135,7 @@ export class Placer {
       for (const ink of this.ink) {
         if (!ink.competes) continue;
         const through =
-          pointToPolyline(claim.at, ink.pts) <= 0.75 ||
+          distanceToPolyline(claim.at, ink.pts) <= 0.75 ||
           (ink.dot !== undefined && Math.hypot(claim.at.x - ink.dot.c.x, claim.at.y - ink.dot.c.y) <= ink.dot.r + 0.5);
         if (through) continue;
         const d = rectToPolyline(r, ink.pts);
@@ -217,10 +152,10 @@ export class Placer {
 
     const c = { x: r.x + r.width / 2, y: r.y + r.height / 2 };
     const own = this.ink.filter((i) => i.id === claim.id);
-    const d0 = own.length === 0 ? Infinity : Math.min(...own.map((i) => pointToPolyline(c, i.pts)));
+    const d0 = own.length === 0 ? Infinity : Math.min(...own.map((i) => distanceToPolyline(c, i.pts)));
     for (const ink of this.ink) {
       if (ink.id === claim.id || !ink.competes) continue;
-      const d = pointToPolyline(c, ink.pts);
+      const d = distanceToPolyline(c, ink.pts);
       if (d < d0 + margin) cost += d < d0 - 0.5 ? 5 : 1;
     }
     return cost;
@@ -296,6 +231,16 @@ export function aroundPoint(at: Point, w: number, h: number, incident: number[],
       const reach = Math.abs(u.x) * (w / 2) + Math.abs(u.y) * (h / 2);
       out.push({ x: at.x + u.x * (gap + reach), y: at.y + u.y * (gap + reach) });
     }
+    // Then each diagonal again with the box's CORNER at `gap` from the point.
+    // Pushed out along the diagonal by its reach, a wide label's near corner
+    // ends up much further than `gap` away, and in a crowded vertex (a
+    // building's windows on one side, the ground's hatching on the other)
+    // something else is then nearer the label than the point it names.
+    for (const d of dirs) {
+      const u = { x: Math.cos(d.a), y: Math.sin(d.a) };
+      if (Math.abs(u.x) < 0.3 || Math.abs(u.y) < 0.3) continue;
+      out.push({ x: at.x + Math.sign(u.x) * (w / 2 + Math.abs(u.x) * gap), y: at.y + Math.sign(u.y) * (h / 2 + Math.abs(u.y) * gap) });
+    }
   }
   return out;
 }
@@ -306,22 +251,7 @@ export function aroundPoint(at: Point, w: number, h: number, incident: number[],
  * (−dy, dx)), just clear of the run and then a little further out.
  */
 export function besideRun(a: Point, b: Point, w: number, h: number, ts: number[], side = 1): Point[] {
-  const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-  const d = { x: (b.x - a.x) / len, y: (b.y - a.y) / len };
-  const n = { x: -d.y, y: d.x };
-  const clearance = Math.abs(n.x) * (w / 2) + Math.abs(n.y) * (h / 2) + MARGIN + 2;
-  const out: Point[] = [];
-  for (const extra of [0, 4, 9, 15]) {
-    for (const t of ts) {
-      for (const s of [side, -side]) {
-        out.push({
-          x: a.x + d.x * len * t + n.x * s * (clearance + extra),
-          y: a.y + d.y * len * t + n.y * s * (clearance + extra),
-        });
-      }
-    }
-  }
-  return out;
+  return candidatesBeside(a, b, w, h, ts, { gap: MARGIN + 2, extras: [0, 4, 9, 15], side });
 }
 
 /** Centres beside a polyline at fractions of its arc length, using the local direction there. */

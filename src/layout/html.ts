@@ -33,6 +33,16 @@ export type IdAssignment = {
 
 export type FontEmbedMode = "none" | "embed" | "outline";
 
+/**
+ * What an exported SVG does about its font when nobody says (ADR 0063):
+ * carry it. A figure is measured in the bundled face, so an SVG that only
+ * NAMES that face is a different figure on every machine that lacks it --
+ * which is every machine but this one. `embed` costs about 330 KB of base64
+ * per file and makes the SVG draw what was measured wherever it is opened;
+ * "none" remains for a caller that knows its viewer has the face.
+ */
+export const DEFAULT_FONT_EMBED: FontEmbedMode = "embed";
+
 export type HtmlOptions = {
   /**
    * Where a scene's children go, by block id. Absent means this is the
@@ -89,11 +99,10 @@ export function buildHtml(spec: FigureSpec, options: HtmlOptions = {}): IdAssign
   const padding = spec.canvas?.padding ?? active.canvas.padding;
   const background = spec.canvas?.background ?? active.canvas.background;
 
-  const fontEmbed = options.fontEmbed ?? "none";
   // EVERY mode measures against the bundled font, including "none", and that
   // is a correctness property rather than a convenience.
   //
-  // The theme's stack starts with "Segoe UI", which is a proprietary Microsoft
+  // The theme's stack used to start with "Segoe UI", a proprietary Microsoft
   // face. On a machine without it Chromium resolves the stack to something
   // else with different advance widths and different line height, so the same
   // spec measures differently -- and since every check here is a measurement,
@@ -107,18 +116,23 @@ export function buildHtml(spec: FigureSpec, options: HtmlOptions = {}): IdAssign
   // a Linux runner -- so the fix is not to match one machine but to depend on
   // none of them. The bundled font travels with the repository.
   //
-  // Prepended, not replacing: a character the bundled font does not cover (see
-  // export/fonts.ts) still falls back to a real installed face rather than
-  // measuring against nothing. `fontEmbed` continues to decide what happens to
-  // the EXPORTED svg, which is a separate question from what was measured.
-  const bodyFontFamily = `"${BUNDLED_FONT_FAMILY}", ${active.text.family}`;
+  // The theme's stack already starts with the bundled face (ADR 0063); it is
+  // prepended here only for a theme that names something else, so a spec's
+  // own stack cannot opt the MIRROR out of measuring against it. A character
+  // the bundled font does not cover (see export/fonts.ts) still falls back to
+  // a real installed face rather than measuring against nothing. `fontEmbed`
+  // decides what happens to the EXPORTED svg, which is a separate question
+  // from what was measured.
+  const bodyFontFamily = active.text.family.includes(`"${BUNDLED_FONT_FAMILY}"`)
+    ? active.text.family
+    : `"${BUNDLED_FONT_FAMILY}", ${active.text.family}`;
   const bundledFontFace = `${bundledFontFaceCssSync()}\n  `;
-  // outline mode sums each glyph's own advance width to position the next
-  // one (render/svg.ts); Chromium's kerning would then measure narrower or
-  // wider than that sum for character pairs a font kerns, so kerning is
-  // switched off here to keep the two in agreement. embed mode draws real
-  // <text> and never sums anything by hand, so kerning stays on for it.
-  const kerning = fontEmbed === "outline" ? "font-kerning: none;" : "";
+  // Kerning is off in EVERY mode (ADR 0063). A glyph's position is then the
+  // sum of the advances before it -- which is what outline mode draws, what
+  // the exported <text> is told to do (svg.ts), and what planning-time
+  // measurement (text-metrics.ts) computes before any browser exists. With
+  // kerning on, Chromium set "AV" or "P(" tighter than any of the three.
+  const kerning = "font-kerning: none;";
 
   const html = `<!doctype html>
 <html><head><meta charset="utf-8"><style>
@@ -354,12 +368,37 @@ function renderBlock(
       : node.wrap === "anywhere"
         ? ' style="white-space: pre-line; overflow-wrap: anywhere"'
         : ' style="white-space: pre-line"';
+  // Rich text (ADR 0062) is real <sub>/<sup>, so Chromium lays out and
+  // measures exactly what the SVG will draw; measure.ts reads each run back.
+  const content =
+    node.runs === undefined
+      ? escapeHtml(node.label ?? "")
+      : node.runs.map((run) => runHtml(run.text, run.script)).join("");
+  const rich = node.runs === undefined ? "" : ' data-pr-rich="1"';
   const label =
     node.label === undefined || node.label === ""
       ? ""
-      : `<span data-pr-text="${escapeAttr(id)}"${labelStyle}>${escapeHtml(node.label)}</span>`;
+      : `<span data-pr-text="${escapeAttr(id)}"${rich}${labelStyle}>${content}</span>`;
 
   return `<div data-pr-box="${escapeAttr(id)}" ${styleAttr(style)}>${label}</div>`;
+}
+
+/**
+ * How a subscript and a superscript are set (ADR 0062), in one place because
+ * measure.ts builds its baseline probe from the same strings. Sizes and
+ * shifts are in the run's OWN em: 0.7 of the parent size; a subscript's
+ * baseline 0.21 parent-em below the line's, a superscript's 0.385 above.
+ * line-height 1 keeps a script from opening the line box, so a line with a
+ * subscript is spaced like one without.
+ */
+export const SCRIPT_STYLE = {
+  sub: "font-size: 0.7em; vertical-align: -0.3em; line-height: 1",
+  sup: "font-size: 0.7em; vertical-align: 0.55em; line-height: 1",
+} as const;
+
+export function runHtml(text: string, script: "sub" | "sup" | undefined): string {
+  if (script === undefined) return escapeHtml(text);
+  return `<${script} data-pr-script="${script}" style="${SCRIPT_STYLE[script]}">${escapeHtml(text)}</${script}>`;
 }
 
 export function escapeHtml(value: string): string {

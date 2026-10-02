@@ -1,0 +1,12 @@
+{
+  "preset": "truth-table",
+  "title": "Lei de De Morgan: ¬(p ∨ q) ≡ ¬p ∧ ¬q",
+  "notation": "logic",
+  "expressions": [
+    { "expr": "not (p or q)", "label": "P" },
+    { "expr": "not p and not q", "label": "Q" }
+  ],
+  "showSubexpressions": true,
+  "compare": true,
+  "classify": true
+}

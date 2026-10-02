@@ -1,0 +1,16 @@
+{
+  "preset": "circuit",
+  "title": "leis de Kirchhoff: duas malhas, duas baterias",
+  "nodes": { "p1": [0, 2], "A": [2, 2], "p2": [4, 2], "p3": [0, 0], "B": [2, 0], "p4": [4, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "p3", "to": "p1", "value": 12 },
+    { "id": "R1", "kind": "resistor", "from": "p1", "to": "A", "value": 2 },
+    { "id": "R2", "kind": "resistor", "from": "A", "to": "p2", "value": 2 },
+    { "id": "E2", "kind": "battery", "from": "p4", "to": "p2", "value": 6 },
+    { "id": "R3", "kind": "resistor", "from": "A", "to": "B", "value": 4 },
+    { "kind": "wire", "from": "p3", "to": "B" },
+    { "kind": "wire", "from": "B", "to": "p4" }
+  ],
+  "ground": "B",
+  "show": { "names": true, "voltages": [["A", "B"]], "power": true }
+}

@@ -31,13 +31,14 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { chromium } from "playwright";
 
 import { SpecError } from "../ir/types.ts";
-import type { FigureSpec } from "../ir/types.ts";
+import type { FigureSpec, Readings, TextRun } from "../ir/types.ts";
 import { formatNumber, formatNumberTex, formatPoint, formatPointTex, LOCALES } from "../locale/format.ts";
 import type { Locale } from "../locale/format.ts";
-import { parseFigureInput } from "../presets/index.ts";
+import { ANSWER_AWARE, parseFigureInput } from "../presets/index.ts";
 import { functionGraphPoints } from "../presets/function-graph/preset.ts";
 import type { FunctionGraphInput } from "../presets/function-graph/preset.ts";
 import { render } from "../pipeline.ts";
+import { BUNDLED_FONT_STACK, bundledFontFaceCssSync } from "../export/fonts.ts";
 import * as v from "../presets/validate.ts";
 import { EMPTY_ENV, calcPlaceholder, evaluateParams, substituteFigure, validateParams } from "./calc.ts";
 import type { ParamEnv, ParamSpec } from "./calc.ts";
@@ -53,10 +54,34 @@ export type SheetFigure = {
   graph?: FunctionGraphInput;
   /** Or any figure input the render command accepts: raw IR or another preset. */
   spec?: unknown;
+  /**
+   * Or a figure module (modules/README.md), run and verified exactly as the
+   * `module` command runs it: a molecule, a reaction scheme, a map. Its
+   * drawing is the module's own SVG; its module checks are the sheet's.
+   */
+  module?: SheetModuleFigure;
   /** HTML; placeholders allowed. */
   caption?: string;
   /** Wider on the page. */
   wide?: boolean;
+  /**
+   * Where the figure's reading panel goes (ADR 0062). "page" (the default,
+   * unless the sheet says otherwise): lifted out of the drawing and set as
+   * page text under the image, at the page's own size. "drawing": left in
+   * the drawing, scaled with it.
+   */
+  readings?: ReadingsPlacement;
+};
+
+export type ReadingsPlacement = "page" | "drawing";
+
+export type SheetModuleFigure = {
+  /** The interpreter. Default "python". */
+  command?: string;
+  /** Script path and flags, one argument each, e.g. ["modules/reaction/render.py", "--reaction=N.O>>[NH4+].[OH-]"]. */
+  args: string[];
+  width?: number;
+  height?: number;
 };
 
 export type SheetExercise = {
@@ -131,6 +156,8 @@ export type SheetInput = {
   closing?: string;
   /** Params shared by every exercise (and usable in the sheet's own texts). */
   params?: ParamSpec;
+  /** The default for every figure's `readings` (ADR 0062). Default "page". */
+  readings?: ReadingsPlacement;
   sections: SheetSection[];
 };
 
@@ -140,11 +167,23 @@ const LEVELS: Record<SheetLevel, string> = { easy: "fácil", mid: "médio", hard
 
 function figure(value: unknown, path: string): void {
   const f = v.object(value, path);
-  if ((f.graph === undefined) === (f.spec === undefined)) {
-    throw new SpecError(`${path} needs exactly one of "graph" (a function-graph input) or "spec"`);
+  const kinds = [f.graph, f.spec, f.module].filter((k) => k !== undefined).length;
+  if (kinds !== 1) {
+    throw new SpecError(`${path} needs exactly one of "graph" (a function-graph input), "spec" (any figure input) or "module" (a figure module)`);
+  }
+  if (f.module !== undefined) {
+    const m = v.object(f.module, `${path}.module`);
+    v.optionalString(m, "command", `${path}.module`);
+    if (!Array.isArray(m.args) || m.args.length === 0 || m.args.some((a) => typeof a !== "string")) {
+      throw new SpecError(`${path}.module.args must be a non-empty list of strings: the script, then its flags`);
+    }
+    for (const k of ["width", "height"] as const) {
+      if (m[k] !== undefined && (typeof m[k] !== "number" || !((m[k] as number) > 0))) throw new SpecError(`${path}.module.${k} must be a positive number`);
+    }
   }
   v.optionalString(f, "caption", path);
   v.optionalBoolean(f, "wide", path);
+  v.optionalEnum(f, "readings", path, ["page", "drawing"] as const);
 }
 
 /** A `variants` block: domains over the exercise's own number params, known predicate kinds. */
@@ -191,6 +230,7 @@ export function validateSheet(raw: unknown): SheetInput {
   }
   v.requiredString(s, "title", "sheet");
   v.optionalEnum(s, "locale", "sheet", LOCALES);
+  v.optionalEnum(s, "readings", "sheet", ["page", "drawing"] as const);
   for (const key of ["subtitle", "footer", "contentsNote", "exercisesLead", "answersLead", "solutionsLead", "closing"]) {
     v.optionalString(s, key, "sheet");
   }
@@ -340,14 +380,20 @@ function placeholder(body: string, points: Points, locale: Locale, math: boolean
 const escape = (text: string): string =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+// The page's own text is set in the bundled face too (ADR 0063): the same
+// face as the figures and the readings lifted out of them, and pagination
+// that does not depend on which sans the printing machine has. Inlined, not
+// linked: Chromium refuses a font from a file:// URL as a cross-origin load.
+// The headings keep their serif -- page design, not measured figure text.
 const STYLE = `
+  ${bundledFontFaceCssSync()}
   @page { size: A4; margin: 18mm 17mm 20mm 17mm; }
   :root {
     --ink: #1b1f27; --soft: #4e5763; --rule: #d5dae1; --key: #1d4e89;
     --easy: #0f7360; --mid: #9a6200; --hard: #b3400c; --paper: #fcfbf7;
   }
   html { background: white; }
-  body { font-family: "Segoe UI", "Noto Sans", system-ui, sans-serif; color: var(--ink);
+  body { font-family: ${BUNDLED_FONT_STACK}; color: var(--ink);
          font-size: 10.6pt; line-height: 1.5; margin: 0; }
   h1 { font-family: Georgia, "Palatino Linotype", serif; font-size: 27pt; margin: 0 0 4pt; color: var(--key); }
   h2 { font-family: Georgia, "Palatino Linotype", serif; font-size: 17pt; color: var(--key);
@@ -374,8 +420,10 @@ const STYLE = `
   ol.items { margin: 3pt 0; padding-left: 20pt; }
   ol.items li { margin: 1.5pt 0; }
   figure { margin: 7pt auto 3pt; text-align: center; break-inside: avoid; }
-  figure img { width: 84%; max-width: 510px; }
-  figure.wide img { width: 96%; max-width: 640px; }
+  /* A figure is shrunk to the column, never enlarged past its own size: a
+     small molecule stretched to 84% of the column filled a page. */
+  figure img { width: auto; height: auto; max-width: min(84%, 510px); }
+  figure.wide img { max-width: min(96%, 640px); }
   figcaption { font-size: 9pt; color: var(--soft); margin-top: 2pt; }
   .box { background: var(--paper); border: 1px solid var(--rule); border-radius: 8px; padding: 8pt 12pt; margin: 8pt 0; break-inside: avoid; }
   .box h3 { margin-top: 2pt; }
@@ -397,16 +445,75 @@ const STYLE = `
 
 export const KATEX = "https://cdn.jsdelivr.net/npm/katex@0.16.11/dist";
 
-type Figures = Map<string, { src: string; caption?: string; wide?: boolean }>;
+type Figures = Map<string, { src: string; caption?: string; wide?: boolean; readings?: Readings }>;
 
 function figureHtml(key: string, figures: Figures): string {
   const f = figures.get(key);
   if (f === undefined) return "";
   return (
     `<figure${f.wide ? ' class="wide"' : ""}><img src="${f.src}">` +
+    (f.readings === undefined ? "" : readingsHtml(f.readings)) +
     (f.caption === undefined ? "" : `<figcaption>${f.caption}</figcaption>`) +
     `</figure>`
   );
+}
+
+/**
+ * The style of lifted readings (ADR 0062), added to a document's stylesheet
+ * only when one of its figures has them: a sheet without panels is the same
+ * document, byte for byte, that it was before panels could be lifted.
+ */
+const READINGS_CSS = `
+  /* A figure's reading panel, lifted out of the drawing (ADR 0062): page text, the image's width. */
+  .readings { display: grid; column-gap: 8pt; row-gap: 1.5pt; width: 84%; max-width: 510px; margin: 3pt auto 0;
+              text-align: left; font-size: 9.6pt; line-height: 1.35; }
+  figure.wide .readings { width: 96%; max-width: 640px; }
+  .readings .r.normal { color: #181B21; }
+  .readings .r.strong { color: #181B21; font-weight: 700; }
+  .readings .r.soft { color: #4E5763; }
+  .readings .r.accent { font-weight: 700; }
+  .readings .lead { font-weight: 700; white-space: nowrap; }
+  .readings .span { grid-column-end: span 2; }
+  .readings .sw { display: flex; align-items: center; }
+  .readings .sw i { display: block; width: 16pt; height: 2.6pt; border-radius: 1pt; }
+  .readings sub, .readings sup { font-size: 0.72em; line-height: 0; }
+`;
+
+function withReadingsCss(html: string, figures: Figures[]): string {
+  if (!figures.some((map) => [...map.values()].some((f) => f.readings !== undefined))) return html;
+  return html.replace("</style>", `${READINGS_CSS}</style>`);
+}
+
+const escapeHtml = (s: string): string => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeAttr = (s: string): string => escapeHtml(s).replace(/"/g, "&quot;");
+
+/** Runs as HTML: a subscript is <sub>, a superscript <sup> -- the same markup the figure's mirror measured. */
+export function runsHtml(runs: readonly TextRun[]): string {
+  return runs.map((r) => (r.script === undefined ? escapeHtml(r.text) : `<${r.script}>${escapeHtml(r.text)}</${r.script}>`)).join("");
+}
+
+/**
+ * A figure's reading panel as page text (ADR 0062): the same lines, the same
+ * emphasis and colours, at the page's size, wrapped by the page. Every line
+ * sits in the grid's text column; a lead takes the column before it, and a
+ * swatch the one before that, so a panel of leads reads as a table.
+ */
+export function readingsHtml(readings: Readings): string {
+  const leads = readings.lines.some((l) => l.lead !== undefined);
+  const swatches = readings.lines.some((l) => l.swatch !== undefined);
+  const columns = [swatches ? "auto" : "", leads ? "auto" : "", "1fr"].filter((c) => c !== "").join(" ");
+  const rows = readings.lines.map((l) => {
+    const style = [l.colour === undefined ? "" : `color: ${l.colour}`, l.gap === undefined ? "" : `margin-top: ${(l.gap * 0.75).toFixed(1)}pt`].filter(Boolean).join("; ");
+    const cls = `r ${l.emphasis}`;
+    const attr = style === "" ? "" : ` style="${escapeAttr(style)}"`;
+    const cells: string[] = [];
+    if (swatches) cells.push(l.swatch === undefined ? `<span class="sw"${attr}></span>` : `<span class="sw"${attr}><i style="background: ${escapeAttr(l.swatch)}"></i></span>`);
+    if (leads && l.lead !== undefined) cells.push(`<span class="${cls} lead"${attr}>${runsHtml(l.lead)}</span>`);
+    const span = leads && l.lead === undefined ? " span" : "";
+    cells.push(`<span class="${cls}${span}"${attr}>${runsHtml(l.runs)}</span>`);
+    return cells.join("");
+  });
+  return `<div class="readings" style="grid-template-columns: ${columns}">${rows.join("")}</div>`;
 }
 
 /** A single figure or several, as a list. */
@@ -453,6 +560,7 @@ function pushHead(out: string[], sheet: SheetInput, katex: string, title: string
 <title>${escape(title)}</title>
 <link rel="stylesheet" href="${katex}/katex.min.css">
 <script src="${katex}/katex.min.js"></script>
+<script src="${katex}/contrib/mhchem.min.js"></script>
 <script src="${katex}/contrib/auto-render.min.js"></script>
 <style>${STYLE}</style>
 </head>
@@ -580,7 +688,7 @@ ${sheet.sections.map((s) => `      <li><b>${escape(s.title.replace(/^\d+\.\s*/, 
   }
   out.push(`</section>\n`);
   pushTail(out);
-  return out.join("\n");
+  return withReadingsCss(out.join("\n"), [figures]);
 }
 
 /** One set of answers in a gabarito: a version's texts and solution figures. */
@@ -624,7 +732,7 @@ export function gabaritoHtml(sheet: SheetInput, entries: GabaritoEntry[], katex 
     out.push(`</section>\n`);
   });
   pushTail(out);
-  return out.join("\n");
+  return withReadingsCss(out.join("\n"), entries.map((e) => e.figures));
 }
 
 // ---- build -----------------------------------------------------------------
@@ -654,12 +762,26 @@ export function defaultSheetDir(name: string): string {
   return join(base, name);
 }
 
-function figureSpec(f: SheetFigure, where: string): FigureSpec {
+function figureSpec(f: SheetFigure, where: string, statement: boolean): FigureSpec {
   try {
-    return f.graph !== undefined ? parseFigureInput({ preset: "function-graph", ...f.graph }) : parseFigureInput(f.spec);
+    return f.graph !== undefined ? parseFigureInput({ preset: "function-graph", ...f.graph }) : parseFigureInput(statement ? withoutAnswers(f.spec) : f.spec);
   } catch (error) {
     throw new SpecError(`${where}: ${(error as Error).message}`);
   }
+}
+
+/**
+ * A statement's figure shows what the exercise gives, never what it asks
+ * (review of 2026-09-29): a circuit printing every solved current, or a
+ * Venn diagram printing the 37 the question asks for, hands the reader the
+ * answer. So a statement figure of a preset that can hide its answers does,
+ * unless its author says `"answers": true`. A solution figure is untouched.
+ */
+function withoutAnswers(spec: unknown): unknown {
+  if (typeof spec !== "object" || spec === null) return spec;
+  const o = spec as Record<string, unknown>;
+  if (typeof o.preset !== "string" || !ANSWER_AWARE.includes(o.preset) || o.answers !== undefined) return spec;
+  return { ...o, answers: false };
 }
 
 /**
@@ -698,6 +820,8 @@ export type ResolvedFigure = {
   kind: "q" | "s";
   figure: SheetFigure;
   captionKey: string;
+  /** Where its reading panel goes: the figure's own choice, else the sheet's, else "page". */
+  readings: ReadingsPlacement;
 };
 
 export type ResolvedSheet = {
@@ -736,15 +860,17 @@ export function resolveSheet(raw: unknown, overrides: SheetParamOverrides = {}):
       const sub = (f: SheetFigure, path: string): SheetFigure =>
         f.graph !== undefined
           ? { ...f, graph: substituteFigure(f.graph, env, `${path}.graph`) }
-          : { ...f, spec: substituteFigure(f.spec, env, `${path}.spec`) };
+          : f.module !== undefined
+            ? { ...f, module: substituteFigure(f.module, env, `${path}.module`) }
+            : { ...f, spec: substituteFigure(f.spec, env, `${path}.spec`) };
       const q = listOf(e.figure).map((f, k) => sub(f, `${e.id}.figure[${k}]`));
       const s = listOf(e.solutionFigure).map((f, k) => sub(f, `${e.id}.solutionFigure[${k}]`));
       own.set(e.id, { q, s });
       q.forEach((f, k) =>
-        figures.push({ key: figureKey("q", e.id, k), exercise: e.id, kind: "q", figure: f, captionKey: `${e.id}.figure.${k}.caption` }),
+        figures.push({ key: figureKey("q", e.id, k), exercise: e.id, kind: "q", figure: f, captionKey: `${e.id}.figure.${k}.caption`, readings: f.readings ?? sheet.readings ?? "page" }),
       );
       s.forEach((f, k) =>
-        figures.push({ key: figureKey("s", e.id, k), exercise: e.id, kind: "s", figure: f, captionKey: `${e.id}.solutionFigure.${k}.caption` }),
+        figures.push({ key: figureKey("s", e.id, k), exercise: e.id, kind: "s", figure: f, captionKey: `${e.id}.solutionFigure.${k}.caption`, readings: f.readings ?? sheet.readings ?? "page" }),
       );
     }
   }
@@ -790,7 +916,13 @@ export function resolveSheet(raw: unknown, overrides: SheetParamOverrides = {}):
 }
 
 /** A figure drawn through the pipeline: its SVG and the checks it failed. */
-export type RenderedFigure = { svg: string; failing: string[]; checkIds: string[] };
+export type RenderedFigure = {
+  svg: string;
+  failing: string[];
+  checkIds: string[];
+  /** The reading panel, when it was lifted out of the drawing to be set as page text (ADR 0062). */
+  readings?: Readings;
+};
 
 /**
  * Renders by content: the same substituted figure is drawn once, however
@@ -800,17 +932,40 @@ export type FigureCache = Map<string, RenderedFigure>;
 
 /** Draw one resolved figure through the full pipeline -- its checks are the sheet's checks. */
 export async function renderSheetFigure(r: ResolvedFigure, cache?: FigureCache): Promise<RenderedFigure> {
-  const key = JSON.stringify(r.figure.graph ?? r.figure.spec);
+  // The kind is part of the key: one input is two figures when the statement's copy hides its answers.
+  const key = `${r.kind}:${r.readings}:${JSON.stringify(r.figure.graph ?? r.figure.module ?? r.figure.spec)}`;
   const hit = cache?.get(key);
   if (hit !== undefined) return hit;
-  const result = await render(figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`), {
-    raster: false,
-  });
+  if (r.figure.module !== undefined) {
+    // A module's figure is its own SVG, verified by the module checks; it has
+    // no answers to hide and no reading panel to lift.
+    const m = r.figure.module;
+    const { runAndVerifyModule } = await import("../modules/run.ts");
+    const { entryForScript } = await import("../modules/repertoire.ts");
+    // A statement's figure hides its answers here too: "complete a reação"
+    // draws the products as "?". Only for scripts that declare the flag.
+    const hides = r.kind === "q" && entryForScript(m.args[0] ?? "")?.answers === true && !m.args.some((a) => a.startsWith("--answers"));
+    const { output, verification } = await runAndVerifyModule({
+      command: m.command ?? "python",
+      args: hides ? [...m.args, "--answers=false"] : m.args,
+      input: { width: m.width ?? 720, height: m.height ?? 520 },
+    });
+    const fails = verification.checks.filter((c) => c.status === "fail");
+    const drawn = { svg: output.svg, failing: fails.map((c) => `${c.id} ${c.target ?? ""}: ${c.detail ?? ""}`), checkIds: fails.map((c) => c.id) };
+    cache?.set(key, drawn);
+    return drawn;
+  }
+  const spec = figureSpec(r.figure, `exercise ${r.exercise} ${r.kind === "q" ? "figure" : "solutionFigure"}`, r.kind === "q");
+  // A panel scaled down with its figure is set at whatever size the column
+  // leaves it -- 7pt for an optics or circuit panel. Lifted, it is page text.
+  const lift = r.readings === "page" && spec.readings !== undefined;
+  const result = await render(spec, { raster: false, readings: lift ? "omit" : "draw" });
   const fails = result.manifest.checks.filter((c) => c.status === "fail");
   const drawn = {
     svg: result.svg,
     failing: fails.map((c) => `${c.id} ${c.target}: ${c.detail ?? ""}`),
     checkIds: fails.map((c) => c.id),
+    ...(lift ? { readings: spec.readings } : {}),
   };
   cache?.set(key, drawn);
   return drawn;
@@ -833,7 +988,7 @@ export async function writeFigures(
     await writeFile(file, drawn.svg, "utf8");
     written.push(file);
     if (drawn.failing.length > 0) failures.push({ figure: `${folder}/${r.key}`.replace(/^figures\//, ""), checks: drawn.failing });
-    figures.set(r.key, { src: `${folder}/${r.key}.svg`, caption: resolved.texts.get(r.captionKey), wide: r.figure.wide });
+    figures.set(r.key, { src: `${folder}/${r.key}.svg`, caption: resolved.texts.get(r.captionKey), wide: r.figure.wide, readings: drawn.readings });
   }
   return { figures, written, failures };
 }

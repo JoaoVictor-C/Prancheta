@@ -211,7 +211,7 @@ Colour is checked, not chosen. `contrast-sufficient` computes real WCAG contrast
 node src/cli.ts render spec.json --fontEmbed outline --pdf --pdfSize a4
 ```
 
-A figure can leave the tool as a deliverable, not just a correct drawing: every element carries a `<title>`/`<desc>` built from data the manifest already has, and sits in its own `<g>`. `--fontEmbed embed` inlines Prancheta's own bundled font (Inter, SIL OFL) as a `@font-face`; `--fontEmbed outline` converts every glyph to a filled path with zero runtime font dependency, verified against resvg with no system fonts available at all — the mode to reach for when the target tool is unknown. `--pdf` writes real vector PDF, sized to the figure by default or to a physical page (`a4`, `letter`, `<w>x<h>mm`).
+A figure can leave the tool as a deliverable, not just a correct drawing: every element carries a `<title>`/`<desc>` built from data the manifest already has, and sits in its own `<g>`. Every figure is set in Prancheta's own bundled font (Inter, SIL OFL, loaded as "Prancheta Sans"), and presets plan their layouts with that font's real advance widths, so a figure lays out the same on every OS. `--fontEmbed embed`, the default, inlines it as a `@font-face` (about 330 KB per SVG); `--fontEmbed outline` converts every glyph to a filled path with zero runtime font dependency, verified against resvg with no system fonts available at all — the mode to reach for when the target tool is unknown; `--fontEmbed none` only names the font. `--pdf` writes real vector PDF, sized to the figure by default or to a physical page (`a4`, `letter`, `<w>x<h>mm`).
 
 ## Depth cues, if they carry information
 

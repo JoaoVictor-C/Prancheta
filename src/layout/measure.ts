@@ -65,6 +65,8 @@ export type MeasuredLine = {
    * may be slightly off. Surfaced rather than hidden.
    */
   baselineUncertain: boolean;
+  /** Present only for a rich label (ADR 0062): the line in pieces of one script each, where each was laid out. */
+  runs?: { text: string; x: number; y: number; fontSize: number; script?: "sub" | "sup" }[];
 };
 
 /**
@@ -153,6 +155,11 @@ export function measureInPage(): PageMeasurement {
   for (const el of Array.from(document.querySelectorAll("[data-pr-text]"))) {
     const span = el as HTMLElement;
     const ownerId = span.getAttribute("data-pr-text") ?? "";
+    if (span.hasAttribute("data-pr-rich")) {
+      const rich = measureRich(span, ownerId);
+      if (rich !== null) texts.push(rich);
+      continue;
+    }
     const textNode = span.firstChild;
     if (!textNode || textNode.nodeType !== Node.TEXT_NODE) continue;
     const content = textNode.textContent ?? "";
@@ -293,6 +300,178 @@ export function measureInPage(): PageMeasurement {
       anchor,
       lines,
     });
+  }
+
+  /**
+   * A label set as runs (ADR 0062). Declared inside measureInPage because
+   * that function is shipped to the page whole and may close over nothing.
+   *
+   * Characters are grouped into lines by the LINE's baseline, not by the top
+   * of their rects: a subscript's rect sits lower than its neighbours' and
+   * would otherwise start a line of its own. Each script's baseline offset and
+   * shift are measured with a probe built from the same markup (its style is
+   * copied off a real <sub>/<sup> in this label), never assumed from the CSS.
+   */
+  function measureRich(span: HTMLElement, ownerId: string): MeasuredText | null {
+    type Script = "sub" | "sup" | "";
+    type Ch = { ch: string; left: number; right: number; top: number; bottom: number; script: Script };
+    const style = getComputedStyle(span);
+    const fontSize = parseFloat(style.fontSize) || 0;
+    const fontWeight = parseFloat(style.fontWeight) || undefined;
+    const tracked = parseFloat(style.letterSpacing);
+    const letterSpacing = Number.isFinite(tracked) && tracked !== 0 ? tracked : undefined;
+    const align = style.textAlign;
+    const anchor: "start" | "center" | "end" =
+      align === "center" ? "center" : align === "right" || align === "end" ? "end" : "start";
+
+    const chars: Ch[] = [];
+    const examples = new Map<Script, Element>();
+    const walker = document.createTreeWalker(span, NodeFilter.SHOW_TEXT);
+    const range = document.createRange();
+    for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+      const holder = node.parentElement;
+      const tag = holder?.getAttribute("data-pr-script");
+      const script: Script = tag === "sub" || tag === "sup" ? tag : "";
+      if (script !== "" && holder !== null && !examples.has(script)) examples.set(script, holder);
+      const content = node.textContent ?? "";
+      for (let i = 0; i < content.length; i += 1) {
+        range.setStart(node, i);
+        range.setEnd(node, i + 1);
+        const rects = range.getClientRects();
+        if (rects.length === 0) continue;
+        const r = rects[rects.length - 1]!;
+        if (r.width === 0 && r.height === 0) continue;
+        if (r.width === 0 && /\s/.test(content[i]!)) continue;
+        chars.push({ ch: content[i]!, left: r.left, right: r.right, top: r.top, bottom: r.bottom, script });
+      }
+    }
+    if (chars.length === 0) return null;
+
+    // --- probe: one "x" per script, each followed by a zero-size baseline marker ---
+    const probe = document.createElement("span");
+    probe.style.whiteSpace = "nowrap";
+    const piece = (host: HTMLElement): { text: Text; marker: HTMLElement } => {
+      const text = document.createTextNode("x");
+      const marker = document.createElement("i");
+      marker.style.display = "inline-block";
+      marker.style.width = "0";
+      marker.style.height = "0";
+      marker.style.verticalAlign = "baseline";
+      host.appendChild(text);
+      host.appendChild(marker);
+      return { text, marker };
+    };
+    const main = piece(probe);
+    const scripted = new Map<Script, { el: HTMLElement; text: Text; marker: HTMLElement }>();
+    for (const [script, example] of examples) {
+      const el = document.createElement(script);
+      el.setAttribute("style", example.getAttribute("style") ?? "");
+      probe.appendChild(el);
+      scripted.set(script, { el, ...piece(el) });
+    }
+    span.parentElement?.appendChild(probe);
+    const rectOf = (text: Text): DOMRect => {
+      const r = document.createRange();
+      r.setStart(text, 0);
+      r.setEnd(text, 1);
+      return r.getBoundingClientRect();
+    };
+    const mainRect = rectOf(main.text);
+    const mainBase = main.marker.getBoundingClientRect().bottom;
+    const metrics = new Map<Script, { offset: number; shift: number; height: number; size: number }>();
+    metrics.set("", { offset: mainBase - mainRect.top, shift: 0, height: mainRect.height, size: fontSize });
+    for (const [script, p] of scripted) {
+      const r = rectOf(p.text);
+      const base = p.marker.getBoundingClientRect().bottom;
+      metrics.set(script, {
+        offset: base - r.top,
+        shift: base - mainBase,
+        height: r.height,
+        size: parseFloat(getComputedStyle(p.el).fontSize) || fontSize,
+      });
+    }
+    probe.remove();
+
+    // --- lines, by the line's baseline ---
+    type Group = { base: number; plain: boolean; chars: Ch[] };
+    const grouped: Group[] = [];
+    for (const c of chars) {
+      const m = metrics.get(c.script)!;
+      const base = c.top + m.offset - m.shift;
+      const group = grouped.find((g) => Math.abs(g.base - base) < fontSize * 0.4);
+      if (group === undefined) grouped.push({ base, plain: c.script === "", chars: [c] });
+      else {
+        group.chars.push(c);
+        // A plain character's baseline is the measured one; a script's is derived.
+        if (c.script === "" && !group.plain) {
+          group.base = base;
+          group.plain = true;
+        }
+      }
+    }
+    grouped.sort((a, b) => a.base - b.base);
+
+    const lines: MeasuredLine[] = [];
+    for (const g of grouped) {
+      let start = 0;
+      let end = g.chars.length - 1;
+      while (start <= end && /\s/.test(g.chars[start]!.ch)) start += 1;
+      while (end >= start && /\s/.test(g.chars[end]!.ch)) end -= 1;
+      if (start > end) continue;
+      const kept = g.chars.slice(start, end + 1);
+      let left = Infinity;
+      let right = -Infinity;
+      let top = Infinity;
+      let bottom = -Infinity;
+      let text = "";
+      let uncertain = false;
+      const pieces: NonNullable<MeasuredLine["runs"]> = [];
+      for (const c of kept) {
+        left = Math.min(left, c.left);
+        right = Math.max(right, c.right);
+        top = Math.min(top, c.top);
+        bottom = Math.max(bottom, c.bottom);
+        text += c.ch;
+        const m = metrics.get(c.script)!;
+        if (Math.abs(c.bottom - c.top - m.height) > 1) uncertain = true;
+        const last = pieces[pieces.length - 1];
+        const script = c.script === "" ? undefined : c.script;
+        if (last !== undefined && last.script === script) last.text += c.ch;
+        else {
+          pieces.push({
+            text: c.ch,
+            x: round(c.left),
+            y: round(g.base + m.shift),
+            fontSize: round(m.size),
+            ...(script === undefined ? {} : { script }),
+          });
+        }
+      }
+      if (uncertain) {
+        fontWarnings.push(`line "${text.slice(0, 24)}" rendered with different metrics than the probe; a fallback font was used`);
+      }
+      const anchorX = anchor === "center" ? (left + right) / 2 : anchor === "end" ? right : left;
+      lines.push({
+        text,
+        x: round(anchorX),
+        y: round(g.base),
+        box: { x: round(left), y: round(top), width: round(right - left), height: round(bottom - top) },
+        baselineUncertain: uncertain,
+        runs: pieces,
+      });
+    }
+
+    return {
+      id: `${ownerId}--label`,
+      ownerId,
+      fontFamily: style.fontFamily,
+      fontSize: round(fontSize),
+      fontWeight,
+      letterSpacing,
+      color: style.color,
+      anchor,
+      lines,
+    };
   }
 
   return {

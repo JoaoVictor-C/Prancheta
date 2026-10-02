@@ -34,9 +34,18 @@ import { compileIn, constantValue } from "../../math/expr.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
 import type { LabelOptions } from "../function-graph/board.ts";
-import { Placer, aroundPoint, pointToPolyline, rectAt, segmentHitsRect } from "../construction/place.ts";
-import type { Claim, Rect } from "../construction/place.ts";
-import { sqrtLabel, splitSquare } from "../vectors/preset.ts";
+import { Placer, aroundPoint } from "../construction/place.ts";
+import type { Claim } from "../construction/place.ts";
+import { fitUnits, niceStep } from "../shared/scale.ts";
+import { denominatorOf, sqrtLabel } from "../../locale/write.ts";
+import type { Rect } from "../../ir/types.ts";
+import { distanceToPolyline, rectAt, segmentHitsRect } from "../../geometry/hit.ts";
+import { gcd, splitSquare } from "../../math/integer.ts";
+import { labelWidth, packItems } from "../shared/text.ts";
+import { layoutPanel as layoutReadings } from "../shared/panel.ts";
+import type { Panel } from "../shared/panel.ts";
+import type { WrapRules } from "../shared/text.ts";
+import type { Printed } from "../../locale/write.ts";
 
 // ---- input ------------------------------------------------------------------
 
@@ -64,6 +73,8 @@ export type LinearMapInput = {
   show?: LinearMapShow;
   shapes?: LinearMapShape[];
   points?: LinearMapPoint[];
+  /** false: the question's figure -- the given and its frame, no image, T(e₁), T(e₂), parallelogram, eigen-lines or results. Default true. */
+  answers?: boolean;
 };
 
 export type Matrix = [[number, number], [number, number]];
@@ -87,7 +98,6 @@ const TINT = "1C";
 
 const MARGIN = 56;
 const PLOT_TARGET_PX = 460;
-const MIN_UNIT = 22;
 const MAX_UNIT = 90;
 const MIN_WIDTH = 620;
 const RANGE_MARGIN = 0.5;
@@ -104,10 +114,6 @@ const EPS = 1e-9;
 export function tidy(x: number): number {
   const r = Math.round(x * 1e12) / 1e12;
   return Math.abs(x - r) < 2e-15 ? r + 0 : x;
-}
-
-function gcd(a: number, b: number): number {
-  return b === 0 ? Math.abs(a) : gcd(b, a % b);
 }
 
 const isInt = (x: number): boolean => Math.abs(x - Math.round(x)) < 1e-9;
@@ -335,15 +341,13 @@ export function singularParts(A: Matrix): { rank: 0 } | { rank: 1; image: Vec; k
 
 // ---- exact writing ---------------------------------------------------------------------
 
-export type Written = { text: string; exact: boolean };
-
 /**
  * A number as a reader writes it: whole, a short decimal, p/q, √n, kπ/q -- and,
  * beyond `snapExact`, the rationalised roots a rotation's matrix is made of
  * (√2/2, √3/2), found through the square: x² a small-denominator rational.
  * Anything else is the formatter's rounded decimal, flagged inexact.
  */
-export function exactText(x: number, locale: Locale = "pt-BR", fractions = false): Written {
+export function exactText(x: number, locale: Locale = "pt-BR", fractions = false): Printed {
   const t = tidy(x);
   if (Math.abs(t) < 1e-12) return { text: "0", exact: true };
   const e = snapExact(t, 1e-9);
@@ -353,10 +357,7 @@ export function exactText(x: number, locale: Locale = "pt-BR", fractions = false
   }
   if (e.exact) return { text: writeExact(e, locale), exact: true };
   const sq = t * t;
-  for (let q = 1; q <= 64; q += 1) {
-    const p = sq * q;
-    if (Math.abs(p - Math.round(p)) <= 1e-9 * Math.max(1, p)) return { text: (t < 0 ? MINUS : "") + sqrtLabel(sq, locale), exact: true };
-  }
+  if (denominatorOf(sq, 64) !== 0) return { text: (t < 0 ? MINUS : "") + sqrtLabel(sq, locale), exact: true };
   const short = formatNumber(t, locale);
   const back = parseNumber(short, locale);
   return { text: short, exact: back !== null && Math.abs(back - t) <= 1e-9 * Math.max(1, Math.abs(t)) };
@@ -404,7 +405,7 @@ export function formulaOf(A: Matrix, locale: Locale = "pt-BR"): string {
   return `T(x${pairSep(locale)}y) = (${rowText(A[0][0], A[0][1], locale, fr)}${pairSep(locale)}${rowText(A[1][0], A[1][1], locale, fr)})`;
 }
 
-function pairText(p: readonly [number, number], locale: Locale, fractions = false): Written {
+function pairText(p: readonly [number, number], locale: Locale, fractions = false): Printed {
   const a = exactText(p[0], locale, fractions);
   const b = exactText(p[1], locale, fractions);
   return { text: `(${a.text}${pairSep(locale)}${b.text})`, exact: a.exact && b.exact };
@@ -420,7 +421,7 @@ export function directionInts(d: Vec): [number, number] | null {
   return [f.q, sign * f.p];
 }
 
-function directionText(d: Vec, locale: Locale): Written {
+function directionText(d: Vec, locale: Locale): Printed {
   const ints = directionInts(d);
   if (ints !== null) return pairText(ints, locale);
   const r = d[1] / d[0];
@@ -439,7 +440,7 @@ export function lineEquation(d: Vec, locale: Locale = "pt-BR"): string {
 const SUB = ["₁", "₂"];
 
 /** An eigenvalue written exact: an integer, a fraction, √n, or the quadratic (a ± b√r)/2 when it has one. */
-export function eigenvalueText(lambda: number, tr: number, disc: number, locale: Locale = "pt-BR"): Written {
+export function eigenvalueText(lambda: number, tr: number, disc: number, locale: Locale = "pt-BR"): Printed {
   const direct = exactText(lambda, locale);
   if (direct.exact) return direct;
   if (isInt(tr) && isInt(disc) && disc > 0) {
@@ -460,7 +461,7 @@ export function eigenvalueText(lambda: number, tr: number, disc: number, locale:
 }
 
 /** The complex pair a ± bi, exact when it is. */
-export function complexPairText(re: number, im: number, locale: Locale = "pt-BR"): Written {
+export function complexPairText(re: number, im: number, locale: Locale = "pt-BR"): Printed {
   const a = exactText(re, locale);
   const b = exactText(Math.abs(im), locale);
   const coefficient = Math.abs(Math.abs(im) - 1) < 1e-9 ? "i" : /^\d+([.,]\d+)?$/.test(b.text) ? `${b.text}i` : `(${b.text})i`;
@@ -469,12 +470,6 @@ export function complexPairText(re: number, im: number, locale: Locale = "pt-BR"
 }
 
 // ---- the plot's frame ---------------------------------------------------------------------
-
-/** A tick step a reader counts by, at most `maxLines` divisions across the span. */
-export function tickStepFor(span: number, maxLines = 10): number {
-  for (const s of [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]) if (span / s <= maxLines) return s;
-  return 1000;
-}
 
 /** Where the line P0 + t·D (t ∈ ℝ) is inside the box, as two endpoints, or null. */
 export function clipLineToBox(p0: Vec, dir: Vec, box: { xlo: number; xhi: number; ylo: number; yhi: number }): [Vec, Vec] | null {
@@ -641,7 +636,7 @@ export function ringSpots(own: Point[], w: number, h: number, ts: number[]): Poi
         const u = { x: Math.cos(ang), y: Math.sin(ang) };
         const reach = Math.abs(u.x) * (w / 2) + Math.abs(u.y) * (h / 2);
         const p = { x: s.x + u.x * (reach + gap), y: s.y + u.y * (reach + gap) };
-        scored.push({ p, score: pointToPolyline(p, own) + rank * 2.5 });
+        scored.push({ p, score: distanceToPolyline(p, own) + rank * 2.5 });
       }
     }
   });
@@ -672,8 +667,13 @@ const fmtInt = (n: number): string => String(n).replace("-", MINUS);
 export function planeGeometry(x: [number, number], y: [number, number]): { unit: number; step: number; plotWidth: number; plotHeight: number; width: number; origin: Point } {
   const spanX = x[1] - x[0];
   const spanY = y[1] - y[0];
-  const unit = Math.min(MAX_UNIT, Math.max(MIN_UNIT, PLOT_TARGET_PX / Math.max(spanX, spanY)));
-  const step = tickStepFor(Math.max(spanX, spanY));
+  // One unit on both axes (angles and areas must survive), FITTED to the box:
+  // a stretch of 300 gives a plane of the same size as a stretch of 3, with
+  // the unit square correspondingly small -- that is what the map does.
+  const { xUnit: unit } = fitUnits(spanX, spanY, { equal: true, targetWidth: PLOT_TARGET_PX, targetHeight: PLOT_TARGET_PX, maxUnit: MAX_UNIT });
+  // Whole units while the box is a few units wide (as it always was); 1, 2 or 5 x 10^k at any other magnitude.
+  const span = Math.max(spanX, spanY);
+  const step = span >= 4 ? Math.max(1, niceStep(span, 10)) : niceStep(span, 10);
   const plotWidth = Math.ceil(MARGIN * 2 + spanX * unit);
   const plotHeight = Math.ceil(MARGIN * 2 + spanY * unit);
   const width = Math.max(plotWidth, MIN_WIDTH);
@@ -721,6 +721,12 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
     }
   }
   const show = parseShow(input.show, shapes.length > 0 || named.length > 0);
+  // answers: false draws what the exercise GIVES (the plane, e₁ e₂, the unit
+  // square, the original shapes and points, the matrix as typed) and nothing
+  // it ASKS FOR (every image, T(e₁) T(e₂), the parallelogram and its area,
+  // the eigen-lines, the image line, det/tr and every reading). The box is
+  // still fitted to the images, so the question and its solution share one page.
+  const hide = input.answers === false;
 
   // ---- what must be inside the box ------------------------------------------
   const must: { what: string; p: Vec }[] = [{ what: "the origin", p: [0, 0] }];
@@ -769,7 +775,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   const box = { xlo, xhi, ylo, yhi };
 
   // ---- the panel's text first: its height decides the canvas -----------------------
-  const panel = buildPanel(A, det, tr, singular, show, shapes, named, locale);
+  const panel = buildPanel(A, det, tr, singular, show, shapes, named, locale, hide ? input.named : undefined, hide);
 
   // ---- frame ----------------------------------------------------------------------
   const { unit, step, plotHeight, width, origin } = planeGeometry([xlo, xhi], [ylo, yhi]);
@@ -834,7 +840,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
 
   // The image lattice, as grid furniture beneath everything else.
   let latticeStep = 1;
-  if (show.grid && !singular) {
+  if (show.grid && !singular && !hide) {
     const lattice = imageLattice(A, box, unit);
     latticeStep = lattice.step;
     for (const line of lattice.lines) {
@@ -875,7 +881,9 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
     });
     placer.addInk(squareIds.original, [...px, px[0]!], false);
     imageOrder = [[0, 0], t1, t12, t2];
-    if (singular) {
+    if (hide) {
+      // the parallelogram is the answer
+    } else if (singular) {
       // The parallelogram has collapsed onto a segment: draw the segment, as ink.
       const along = imageOrder.map((p) => p);
       const dirv = singularParts(A);
@@ -898,17 +906,18 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   const centroidOf = (pts: Point[]): Point => ({ x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length });
   shapes.forEach((s, i) => {
     const px = canvasRegion(`shape-${i}`, s.pts, `${ORIGINAL}${TINT}`, ORIGINAL, 1.8);
-    const ix = canvasRegion(`shape-${i}-image`, s.image, `${IMAGE}${TINT}`, IMAGE, 2.2);
+    const ix = hide ? [] : canvasRegion(`shape-${i}-image`, s.image, `${IMAGE}${TINT}`, IMAGE, 2.2);
     if (s.names === undefined) return;
     const ctr = centroidOf(px);
-    const ictr = centroidOf(ix);
+    const ictr = hide ? ctr : centroidOf(ix);
     s.names.forEach((n, j) => {
       const same = Math.hypot(s.pts[j]![0] - s.image[j]![0], s.pts[j]![1] - s.image[j]![1]) < 1e-9;
       const dir = (p: Point, o: Point): Point => {
         const len = Math.hypot(p.x - o.x, p.y - o.y) || 1;
         return { x: (p.x - o.x) / len, y: (p.y - o.y) / len };
       };
-      if (same) vertices.push({ id: `shape-${i}-v${j}`, name: `${n} = ${n}′`, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
+      if (hide) vertices.push({ id: `shape-${i}-v${j}`, name: n, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
+      else if (same) vertices.push({ id: `shape-${i}-v${j}`, name: `${n} = ${n}′`, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
       else {
         vertices.push({ id: `shape-${i}-v${j}`, name: n, c: px[j]!, colour: INK, outward: dir(px[j]!, ctr) });
         vertices.push({ id: `shape-${i}-v${j}-image`, name: `${n}′`, c: ix[j]!, colour: IMAGE, outward: dir(ix[j]!, ictr) });
@@ -918,7 +927,8 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   named.forEach((n, i) => {
     const p = at(n.p);
     const q = T(n.p);
-    if (Math.hypot(n.p[0] - q[0], n.p[1] - q[1]) < 1e-9) vertices.push({ id: `point-${i}`, name: `${n.name} = ${n.name}′`, c: p, colour: INK, outward: { x: 0, y: -1 } });
+    if (hide) vertices.push({ id: `point-${i}`, name: n.name, c: p, colour: INK, outward: { x: 0, y: -1 } });
+    else if (Math.hypot(n.p[0] - q[0], n.p[1] - q[1]) < 1e-9) vertices.push({ id: `point-${i}`, name: `${n.name} = ${n.name}′`, c: p, colour: INK, outward: { x: 0, y: -1 } });
     else {
       vertices.push({ id: `point-${i}`, name: n.name, c: p, colour: INK, outward: { x: 0, y: -1 } });
       vertices.push({ id: `point-${i}-image`, name: `${n.name}′`, c: at(q), colour: IMAGE, outward: { x: 0, y: -1 } });
@@ -931,7 +941,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   const disc = tr * tr - 4 * det;
   type Through = { id: string; seg: [Point, Point]; stroke: string; width: number; dashed: boolean; text: string; textColour: string };
   const through: Through[] = [];
-  if (show.eigen && eig.kind === "real") {
+  if (show.eigen && !hide && eig.kind === "real") {
     eig.lines.forEach((line, i) => {
       const seg = clipLineToBox([0, 0], line.direction, box);
       if (seg === null) return;
@@ -939,7 +949,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
       through.push({ id: `eigen-${i}`, seg: [at(seg[0]), at(seg[1])], stroke: EIGEN, width: 1.9, dashed: true, text: `λ ${w.exact ? "=" : "≈"} ${w.text}`, textColour: EIGEN_TEXT });
     });
   }
-  if (singular) {
+  if (singular && !hide) {
     const parts = singularParts(A);
     if (parts.rank === 1) {
       const seg = clipLineToBox([0, 0], parts.image, box);
@@ -951,11 +961,11 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
   // spots that no ink crosses. Two lines through the origin at 45° cross all
   // four; then the lines are drawn with a small gap round the origin, which a
   // dashed line reads as anyway, instead of leaving the "0" struck through.
-  const arrowTips: Vec[] = show.basis ? [e1, e2, t1, t2] : [];
+  const arrowTips: Vec[] = show.basis ? (hide ? [e1, e2] : [e1, e2, t1, t2]) : [];
   const drawn: Point[][] = [
     ...arrowTips.map((tip) => [O, at(tip)]),
-    ...(show.unitSquare ? [[...([[0, 0], e1, corner, e2, [0, 0]] as Vec[]).map((p) => at(p))], [...([[0, 0], t1, t12, t2, [0, 0]] as Vec[]).map((p) => at(p))]] : []),
-    ...shapes.flatMap((sh) => [[...sh.pts, sh.pts[0]!].map((p) => at(p)), [...sh.image, sh.image[0]!].map((p) => at(p))]),
+    ...(show.unitSquare ? [[...([[0, 0], e1, corner, e2, [0, 0]] as Vec[]).map((p) => at(p))], ...(hide ? [] : [[...([[0, 0], t1, t12, t2, [0, 0]] as Vec[]).map((p) => at(p))]])] : []),
+    ...shapes.flatMap((sh) => [[...sh.pts, sh.pts[0]!].map((p) => at(p)), ...(hide ? [] : [[...sh.image, sh.image[0]!].map((p) => at(p))])]),
   ];
   const originSpots = tickPlan(frame, grid).find((t) => t.id === `${frame.id}-tick-origin`)?.spots.map((sp) => sp.box) ?? [];
   const hitsRect = (poly: Point[], r: Rect): boolean => {
@@ -996,8 +1006,10 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
     const same = (p: Vec, q: Vec): boolean => Math.hypot(p[0] - q[0], p[1] - q[1]) < 1e-9;
     type Named = { name: string; v: Vec; image: boolean; id: string };
     const items: Named[] = [
-      { name: "T(e₁)", v: t1, image: true, id: "image-e1" },
-      { name: "T(e₂)", v: t2, image: true, id: "image-e2" },
+      ...(hide ? [] : [
+        { name: "T(e₁)", v: t1, image: true, id: "image-e1" },
+        { name: "T(e₂)", v: t2, image: true, id: "image-e2" },
+      ]),
       { name: "e₁", v: e1, image: false, id: "basis-e1" },
       { name: "e₂", v: e2, image: false, id: "basis-e2" },
     ];
@@ -1037,7 +1049,7 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
    */
   const put = (claim: Claim, text: string, o: LabelOptions, groups: (w: number, h: number) => Point[][], own?: Point[]): Block => {
     const { w, h } = board.extent(text, o);
-    const best = placer.choose(claim, w, h, groups(w, h), own === undefined ? undefined : (c) => pointToPolyline(c, own));
+    const best = placer.choose(claim, w, h, groups(w, h), own === undefined ? undefined : (c) => distanceToPolyline(c, own));
     const block = board.label(text, best.centre.x, best.centre.y, { ...o, width: w, ...(best.strict ? {} : { fill: PAPER }) });
     placer.commit(rectAt(best.centre, w, h));
     return block;
@@ -1107,10 +1119,34 @@ export function expandLinearMap(input: LinearMapInput): FigureSpec {
 // ---- the reading panel -------------------------------------------------------------------------------
 
 type PanelData = {
-  entries: [[string, string], [string, string]];
+  /** Absent when the map is given by name and the matrix is what is asked for. */
+  entries?: [[string, string], [string, string]];
   head: string[]; // the lines beside the matrix
   body: string[]; // full-width lines beneath
 };
+
+/** A named map in words, as the exercise would state it. */
+function namedText(named: NamedMap, locale: Locale): string {
+  const n = named as Record<string, unknown>;
+  const num = (x: unknown): string => (typeof x === "number" ? formatNumber(x, locale) : String(x));
+  const angle = (x: unknown): string => (typeof x === "number" ? `${formatNumber(x, locale)}°` : String(x));
+  if ("rotation" in n) return `rotação de ${angle(n.rotation)}`;
+  if ("reflection" in n) {
+    const line = (n.reflection as { line: unknown }).line;
+    return typeof line === "number" ? `reflexão na reta de ângulo ${angle(line)}` : `reflexão na reta ${String(line)}`;
+  }
+  if ("shear" in n) {
+    const sh = n.shear as { x?: unknown; y?: unknown };
+    return sh.x !== undefined ? `cisalhamento horizontal de fator ${num(sh.x)}` : `cisalhamento vertical de fator ${num(sh.y)}`;
+  }
+  if ("scale" in n) {
+    const sc = n.scale as unknown[];
+    return `escala de fatores ${num(sc[0])} e ${num(sc[1])}`;
+  }
+  const onto = (n.projection as { onto: unknown }).onto;
+  if (Array.isArray(onto)) return `projeção sobre o vetor (${num(onto[0])}; ${num(onto[1])})`;
+  return typeof onto === "number" ? `projeção sobre a reta de ângulo ${angle(onto)}` : `projeção sobre a reta ${String(onto)}`;
+}
 
 function buildPanel(
   A: Matrix,
@@ -1121,15 +1157,23 @@ function buildPanel(
   shapes: { pts: Vec[]; names: string[] | undefined; image: Vec[] }[],
   named: Item[],
   locale: Locale,
+  givenName: NamedMap | undefined,
+  hide: boolean,
 ): PanelData {
   const fr = wantsFractions(A);
-  const w = A.map((row) => row.map((x) => exactText(x, locale, fr))) as Written[][];
+  const w = A.map((row) => row.map((x) => exactText(x, locale, fr))) as Printed[][];
   const entries: [[string, string], [string, string]] = [
     [w[0]![0]!.text, w[0]![1]!.text],
     [w[1]![0]!.text, w[1]![1]!.text],
   ];
   const detW = exactText(det, locale);
   const trW = exactText(tr, locale);
+  if (hide) {
+    // The question's panel: the map as the exercise states it and nothing computed from it.
+    // A map given by name is stated by its name -- its matrix would be the answer.
+    if (givenName !== undefined) return { head: [`T: ${namedText(givenName, locale)}`], body: [] };
+    return { entries, head: [formulaOf(A, locale)], body: [] };
+  }
   const head = [formulaOf(A, locale), `det A ${detW.exact ? "=" : "≈"} ${detW.text}; tr A ${trW.exact ? "=" : "≈"} ${trW.text}`];
   const body: string[] = [];
   const inexact = w.flat().some((x) => !x.exact);
@@ -1188,9 +1232,9 @@ function buildPanel(
     const names = s.names;
     const img = s.image.map((p, j) => {
       const pt = pairText(p, locale);
-      return `${names === undefined ? `V${j + 1}` : names[j]!}′ ${pt.exact ? "=" : "≈"} ${pt.text}`;
+      return `${names === undefined ? `V_{${j + 1}}` : names[j]!}′ ${pt.exact ? "=" : "≈"} ${pt.text}`;
     });
-    for (const line of chunk(img, ", ", 480)) body.push(line);
+    for (const line of packItems(img, ", ", 480, panelWidth)) body.push(line);
     const area0 = polygonArea(s.pts);
     const area1 = polygonArea(s.image);
     const a0 = exactText(area0, locale);
@@ -1203,55 +1247,34 @@ function buildPanel(
       const pt = pairText(applyMatrix(A, n.p), locale);
       return `${n.name}′ ${pt.exact ? "=" : "≈"} ${pt.text}`;
     });
-    for (const line of chunk(img, ", ", 480)) body.push(line);
+    for (const line of packItems(img, ", ", 480, panelWidth)) body.push(line);
   }
   if (inexact) body.push("entradas não exatas arredondadas a três casas");
   void fmtInt;
   return { entries, head, body };
 }
 
-/** Items joined by `sep`, split into lines no wider than `maxPx` at the panel's size. */
-function chunk(items: string[], sep: string, maxPx: number): string[] {
-  const per = (s: string): number => Math.ceil([...s].length * (PANEL_FONT * 0.56 + 0.1) + 10);
-  const out: string[] = [];
-  let cur = "";
-  for (const it of items) {
-    const next = cur === "" ? it : `${cur}${sep}${it}`;
-    if (cur !== "" && per(next) > maxPx) {
-      out.push(cur);
-      cur = it;
-    } else cur = next;
-  }
-  if (cur !== "") out.push(cur);
-  return out;
-}
+/** "=" and "≈" stay with both neighbours, and "|det" with its argument: a line never ends on "S ≈ |det A| =". */
+const EQUATION_RULES: WrapRules = {
+  joinsPrevious: (w) => w === "=" || w === "≈",
+  joinsNext: (w) => w === "=" || w === "≈" || w.endsWith("det"),
+};
 
-/** A line broken at spaces into lines no wider than `maxPx`, the way a paragraph wraps. */
-function wrapWords(text: string, maxPx: number, extent: (t: string) => number): string[] {
-  if (extent(text) <= maxPx) return [text];
-  // "=" and "≈" stay with both neighbours: a line never ends on "S ≈ |det A| =".
-  const words: string[] = [];
-  let glue = false;
-  for (const w of text.split(" ")) {
-    if (words.length > 0 && (glue || w === "=" || w === "≈")) words[words.length - 1] += ` ${w}`;
-    else words.push(w);
-    glue = w === "=" || w === "≈" || w.endsWith("det");
-  }
-  const out: string[] = [];
-  let cur = "";
-  for (const word of words) {
-    const next = cur === "" ? word : `${cur} ${word}`;
-    if (cur !== "" && extent(next) > maxPx) {
-      out.push(cur);
-      cur = word;
-    } else cur = next;
-  }
-  if (cur !== "") out.push(cur);
-  return out;
-}
+/** The panel text's width as the checks will see it, measured in the bundled face. */
+const panelWidth = (s: string): number => labelWidth(s, PANEL_FONT);
 
+/**
+ * The matrix block (A =, its entries, its brackets and the lines beside it)
+ * is part of the figure; the full-width lines under it are the reading panel
+ * (shared/panel.ts, ADR 0062), which a sheet may lift out -- so the matrix
+ * block's ids are `matrix-*`, never `panel-*`.
+ */
 type PanelLayout = {
   height: number;
+  /** The reading panel under the matrix, its first line's top and where the figure ends, relative to the plot's foot. */
+  readings: Panel;
+  readingsTop: number;
+  cut: number;
   labels: { id: string; text: string; x: number; y: number; w: number; colour: string; weight?: number; align?: "start" | "center" | "end" }[];
   brackets: { id: string; pts: Point[] }[];
 };
@@ -1260,6 +1283,13 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   const labels: PanelLayout["labels"] = [];
   const brackets: PanelLayout["brackets"] = [];
   const o = { size: PANEL_FONT };
+  if (panel.entries === undefined) {
+    // A map given by name: one line, no matrix.
+    const text = panel.head[0]!;
+    labels.push({ id: "matrix-head-0", text, x: MARGIN, y: 46, w: board.extent(text, o).w, colour: INK, align: "start", weight: 700 });
+    return { height: 46 + 28, labels, brackets, readings: layoutReadings([], { width }), readingsTop: 74, cut: 74 };
+  }
+  const entries = panel.entries;
   const extent = (text: string): number => board.extent(text, o).w;
   const rowH = 28;
   const top = 46; // the first row centre, below the plot: the matrix brackets start 28px under it
@@ -1267,9 +1297,9 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   const y2 = top + rowH;
   const left = MARGIN;
   const wA = extent("A =");
-  labels.push({ id: "panel-name", text: "A =", x: left, y: (y1 + y2) / 2, w: wA, colour: INK, weight: 700 });
+  labels.push({ id: "matrix-name", text: "A =", x: left, y: (y1 + y2) / 2, w: wA, colour: INK, weight: 700 });
   const bx0 = left + wA + 12;
-  const colW = [0, 1].map((j) => Math.max(extent(panel.entries[0][j]!), extent(panel.entries[1][j]!)));
+  const colW = [0, 1].map((j) => Math.max(extent(entries[0][j]!), extent(entries[1][j]!)));
   const gap = 22;
   const pad = 12;
   const c0 = bx0 + pad;
@@ -1278,10 +1308,10 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   const cell = (id: string, text: string, x: number, w: number, y: number): void => {
     labels.push({ id, text, x, y, w, colour: INK, align: "center" });
   };
-  cell("matrix-a11", panel.entries[0][0], c0, colW[0]!, y1);
-  cell("matrix-a12", panel.entries[0][1], c1, colW[1]!, y1);
-  cell("matrix-a21", panel.entries[1][0], c0, colW[0]!, y2);
-  cell("matrix-a22", panel.entries[1][1], c1, colW[1]!, y2);
+  cell("matrix-a11", entries[0][0], c0, colW[0]!, y1);
+  cell("matrix-a12", entries[0][1], c1, colW[1]!, y1);
+  cell("matrix-a21", entries[1][0], c0, colW[0]!, y2);
+  cell("matrix-a22", entries[1][1], c1, colW[1]!, y2);
   const yt = y1 - 18;
   const yb = y2 + 18;
   const serif = 5;
@@ -1294,21 +1324,21 @@ function layoutPanel(board: Board, panel: PanelData, width: number): PanelLayout
   panel.head.forEach((text, i) => {
     const w = extent(text);
     if (w > room) overflow.push(text);
-    else labels.push({ id: `panel-head-${i}`, text, x: xText, y: i === 0 ? y1 : y2, w, colour: INK, align: "start" });
+    else labels.push({ id: `matrix-head-${i}`, text, x: xText, y: i === 0 ? y1 : y2, w, colour: INK, align: "start" });
   });
   // A head line that did not fit beside the matrix goes with the rest, first.
   const maxLine = width - MARGIN * 2;
-  const body = [...overflow, ...panel.body].flatMap((text) => wrapWords(text, maxLine, extent));
-  let y = y2 + 18 + 26;
-  body.forEach((text, i) => {
-    labels.push({ id: `panel-line-${i}`, text, x: left, y, w: extent(text), colour: SOFT, align: "start" });
-    y += PANEL_LINE_H;
-  });
-  const lastCentre = body.length > 0 ? y - PANEL_LINE_H : y2 + 18;
-  return { height: Math.ceil(lastCentre + 28), labels, brackets };
+  const readings = layoutReadings(
+    [...overflow, ...panel.body].map((text) => ({ text })),
+    { width: maxLine, size: PANEL_FONT, lineHeight: PANEL_LINE_H, rules: EQUATION_RULES, emphasis: "soft" },
+  );
+  const readingsTop = y2 + 18 + 14;
+  const height = readings.empty ? y2 + 18 + 28 : readingsTop + readings.height + 16;
+  return { height: Math.ceil(height), labels, brackets, readings, readingsTop, cut: yb + 8 };
 }
 
 function drawPanel(board: Board, layout: PanelLayout, plotHeight: number, _width: number): void {
+  layout.readings.draw(board, { left: MARGIN, top: plotHeight + layout.readingsTop, cut: plotHeight + layout.cut });
   for (const br of layout.brackets) {
     board.poly(
       br.pts.map((p) => ({ x: p.x, y: p.y + plotHeight })),

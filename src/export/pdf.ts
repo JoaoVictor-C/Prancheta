@@ -47,6 +47,8 @@ export async function rasterisePdf(
   svg: string,
   figureSize: { width: number; height: number },
   options: PdfOptions = {},
+  /** An `@font-face` rule for a page drawing an SVG that names a face it does not carry. */
+  fontFace = "",
 ): Promise<Buffer> {
   const size = resolveSizeMm(options.size ?? "figure");
 
@@ -62,6 +64,7 @@ export async function rasterisePdf(
       await page.setViewportSize({ width: widthPx, height: heightPx });
       await page.setContent(
         `<!doctype html><html><head><meta charset="utf-8"><style>
+           ${fontFace}
            html, body { margin: 0; padding: 0; }
            svg { display: block; }
          </style></head><body>${svg}</body></html>`,
@@ -81,6 +84,7 @@ export async function rasterisePdf(
     // make every measured proportion in the figure a lie on paper.
     await page.setContent(
       `<!doctype html><html><head><meta charset="utf-8"><style>
+         ${fontFace}
          html, body { margin: 0; padding: 0; height: 100%; }
          body { display: flex; align-items: center; justify-content: center; }
          svg { max-width: 100%; max-height: 100%; width: auto; height: auto; }

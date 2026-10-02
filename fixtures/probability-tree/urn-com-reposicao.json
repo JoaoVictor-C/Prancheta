@@ -1,0 +1,9 @@
+{
+  "preset": "probability-tree",
+  "title": "urna com 3 bolas vermelhas e 2 azuis, duas retiradas com reposição",
+  "urn": { "V": 3, "A": 2 },
+  "draws": 2,
+  "replacement": true,
+  "events": [{ "name": "mesma cor", "paths": [["V", "V"], ["A", "A"]] }],
+  "also": "percent"
+}

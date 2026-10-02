@@ -317,3 +317,112 @@ test("length and angle labels are MEASURED against the drawing, not taken on tru
   const bad = lying.manifest.checks.find((c) => c.id === "length-matches-its-label" && c.status === "fail");
   assert.ok(bad !== undefined, "a wrong length label must fail length-matches-its-label");
 });
+
+// --- review of 2026-09-29: the unit follows the data, and answers can be withheld ---
+
+const kids = (input: ConstructionInput): Block[] => (expandConstruction(input).root as Scene).children as Block[];
+const printed = (input: ConstructionInput): string[] => kids(input).filter((b) => !String(b.id ?? "").startsWith("plane-tick")).map((b) => b.label ?? "");
+const ticksOn = (input: ConstructionInput, axis: "x" | "y"): number => kids(input).filter((b) => new RegExp(`^plane-tick-${axis}-|^plane-tick-origin`).test(b.id ?? "")).length;
+const sizeOf = (input: ConstructionInput): { w: number; h: number } => {
+  const root = expandConstruction(input).root as Scene;
+  return { w: root.width as number, h: root.height as number };
+};
+const markIds = (input: ConstructionInput): string[] => [...(((expandConstruction(input).root as Scene).marks ?? []) as { id?: string }[]).map((m) => String(m.id)), ...kids(input).map((b) => String(b.id))];
+const okRender = async (input: ConstructionInput): Promise<void> => {
+  const result = await render(expandConstruction(input), { raster: false });
+  const failing = result.manifest.checks.filter((c) => c.status === "fail");
+  assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));
+};
+
+const RIGHT = (s: number, axes: boolean): ConstructionInput => ({
+  axes,
+  objects: [{ A: [0, 0] }, { B: [3000 * s / 1000, 0] }, { C: [0, 4 * s] }, { name: "T", polygon: ["A", "B", "C"] }],
+});
+
+test("probe: a triangle A (0; 0), B (3000; 0), C (0; 4000) on numbered axes is a sane canvas with a dozen numbers at most", { timeout: 240000 }, async () => {
+  const input: ConstructionInput = {
+    axes: true,
+    objects: [{ A: [0, 0] }, { B: [3000, 0] }, { C: [0, 4000] }, { name: "T", polygon: ["A", "B", "C"] }],
+  };
+  const { w, h } = sizeOf(input);
+  assert.ok(w >= 60 && w <= 4000 && h >= 60 && h <= 4000, `${w} x ${h}`);
+  for (const axis of ["x", "y"] as const) assert.ok(ticksOn(input, axis) >= 3 && ticksOn(input, axis) <= 12, `${ticksOn(input, axis)} numbers on ${axis}`);
+  await okRender(input);
+});
+
+test("probe: the same triangle at 0,003 is as large and as numbered", { timeout: 240000 }, async () => {
+  const input: ConstructionInput = { axes: true, objects: [{ A: [0, 0] }, { B: [0.003, 0] }, { C: [0, 0.004] }, { name: "T", polygon: ["A", "B", "C"] }] };
+  for (const axis of ["x", "y"] as const) assert.ok(ticksOn(input, axis) >= 3 && ticksOn(input, axis) <= 12, `${ticksOn(input, axis)} numbers on ${axis}`);
+  await okRender(input);
+});
+
+test("a construction at any magnitude is the same figure, numbered or not", () => {
+  for (const axes of [true, false]) {
+    const at = (s: number) => ({ ...sizeOf(RIGHT(s, axes)), x: ticksOn(RIGHT(s, axes), "x"), y: ticksOn(RIGHT(s, axes), "y") });
+    assert.deepEqual(at(1000), at(1), `axes ${axes}`);
+    assert.deepEqual(at(0.001), at(1), `axes ${axes}`);
+  }
+});
+
+test("answers: false right triangle keeps the construction and no measured number: lengths gone, unnamed angle a ?, no readings", () => {
+  const input = fixture("right-triangle-altitude.json");
+  const full = printed(input);
+  const bare = printed({ ...input, answers: false });
+  assert.ok(full.some((t) => /°/.test(t)) && full.some((t) => /^h = /.test(t)) && full.some((t) => t === "3"));
+  assert.deepEqual(bare.filter((t) => t !== "").sort(), ["?", "A", "B", "C", "H", "h"].sort());
+  assert.deepEqual(markIds({ ...input, answers: false }).filter((i) => /^(o-h|side-|dot-)/.test(i)).sort(), markIds(input).filter((i) => /^(o-h|side-|dot-)/.test(i)).sort(), "the drawing itself is unchanged");
+});
+
+test("answers: false analytic figure keeps a typed point's pair, drops the computed midpoint's pair, the length value and the equation", () => {
+  const input = fixture("analytic-distance-midpoint.json");
+  const full = printed(input);
+  const bare = printed({ ...input, answers: false });
+  assert.ok(full.includes("M(1; −1)") && full.includes("d = 7,21") && full.some((t) => /^r: /.test(t)));
+  assert.ok(bare.includes("A(−2; 1)") && bare.includes("B(4; −3)"), bare.join("|"));
+  assert.ok(bare.includes("M") && !bare.some((t) => /M\(|7,21|^r: |=/.test(t)), bare.join("|"));
+  assert.ok(bare.includes("d"), "the named length is the unknown: its name stays");
+});
+
+test("answers: false conic keeps the curve and its points and drops the printed equation", () => {
+  for (const name of ["ellipse-foci.json", "hyperbola-asymptotes.json", "parabola-focus-directrix.json"]) {
+    const input = fixture(name);
+    const bare = printed({ ...input, answers: false });
+    assert.ok(printed(input).some((t) => /=/.test(t)), `${name}: the full figure prints an equation`);
+    assert.ok(!bare.some((t) => /=|²/.test(t)), `${name}: ${bare.join("|")}`);
+    assert.ok(markIds({ ...input, answers: false }).some((i) => i.startsWith("o-")), name);
+  }
+});
+
+test('"answer": true withholds an object, its dot and label and every annotation on it, and the frame is unchanged', () => {
+  const statement = fixture("right-triangle-altitude-statement.json");
+  const asked = markIds(statement);
+  const shown = markIds({ ...statement, answers: true });
+  assert.ok(shown.includes("o-h") && shown.includes("dot-H"));
+  assert.ok(!asked.includes("o-h") && !asked.includes("dot-H"));
+  assert.ok(!printed(statement).some((t) => t === "H" || t === "h"), printed(statement).join("|"));
+  const marked = printed(statement);
+  assert.deepEqual(marked.filter((t) => t !== "").sort(), ["?", "A", "B", "C"].sort());
+  // The same construction with nothing withheld has the same frame.
+  const plain: ConstructionInput = { ...statement, objects: statement.objects.map(({ answer: _answer, ...rest }) => rest) };
+  assert.deepEqual(sizeOf(statement), sizeOf(plain));
+});
+
+test('"answer" is checked, and is inert while answers is true', () => {
+  const statement = fixture("right-triangle-altitude-statement.json");
+  assert.throws(() => validateConstructionInput({ ...statement, objects: [{ A: [0, 0], answer: "yes" }, ...statement.objects.slice(1)] } as unknown as Record<string, unknown>), /answer/);
+  const stripped = statement.objects.map(({ answer: _a, ...r }) => r);
+  assert.deepEqual(expandConstruction({ ...statement, answers: true }), expandConstruction({ ...statement, answers: true, objects: stripped }));
+});
+
+test("answers: true (or unset) is exactly the figure it was before the option existed", () => {
+  for (const f of readdirSync(fixtureDir).filter((n) => n.endsWith(".json") && !n.endsWith("-statement.json"))) {
+    const input = fixture(f);
+    assert.deepEqual(expandConstruction({ ...input, answers: true }), expandConstruction(input), f);
+  }
+});
+
+for (const f of ["right-triangle-altitude.json", "analytic-distance-midpoint.json", "hyperbola-asymptotes.json", "ladder-wall.json", "inscribed-angle.json"]) {
+  test(`${f} with answers: false renders with every check passing`, { timeout: 240000 }, async () => {
+    await okRender({ ...fixture(f), answers: false });
+  });
+}

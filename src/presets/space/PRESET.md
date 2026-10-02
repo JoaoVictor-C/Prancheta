@@ -159,6 +159,34 @@ set only where it is at least 3 px clear of every line and every other label,
 and nearer what it names than anything else. A tick number with no such spot
 is left off, and its tick mark stays.
 
+## Scale
+
+The tick step is 1, 2 or 5 × 10ᵏ for any k, fitted to the span of the
+figure's own points (`shared/scale.ts`). A point at (3; 4; 5) is numbered
+1, 2, 3 …; one at (3000; 4000; 5000) by 500 or 1000; one at
+(0,001; 0,002; 0,003) by 0,0005. Every axis has about ten intervals whatever
+the magnitude, and the canvas stays a page. Where the figure is framed by
+points, a plane's far intercept still does not stretch it ("far" is more than
+twelve steps). Small numbers print with their digits (`0,0005`), never as
+`0,00`. A typed point whose label (name and coordinates) finds no clear spot on
+a crowded page is drawn again with the name alone beside the dot and the
+coordinates in the panel.
+
+## answers: false
+
+`"answers": false` draws the exercise's question, not its solution. Kept:
+the axes and ticks, every typed point with its coordinates, every typed
+vector with its components in the panel (`u = (2; 1; 0)`), lines and planes
+as drawn, and the names of derived points and lines. Hidden: the arrow of a
+derived vector (a cross product or a sum -- drawing it is the answer),
+the coordinates of every derived point (an intersection, midpoint or foot),
+the derivation lines, every `distance`, `angle`, `position` and
+`commonPerpendicular` reading, the printed equation of each plane and line,
+`|v|` and the components of a derived or two-point vector, and the numbers at
+a plane's marked intercepts. A figure with nothing to say in the panel has
+no panel. The dashed guides and the common perpendicular's segment stay:
+they are the construction, not a number.
+
 ## What is not covered
 
 - School solids (cylinders, cones, spheres, prisms). `geometry/projection.ts`

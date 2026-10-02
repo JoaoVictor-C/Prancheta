@@ -1,0 +1,11 @@
+{
+  "preset": "surface",
+  "title": "paraboloide e o ponto P (enunciado)",
+  "expr": "x^2 + y^2",
+  "x": [-2, 2],
+  "y": [-2, 2],
+  "z": [0, 5],
+  "point": { "name": "P", "x": 1, "y": 1, "tangentPlane": true },
+  "levels": [1, 4],
+  "answers": false
+}

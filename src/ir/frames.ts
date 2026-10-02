@@ -46,6 +46,7 @@ import type {
 } from "./types.ts";
 import { SpecError } from "./types.ts";
 import { formatNumber } from "../locale/format.ts";
+import { rectsMeet, segmentHitsRect } from "../geometry/hit.ts";
 import type { Locale } from "../locale/format.ts";
 
 /** A point stated in a frame, or one already in canvas coordinates. */
@@ -165,38 +166,6 @@ function textIn(spot: TickSpot, text: string): Rect {
   const { box, align } = spot;
   const x = align === "start" ? box.x : align === "end" ? box.x + box.width - w : box.x + (box.width - w) / 2;
   return { x, y: box.y, width: w, height: 16 };
-}
-
-/** Liang–Barsky: does segment a–b pass through the rect? */
-function segmentHitsRect(a: Point, b: Point, r: Rect): boolean {
-  let t0 = 0;
-  let t1 = 1;
-  const dx = b.x - a.x;
-  const dy = b.y - a.y;
-  for (const [p, q] of [
-    [-dx, a.x - r.x],
-    [dx, r.x + r.width - a.x],
-    [-dy, a.y - r.y],
-    [dy, r.y + r.height - a.y],
-  ] as const) {
-    if (p === 0) {
-      if (q < 0) return false;
-      continue;
-    }
-    const t = q / p;
-    if (p < 0) {
-      if (t > t1) return false;
-      if (t > t0) t0 = t;
-    } else {
-      if (t < t0) return false;
-      if (t < t1) t1 = t;
-    }
-  }
-  return true;
-}
-
-function rectsMeet(a: Rect, b: Rect): boolean {
-  return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
 /** Is this box, padded by a pixel, clear of every obstacle? */

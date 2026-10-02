@@ -1,0 +1,10 @@
+{
+  "preset": "unit-circle",
+  "title": "Determine sen, cos e tg de π/4",
+  "answers": false,
+  "quadrantLabels": true,
+  "angles": [
+    { "angle": "π/4", "arc": true, "projection": true, "tangent": true, "symmetric": true },
+    "5π/6"
+  ]
+}

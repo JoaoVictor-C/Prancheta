@@ -1,0 +1,7 @@
+{
+  "preset": "probability-tree",
+  "urn": { "V": 2, "A": 2, "B": 1 },
+  "draws": 3,
+  "replacement": false,
+  "events": [{ "name": "três cores", "paths": [["V", "A", "B"], ["V", "B", "A"], ["A", "V", "B"], ["A", "B", "V"], ["B", "V", "A"], ["B", "A", "V"]] }]
+}

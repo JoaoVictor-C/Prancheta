@@ -31,17 +31,20 @@
 import type { Block, Connector, FigureSpec, Frame, FramedPoint, GridSpec, Mark, Point, Scene } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { resolveInFrame, tickPlan } from "../../ir/frames.ts";
-import { LOCALES, MINUS, asFraction, formatNumber, formatPoint, snapExact, writeExact } from "../../locale/format.ts";
+import { LOCALES, MINUS, asFraction, formatNumber, formatPoint } from "../../locale/format.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as vec from "../../geometry/vec.ts";
 import type { Circle2, Line2, Vec2 } from "../../geometry/vec.ts";
 import { constantValue } from "../../math/expr.ts";
 import * as v from "../validate.ts";
 import { Board } from "../function-graph/board.ts";
+import { layoutPanel } from "../shared/panel.ts";
 import { typedCoordinate } from "../function-graph/preset.ts";
-import { measuredLabel, sqrtLabel } from "../vectors/preset.ts";
-import { Placer, aroundPoint, besidePolyline, besideRun, pointToPolyline, rectAt } from "./place.ts";
+import { measuredLabel, sqrtLabel, writeSnapped } from "../../locale/write.ts";
+import { fitUnits, niceStep } from "../shared/scale.ts";
+import { Placer, aroundPoint, besidePolyline, besideRun } from "./place.ts";
 import type { Claim } from "./place.ts";
+import { rectAt } from "../../geometry/hit.ts";
 
 // ---- input ------------------------------------------------------------------
 
@@ -67,6 +70,13 @@ export type ConstructionInput = {
    * compares units as well as numbers (ADR 0028). Default: none.
    */
   unit?: string;
+  /**
+   * false: the figure an exercise GIVES. The construction stays -- it is what the statement draws -- and every measured
+   * number goes: lengths (a length named `name` prints just that name), angle values (a named angle keeps its name, an
+   * unnamed one is marked "?"), the readings panel, the computed pair of a point that is not free. An object with
+   * `"answer": true` is not drawn at all, with its labels and every annotation on it. Default true.
+   */
+  answers?: boolean;
   objects: ConstructionItem[];
   annotations?: ConstructionAnnotation[];
 };
@@ -86,14 +96,14 @@ const UNKNOWN = "#B3261E"; // red: an angle named rather than measured -- the un
 
 const MARGIN = 52;
 const PLOT_TARGET_PX = 460;
-const MIN_UNIT = 22;
-const MAX_UNIT = 90;
 const CAPTION_LINE_H = 21;
 const DOT_R = 3.2;
 const RIGHT_ANGLE_PX = 11;
 const TICK_HALF = 6;
 const TOL = 1e-9;
 const TICK_ROOM_PX = 48;
+/** Divisions to an axis, at most, when the plane is numbered. */
+const AXIS_TICKS = 10;
 
 // ---- word-problem pictograms (ADR 0047) --------------------------------------
 // Decoration derived from already-computed geometry: a segment or a point an
@@ -105,7 +115,14 @@ const RUNG_GAP = 26;
 
 // ---- the model -------------------------------------------------------------
 
-type Style = { colour: string; width: number; dashed: boolean; hidden: boolean };
+type Style = {
+  colour: string;
+  width: number;
+  dashed: boolean;
+  hidden: boolean;
+  /** Hidden because `answers: false` met `"answer": true`: still computed, still bounds the view, never drawn or annotated. */
+  withheld?: true;
+};
 
 export type Extent = { kind: "line" } | { kind: "ray"; from: Vec2 } | { kind: "segment"; a: Vec2; b: Vec2 };
 
@@ -127,7 +144,7 @@ export type SegmentPicto = (typeof SEGMENT_PICTOS)[number];
 export type PointPicto = (typeof POINT_PICTOS)[number];
 
 export type ConstructionObject =
-  | { kind: "point"; name: string; p: Vec2; style: Style; dot: boolean; label: string | null; coords: boolean; picto?: PointPicto }
+  | { kind: "point"; name: string; p: Vec2; style: Style; dot: boolean; label: string | null; coords: boolean; free?: true; picto?: PointPicto }
   | { kind: "linear"; name: string; line: Line2; extent: Extent; ends?: [string, string]; style: Style; label: string | null; picto?: SegmentPicto; side?: 1 | -1 }
   | { kind: "circle"; name: string; circle: Circle2; style: Style; label: string | null }
   | { kind: "polygon"; name: string; vertices: string[]; pts: Vec2[]; fill: string | null; style: Style }
@@ -150,7 +167,7 @@ const LINEAR_KINDS = ["segment", "line", "ray", "perpendicular", "parallel", "pe
 const CIRCLE_KINDS = ["circle", "circumcircle", "incircle"] as const;
 const OTHER_KINDS = ["polygon", "ellipse", "hyperbola", "parabola"] as const;
 const ALL_KINDS: readonly string[] = [...POINT_KINDS, ...LINEAR_KINDS, ...CIRCLE_KINDS, ...OTHER_KINDS];
-const OPTION_KEYS = new Set(["name", "label", "hidden", "dashed", "colour", "draw", "which", "other", "fill", "show", "dot", "coords", "touch", "focusNames", "picto", "side"]);
+const OPTION_KEYS = new Set(["name", "label", "hidden", "dashed", "colour", "draw", "which", "other", "fill", "show", "dot", "coords", "touch", "focusNames", "picto", "side", "answer"]);
 
 /** `raw.picto` checked against the list a kind of object allows, or `undefined` when none was asked. */
 function checkedPicto<T extends string>(raw: unknown, allowed: readonly T[], path: string): T | undefined {
@@ -344,7 +361,7 @@ export function boatGlyph(p: Point): GlyphPart[] {
 
 /** A value as a reader writes it, exact when it snaps: 2, 1/2, √3. */
 function exact(value: number, locale: Locale): string {
-  return writeExact(snapExact(value, TOL), locale);
+  return writeSnapped(value, TOL, locale);
 }
 
 /** "x²", "(x − 2)²", "(x + 1/2)²". */
@@ -593,7 +610,9 @@ export function computeConstruction(input: ConstructionInput): Model {
     const kind = kinds[0]!;
     const arg = raw[kind];
     const kp = `${path}.${kind}`;
-    const hidden = raw.hidden === true;
+    const withheld = input.answers === false && raw.answer === true;
+    const hidden = raw.hidden === true || withheld;
+    const hid = { hidden, ...(withheld ? { withheld: true as const } : {}) };
     const dashed = raw.dashed === true;
     const colour = typeof raw.colour === "string" ? raw.colour : undefined;
     const label = raw.label === undefined || raw.label === false ? null : raw.label === true ? name : checkedText(raw.label, `${path}.label`);
@@ -711,10 +730,11 @@ export function computeConstruction(input: ConstructionInput): Model {
         kind: "point",
         name,
         p,
-        style: { colour: colour ?? INK, width: 0, dashed: false, hidden },
+        style: { colour: colour ?? INK, width: 0, dashed: false, ...hid },
         dot: raw.dot !== false,
         label: raw.label === false ? null : label ?? name,
         coords,
+        ...(kind === "at" ? { free: true as const } : {}),
         ...(picto === undefined ? {} : { picto }),
       });
       order.push(name);
@@ -822,7 +842,7 @@ export function computeConstruction(input: ConstructionInput): Model {
           colour: colour ?? (dashed ? GUIDE : isLine ? LINE : INK),
           width: dashed ? 1.4 : isLine ? 1.6 : 2,
           dashed,
-          hidden,
+          ...hid,
         },
         label,
         ...(picto === undefined ? {} : { picto, side }),
@@ -853,7 +873,7 @@ export function computeConstruction(input: ConstructionInput): Model {
         kind: "circle",
         name,
         circle: c,
-        style: { colour: colour ?? (dashed ? GUIDE : CIRCLE), width: dashed ? 1.4 : 1.8, dashed, hidden },
+        style: { colour: colour ?? (dashed ? GUIDE : CIRCLE), width: dashed ? 1.4 : 1.8, dashed, ...hid },
         label,
       });
       order.push(name);
@@ -872,7 +892,7 @@ export function computeConstruction(input: ConstructionInput): Model {
         if (vec.approxEqual(pts[j]!, pts[(j + 1) % pts.length]!)) throw new SpecError(`${kp}: ${vs[j]} and ${vs[(j + 1) % vs.length]} coincide -- the polygon has a side of length zero`);
       }
       const fill = typeof raw.fill === "string" ? raw.fill : null;
-      objects.set(name, { kind: "polygon", name, vertices: vs, pts, fill, style: { colour: colour ?? INK, width: 2, dashed, hidden } });
+      objects.set(name, { kind: "polygon", name, vertices: vs, pts, fill, style: { colour: colour ?? INK, width: 2, dashed, ...hid } });
       order.push(name);
       return;
     }
@@ -935,7 +955,7 @@ export function computeConstruction(input: ConstructionInput): Model {
       kind: "conic",
       name,
       conic,
-      style: { colour: colour ?? (dashed ? GUIDE : CONIC), width: dashed ? 1.4 : 2.2, dashed, hidden },
+      style: { colour: colour ?? (dashed ? GUIDE : CONIC), width: dashed ? 1.4 : 2.2, dashed, ...hid },
       show,
       label,
       ...(focusNames === undefined ? {} : { focusNames }),
@@ -1031,11 +1051,6 @@ function clipPolyline(pts: Vec2[], view: View): Vec2[][] {
   return runs;
 }
 
-function niceStep(span: number): number {
-  for (const s of [1, 2, 5, 10, 20, 50, 100]) if (span / s <= 15) return s;
-  return 100;
-}
-
 const safeId = (s: string): string => s.replace(/[^A-Za-z0-9_-]/g, (ch) => `_${ch.codePointAt(0)!.toString(16)}`);
 
 type LabelJob = {
@@ -1048,22 +1063,26 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   const model = computeConstruction(input);
   const { objects } = model;
   const axes = input.axes === true;
+  const answers = input.answers !== false;
   const unitSuffix = input.unit === undefined ? "" : ` ${input.unit}`;
 
   // ---- annotations: read and computed before anything is drawn ----
-  type Seg = { id: string; a: Vec2; b: Vec2; ends: [string, string]; poly: string | null };
+  // `withheld` segments (answers: false, "answer": true) stay addressable so an annotation on one is not an error;
+  // they are simply never drawn, ticked or measured.
+  type Seg = { id: string; a: Vec2; b: Vec2; ends: [string, string]; poly: string | null; withheld: boolean };
   const segments: Seg[] = [];
   for (const name of model.order) {
     const o = objects.get(name)!;
-    if (o.style.hidden) continue;
+    if (o.style.hidden && o.style.withheld !== true) continue;
+    const withheld = o.style.withheld === true;
     if (o.kind === "linear" && o.extent.kind === "segment") {
       const ends: [string, string] = o.ends ?? ["", ""];
-      segments.push({ id: `o-${safeId(name)}`, a: o.extent.a, b: o.extent.b, ends, poly: null });
+      segments.push({ id: `o-${safeId(name)}`, a: o.extent.a, b: o.extent.b, ends, poly: null, withheld });
     }
     if (o.kind === "polygon") {
       o.vertices.forEach((vn, j) => {
         const wn = o.vertices[(j + 1) % o.vertices.length]!;
-        segments.push({ id: `side-${safeId(name)}-${safeId(vn)}-${safeId(wn)}`, a: o.pts[j]!, b: o.pts[(j + 1) % o.pts.length]!, ends: [vn, wn], poly: name });
+        segments.push({ id: `side-${safeId(name)}-${safeId(vn)}-${safeId(wn)}`, a: o.pts[j]!, b: o.pts[(j + 1) % o.pts.length]!, ends: [vn, wn], poly: name, withheld });
       });
     }
   }
@@ -1111,7 +1130,10 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
     const kind = kinds[0]!;
     const name = o.name === undefined ? null : checkedText(o.name, `${path}.name`);
     if (kind === "length") {
-      lengthNotes.push({ seg: findSegment(o.length, `${path}.length`), name });
+      const seg = findSegment(o.length, `${path}.length`);
+      // Without answers a length is what the exercise asks for: a named one prints as its bare name (the unknown),
+      // an unnamed one prints nothing.
+      if (!seg.withheld && (answers || name !== null)) lengthNotes.push({ seg, name });
       return;
     }
     if (kind === "angle") {
@@ -1123,11 +1145,15 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
         return p.p;
       }) as [Vec2, Vec2, Vec2];
       if (vec.approxEqual(pts[0], pts[1]) || vec.approxEqual(pts[2], pts[1])) throw new SpecError(`${path}: an arm of the angle ${ns.join("")} has no length`);
+      const withheld = ns.some((n) => objects.get(n)!.style.withheld === true);
       const degrees = angleAt(pts[0], pts[1], pts[2]);
       if (degrees < 1e-6 || degrees > 180 - 1e-6) {
         throw new SpecError(`${path}: the angle ${ns.join("")} is ${degrees < 1 ? "zero" : "flat (180°)"} -- there is no angle to mark`);
       }
-      angleNotes.push({ a: pts[0], vtx: pts[1], b: pts[2], names: ns, name, degrees, label: name ?? `${measuredLabel(degrees, locale)}°` });
+      if (withheld) return;
+      // Without answers an unnamed angle is marked "?": the value is the answer, the arc says which angle.
+      const shownName = answers ? name : name ?? "?";
+      angleNotes.push({ a: pts[0], vtx: pts[1], b: pts[2], names: ns, name: shownName, degrees, label: shownName ?? `${measuredLabel(degrees, locale)}°` });
       return;
     }
     if (kind === "equal") {
@@ -1142,10 +1168,11 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
           );
         }
       });
-      tickGroups.push(segs);
+      if (!segs.some((s) => s.withheld)) tickGroups.push(segs);
       return;
     }
     // equation
+    if (!answers) return;
     const target = o.equation;
     if (typeof target !== "string") throw new SpecError(`${path}.equation must name a line, circle or conic`);
     v.knownId(target, new Set(objects.keys()), `${path}.equation`, "an object");
@@ -1161,7 +1188,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
 
   if (input.equalTicks === true) {
     const used = new Set(tickGroups.flat().map((s) => s.id));
-    const free = segments.filter((s) => !used.has(s.id));
+    const free = segments.filter((s) => !used.has(s.id) && !s.withheld);
     const groups: Seg[][] = [];
     for (const s of free) {
       const l = vec.distance(s.a, s.b);
@@ -1210,15 +1237,15 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
         [1, -1].forEach((s, k) => {
           const line: Line2 = { point: c.center, direction: vec.add(vec.scale(c.axis, c.a), vec.scale(w, s * c.b)) };
           extraLines.push({ id: `${base}-asymptote-${k + 1}`, line, label: null });
-          readings.push(`assíntota: ${lineEquation(line, locale)}`);
+          if (answers) readings.push(`assíntota: ${lineEquation(line, locale)}`);
         });
       }
     }
-    if (o.show.has("equation")) readings.unshift(`${name}: ${conicEquation(c, locale)!}`);
+    if (answers && o.show.has("equation")) readings.unshift(`${name}: ${conicEquation(c, locale)!}`);
   }
 
   // Length and angle readings: what the drawing cannot say exactly.
-  for (const n of lengthNotes) {
+  for (const n of answers ? lengthNotes : []) {
     const l2 = vec.lengthSquared(vec.sub(n.seg.b, n.seg.a));
     const exactText = sqrtLabel(l2, locale);
     const drawn = measuredLabel(Math.sqrt(l2), locale);
@@ -1230,7 +1257,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
     }
   }
   for (const n of angleNotes) {
-    if (n.name !== null) continue;
+    if (n.name !== null) continue; // (every angle has a name without answers, so none is read out then)
     const rounded = Math.abs(n.degrees - Math.round(n.degrees * 100) / 100) > 1e-9 * n.degrees;
     if (rounded) readings.push(`∠${n.names.join("")} ≈ ${measuredLabel(n.degrees, locale)}°`);
   }
@@ -1245,7 +1272,8 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   if (axes) touch([0, 0]);
   for (const name of model.order) {
     const o = objects.get(name)!;
-    if (o.style.hidden) continue;
+    // A withheld object still bounds the view: the question's plane is the answer's plane.
+    if (o.style.hidden && o.style.withheld !== true) continue;
     if (o.kind === "point") touch(o.p);
     else if (o.kind === "linear") {
       if (o.extent.kind === "segment") {
@@ -1287,13 +1315,12 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   if (xs.length === 0) throw new SpecError("construction: nothing is drawn -- every object is hidden");
 
   let view: View = { xMin: Math.min(...xs), xMax: Math.max(...xs), yMin: Math.min(...ys), yMax: Math.max(...ys) };
-  const spanRaw = Math.max(view.xMax - view.xMin, view.yMax - view.yMin, 1);
-  const pad = Math.max(axes ? 0.8 : 0.3, 0.08 * spanRaw);
+  // Everything below is in proportion to the figure's own extent: the same triangle at 3, at 3000 or at 0,03 is the same
+  // figure, with a tick step of 1, 2 or 5 x 10^k and about a dozen numbers to an axis at most.
+  const spanRaw = Math.max(view.xMax - view.xMin, view.yMax - view.yMin) || 1;
+  const pad = (axes ? 0.13 : 0.08) * spanRaw;
   view = { xMin: view.xMin - pad, xMax: view.xMax + pad, yMin: view.yMin - pad, yMax: view.yMax + pad };
-  const step = niceStep(Math.max(view.xMax - view.xMin, view.yMax - view.yMin));
-  // A tick number can only step off a curve crossing its axis (ADR 0034)
-  // when half a division leaves room beside it: at least 48px a division.
-  const minUnit = axes ? TICK_ROOM_PX / step : MIN_UNIT;
+  const step = niceStep(Math.max(view.xMax - view.xMin, view.yMax - view.yMin), AXIS_TICKS);
   if (axes) {
     view = {
       xMin: Math.floor(view.xMin / step) * step,
@@ -1304,16 +1331,21 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   }
   const spanX = view.xMax - view.xMin;
   const spanY = view.yMax - view.yMin;
-  const unit = Math.min(Math.max(MAX_UNIT, minUnit), Math.max(minUnit, PLOT_TARGET_PX / Math.max(spanX, spanY)));
+  const fitted = fitUnits(spanX, spanY, { targetWidth: PLOT_TARGET_PX, targetHeight: PLOT_TARGET_PX, equal: true }).xUnit;
+  // A tick number can only step off a curve crossing its axis (ADR 0034) when half a division leaves room beside it:
+  // at least 48px a division. (The step was chosen for that; this keeps it true after the range is widened to whole ticks.)
+  const unit = axes ? Math.max(fitted, TICK_ROOM_PX / step) : fitted;
   const plotWidth = Math.ceil(2 * MARGIN + spanX * unit);
   const plotHeight = Math.ceil(2 * MARGIN + spanY * unit);
 
-  const board0 = new Board(10, 10, PAPER);
-  const captionStyle = { size: 13, colour: SOFT };
-  const captionWidth = readings.length === 0 ? 0 : Math.max(...readings.map((r) => board0.extent(r, captionStyle).w));
-  const width = Math.max(plotWidth, captionWidth + 2 * 24);
+  // One reading a line, never wrapped: an equation parted across lines reads wrong.
+  const readingPanel = layoutPanel(
+    readings.map((text, i) => ({ text: [{ text }], id: String(i + 1), wrap: false })),
+    { width: Infinity, size: 13, lineHeight: CAPTION_LINE_H, emphasis: "soft" },
+  );
+  const width = Math.max(plotWidth, readingPanel.width + 2 * 24);
   const offsetX = Math.round((width - plotWidth) / 2);
-  const height = plotHeight + (readings.length > 0 ? readings.length * CAPTION_LINE_H + 16 : 0);
+  const height = plotHeight + (readingPanel.empty ? 0 : readingPanel.height + 16);
 
   const grid: GridSpec | undefined = axes
     ? { x: { from: view.xMin, to: view.xMax, step, origin: 0 }, y: { from: view.yMin, to: view.yMax, step, origin: 0 }, locale }
@@ -1523,7 +1555,8 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   for (const name of model.order) {
     const o = objects.get(name)!;
     if (o.kind !== "point" || o.style.hidden) continue;
-    const text = o.label === null ? null : o.coords ? `${o.label}${formatPoint(o.p[0], o.p[1], locale)}` : o.label;
+    // A point's computed pair is an answer unless the point is one the author typed.
+    const text = o.label === null ? null : o.coords && (answers || o.free === true) ? `${o.label}${formatPoint(o.p[0], o.p[1], locale)}` : o.label;
     dots.push({
       id: `dot-${safeId(name)}`,
       p: o.p,
@@ -1629,7 +1662,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
     const a = at(n.seg.a);
     const b = at(n.seg.b);
     const l = Math.sqrt(vec.lengthSquared(vec.sub(n.seg.b, n.seg.a)));
-    const text = `${n.name === null ? "" : `${n.name} = `}${measuredLabel(l, locale)}${unitSuffix}`;
+    const text = answers ? `${n.name === null ? "" : `${n.name} = `}${measuredLabel(l, locale)}${unitSuffix}` : n.name!;
     const style = { size: 13, weight: 600, colour: INK };
     const { w, h } = board.extent(text, style);
     const ref = n.seg.poly === null ? centroid : polygonCentre.get(n.seg.poly)!;
@@ -1658,16 +1691,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   }
 
   // ---- 6. the readings panel: what the drawing cannot say exactly ----
-  readings.forEach((text, i) => {
-    board.label(text, width / 2, plotHeight + 8 + CAPTION_LINE_H / 2 + i * CAPTION_LINE_H, {
-      ...captionStyle,
-      align: "center",
-      width: Math.max(captionWidth, 40),
-      id: `reading-${i + 1}`,
-      claim: false,
-      freeStanding: true,
-    });
-  });
+  readingPanel.draw(board, { top: plotHeight + 8, cut: plotHeight, align: "center" });
 
   // Paint order: fills, lines, annotation marks, then dots over all of them.
   const spec = board.spec(input.title ?? "construção");
@@ -1714,7 +1738,7 @@ export function validateConstructionInput(raw: Record<string, unknown>): void {
   }
   v.nonEmptyArray(raw, "objects", path, "objects").forEach((item, i) => {
     const o = v.object(item, `${path}.objects[${i}]`);
-    for (const key of ["hidden", "dashed", "dot", "coords"]) v.optionalBoolean(o, key, `${path}.objects[${i}]`);
+    for (const key of ["hidden", "dashed", "dot", "coords", "answer"]) v.optionalBoolean(o, key, `${path}.objects[${i}]`);
     if (o.draw !== undefined) v.optionalEnum(o, "draw", `${path}.objects[${i}]`, ["line", "ray", "segment"]);
     if (o.colour !== undefined) v.optionalString(o, "colour", `${path}.objects[${i}]`);
   });

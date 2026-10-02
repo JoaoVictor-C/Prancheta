@@ -1,0 +1,16 @@
+{
+  "preset": "automaton",
+  "title": "AFN: o terceiro símbolo a partir do fim é a",
+  "kind": "nfa",
+  "alphabet": ["a", "b"],
+  "states": ["q0", "q1", "q2", "q3"],
+  "start": "q0",
+  "accept": ["q3"],
+  "transitions": [
+    { "from": "q0", "on": ["a", "b"], "to": "q0" },
+    { "from": "q0", "on": "a", "to": "q1" },
+    { "from": "q1", "on": ["a", "b"], "to": "q2" },
+    { "from": "q2", "on": ["a", "b"], "to": "q3" }
+  ],
+  "words": ["baab", "abb", "bbabab", "aaaaaaaaaaaa"]
+}
