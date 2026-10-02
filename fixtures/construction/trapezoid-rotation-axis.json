@@ -1,0 +1,16 @@
+{
+  "preset": "construction",
+  "title": "Trapézio retângulo e eixo de rotação",
+  "objects": [
+    { "S": [0, 0] },
+    { "P": [0, 4] },
+    { "Q": [2, 4] },
+    { "R": [3.5, 0] },
+    { "name": "PQRS", "polygon": ["P", "Q", "R", "S"], "fill": "#9CCBEA" },
+    { "name": "eixo", "rotationAxis": { "through": ["P", "S"], "extend": 0.3, "arrows": "both" }, "label": "eixo" }
+  ],
+  "annotations": [
+    { "angle": ["Q", "P", "S"] },
+    { "angle": ["P", "S", "R"] }
+  ]
+}

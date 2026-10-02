@@ -1,0 +1,20 @@
+{
+  "preset": "function-graph",
+  "title": "Vagas e inscritos por curso técnico",
+  "x": { "categories": ["Mecânica", "Química", "Informática", "Edificações"], "unit": 120, "name": "" },
+  "y": { "range": [0, 140], "step": 20, "unit": 2, "name": "Quantidade" },
+  "bars": [
+    { "id": "manha", "values": [40, 35, 60, 25], "legend": "Vagas (manhã)" },
+    { "id": "noite", "values": [30, 45, 50, 30], "legend": "Vagas (noite)" }
+  ],
+  "series": [
+    {
+      "id": "inscritos",
+      "values": [95, 60, 130, 45],
+      "colour": "key",
+      "markers": "square",
+      "legend": "Inscritos",
+      "label": { "text": "inscritos", "at": 1.5, "towards": ["U", "L"] }
+    }
+  ]
+}

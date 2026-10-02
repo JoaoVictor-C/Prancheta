@@ -1,0 +1,9 @@
+{
+  "preset": "genetics",
+  "kind": "punnett",
+  "title": "Grupos sanguíneos ABO: Iᴬi × Iᴮi",
+  "parents": ["Iᴬi", "Iᴮi"],
+  "names": ["Mãe", "Pai"],
+  "dominance": { "I": "codominance" },
+  "highlight": ["ii"]
+}

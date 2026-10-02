@@ -55,8 +55,8 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `vectors` | Vectors in the plane with sums, multiples, components, projections and angles derived from them. | yes |
 | `unit-circle` | The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles. | yes |
 | `construction` | Plane and analytic geometry built from definitions: intersections, perpendiculars, bisectors, tangents, triangle centres and conics, with every length and angle computed. | yes |
-| `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed. | yes |
-| `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
+| `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed; gridded coordinate planes, blocks with their orthogonal projections, and paths with arrows and exact lengths. | yes |
+| `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere, frustums, hemispheres, stairs and polyhedra from face data -- from their dimensions: hidden edges by real visibility, bores, liquid to a level, inscribed and stacked solids, nets; diagonals, slant heights, volumes and areas exact. | yes |
 | `surface` | Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact. | yes |
 | `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
 | `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed; and the field lines and equipotentials of point charges, seeded in proportion to each charge. | yes |
@@ -72,6 +72,8 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `probability-tree` | Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves. | yes |
 | `venn` | Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong. | yes |
 | `acid-base` | Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻]. | yes |
+| `data-table` | Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false. | yes |
+| `genetics` | Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact. | yes |
 
 ## Figure modules
 
@@ -200,7 +202,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, a boolean function, raw data to summarise, a probability law, a probability tree, overlapping sets, or an acid–base equilibrium.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, a boolean function, raw data to summarise, a probability law, a probability tree, overlapping sets, an acid–base equilibrium, a table of given data, or a genetic cross or pedigree.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -240,7 +242,7 @@ A construction is not a scene and not a graph (`S-construction-favours-construct
 
 A configuration in space is its own question (`S-space-favours-space`). *"Represente o plano 2x + 3y + 6z = 12 e a reta r que o fura em I"* is about which points, lines and planes there are, and which part of r a reader sees through π. The `vectors` preset has no third axis (`S-space-disqualifies-vectors`), and a graph has no coordinates at all (`S-space-disqualifies-graph`). The `space` preset draws it through the textbook's cavalier camera. Typed coordinates are the only input. Every intersection, foot, cross product and common perpendicular is computed. Every distance, angle and equation is printed exact in the panel, and a line is dashed exactly where a plane patch is nearer the reader.
 
-A school solid is its own question (`S-solid-favours-solid`). *"Um cone tem raio 2 e altura 4; calcule a geratriz e o volume"* is about a body and the numbers its dimensions fix, not about points on axes. The `space` preset draws lines and planes and has no rims or silhouettes (`S-solid-disqualifies-space`), and a graph has no geometry at all (`S-solid-disqualifies-graph`). The `solid` preset takes the dimensions once. Every vertex, rim ellipse and silhouette is computed from them. Hidden edges are dashed by which faces the reader sees. Diagonals, slant heights, volumes and areas are printed exact (`2√3`, `2√5`, `16π/3`), and each length on the drawing is measured in true 3D length. Composites (a sphere in a cube, a cone in a cylinder) are transparent: each solid dashes only its own hidden edges.
+A school solid is its own question (`S-solid-favours-solid`). *"Um cone tem raio 2 e altura 4; calcule a geratriz e o volume"* is about a body and the numbers its dimensions fix, not about points on axes. The `space` preset draws lines and planes and has no rims or silhouettes (`S-solid-disqualifies-space`), and a graph has no geometry at all (`S-solid-disqualifies-graph`). The `solid` preset takes the dimensions once. Every vertex, rim ellipse and silhouette is computed from them. Hidden edges are dashed by which faces the reader sees. Diagonals, slant heights, volumes and areas are printed exact (`2√3`, `2√5`, `16π/3`), and each length on the drawing is measured in true 3D length. Composites (a sphere in a cube, a cone in a cylinder) are transparent: each solid dashes only its own hidden edges. The same preset draws what ENEM builds from those bodies: a frustum, a dome on a silo, a bored piece, a stair, a polyhedron typed as vertices and faces, a tank filled to a level (*"Um reservatório cilíndrico de raio 3 m contém 18π m³ de água; qual a altura da água?"*), and a net (*planificação*) beside its solid. Coordinate planes with a block projected onto them, or a path with arrows between walls, stay with `space`.
 
 The graph of a function of two variables is its own question (`S-surface-favours-surface`). *"Esboce o gráfico de f(x, y) = x² + y² e suas curvas de nível"* is not a curve on a plane — `function-graph` has one variable (`S-surface-disqualifies-function-graph`) — and not a configuration of points, lines and planes (`S-surface-disqualifies-space`). The `surface` preset takes the expression and the domain. Every mesh height is f, cells are painted far to near, which is exact for a surface with one z per (x, y), and every line is drawn only where no nearer cell covers it. Level curves are found where f = c and drawn at their height and projected onto a floor; a point's height is computed, and its tangent plane is printed exact (`z = 2x + 2y − 2`). A sphere, a torus or a surface that crosses itself has more than one z per (x, y), and no preset or module draws it yet: say so rather than approximate it. A flat contour map is the `field` preset's.
 
@@ -271,6 +273,10 @@ Random stages that multiply along a path are a probability tree (`S-probability-
 How sets overlap is a Venn diagram (`S-set-relations-favours-venn`). *"Sombreie (A ∪ B) − C"* or *"numa pesquisa com 100 pessoas, 45 leem o jornal A, 30 o B, 12 ambos: quantas não leem nenhum?"* is about regions: which ones an expression covers, how many people each holds. Blocks cannot show shared members (`S-set-relations-disqualifies-blocks`), and overlapping sets are not intervals (`S-set-relations-disqualifies-number-line`). The `venn` preset traces every region from the circle geometry, shades an expression by evaluating it on each region, solves survey data by inclusion–exclusion — refusing data that would leave a region negative — and prints each count inside its own region, the outside included. The older "set" structure, an unordered bag of items, stays a stack of blocks.
 
 A titration, a species-distribution diagram or the pH scale is its own question (`S-acid-base-favours-acid-base`). *"Trace a curva de titulação de 25 mL de CH₃COOH 0,1 mol/L com NaOH 0,1 mol/L e marque o ponto de equivalência"*, *"mostre a fração de H₂CO₃, HCO₃⁻ e CO₃²⁻ em função do pH"* or *"coloque na escala de pH uma solução com [H⁺] = 10⁻³ mol/L"* take the constants, concentrations and volumes, never the points. A curve typed into `function-graph` leaves the equivalence point and the pKa read at half-equivalence free to disagree with it (`S-acid-base-disqualifies-function-graph`), and a chart draws values it is handed (`S-acid-base-disqualifies-chart`). The `acid-base` preset solves the charge balance at every volume, marks the initial, half-equivalence and equivalence points on the curve it draws, prints an indicator's verdict from the jump it computed, and puts the crossings of a distribution diagram at exactly pH = pKa.
+
+A table of given values is its own question (`S-table-favours-data-table`). *"A tabela mostra o consumo de cada aparelho de uma casa: complete a coluna de energia por dia e o total"* gives rows and columns that are read, not evaluated from an expression (that table is `value-table`'s) and not summarised from observations (`statistics`). Blocks have no columns (`S-table-disqualifies-labelled-blocks`). The `data-table` preset writes every number pt-BR, aligned on its decimal comma, computes a derived column or a totals row from the data, and blanks exactly those under `answers: false`.
+
+A genetic cross or a family tree of a trait is its own question (`S-genetics-favours-genetics`). *"No heredograma de uma doença autossômica recessiva, qual a probabilidade de II-2 ser portador?"* has two parents per child, marriages and generations — not a graph (`S-genetics-disqualifies-graph`) and not a mindmap (`S-genetics-disqualifies-mindmap`). The `genetics` preset computes a Punnett square's gametes, cells and ratios from the genotypes, lays out a pedigree by generation, checks it against the mode of inheritance, and prints each requested probability exactly (2/3), refusing one the pedigree cannot determine.
 
 ## Answer three questions, not two
 
@@ -510,6 +516,10 @@ A slice under 6% carries no inline share — there is no room to set one legibly
 
 **Known, stated limit.** Two series with near-identical values at the same category place two markers close enough to partially overlap, which `boxes-do-not-overlap` will genuinely fail on — an honest collision, not a false positive. Real scatter data can produce this; small markers narrow the range of values where it happens, they do not remove it.
 
+## A ruled bar chart, and a line over the bars (ADR 0066)
+
+`yAxis: {name, range, step}` and/or `overlay: [{label, values, colour, axis}]` (with `y2Axis` for an overlay on a right axis), plus `xName`, draw a vertical grouped bar chart the way an exam prints one. The y axis is numbered and ruled, and a line runs over the bars (stock bars and a demand line). Such a chart is not drawn here. It is translated into `function-graph`'s plane (`ruledChart`): the categories become its category axis, each series a set of `bars`, each overlay a `series`. That plane already numbers, rules and checks an axis, and a line over bars needs one coordinate system for both. Bars without these fields are unchanged. A **line chart of measured data** is function-graph's `series`, not this preset's line mode, which stays the minimal axis-less path below; `yAxis` on `chartType: "line"` is refused with that pointer. Fixture: [`fixtures/chart-bars-overlay.json`](../../../fixtures/chart-bars-overlay.json).
+
 ## Conventions
 
 - Bar length is a straight linear scale against the largest value in the data — no log scale, no truncated axis. A bar chart's whole claim is that length is proportional to value; anything else needs a different chart type and a label saying so.
@@ -675,8 +685,18 @@ Every label, curve label and legend row is a template:
 
 A literal pair such as `(2; 5)` or `(2, 5)` in label text is **refused**: it is a second statement of a number the figure already computes, free to disagree with it. The formatter (`src/locale/format.ts`) writes pt-BR pairs with a semicolon, `(2,5; 7,25)`, decimals with a comma, the minus as `−`, and a value like 17/3 as `17/3` rather than a rounded decimal that is a different number.
 
+### Measured series, schematic axes, bars and panels (ADR 0066)
+
+- **Series.** `series: [{id, points: [[x, y], …], interpolate, markers, valueLabels, axis, arrows, label, legend}]`: a curve through GIVEN points. `interpolate` is `"linear"` (default, vertex for vertex), `"smooth"` (monotone cubic, which never overshoots between two points), `"step"` or `"none"` (markers only). Where x runs one way, a series is a function of x: areas `between` two series, `{of, x}` points and curve labels work as on an expression. A linear series that turns back is a path, drawn in order. A point outside the range is refused. `markers`: `true`/`"circle"`/`"square"`. `valueLabels`: `true`, a list of indices, or `{at, decimals, suffix, towards}`. Each prints the given value through the formatter and names its point.
+- **Category axis.** `x: {categories: ["Jan", …]}` puts category i at x = i, with range [0,5; n + 0,5] and no number. Series then give `values` (one per category). With series or bars, `y.range` may be left out: it is fitted to the data in steps of 1, 2 or 5 × 10ᵏ. Any axis may give `length` (px) instead of `unit`.
+- **Two y axes.** `y2: {range, step, name, colour}` and `"axis": "y2"` on a series. The right axis takes the y axis's height. `colour` on `y`/`y2` colours each axis's numbers and name to its series.
+- **Bars.** `bars: [{id, values, legend, valueLabels}]`, grouped on a category axis, height = value from zero (a range without zero is refused). A bar chart is authored through `chart` (`yAxis`, `overlay`), which expands to this.
+- **Schematic axes.** `axes: {schematic: true}` or `x.schematic` / `y.schematic`: no numbers, no lattice (`axes.grid` to keep it), arrowheads (`axes.arrows`). `ticks: [{at: 2, label: "T"}, {at: 5, label: "P_0"}]` names places on any axis, with real subscripts; a number typed as a label is refused. `guides: "x" | "y"` on a point draws one guide. `arrows: [0.5]` (or `{at, reverse}`) on a function or series sets arrowheads along it.
+- **Panels.** `panels: [{…}, …]` with `columns` (default 2): each panel a function-graph whose missing fields come from the set (one scale for all), lettered (A), (B)… (`label` to rename). Ids are prefixed `pA-`, `pB-`…
+
 ## What the checks hold it to
 
+- **Axes without numbers.** A schematic or category axis declares itself (a zero-ink `plane-schematic-x` mark). `axis-number-present` passes a declared axis and fails one that prints no number without declaring it, or one that declares itself and still requires numbers.
 - **Axis numbers.** Every number the preset prints, and every one in `require`, is declared on the grid; `axis-number-present` fails if one is missing or has drifted more than half a division from its tick. A number whose usual spot has ink slides along its own gridline, to either side of the axis, and only as a last resort keeps its spot on a paper backing.
 - **The zero line** is drawn whenever the range contains zero.
 - **Series told apart without colour.** Each function and line is a series; `series-distinguishable-without-colour` fails when two share a stroke style and one has no direct label. A legend does not count — a legend tells series apart by colour.
@@ -688,7 +708,7 @@ A literal pair such as `(2; 5)` or `(2, 5)` in label text is **refused**: it is 
 
 ## Where it came from
 
-The Cálculo 1 sheet in `experiments/exercises/calculo1/` was drawn with a helper script; its fifteen figures are now the fixtures of this preset (`fixtures/function-graph/calc1-*.json`), and the defects that reached the student are the reason for each rule above. See ADR 0022. The curves beyond graphs of functions are ADR 0029; their fixtures are `fixtures/function-graph/curve-*.json` — an ellipse and a circle from their equations, and a cardioid with a point and tangent read off it by θ. Areas and Riemann sums are ADR 0036; their fixtures are `fixtures/function-graph/area-*.json` (under x², between x² and x + 2, sin on [0, 2π] as area and as signed integral) and `riemann-*.json` (left and midpoint sums of x² with n = 4 and 8, and a right sum with rectangles on both sides of the axis). Asymptotes and holes are ADR 0038; their fixtures are `fixtures/function-graph/asym-*.json` — (2x + 1)/(x − 1) and 1/(x − 1) with their vertical and horizontal asymptotes, tan with x = ±π/2, arctan with y = ±π/2 on its two sides, (x² + 1)/x with y = x, 1/(x − 1)² + 1 with asymptotes claimed by name, and the holes of (x² − 1)/(x − 1) and sin(x)/x.
+The Cálculo 1 sheet in `experiments/exercises/calculo1/` was drawn with a helper script; its fifteen figures are now the fixtures of this preset (`fixtures/function-graph/calc1-*.json`), and the defects that reached the student are the reason for each rule above. See ADR 0022. The curves beyond graphs of functions are ADR 0029; their fixtures are `fixtures/function-graph/curve-*.json` — an ellipse and a circle from their equations, and a cardioid with a point and tangent read off it by θ. Areas and Riemann sums are ADR 0036; their fixtures are `fixtures/function-graph/area-*.json` (under x², between x² and x + 2, sin on [0, 2π] as area and as signed integral) and `riemann-*.json` (left and midpoint sums of x² with n = 4 and 8, and a right sum with rectangles on both sides of the axis). Asymptotes and holes are ADR 0038; their fixtures are `fixtures/function-graph/asym-*.json` — (2x + 1)/(x − 1) and 1/(x − 1) with their vertical and horizontal asymptotes, tan with x = ±π/2, arctan with y = ±π/2 on its two sides, (x² + 1)/x with y = x, 1/(x − 1)² + 1 with asymptotes claimed by name, and the holes of (x² − 1)/(x − 1) and sin(x)/x. Measured series, schematic axes, bars and panels are ADR 0066; their fixtures are `series-*.json` (a monthly temperature line with value labels, two series with the area between them shaded, a dual-axis day), `bars-with-line.json`, `schematic-position-time.json` and `panels-five-options.json`.
 
 ### sign-chart
 
@@ -1301,7 +1321,58 @@ A top-level `unit` (`"m"`, `"cm"`) is printed after every length, on the
 drawing and in the panel, and set on the frame, so `length-matches-its-label`
 compares the unit as well as the number.
 
+## Extensions: sectors, rings, belts, regions, dimensions, paths (ADR 0067)
+
+More objects, each computed from the objects it names, never from a typed
+measure. All take `label`, `colour`, `dashed`, `hidden`, `answer`; the shapes
+that enclose a region also take `fill` (a tint) and `hatch` (`true`, or
+`{ "angle": 45, "gap": 6, "colour": "#..." }`: parallel lines clipped to the
+region, a hole left bare). `fill` and `hatch` also work on a `circle` and a
+`polygon`.
+
+| object | definition |
+| --- | --- |
+| `"sector": { "center": "O", "through": "A", "angle": 72 }` | the sector from ray OA counter-clockwise by 72° (negative: clockwise). Or `"to": "B"` instead of `angle` (OA to OB), or `"radius": 5, "from": 30` (degrees). Drawn as ONE closed outline, so `sweep-matches-its-label` measures its angle |
+| `"ring": { "center": "O", "inner": 3, "outer": 5 }` | an annulus; with `"from": 40, "angle": 50` an annular sector (the band along a track) |
+| `"semicircle": { "on": ["A", "B"], "side": 1 }` | the half-disc on AB as diameter, `1` = left of A→B. `"away": "C"` (a point or a polygon) bulges away from it: the half-pizzas on a triangle's sides |
+| `"belt": { "circles": ["pa", "pb"], "tangents": "external", "touch": ["T1", "U1", "T2", "U2"] }` | the belt round two circles: `"external"` or `"crossed"` tangents computed from the circles, plus the wrapped arcs. `touch` names the four tangent points (circle 1 then circle 2 on the first tangent, then on the second) so radii and angles can be drawn from them. Its length is a reading |
+| `"region": { "start": "A", "then": [ { "arc": { "center": "M", "to": "B", "ccw": true } }, { "arc": { "center": "K", "to": "A", "ccw": false } } ] }` | a region bounded by straight pieces (`{ "line": "P" }`) and circle arcs about a named point or circle (`to` must be on that circle, `ccw` says which way round); the boundary must close. A lune, a circular segment, a stadium. This is the "polygon plus circle segments" form of a union or difference; no boolean operation on shapes is attempted |
+| `"path": { "through": ["A", "B", "C"], "arrows": "each" }` | a polyline through named points with a solid arrowhead at the middle of each step (`"end"`: only at the end, `"none"`); `"closed": true`. Its steps are measured segments named `walk.1`, `walk.2`… |
+| `"dimension": { "from": "A", "to": "B", "offset": 0.7, "side": -1 }` | an architectural dimension line (cota): a line parallel to AB at `offset`, arrowheads at both ends, two extension lines, the length printed centred beside it and measured by `length-matches-its-label`. `"side"`: `1` left of A→B, `-1` right. `"label": "x"` names the quantity (`x = 1,5 m`) |
+| `"rotationAxis": { "through": ["P", "S"], "extend": 0.3, "arrows": "both" }` | a dashed axis past both ends of PS (by 30 % of its length) with a curved turn arrow at each end asked for (`"first"`, `"last"`, `"both"`, `"none"`; `"turn": -1` reverses). `label` names it (`eixo`) |
+
+`circumcircle` and `incircle` also take a polygon of four points (or four
+names): a rectangle's or square's circumcircle, a square's, rhombus's or
+kite's incircle. A quadrilateral with no such circle is refused by name.
+
+A top-level `"grid": true` (or `{ "step": 2 }`) lays an unnumbered square
+lattice under the figure -- the "malha quadriculada" of a path question. Not
+together with `axes`.
+
+Annotations added: `{ "area": "S" }` (`A = 15,71 cm²`, measured by
+`area-matches-its-label` against the region's own outline), `{ "arc": "S" }`
+(`ℓ = 6,28 cm`, of a sector, semicircle or circle), `{ "angle": "S" }` (a
+sector's angle as a measured arc), `{ "radius": "C", "which": "inner", "at": 135 }`
+(a radius drawn from the centre with its length, `r` or `R` unless `name` says
+otherwise; `which` picks a ring's radius), and `"given": true` on any of these,
+`length` and `angle`. `length` also names the runs a shape owns: `"belt.t1"`,
+`"belt.t2"`, `"S.r1"`, `"walk.3"`.
+
+An arc's length cannot be measured by a check (none reads a curved run), so
+`{ "arc" }` prints a computed number that `length-matches-its-label` reports as
+not applicable, never as a pass. Everything else printed is measured.
+
+Worked examples in `fixtures/construction/`: `sector-area`, `ring`,
+`annular-sector`, `belt-pulleys`, `hippocrates-lunes`, `semicircles-on-sides`,
+`square-circles`, `floor-plan-dimensions`, `grid-path`,
+`trapezoid-rotation-axis`.
+
 ## Refusals
+
+Also refused by name: a sector of 0° or 360°, a ring whose inner radius is not
+smaller, a belt of nested or overlapping circles, a region whose boundary does
+not close or whose arc ends are not on one circle, a semicircle with no side, a
+path step of length zero, a quadrilateral with no circle of the kind asked.
 
 Every construction that cannot be carried out is refused by name, never drawn
 approximately: an undefined object (with a "did you mean"), two parallel lines
@@ -1336,6 +1407,13 @@ triangle with sides 3000 and 4000, one with sides 3 and 4 and one with sides
 narrower than 48 px (ADR 0034).
 
 ## answers: false
+
+The extensions follow the same rule (ADR 0067): an `area`, `arc`, `radius`,
+sector `angle` or dimension prints a measured number, so with `answers: false`
+it prints only its `name` (or nothing, or `?` for an unnamed angle) -- unless it
+says `"given": true`, the exercise's own datum (a pulley's radius, a room's
+width), which stays. A belt's length reading and every other panel line are
+empty. Hatches, fills and the shapes themselves stay.
 
 `"answers": false` draws what an exercise **gives**. A construction figure *is*
 its objects, so the drawing stays; what goes is every **measured number**:
@@ -1486,6 +1564,26 @@ Each plane takes three options:
 The panel prints the equação geral in canonical form: whole coefficients, no
 common factor, a positive leading coefficient, `= 0`.
 
+### Grids, blocks and paths (ADR 0068)
+
+- **`"grids": ["xy", "xz", "yz"]`** draws those coordinate planes as a dashed
+  grid of the tick step over the region's first-octant part.
+- **`"blocks": [{ "name": "C", "at": [3, 4, 3], "size": 1, "projections":
+  ["xy", "xz", "yz"] }]`** draws a box (`size` an edge or `[dx, dy, dz]`,
+  default a unit cube) from its corner nearest the origin. Its faces that face
+  the reader hide what is behind them: a line, an axis, a patch edge or the
+  block's own back edges are dashed there, and a grid line there is left
+  out. Each projection is the block's rectangle on that coordinate plane,
+  filled, with dashed guides from the block's nearest face.
+- **`"paths": [{ "name": "t", "through": ["A", "B", "C"], "projection": "xy"
+  }]`** draws the polyline through points (names or coordinates) with an
+  arrowhead mid-way along each stretch (`"arrows": false` drops them), dashed
+  where a patch or a block hides it. The panel prints its length exact,
+  `comprimento de ABCDE = 2 + 2√10 + √14 + √41`. `projection` (a coordinate
+  plane or a declared plane's name) draws its orthogonal projection, with a
+  dashed guide from each point to its foot, and prints that length.
+- **`"axes": { "names": ["N", "L", "altura"] }`** renames the axes.
+
 ### Measures
 
 Measures go to the panel only.
@@ -1544,12 +1642,15 @@ the coordinates of every derived point (an intersection, midpoint or foot),
 the derivation lines, every `distance`, `angle`, `position` and
 `commonPerpendicular` reading, the printed equation of each plane and line,
 `|v|` and the components of a derived or two-point vector, and the numbers at
-a plane's marked intercepts. A figure with nothing to say in the panel has
+a plane's marked intercepts. A block's projections and their guides, a path's
+projection and its guides, and every path length are hidden too: the
+projection is what such an exercise asks for. A figure with nothing to say in the panel has
 no panel. The dashed guides and the common perpendicular's segment stay:
 they are the construction, not a number.
 
 ## What is not covered
 
+- Pictures (an aircraft, a flag): a path or a block stands for them.
 - School solids (cylinders, cones, spheres, prisms). `geometry/projection.ts`
   exports what they need: `projectCircle`, `sphereOutline`,
   `tangentParamsParallelTo`, `tangentParamsFrom` and `depth`.
@@ -1600,6 +1701,15 @@ is not for points, lines and planes on axes (use
 | `cylinder` | `radius`, `height` |
 | `cone` | `radius`, and `height` **or** `slant` (the geratriz g) |
 | `sphere` | `radius` |
+| `frustum` (tronco) | of a cone: `radius` (bottom), `topRadius`, and `height` **or** `slant`; of a pyramid: `sides` (default 4), `edge` (bottom), `topEdge`, and `height` **or** `slant` |
+| `hemisphere` | `radius` (or none, stood `on` a cylinder) |
+| `stairs` | `steps` (1–12), `tread` (piso, along x), `riser` (espelho), `width` (along y) |
+| `polyhedron` | `vertices` (`[x, y, z]` each) and `faces` (vertex indices in order round each face) |
+
+A cone takes `"apex": "down"` to stand on its apex with its base on top (a
+glass, a funnel); `at` is then the apex. See
+[ADR 0068](../../../docs/decisions/0068-solid-and-space-extensions.md) for
+everything below that was added with it.
 
 - **`at`** is the centre of the base (for a sphere, its centre). It defaults
   to the origin. Solids stand upright, with their axis along z.
@@ -1610,7 +1720,60 @@ is not for points, lines and planes on axes (use
   - `{"kind": "sphere", "circumscribes": "<cube or box>"}`
   - `{"kind": "cone", "inscribedIn": "<cylinder>"}`
 
+  - `{"kind": "prism", "sides": 4, "inscribedIn": "<cylinder>"}` (ℓ = R√2;
+    `sides` is the one thing typed)
+  - `{"kind": "cylinder", "inscribedIn": "<cube or regular prism>"}` (r = a/2,
+    or the base apothem)
+
   Give the target a `name`.
+- **`on`** stands a solid on the top of a named one: its `at` is that top's
+  centre, and a hemisphere, cone or cylinder stood on a cylinder or a cone's
+  frustum takes the top radius when its own is not typed. A round solid on a
+  round top of the same radius makes one body: the rim they share is drawn
+  once, seen where either lateral surface faces the reader, and the covered
+  top is no face (not filled, not a cap that shows the rim).
+- **`bore`** runs a hole through a solid with two flat bases (cylinder,
+  frustum, prism, cube, box) along its axis: `{"radius": ρ}`, `{"sides": n,
+  "edge": ℓ}`, or `{"sides": n, "inscribed": true}` in a cylinder (its
+  corners on the cylinder's circle, ℓ = R√2 for a square). A bore that does
+  not fit is refused. Its edges are seen on a cap that faces the reader or
+  **through the opening**: the ray from a point of the hole's wall toward the
+  reader is followed to the far cap, and the point is seen when it leaves
+  through the hole -- so a thin medal shows the far bottom edge of its hole and
+  a tall piece does not. Nothing else shows it: an inscribed prism's corner
+  lines, a seam of no thickness on the outer wall, are hidden. `volume` and `area` print what is left:
+  `V = V(cilindro) − V(furo) = 96π − 27π/2 = 165π/2`.
+- **`liquid`** fills a cube, box, prism, pyramid, cylinder, cone (either way
+  up) or frustum to a level: `{"height": n}`, or `{"volume": V}` (a number, or
+  `"18π"`) and the level is computed -- exact for a constant section and for a
+  cone whose fraction is a rational cube, by bisection (flagged `≈`)
+  otherwise. The liquid is tinted; the level line is solid where the wall it
+  lies on faces the reader and dashed where it does not. `show: ["level"]`
+  draws the level as a dimension line beside the liquid, with arrowheads and
+  extension lines from the floor (or apex) and from the level; a height
+  drawn through the liquid is labelled above it. `volume` prints
+  `V(líquido)` and `V(líquido)/V`; `measures` prints a computed level.
+- **`net`**: `true` draws the planificação beside the solid, `"only"` instead
+  of it. Polyhedra unfold along a tree of their faces, fold lines dashed;
+  prisms (and cubes, boxes) as the textbook strip -- the cube's cross -- and a
+  stair hangs its profiles from its floor; everything else unfolds outward
+  from its largest face, and a net whose faces would overlap is refused.
+  A cylinder unrolls to its 2πr × h rectangle and two discs, a cone to a
+  sector of radius g and angle θ = 360°·r/g, a cone's frustum to an annular
+  sector. Bases are named `base`; `netLabels` names every face instead (a
+  die's numbers are allowed, a measure is not). Lengths on a net are true
+  lengths and are measured.
+- **`stairs`** and **`polyhedron`** are not convex in general, so they are
+  drawn with hidden-line removal over the whole solid: an edge is cut where
+  it crosses the outline of a face that faces the reader and is hidden where
+  such a face is nearer (`mesh.ts`). A polyhedron is checked (closed, planar
+  faces, two faces per edge) and oriented whatever the winding typed.
+  `"tint": "sides"` colours its faces by their number of sides.
+  `readings: ["counts"]` prints `vértices: 9; arestas: 16; faces: 9 (4
+  triângulos, 5 quadrados)` and `V − A + F = 9 − 16 + 9 = 2` (any polyhedron).
+  A stair's `area` prints pisos, espelhos and paredes laterais apart.
+- **`total`** (top level): `["volume", "area"]` sums the composite, the area
+  less twice every round junction.
 - **`labels`**: `true` gives the textbook letters. Base vertices are A, B,
   C, … counter-clockwise from the front-left, top vertices follow, a
   pyramid's apex is V. A cylinder's centres are O and O′, a cone's are V
@@ -1628,6 +1791,10 @@ is not for points, lines and planes on axes (use
   | `cylinder` | `radius` (on the top base), `height` (on the right silhouette) |
   | `cone` | `height`, `radius` (right angle at O), `slant` (on the right silhouette) |
   | `sphere` | `radius`, `equator` |
+  | `frustum` | cone: `radius` (R), `topRadius` (r), `height`, `slant`; pyramid: `edge` (ℓ), `topEdge` (ℓ′), `height`, `slant` |
+  | `hemisphere` | `radius` (centre to the top of the dome) |
+  | `stairs` | `dimensions` (the width, the first riser, and the tread as a dimension line above the top step) |
+  | any with a `bore` / `liquid` | `bore` (ρ or ℓ), `level` |
 - **`readings`**: `"volume"`, `"area"` (total area) and `"measures"` (the
   derivation of each shown measure). Each is printed in the panel as
   formula and value: `V = πr²h/3 = 16π/3`.
@@ -1682,6 +1849,31 @@ slant does not show h), every length of a derived solid (the radius of an
 inscribed sphere), and the whole panel: `measures`, `volume` and `area`. The
 derivation line of a derived solid keeps only its relation ("inscrita no
 cubo"), not its formula.
+
+The extensions of ADR 0068 follow the same rule. Kept: a frustum's typed radii
+or edges and its typed height or slant, a bore's typed radius or edge, a
+liquid's typed level, a stair's tread, riser and width, a net and every
+given length on it (h, r, a typed g). Hidden: a frustum's slant or height it
+was not typed by, an inscribed bore's side, a level computed from a volume
+(the liquid is still drawn at it), a polyhedron's counts, a net's 2πr and
+its sector angle θ, an inscribed prism's or cylinder's dimension, and every
+volume, area and total.
+
+## What is not covered
+
+- Occlusion between solids. A composite stays transparent (ADR 0046); only a
+  round solid stood on a round one of the same radius is joined into one body.
+- Stacked polyhedra (`on` places them, but their shared face is not removed)
+  and a `total` area for them, which is refused.
+- Inner partitions (a tank's baffles), a liquid in a bored solid, a tilted
+  liquid, the net of a bored solid or of a sphere.
+- `16π − 32` is not an exact form here (π and non-π terms): it prints rounded,
+  flagged `≈`.
+- The unit is fitted to the largest dimension by its decade, so a solid whose
+  largest dimension is 1 to 3 (a stair of 1,2 m) draws small; type it in a
+  smaller unit (12 dm).
+
+Fixtures: [`fixtures/solid/`](../../../fixtures/solid).
 
 ### surface
 
@@ -2354,6 +2546,34 @@ you place the nodes the way the exercise draws them.
 - **`symbols`**: `"zigzag"` (default) or `"iec"`. **`title`** and **`locale`**
   work as in every other preset.
 
+## Diodes, real sources, symbols, taps and load boxes (ADR 0069)
+
+| kind / field | meaning |
+| --- | --- |
+| `led`, `diode` | triangle and bar; current flows `from` (anode) to `to` (cathode). `vf`: forward voltage in V (default 0, ideal). An LED has two emission arrows and, when the answers are shown and it conducts, is filled yellow. |
+| `battery` + `r` | a real source: the battery and its internal resistance r in series (towards the + terminal) inside a dashed box. The terminals are `from` and `to`, so `U_AB` across them is ε − r·i. `show.terminal: true` prints `U = ε − r·i = 12 − 0,5 · 4 = 10 V`. |
+| `value`, `r` as a string | symbolic: `"R"`, `"2R"`, `"0,2 R_c"`, `"E"`. |
+| `potentiometer` | a resistive wire from `from` to `to` (one straight run, no `via`) of total `value`. `taps`: `[{ "node": "W", "at": 0.25 }]` (`at` a number in (0, 1) or `"1/6"`, measured from `from`) or `{ "equal": ["A", "B", "C"] }`. A tap is a node **placed by the preset** (do not list it in `nodes`); other components connect to it by name. |
+| a node as `{ "at": "C", "dx": 0, "dy": 2 }` | a node placed relative to another one (a tap included), so a lead stays above its tap. |
+| `load` | a labelled box (`label`, default "aparelho") with `value` Ω **or** `rated: { "power": W, "voltage": V }` (R = U²/P derived). |
+| `hideValue: true` | no value beside the component. |
+
+**Diode states.** Every on/off assignment is solved (2ⁿ, n ≤ 14) and only a
+self-consistent one is kept: an ON diode holds V_a − V_b = V_f and carries
+i ≥ 0, an OFF one carries nothing and sees V_a − V_b ≤ V_f. None consistent, or
+two that differ electrically, is refused by name. The panel says
+`D₁: aceso, i = 20 mA` or `D₁: apagado` (`show.states`, default on). Currents
+under 0,1 A are written in mA.
+
+**Symbolic values.** The solver scales: every resistance (resistors, lamps,
+loads, potentiometers, internal r) must be a multiple of ONE symbol and every
+EMF a multiple of ONE other symbol (all numbers, or all symbols; mixing is
+refused). It solves with each symbol = 1 and prints currents as multiples of
+E/R, voltages of E and powers of E²/R: `i = E/(3R)`, `U = 6E/11`,
+`P = 25E²/(121R)`. This is a scale solve, not a computer-algebra system: a
+resistance `r` unrelated to `R` (a second symbol) is not supported, and neither
+are current sources, `vf > 0` or a rated load among symbols.
+
 ## What is drawn
 
 - **Symbols**: see the table above. The battery's "+" is drawn as two strokes,
@@ -2425,7 +2645,10 @@ arrowhead back and checks it against the sign of its current.
 
 - Automatic layout from a netlist.
 - Capacitors, inductors and AC.
-- Internal resistance as an attribute (draw it as a resistor in series).
+- Two or more different symbols for one quantity type (see "Symbolic values"),
+  a current source or a non-zero diode drop in a symbolic circuit.
+- A movable meter lead drawn as a motion: draw one figure per tap (the tap is
+  a node; move the ammeter's `to`).
 - Dependent sources.
 - Non-ideal meters.
 - Diagonal runs (the diamond-drawn Wheatstone bridge; draw it rectangular).
@@ -2433,9 +2656,10 @@ arrowhead back and checks it against the sign of its current.
 ## answers: false
 
 `answers: false` draws what the exercise gives and none of what it asks. Kept:
-the symbols with their given values (and names), node letters, the ground, the
+the symbols with their given values (and names; an LED's V_f, a source's r, a
+load's rating and label, symbolic values), node letters, the ground, the
 meters' letters (A, V). Hidden: every branch-current arrow and its label, the
-meters' readings, and the whole panel (`U_AB`, node potentials, powers,
+meters' readings, an LED's lit fill, and the whole panel (`U_AB`, node potentials, powers,
 currents listed in panel mode). The current arrows are part of the answer
 because their direction is what "qual o sentido da corrente" asks. The circuit
 is still solved, so an unsolvable netlist is refused either way.
@@ -3476,3 +3700,147 @@ The question typically gives the data and asks V_eq, the pH at equivalence, the 
 - **titration** keeps the heading (the given data), the numbered plane, the **curve** and the **indicator bands with their names and ranges** (they are given). It drops the initial, half-equivalence and equivalence points, their guides and values, the reading panel and the indicator verdict. The curve is still computed, so the figure is the same one the solution draws over.
 - **distribution** keeps the curves, the species names, the axes and the given `pH` line with its label. It drops the pKa crossings (dots, drops and labels — the marker would give the pKa as much as its label does), the fractions marked at the given pH and the panel.
 - **ph-scale** keeps the scale, its numbers and words, the substances **given by pH**, and the indicator ranges. A substance given by a concentration is **not placed** (its position is the answer) and the panel with the arithmetic goes.
+
+### data-table
+
+The textbook table of **given** text and numbers: a nutrition label, a price list, a ranking, the properties of five substances. `value-table` computes a function's values from an expression; this preset draws data that are the content. A few cells can be derived (a column from other columns, a totals row) and those are computed and checked, never typed.
+
+**Choose it when** the exercise shows rows and columns of facts the reader must read, compare or complete: header row with units, grouped headers, blank cells to fill in, a highlighted cell, a "Total" row. Not for a function's values at points (`value-table`) nor for a truth table (`truth-table`).
+
+## Input
+
+```json
+{
+  "preset": "data-table",
+  "title": "Compra de material escolar",
+  "columns": [
+    { "header": "Produto" },
+    { "header": "Quantidade", "id": "q" },
+    { "header": "Preço unitário", "unit": "R$", "id": "p", "format": "money" },
+    { "header": "Total", "unit": "R$", "from": "q*p", "format": "money" }
+  ],
+  "rows": [["Caderno", 4, 18.9], ["Caneta", 12, 2.5]],
+  "stub": true,
+  "totals": { "by": { "q": "sum", "D": "sum" } },
+  "source": "Fonte: dados fictícios."
+}
+```
+
+- **`columns`** — `{ header, unit?, id?, align?, format?, from? }`. The unit prints after the header: "Preço unitário (R$)". A header wider than its column wraps; a parenthesised unit is never split.
+- **`rows`** — one array per row with the cells of the **non-derived** columns, in order (or one per column with `null` at the derived ones). A cell is text, a number, `null` (a blank to fill) or `{ "answer": v }` (shown only when answers are shown).
+- **`title`** drawn above (and the figure's title); **`caption`** a note below; **`source`** "Fonte: ..." below it, smaller.
+- **`headerRows`** — grouped headers above the column headers, outermost first: `[[{ "text": "Escola pública", "span": 2 }, ...]]`. Each row's spans must add up to the number of columns; `"text": ""` leaves a span empty.
+- **`stub: true`** — the first column names the row (left, semibold, heavier rule after it).
+- **`highlight`** — `{ row, col }` one cell, `{ row }` a row, `{ col }` a column (0-based rows; `col` is an index, a letter or an id). Tinted and bold.
+- **`blank`** — `"?"` or `"____"`: what a blank or hidden answer looks like. Default: empty.
+- **`locale`** — `"pt-BR"` (default) or `"en"`.
+
+## Text and scripts
+
+Text cells, headers, title, caption and source take real sub/superscripts: `_{…}` / `^{…}`, or the bare forms of a formula — `H_2O`, `C_6H_12O_6`, `m^2`, `g/cm^3`, `10^-3`, `Ca^2+`, `Na^+`, `SO_4^{2-}`. A sign followed by a digit or letter is not a charge (`x^2-1` keeps its minus). A lone `_` or `^` is literal.
+
+## Numbers
+
+Given numbers print pt-BR through the one formatter: decimal comma, the minus `−`, a narrow space from five digits. A column with no `format` prints every number with the same number of decimals (the fewest that write all of them: 2,5 / 10,0 / 0,25 → 2,50 / 10,00 / 0,25) so the decimal commas line up; numeric columns are right-aligned as a block centred under the header (`align` overrides). `format`:
+
+- `"integer"`, `"money"` (2 decimals, `1.234,50`), `"percent"` (the value is a fraction: 0,256 → `25,6%`)
+- `{ decimals?, grouping?, prefix?, suffix?, percent? }` — `grouping: true` is the traditional `1.234,50`; `grouping: "space"` groups from four digits with a narrow space, as exam booklets print (`2 000,00`).
+
+## Derived cells
+
+- **`from`** — a column computed per row from others, in the expression language of `function-graph`: `"q*p"`, `"(C+E)/(B+D)"`, `"3*vit+emp"`. Variables are column letters (A, B, C…, by position including derived columns) and `id`s (a letter, then letters/digits; not `e`, `pi` or a function name). Write `*` explicitly. A derived column may use an earlier derived one; a loop, a blank/text input or a non-finite result is refused naming the cell.
+- **`totals`** — `{ label?, by: { "q": "sum", "D": "mean" } }` with `sum`, `mean`, `min`, `max`. A row under a heavy rule; the label ("Total", or "Média" when all are means) sits in the first column.
+
+## answers: false
+
+Derived cells, totals-row values and `{ "answer": v }` cells are the answers: they are drawn empty (or as the `blank` marker). Every given cell stays, `null` cells stay blank, and the geometry is identical to the solution's (column widths use the hidden text too), so the question and the answer figures line up. The preset is in `ANSWER_AWARE`.
+
+## Limits
+
+At most 16 columns and 120 rows. A text column wraps its cells at about 230 px. No row/column spans in the body (only grouped headers), no cell borders on/off options, no images in cells.
+
+### genetics
+
+Punnett squares and pedigrees (*heredogramas*) of Biologia and ENEM ("o cruzamento
+de plantas Aa × Aa", "o heredograma abaixo mostra uma doença autossômica
+recessiva; qual a probabilidade de II-3 ser portador?"). Two kinds, one preset;
+every number is **computed** -- gametes, cells, proportions, genotype
+possibilities, probabilities -- in exact fractions. See
+[`docs/decisions/0070-genetics.md`](../../../docs/decisions/0070-genetics.md).
+
+**Choose it when** the figure is a genetic cross or a family tree of a trait. It
+is not a probability tree (`probability-tree`) nor a general tree (`graph`).
+
+## kind "punnett"
+
+```json
+{ "preset": "genetics", "kind": "punnett", "parents": ["AaBb", "AaBb"],
+  "phenotypes": { "A": { "dominant": "amarela", "recessive": "verde" },
+                  "B": { "dominant": "lisa", "recessive": "rugosa" } },
+  "highlight": ["A_bb"] }
+```
+
+| field | what it does |
+| --- | --- |
+| `parents` | Two genotypes: `"Aa"`, `"AaBb"` (pairs, independent assortment), sex-linked `"XᴬXᵃ"` / `"X^A X^a"` × `"XᴬY"`, multiple alleles `"Iᴬi"`. First = rows, second = columns. |
+| `names` | The parents' names; default Mãe/Pai (sex-linked) or Genitor 1/2. |
+| `dominance` | `"complete"` (default), `"incomplete"`, `"codominance"`; one word or per locus (`{"I": "codominance"}`). |
+| `phenotypes` | Names per locus. Complete: `{"dominant", "recessive"}`. Incomplete/codominance: genotype to name (`{"CᴿCᵂ": "rosa"}`). Unnamed: `A_`/`aa`, and ABO gives A, B, AB, O. |
+| `sexWords` | Words for offspring sex in a sex-linked cross; default filha/filho. |
+| `highlight` | Genotype patterns (`"A_bb"`, `"XᵃY"`) or phenotype names: cells outlined, `P(…)` printed. |
+
+Drawn: the gametes of each parent on the margins (distinct, in dominant-first
+order), every offspring genotype in its cell (alleles dominant first, real
+superscripts), cells tinted by phenotype with a swatch legend. Panel: genotype
+fractions and ratio (`1 : 2 : 1`), phenotype fractions and ratio
+(`9 : 3 : 3 : 1`), requested probabilities with a percentage.
+
+## kind "pedigree"
+
+```json
+{ "preset": "genetics", "kind": "pedigree",
+  "individuals": [ { "id": "I-1", "sex": "M" }, { "id": "I-2", "sex": "F" },
+    { "id": "II-1", "sex": "F", "affected": true, "parents": ["I-1", "I-2"] } ],
+  "analysis": { "mode": "autosomal recessive",
+                "queries": [ { "of": "II-1", "is": "affected" } ] } }
+```
+
+| field | what it does |
+| --- | --- |
+| `individuals[]` | `id`, `sex` (`M` square, `F` circle, `?` diamond), `affected` (filled), `carrier` (dot or half), `deceased` (slash), `proband` (arrow), `parents` (two ids), `name`, `genotype` (given by the exercise, used by the analysis). |
+| `marriages[]` | `{between: [a, b], consanguineous?}` for couples without children listed; shared parents make a marriage by themselves. A shared ancestor in the chart makes it consanguineous (double line) by itself. |
+| `carrierStyle` | `"dot"` (default) or `"half"`. |
+| `legend` | Key of the symbols used (default true). |
+| `analysis` | `mode` ("autosomal recessive/dominant", "X-linked recessive/dominant", Portuguese too), `frequency` (disease allele, `"1/100"`), `queries`: `{of, is: carrier / affected / unaffected}`, `{of, is: "genotype", genotype}`, `{childOf: [a, b], is: affected / carrier, sex?}` (with `sex` the probability is the joint "a boy and affected"). |
+
+Layout is computed: generation from parents, order within a row (sibships
+follow their parents; individuals who marry in stand at the sibship's ends),
+positions by least squares (children under the parents' marriage, partners one
+spacing apart), orthogonal lines. **Labels (`II-3`) are derived** from the
+layout; an id that looks like a label but differs from it is refused.
+
+The analysis enumerates every genotype assignment in exact integers, keeps
+those that show the drawn phenotypes, prints each individual's genotype (`Aa`,
+`A_`, `XᴬXᴬ ou XᴬXᵃ`) under the symbol and every query exactly
+(`P(II-3 ser portador) = 2/3 ≈ 66,67%`). **Refused**: a pedigree no assignment
+explains (the first individual that makes it impossible is named); a
+probability that changes with the genotype of an unrelated married-in
+individual unless `frequency` or that individual's `genotype` is given; a
+carrier mark in a dominant or male-X mode.
+
+## answers: false
+
+Punnett: the margins (gametes) stay; every cell, tint, outline and the whole
+panel go. Pedigree: the chart as given (sexes, affected, carriers, marriages,
+labels, legend) stays; the genotypes under the symbols and the panel (verdict
+and probabilities) go. The analysis still runs, so an inconsistent pedigree is
+refused either way.
+
+## Not covered
+
+Linked genes (crossing-over), Y-linked and mitochondrial inheritance, twins,
+three or more partners in a chain, marriages that cross generations (a couple
+is placed in the later generation; children must be exactly one below).
+
+Fixtures: [`fixtures/genetics/`](../../../fixtures/genetics). Tests:
+`tests/genetics.test.ts`.

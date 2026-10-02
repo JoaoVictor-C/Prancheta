@@ -1,0 +1,21 @@
+{
+  "preset": "data-table",
+  "title": "Consumo de energia dos aparelhos de uma casa",
+  "columns": [
+    { "header": "Aparelho" },
+    { "header": "Potência", "unit": "W", "id": "w" },
+    { "header": "Uso por dia", "unit": "h", "id": "h" },
+    { "header": "Energia por dia", "unit": "kWh", "from": "w*h/1000", "format": { "decimals": 2 } }
+  ],
+  "rows": [
+    ["Chuveiro elétrico", 5500, 0.5],
+    ["Geladeira", 150, 24],
+    ["Televisão", 120, { "answer": 5 }],
+    ["Ventilador", { "answer": 80 }, 8],
+    ["Lâmpadas de LED", 60, 6]
+  ],
+  "stub": true,
+  "answers": false,
+  "blank": "____",
+  "totals": { "label": "Total diário", "by": { "D": "sum" } }
+}

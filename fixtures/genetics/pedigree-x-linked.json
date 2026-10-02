@@ -1,0 +1,22 @@
+{
+  "preset": "genetics",
+  "kind": "pedigree",
+  "title": "Heredograma de uma doença recessiva ligada ao X",
+  "individuals": [
+    { "id": "I-1", "sex": "M" },
+    { "id": "I-2", "sex": "F", "carrier": true },
+    { "id": "II-1", "sex": "M", "affected": true, "parents": ["I-1", "I-2"] },
+    { "id": "II-2", "sex": "M", "parents": ["I-1", "I-2"] },
+    { "id": "II-3", "sex": "F", "parents": ["I-1", "I-2"] },
+    { "id": "II-4", "sex": "M" },
+    { "id": "III-1", "sex": "F", "parents": ["II-3", "II-4"] },
+    { "id": "III-2", "sex": "M", "parents": ["II-3", "II-4"] }
+  ],
+  "analysis": {
+    "mode": "X-linked recessive",
+    "queries": [
+      { "of": "II-3", "is": "carrier" },
+      { "childOf": ["II-3", "II-4"], "is": "affected", "sex": "M" }
+    ]
+  }
+}

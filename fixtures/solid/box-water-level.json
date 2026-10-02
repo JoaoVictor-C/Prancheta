@@ -1,0 +1,9 @@
+{
+  "preset": "solid",
+  "title": "aquário com água até um nível",
+  "unit": "dm",
+  "solids": [
+    { "kind": "box", "width": 6, "depth": 3, "height": 5, "labels": true,
+      "liquid": { "height": 2 }, "show": ["dimensions", "level"], "readings": ["volume"] }
+  ]
+}

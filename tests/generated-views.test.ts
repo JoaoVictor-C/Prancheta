@@ -54,7 +54,8 @@ test("every preset id in PRESETS appears in both SKILL.md and AGENTS.md", () => 
 test("every rule-id-shaped token referenced in SKILL.md exists in RULES", () => {
   // Rule ids look like S-xxx or I-xxx. Restrict to tokens that actually start
   // with "S-" or "I-" to avoid false positives from unrelated hyphenated words.
-  const ruleIdPattern = /\b[SI]-[a-z0-9]+(?:-[a-z0-9]+)*\b/g;
+  // The first segment starts with a letter: a pedigree's "I-1" is not a rule.
+  const ruleIdPattern = /\b[SI]-[a-z][a-z0-9]*(?:-[a-z0-9]+)*\b/g;
   const found = new Set(skillText.match(ruleIdPattern) ?? []);
   const knownIds = new Set(RULES.map((rule) => rule.id));
   const unknownTokens = [...found].filter((token) => !knownIds.has(token));

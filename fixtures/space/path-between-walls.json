@@ -1,0 +1,18 @@
+{
+  "preset": "space",
+  "title": "trajetória entre duas paredes e sua projeção no chão",
+  "axes": { "names": true },
+  "region": { "x": [0, 4], "y": [0, 6], "z": [0, 4] },
+  "points": [
+    { "name": "A", "at": [1, 6, 4], "coords": false },
+    { "name": "B", "at": [3, 0, 3], "coords": false },
+    { "name": "C", "at": [3, 0, 1], "coords": false },
+    { "name": "D", "at": [1, 6, 1], "coords": false },
+    { "name": "E", "at": [3, 3, 0], "coords": false }
+  ],
+  "planes": [
+    { "name": "α", "equation": "y = 0" },
+    { "name": "β", "equation": "y = 6" }
+  ],
+  "paths": [{ "name": "t", "through": ["A", "B", "C", "D", "E"], "projection": "xy" }]
+}

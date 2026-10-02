@@ -1,0 +1,15 @@
+{
+  "preset": "circuit",
+  "title": "R em série com 2R em paralelo com 3R",
+  "nodes": { "A": [0, 2], "B": [2, 2], "C": [4, 2], "D": [4, 0], "F": [2, 0], "E": [0, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "E", "to": "A", "value": "E" },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "B", "value": "R" },
+    { "kind": "wire", "from": "B", "to": "C" },
+    { "id": "R2", "kind": "resistor", "from": "B", "to": "F", "value": "2R" },
+    { "id": "R3", "kind": "resistor", "from": "C", "to": "D", "value": "3R" },
+    { "kind": "wire", "from": "D", "to": "F" },
+    { "kind": "wire", "from": "F", "to": "E" }
+  ],
+  "show": { "voltages": [["B", "F"]], "power": true }
+}

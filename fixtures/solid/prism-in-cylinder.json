@@ -1,0 +1,9 @@
+{
+  "preset": "solid",
+  "title": "prisma hexagonal regular inscrito no cilindro",
+  "unit": "cm",
+  "solids": [
+    { "kind": "cylinder", "name": "Cilindro", "radius": 3, "height": 6, "labels": true, "show": ["height"], "readings": ["volume"] },
+    { "kind": "prism", "name": "Prisma", "sides": 6, "inscribedIn": "Cilindro", "show": ["edge"], "readings": ["measures", "volume"] }
+  ]
+}

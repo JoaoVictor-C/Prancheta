@@ -1,0 +1,13 @@
+{
+  "preset": "chart",
+  "title": "Estoque e procura de bicicletas por modelo",
+  "categories": [
+    { "label": "Urbana", "values": [45, 70] },
+    { "label": "Mountain", "values": [30, 55] },
+    { "label": "Speed", "values": [20, 25] },
+    { "label": "Elétrica", "values": [15, 10] }
+  ],
+  "series": ["Loja A", "Loja B"],
+  "overlay": [{ "label": "Procura", "values": [100, 70, 60, 40] }],
+  "yAxis": { "name": "Unidades", "step": 10 }
+}

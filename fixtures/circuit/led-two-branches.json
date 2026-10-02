@@ -1,0 +1,16 @@
+{
+  "preset": "circuit",
+  "title": "dois LEDs em ramos paralelos",
+  "nodes": { "A": [0, 3], "B": [2, 3], "C": [5, 3], "X1": [2, 1.5], "X2": [5, 1.5], "D": [2, 0], "F": [5, 0], "E": [0, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "E", "to": "A", "value": 5 },
+    { "kind": "wire", "from": "A", "to": "B" },
+    { "kind": "wire", "from": "B", "to": "C" },
+    { "id": "R1", "kind": "resistor", "from": "B", "to": "X1", "value": 100 },
+    { "id": "D1", "kind": "led", "from": "X1", "to": "D", "vf": 2 },
+    { "id": "R2", "kind": "resistor", "from": "C", "to": "X2", "value": 150 },
+    { "id": "D2", "kind": "led", "from": "X2", "to": "F", "vf": 2 },
+    { "kind": "wire", "from": "E", "to": "D" },
+    { "kind": "wire", "from": "D", "to": "F" }
+  ]
+}

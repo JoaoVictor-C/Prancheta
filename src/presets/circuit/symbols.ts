@@ -26,6 +26,8 @@ export type Path = {
   width: number;
   fill?: string;
   close?: boolean;
+  /** A dashed outline (the box round a non-ideal source). */
+  dashed?: boolean;
 };
 
 export type SymbolKind =
@@ -36,15 +38,31 @@ export type SymbolKind =
   | "current-source"
   | "ammeter"
   | "voltmeter"
-  | "switch";
+  | "switch"
+  | "led"
+  | "diode"
+  | "load";
+
+/** What a symbol's size depends on beyond its kind. */
+export type SymbolExtras = {
+  /** A battery drawn with its internal resistance r in series, inside a dashed box. */
+  internal?: boolean;
+  /** A load box: half its length along the run, half its width across it. */
+  load?: { al: number; ac: number };
+};
 
 /** How far the body runs along the axis, each side of its centre. */
-export function halfLength(kind: SymbolKind): number {
+export function halfLength(kind: SymbolKind, extras: SymbolExtras = {}): number {
   switch (kind) {
+    case "led":
+    case "diode":
+      return DIODE_H;
+    case "load":
+      return extras.load?.al ?? 30;
     case "resistor":
       return 24;
     case "battery":
-      return 4;
+      return extras.internal === true ? INTERNAL_BOX_HALF : 4;
     case "lamp":
       return LAMP_R;
     case "ammeter":
@@ -59,12 +77,18 @@ export function halfLength(kind: SymbolKind): number {
 }
 
 /** How far the symbol's ink reaches from the run, across it (either side). */
-export function halfWidth(kind: SymbolKind, open: boolean): number {
+export function halfWidth(kind: SymbolKind, open: boolean, extras: SymbolExtras = {}): number {
   switch (kind) {
+    case "led":
+      return LED_REACH;
+    case "diode":
+      return DIODE_H;
+    case "load":
+      return extras.load?.ac ?? 14;
     case "resistor":
       return ZIG_A;
     case "battery":
-      return LONG_PLATE;
+      return extras.internal === true ? INTERNAL_BOX_ACROSS : LONG_PLATE;
     case "lamp":
       return LAMP_R;
     case "ammeter":
@@ -89,6 +113,14 @@ export const TERMINAL_R = 2.8;
 export const SWITCH_HALF = 14;
 export const SWITCH_BLADE = 30;
 export const SWITCH_ANGLE = Math.PI / 6;
+export const DIODE_H = 9;
+export const LED_REACH = 19;
+/** A battery with its internal resistance: the box's half-length and half-width, and where each part sits along the run (from the centre). */
+export const INTERNAL_BOX_HALF = 44;
+export const INTERNAL_BOX_ACROSS = 20;
+export const INTERNAL_BATTERY_AT = -34;
+export const INTERNAL_R_AT = 14;
+export const INTERNAL_R_HALF = 24;
 
 const add = (p: Point, d: Point, k: number): Point => ({ x: p.x + d.x * k, y: p.y + d.y * k });
 const at = (c: Point, d: Point, n: Point, along: number, across: number): Point => ({
@@ -124,7 +156,7 @@ export function symbolPaths(
   d: Point,
   lead: Point[],
   tail: Point[],
-  opts: { iec: boolean; closed: boolean; outside: 1 | -1 },
+  opts: { iec: boolean; closed: boolean; outside: 1 | -1; internal?: boolean; load?: { al: number; ac: number }; lit?: boolean },
 ): Path[] {
   const n = { x: -d.y, y: d.x };
   const W = 2;
@@ -132,29 +164,44 @@ export function symbolPaths(
   const tailOps = (pts: Point[]): Op[] => pts.map((p) => ({ line: p }));
   switch (kind) {
     case "resistor": {
-      const body: Op[] = [];
-      if (opts.iec) {
-        const h = 8;
-        const L = 24;
-        body.push(
-          { line: at(c, d, n, -L, h) },
-          { line: at(c, d, n, L, h) },
-          { line: at(c, d, n, L, -h) },
-          { line: at(c, d, n, -L, -h) },
-          { line: at(c, d, n, -L, 0) },
-          { line: at(c, d, n, -L, h) },
-          { line: at(c, d, n, L, h) },
-          { line: at(c, d, n, L, 0) },
-        );
-      } else {
-        const alongs = [-24, -20, -12, -4, 4, 12, 20, 24];
-        alongs.forEach((s, i) => {
-          if (i > 0) body.push({ line: at(c, d, n, s, i === alongs.length - 1 ? 0 : i % 2 === 1 ? ZIG_A : -ZIG_A) });
-        });
-      }
+      const body = resistorBody(c, d, n, opts.iec);
       return [{ part: "", start: lead[0]!, ops: [...leadOps(lead), ...body, ...tailOps(tail)], width: W }];
     }
+    case "load": {
+      const { al, ac } = opts.load ?? { al: 30, ac: 14 };
+      return [
+        { part: "", start: at(c, d, n, -al, ac), ops: [{ line: at(c, d, n, al, ac) }, { line: at(c, d, n, al, -ac) }, { line: at(c, d, n, -al, -ac) }], width: W, close: true, fill: "paper" },
+        { part: "-lead-from", start: lead[0]!, ops: leadOps(lead), width: W },
+        { part: "-lead-to", start: at(c, d, n, al, 0), ops: tailOps(tail), width: W },
+      ];
+    }
+    case "diode":
+    case "led": {
+      const h = DIODE_H;
+      const out: Path[] = [
+        { part: "", start: at(c, d, n, -h, h), ops: [{ line: at(c, d, n, h, 0) }, { line: at(c, d, n, -h, -h) }], width: W, close: true, fill: opts.lit === true ? "lit" : "paper" },
+        { part: "-bar", start: at(c, d, n, h, h), ops: [{ line: at(c, d, n, h, -h) }], width: W + 0.5 },
+        { part: "-lead-from", start: lead[0]!, ops: leadOps(lead), width: W },
+        { part: "-lead-to", start: at(c, d, n, h, 0), ops: tailOps(tail), width: W },
+      ];
+      if (kind === "led") {
+        // Two arrows leaving the body, on the side opposite the value label: light is emitted.
+        const side = -opts.outside;
+        for (const [i, a0] of [-5, 2].entries()) {
+          const from = at(c, d, n, a0, side * 10);
+          const tip = at(c, d, n, a0 + 7, side * 17);
+          const len = Math.hypot(tip.x - from.x, tip.y - from.y);
+          const u = { x: (tip.x - from.x) / len, y: (tip.y - from.y) / len };
+          const nn = { x: -u.y, y: u.x };
+          const base = { x: tip.x - u.x * 4.5, y: tip.y - u.y * 4.5 };
+          out.push({ part: `-ray${i + 1}`, start: from, ops: [{ line: base }], width: 1.4 });
+          out.push({ part: `-ray${i + 1}-head`, start: tip, ops: [{ line: { x: base.x + nn.x * 2.4, y: base.y + nn.y * 2.4 } }, { line: { x: base.x - nn.x * 2.4, y: base.y - nn.y * 2.4 } }], width: 1, fill: "ink", close: true });
+        }
+      }
+      return out;
+    }
     case "battery": {
+      if (opts.internal === true) return internalBattery(c, d, n, lead, tail, opts);
       const plus = add(c, d, PLATE_GAP);
       const minus = add(c, d, -PLATE_GAP);
       const out: Path[] = [
@@ -224,6 +271,72 @@ export function symbolPaths(
       return out;
     }
   }
+}
+
+/** The zigzag (or IEC rectangle) body of a resistor centred at c, 48 px long. */
+function resistorBody(c: Point, d: Point, n: Point, iec: boolean): Op[] {
+  const body: Op[] = [];
+  if (iec) {
+    const h = 8;
+    const L = 24;
+    body.push(
+      { line: at(c, d, n, -L, h) },
+      { line: at(c, d, n, L, h) },
+      { line: at(c, d, n, L, -h) },
+      { line: at(c, d, n, -L, -h) },
+      { line: at(c, d, n, -L, 0) },
+      { line: at(c, d, n, -L, h) },
+      { line: at(c, d, n, L, h) },
+      { line: at(c, d, n, L, 0) },
+    );
+  } else {
+    const alongs = [-24, -20, -12, -4, 4, 12, 20, 24];
+    alongs.forEach((s, i) => {
+      if (i > 0) body.push({ line: at(c, d, n, s, i === alongs.length - 1 ? 0 : i % 2 === 1 ? ZIG_A : -ZIG_A) });
+    });
+  }
+  return body;
+}
+
+/**
+ * A real source: the battery, then its internal resistance r in series
+ * towards the + terminal, both inside a dashed box. The box is the textbook
+ * way to say "this is ONE source, its r is part of it". Part names: "" is the
+ * long plate (what the EMF label names), "-r" the resistor (what r's label
+ * names).
+ */
+function internalBattery(c: Point, d: Point, n: Point, lead: Point[], tail: Point[], opts: { iec: boolean; outside: 1 | -1 }): Path[] {
+  const cb = add(c, d, INTERNAL_BATTERY_AT);
+  const cr = add(c, d, INTERNAL_R_AT);
+  const plus = add(cb, d, PLATE_GAP);
+  const minus = add(cb, d, -PLATE_GAP);
+  const W = 2;
+  const out: Path[] = [
+    { part: "", start: at(plus, d, n, 0, LONG_PLATE), ops: [{ line: at(plus, d, n, 0, -LONG_PLATE) }], width: 2 },
+    { part: "-short", start: at(minus, d, n, 0, SHORT_PLATE), ops: [{ line: at(minus, d, n, 0, -SHORT_PLATE) }], width: 4.5 },
+    { part: "-lead-from", start: lead[0]!, ops: [...lead.slice(1).map((p) => ({ line: p })), { line: minus }], width: W },
+    {
+      part: "-r",
+      start: plus,
+      ops: [{ line: at(cr, d, n, -INTERNAL_R_HALF, 0) }, ...resistorBody(cr, d, n, opts.iec), { line: at(c, d, n, INTERNAL_BOX_HALF, 0) }, ...tail.map((p) => ({ line: p }))],
+      width: W,
+    },
+  ];
+  out.push(plusSign(at(cb, d, n, PLATE_GAP + 8, -opts.outside * (LONG_PLATE - 3)), 3.5, "-plus"));
+  out.push({
+    part: "-box",
+    start: at(c, d, n, -INTERNAL_BOX_HALF, INTERNAL_BOX_ACROSS),
+    ops: [{ line: at(c, d, n, INTERNAL_BOX_HALF, INTERNAL_BOX_ACROSS) }, { line: at(c, d, n, INTERNAL_BOX_HALF, -INTERNAL_BOX_ACROSS) }, { line: at(c, d, n, -INTERNAL_BOX_HALF, -INTERNAL_BOX_ACROSS) }],
+    width: 1.1,
+    close: true,
+    dashed: true,
+  });
+  return out;
+}
+
+/** Where the battery's plates and its internal resistance sit, for the labels that name them. */
+export function internalParts(c: Point, d: Point): { battery: Point; resistor: Point } {
+  return { battery: add(c, d, INTERNAL_BATTERY_AT), resistor: add(c, d, INTERNAL_R_AT) };
 }
 
 /** A drawn "+": the horizontal stroke, back to the middle, then the vertical one -- level on the page. */

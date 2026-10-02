@@ -1,0 +1,17 @@
+{
+  "preset": "genetics",
+  "kind": "pedigree",
+  "title": "Casamento entre primos",
+  "carrierStyle": "half",
+  "individuals": [
+    { "id": "avo", "sex": "M", "deceased": true },
+    { "id": "avo-f", "sex": "F" },
+    { "id": "tio", "sex": "M", "parents": ["avo", "avo-f"] },
+    { "id": "tia", "sex": "F", "parents": ["avo", "avo-f"], "carrier": true },
+    { "id": "tia-esposa", "sex": "F" },
+    { "id": "tio-marido", "sex": "M" },
+    { "id": "prima", "sex": "F", "parents": ["tio", "tia-esposa"], "carrier": true },
+    { "id": "primo", "sex": "M", "parents": ["tio-marido", "tia"] },
+    { "id": "filha", "sex": "F", "affected": true, "parents": ["prima", "primo"], "proband": true }
+  ]
+}

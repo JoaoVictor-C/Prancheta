@@ -1,0 +1,14 @@
+{
+  "preset": "circuit",
+  "title": "circuito doméstico com aparelho",
+  "nodes": { "A": [0, 2], "B": [2, 2], "C": [5, 2], "D": [5, 0], "F": [2, 0], "E": [0, 0] },
+  "components": [
+    { "id": "U1", "kind": "voltage-source", "from": "E", "to": "A", "value": 120 },
+    { "id": "Rf1", "kind": "resistor", "from": "A", "to": "B", "value": 0.5 },
+    { "id": "L1", "kind": "load", "from": "B", "to": "C", "label": "aparelho", "rated": { "power": 960, "voltage": 120 } },
+    { "kind": "wire", "from": "C", "to": "D" },
+    { "id": "Rf2", "kind": "resistor", "from": "D", "to": "F", "value": 0.5 },
+    { "kind": "wire", "from": "F", "to": "E" }
+  ],
+  "show": { "voltages": [["B", "C"]], "power": true }
+}

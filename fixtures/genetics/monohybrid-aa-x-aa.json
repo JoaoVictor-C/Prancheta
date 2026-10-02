@@ -1,0 +1,8 @@
+{
+  "preset": "genetics",
+  "kind": "punnett",
+  "title": "Cruzamento monoíbrido Aa × Aa",
+  "parents": ["Aa", "Aa"],
+  "phenotypes": { "A": { "dominant": "semente amarela", "recessive": "semente verde" } },
+  "highlight": ["aa"]
+}

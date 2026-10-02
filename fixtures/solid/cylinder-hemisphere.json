@@ -1,0 +1,10 @@
+{
+  "preset": "solid",
+  "title": "silo: cilindro com cúpula semiesférica",
+  "unit": "m",
+  "solids": [
+    { "kind": "cylinder", "name": "Cilindro", "radius": 3, "height": 8, "show": ["height"], "readings": ["volume"] },
+    { "kind": "hemisphere", "name": "Cúpula", "on": "Cilindro", "show": ["radius"], "readings": ["volume", "area"] }
+  ],
+  "total": ["volume", "area"]
+}

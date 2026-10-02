@@ -1,0 +1,17 @@
+{
+  "preset": "data-table",
+  "title": "Pesquisa sobre hábitos de transporte",
+  "columns": [
+    { "header": "Meio de transporte utilizado no deslocamento diário até o trabalho" },
+    { "header": "Número de pessoas entrevistadas", "id": "n" },
+    { "header": "Tempo médio de viagem", "unit": "min", "id": "t" },
+    { "header": "Gasto mensal médio", "unit": "R$", "format": "money" },
+    { "header": "Tempo total de viagem do grupo", "unit": "min", "from": "n*t" }
+  ],
+  "rows": [
+    ["Ônibus municipal, incluindo linhas alimentadoras e terminais de integração", 420, 62, 198.5],
+    ["Automóvel particular", 310, 38, 640],
+    ["Bicicleta", 85, 27, 12.9],
+    ["A pé", 60, 14, 0]
+  ]
+}

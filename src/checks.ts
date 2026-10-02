@@ -2744,7 +2744,9 @@ function axisNumberPresent(figure: LaidOutFigure): Check {
   const ticks = figure.elements.filter(
     (e): e is PlacedMark => e.kind === "mark" && e.tick !== undefined,
   );
-  if (ticks.length === 0) {
+  const schematic = schematicAxes(figure);
+  const silent = numberlessAxes(figure, ticks, schematic);
+  if (ticks.length === 0 && schematic.size === 0) {
     return {
       id: "axis-number-present",
       target: "figure",
@@ -2771,21 +2773,85 @@ function axisNumberPresent(figure: LaidOutFigure): Check {
     });
     if (!found) missing.push(`${tick.axis} = ${tick.value}`);
   }
-  return missing.length === 0
+  const examined = ticks.length + schematic.size + silent.length;
+  const declared = schematic.size === 0 ? "" : `; ${schematic.size} axis/axes declared without numbers (${[...schematic].join(", ")})`;
+  const problems = [
+    ...(missing.length === 0 ? [] : [`${missing.length} required axis number(s) missing or away from their tick: ${missing.join(", ")}`]),
+    ...silent,
+  ];
+  return problems.length === 0
     ? {
         id: "axis-number-present",
         target: "figure",
         status: "pass",
-        examined: ticks.length,
-        detail: `all ${ticks.length} required axis number(s) are printed at their ticks`,
+        examined,
+        detail: `all ${ticks.length} required axis number(s) are printed at their ticks${declared}`,
       }
     : {
         id: "axis-number-present",
         target: "figure",
         status: "fail",
-        examined: ticks.length,
-        detail: `${missing.length} required axis number(s) missing or away from their tick: ${missing.join(", ")}`,
+        examined,
+        detail: problems.join("; "),
       };
+}
+
+/**
+ * Axes declared to print no number (ADR 0066): a schematic axis, a category
+ * axis. The declaration is a zero-ink grid mark `<frame>-schematic-<axis>`
+ * -- the stand-in for a `GridAxis.schematic` field the core grid does not
+ * yet carry. Returned as "frame x" / "frame y".
+ */
+function schematicAxes(figure: LaidOutFigure): Set<string> {
+  const out = new Set<string>();
+  for (const e of figure.elements) {
+    if (e.kind !== "mark" || e.gridOf === undefined) continue;
+    const m = /^(.*)-schematic-(x|y)$/.exec(e.id);
+    if (m !== null && m[1] === e.gridOf) out.add(`${e.gridOf} ${m[2]}`);
+  }
+  return out;
+}
+
+/**
+ * The axes that print no number and do not say so, among the frames that
+ * number something or declare something -- a frame that does neither (a
+ * unit circle's bare axes) states no promise about numbers and is not asked.
+ * An axis is THERE when its frame rules a line along it (lattice or zero
+ * line, inked or not). It is numbered when it has a required number or the
+ * grid's own tick numbers, and declared when it has a schematic mark. One
+ * that is both numbered and declared contradicts itself.
+ */
+function numberlessAxes(figure: LaidOutFigure, ticks: PlacedMark[], schematic: Set<string>): string[] {
+  const frames = new Set<string>([
+    ...ticks.flatMap((t) => (t.gridOf === undefined ? [] : [t.gridOf])),
+    ...[...schematic].map((s) => s.slice(0, s.lastIndexOf(" "))),
+  ]);
+  const out: string[] = [];
+  for (const frame of frames) {
+    for (const axis of ["x", "y"] as const) {
+      const key = `${frame} ${axis}`;
+      const numbered =
+        ticks.some((t) => t.gridOf === frame && t.tick!.axis === axis) ||
+        figure.elements.some((e) => e.kind === "text" && (e.ownerId ?? "").startsWith(`${frame}-tick-${axis}-`));
+      const declared = schematic.has(key);
+      if (numbered && declared) {
+        out.push(`the ${axis} axis of ${frame} is declared without numbers and still requires some`);
+        continue;
+      }
+      if (numbered || declared) continue;
+      const present = figure.elements.some((e) => {
+        if (e.kind !== "mark" || e.gridOf !== frame || e.tick !== undefined || e.points.length < 2) return false;
+        const a = e.points[0]!;
+        const b = e.points[e.points.length - 1]!;
+        // The x axis is ruled by horizontal lines, the y axis by vertical ones.
+        return axis === "x"
+          ? Math.abs(a.y - b.y) < 1e-6 && Math.abs(a.x - b.x) > 1
+          : Math.abs(a.x - b.x) < 1e-6 && Math.abs(a.y - b.y) > 1;
+      });
+      if (present) out.push(`the ${axis} axis of ${frame} prints no number and is not declared schematic`);
+    }
+  }
+  return out;
 }
 
 /** Every series a figure declares, with its marks. */
@@ -2816,13 +2882,19 @@ function seriesDistinguishableWithoutColour(
   boxes: Map<string, PlacedBox>,
 ): Check {
   const series = seriesOf(figure);
-  if (series.size < 2) {
+  // Panels of one figure (ADR 0066: a five-option set, each panel a graph
+  // of its own, its series prefixed `p<letter>-`) are read apart; a reader
+  // tells series apart within a panel, never across two.
+  const scope = (name: string): string => /^(p[A-Za-z0-9]{1,3})-/.exec(name)?.[1] ?? "";
+  const scopes = new Map<string, number>();
+  for (const name of series.keys()) scopes.set(scope(name), (scopes.get(scope(name)) ?? 0) + 1);
+  if (![...scopes.values()].some((n) => n >= 2)) {
     return {
       id: "series-distinguishable-without-colour",
       target: "figure",
       status: "not-applicable",
       examined: series.size,
-      detail: "not applicable: fewer than two series are declared",
+      detail: scopes.size > 1 ? "not applicable: no panel declares two series" : "not applicable: fewer than two series are declared",
     };
   }
   const labelled = new Set<string>();
@@ -2830,14 +2902,14 @@ function seriesDistinguishableWithoutColour(
   const pattern = (marks: PlacedMark[]): string => [...new Set(marks.map((m) => m.lineStyle))].sort().join("+");
   const byPattern = new Map<string, string[]>();
   for (const [name, marks] of series) {
-    const key = pattern(marks);
+    const key = `${scope(name)}|${pattern(marks)}`;
     if (!byPattern.has(key)) byPattern.set(key, []);
     byPattern.get(key)!.push(name);
   }
   const colourOnly: string[] = [];
   for (const [name, marks] of series) {
     if (labelled.has(name)) continue;
-    const sharing = byPattern.get(pattern(marks))!.filter((other) => other !== name);
+    const sharing = byPattern.get(`${scope(name)}|${pattern(marks)}`)!.filter((other) => other !== name);
     if (sharing.length > 0) colourOnly.push(`${name} (${pattern(marks)}, like ${sharing.join(", ")})`);
   }
   return colourOnly.length === 0

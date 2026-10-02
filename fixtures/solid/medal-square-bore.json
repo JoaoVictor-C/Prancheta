@@ -1,0 +1,10 @@
+{
+  "preset": "solid",
+  "title": "medalha cilíndrica com furo de base quadrada inscrita",
+  "unit": "cm",
+  "camera": { "kind": "orthographic", "azimuth": 0, "elevation": 35 },
+  "solids": [
+    { "kind": "cylinder", "radius": 4, "height": 1, "bore": { "sides": 4, "inscribed": true },
+      "show": ["height", "bore"], "readings": ["measures", "volume"] }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "preset": "solid",
+  "title": "escada maciça de três degraus",
+  "unit": "dm",
+  "camera": { "kind": "orthographic", "azimuth": -35, "elevation": 22 },
+  "solids": [
+    { "kind": "stairs", "steps": 3, "tread": 4, "riser": 2, "width": 6,
+      "show": ["dimensions"], "readings": ["volume", "area"] }
+  ]
+}

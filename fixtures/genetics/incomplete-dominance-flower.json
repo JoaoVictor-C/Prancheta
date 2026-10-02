@@ -1,0 +1,9 @@
+{
+  "preset": "genetics",
+  "kind": "punnett",
+  "title": "Cor da flor, dominância incompleta",
+  "parents": ["CᴿCᵂ", "CᴿCᵂ"],
+  "dominance": "incomplete",
+  "phenotypes": { "C": { "CᴿCᴿ": "vermelha", "CᴿCᵂ": "rosa", "CᵂCᵂ": "branca" } },
+  "highlight": ["rosa"]
+}

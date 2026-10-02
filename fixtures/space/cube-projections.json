@@ -1,0 +1,8 @@
+{
+  "preset": "space",
+  "title": "cubo e suas projeções ortogonais nos planos coordenados",
+  "axes": { "ticks": false },
+  "region": { "x": [0, 6], "y": [0, 7], "z": [0, 6] },
+  "grids": ["xy", "xz", "yz"],
+  "blocks": [{ "name": "C", "at": [3, 4, 3], "projections": ["xy", "xz", "yz"] }]
+}

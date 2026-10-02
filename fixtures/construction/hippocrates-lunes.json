@@ -1,0 +1,21 @@
+{
+  "preset": "construction",
+  "title": "Luas de Hipócrates",
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [4, 0] },
+    { "C": [0, 3] },
+    { "name": "T", "polygon": ["A", "B", "C"], "fill": "#F3E6B8" },
+    { "name": "M", "midpoint": ["A", "B"], "hidden": true },
+    { "name": "N", "midpoint": ["A", "C"], "hidden": true },
+    { "name": "K", "circumcenter": ["A", "B", "C"], "hidden": true },
+    { "name": "circ", "circumcircle": ["A", "B", "C"], "dashed": true },
+    { "name": "L1", "region": { "start": "A", "then": [{ "arc": { "center": "M", "to": "B", "ccw": true } }, { "arc": { "center": "K", "to": "A", "ccw": false } }] }, "fill": "#BFDDF0" },
+    { "name": "L2", "region": { "start": "A", "then": [{ "arc": { "center": "N", "to": "C", "ccw": false } }, { "arc": { "center": "K", "to": "A", "ccw": true } }] }, "fill": "#F2C7C0" }
+  ],
+  "annotations": [
+    { "area": "L1", "name": "L₁" },
+    { "area": "L2", "name": "L₂" },
+    { "area": "T", "name": "T" }
+  ]
+}

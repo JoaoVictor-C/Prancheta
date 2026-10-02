@@ -1,0 +1,19 @@
+{
+  "preset": "construction",
+  "title": "Quadrado com círculo inscrito e circunscrito",
+  "unit": "cm",
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [4, 0] },
+    { "C": [4, 4] },
+    { "D": [0, 4] },
+    { "name": "Q", "polygon": ["A", "B", "C", "D"], "fill": "#F3E6B8" },
+    { "name": "out", "circumcircle": "Q" },
+    { "name": "in", "incircle": "Q", "dashed": true },
+    { "name": "AC", "segment": ["A", "C"], "dashed": true }
+  ],
+  "annotations": [
+    { "length": "AB" },
+    { "length": "AC" }
+  ]
+}

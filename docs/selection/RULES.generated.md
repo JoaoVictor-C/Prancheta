@@ -744,3 +744,48 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 90
 - **Statement:** A chart draws values it is handed; the pH along a titration is the root of a balance at every volume.
+
+## S-table-favours-data-table
+
+- **Axis:** structure
+- **When:** `table`
+- **Preset:** `data-table`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Rows and columns of given values are drawn by data-table: numbers written pt-BR and aligned on the comma, derived columns and totals computed from the data, blanks to fill.
+
+## S-table-disqualifies-labelled-blocks
+
+- **Axis:** structure
+- **When:** `table`
+- **Preset:** `labelled-blocks`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A stack of blocks has no columns: a table's meaning is which value sits in which row and column.
+
+## S-genetics-favours-genetics
+
+- **Axis:** structure
+- **When:** `genetics`
+- **Preset:** `genetics`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** A Punnett square or a pedigree is drawn by genetics: gametes, cells and ratios computed from the genotypes, a pedigree laid out by generation and checked against its mode of inheritance.
+
+## S-genetics-disqualifies-graph
+
+- **Axis:** structure
+- **When:** `genetics`
+- **Preset:** `graph`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A pedigree is not nodes and edges: two parents per child, marriages and generations carry the inheritance a graph layout would lose.
+
+## S-genetics-disqualifies-mindmap
+
+- **Axis:** structure
+- **When:** `genetics`
+- **Preset:** `mindmap`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A family tree has two parents per child; a mindmap has one root and one parent per node.

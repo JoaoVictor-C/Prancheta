@@ -154,8 +154,21 @@
  * and indicator ranges. Not a "function": the curve is the root of a
  * charge balance, not a typed expression. Not "data" or "distribution":
  * there are no observations and no probability law.
+ *
+ * "table" is rows and columns of GIVEN text and numbers -- a nutrition
+ * label, a price list, a ranking, the properties of substances -- with
+ * units, grouped headers, blanks to fill, and derived columns or totals
+ * computed from the data. Not a "function": nothing is evaluated from an
+ * expression (that table is value-table's). Not "data": the values are
+ * read, not summarised.
+ *
+ * "genetics" is a cross or a family tree of a trait: a Punnett square
+ * from the parents' genotypes, or a pedigree of individuals, marriages
+ * and generations, with the ratios and probabilities read off it. Not a
+ * "hierarchy": a pedigree has two parents per child and its meaning is the
+ * inheritance, not the tree.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations", "acid-base-equilibrium"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations", "acid-base-equilibrium", "table", "genetics"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -212,7 +225,9 @@ export type PresetId =
   | "distribution"
   | "probability-tree"
   | "venn"
-  | "acid-base";
+  | "acid-base"
+  | "data-table"
+  | "genetics";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -278,12 +293,12 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
   {
     id: "space",
     implemented: true,
-    summary: "Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed.",
+    summary: "Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed; gridded coordinate planes, blocks with their orthogonal projections, and paths with arrows and exact lengths.",
   },
   {
     id: "solid",
     implemented: true,
-    summary: "School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact.",
+    summary: "School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere, frustums, hemispheres, stairs and polyhedra from face data -- from their dimensions: hidden edges by real visibility, bores, liquid to a level, inscribed and stacked solids, nets; diagonals, slant heights, volumes and areas exact.",
   },
   {
     id: "surface",
@@ -359,6 +374,16 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "acid-base",
     implemented: true,
     summary: "Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻].",
+  },
+  {
+    id: "data-table",
+    implemented: true,
+    summary: "Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false.",
+  },
+  {
+    id: "genetics",
+    implemented: true,
+    summary: "Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact.",
   },
 ];
 

@@ -1,0 +1,9 @@
+{
+  "preset": "solid",
+  "title": "peça cilíndrica com furo central",
+  "unit": "cm",
+  "solids": [
+    { "kind": "cylinder", "radius": 4, "height": 6, "labels": true, "bore": { "radius": 1.5 },
+      "show": ["radius", "height", "bore"], "readings": ["volume", "area"] }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "preset": "data-table",
+  "title": "Matrículas e aprovações por tipo de escola",
+  "columns": [
+    { "header": "Ano" },
+    { "header": "Matriculados" },
+    { "header": "Aprovados" },
+    { "header": "Matriculados" },
+    { "header": "Aprovados" },
+    { "header": "Taxa de aprovação geral", "from": "(C+E)/(B+D)", "format": "percent" }
+  ],
+  "headerRows": [
+    [{ "text": "", "span": 1 }, { "text": "Escola pública", "span": 2 }, { "text": "Escola privada", "span": 2 }, { "text": "", "span": 1 }]
+  ],
+  "rows": [
+    [2021, 1840, 1512, 620, 589],
+    [2022, 1905, 1590, 655, 631],
+    [2023, 1960, 1688, 640, 622],
+    [2024, 2012, 1745, 698, 677]
+  ],
+  "stub": true,
+  "caption": "Cada ano tem os alunos matriculados e os aprovados, por tipo de escola.",
+  "source": "Fonte: dados fictícios."
+}

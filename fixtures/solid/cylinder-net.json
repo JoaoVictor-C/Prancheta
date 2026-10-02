@@ -1,0 +1,8 @@
+{
+  "preset": "solid",
+  "title": "planificação do cilindro",
+  "unit": "cm",
+  "solids": [
+    { "kind": "cylinder", "radius": 2, "height": 5, "show": ["radius", "height"], "net": "only", "readings": ["area"] }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "preset": "circuit",
+  "title": "fonte real: ε = 12 V, r = 0,5 Ω",
+  "nodes": { "A": [0, 2], "B": [5, 2], "C": [5, 0], "E": [0, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "E", "to": "A", "value": 12, "r": 0.5 },
+    { "kind": "wire", "from": "A", "to": "B" },
+    { "id": "R1", "kind": "resistor", "from": "B", "to": "C", "value": 2.5 },
+    { "kind": "wire", "from": "C", "to": "E" }
+  ],
+  "show": { "voltages": [["A", "E"]], "terminal": true, "power": true }
+}

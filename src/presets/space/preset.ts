@@ -59,6 +59,18 @@ import type { Box3, Patch } from "./visibility.ts";
 import { SpacePlacer, aroundPlace, besideRun } from "./placer.ts";
 import { parsePlaneEquation, planeEquationText, printDegrees, printExact, printTriple, simplestDirection, typesANumber } from "./numbers.ts";
 import type { Linear, Printed } from "./numbers.ts";
+import { add as xadd, mul as xmul, print as xprint, rat as xrat, sqrt as xsqrt } from "../solid/exact.ts";
+import type { Exact } from "../solid/exact.ts";
+
+/** The length of a polyline, exact from its coordinates: a sum of roots (√2 + 3 + 2√5), else rounded with ≈. */
+export function pathLength(pts: readonly Vec3[]): Printed {
+  let total: Exact = xrat(0);
+  for (let k = 1; k < pts.length; k += 1) {
+    const d = [0, 1, 2].map((i) => xrat(pts[k]![i]! - pts[k - 1]![i]!));
+    total = xadd(total, xsqrt(d.reduce<Exact>((acc, x) => xadd(acc, xmul(x, x)), xrat(0))));
+  }
+  return xprint(total);
+}
 
 // ---- input ------------------------------------------------------------------
 
@@ -109,11 +121,31 @@ export type SpaceMeasure =
   | { position: [string, string] }
   | { commonPerpendicular: [string, string] };
 
+export type CoordPlane = "xy" | "xz" | "yz";
+export type SpaceBlockDef = {
+  name?: string;
+  /** The corner nearest the origin. */
+  at: Coord3;
+  /** The edge (a cube) or the three sizes along x, y and z. Default 1. */
+  size?: number | Coord3;
+  projections?: CoordPlane[];
+};
+export type SpacePathDef = {
+  name: string;
+  /** Point names or coordinates, in order. */
+  through: PointRef[];
+  /** Default true: an arrowhead mid-way along each stretch, in its direction. */
+  arrows?: boolean;
+  /** The orthogonal projection of the path on a coordinate plane or on a declared plane. */
+  projection?: string;
+};
+
 export type SpaceInput = {
   title?: string;
   locale?: Locale;
   camera?: CameraSpec;
-  axes?: { ticks?: boolean; names?: boolean; origin?: boolean };
+  /** `names` may be three names for x, y and z ("N", "L", "altura") instead of true/false. */
+  axes?: { ticks?: boolean; names?: boolean | [string, string, string]; origin?: boolean };
   /** The drawing region lines and planes are clipped to, per axis. Derived from the figure's points when omitted. */
   region?: { x?: [number, number]; y?: [number, number]; z?: [number, number] };
   points?: SpacePointDef[];
@@ -121,6 +153,12 @@ export type SpaceInput = {
   lines?: SpaceLineDef[];
   planes?: SpacePlaneDef[];
   measures?: SpaceMeasure[];
+  /** Coordinate planes drawn as a grid of the tick step, in the first octant (ADR 0068). */
+  grids?: CoordPlane[];
+  /** Boxes in the space -- a unit cube by default -- with their orthogonal projections on coordinate planes. */
+  blocks?: SpaceBlockDef[];
+  /** Polylines through points, with an arrow on each stretch, and their projection on a plane. */
+  paths?: SpacePathDef[];
   /**
    * Default true. With false the figure is the exercise's question: typed points keep their coordinates, and no
    * computed result is printed -- the readings panel keeps only what was typed (a typed point's or vector's
@@ -143,6 +181,11 @@ const LINE_COLOURS = ["#9A3409", "#6E4A00", "#08505C"];
 const VECTOR_TYPED = "#1D4E89";
 const VECTOR_DERIVED = "#6C3290";
 const PERP = "#2F6B3A";
+const GRID = "#9AA3B0";
+const BLOCK = "#1D4E89";
+const PROJECTION = "#B0392B";
+const PATH = "#C0392B";
+const PATH_PROJECTION = "#6E4A00";
 
 // ---- sizes (canvas px) ------------------------------------------------------------
 
@@ -469,7 +512,48 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
   const vectorsList = objs.filter((o): o is VectorObj => o.kind === "vector");
   const linesList = objs.filter((o): o is LineObj => o.kind === "line");
   const planesList = objs.filter((o): o is PlaneObj => o.kind === "plane");
-  if (objs.length === 0) throw new SpecError("space: declare at least one point, vector, line or plane");
+  if (objs.length === 0 && (input.blocks ?? []).length === 0) throw new SpecError("space: declare at least one point, vector, line, plane or block");
+
+  // ---- blocks and paths (ADR 0068) ----
+  const COORD_PLANES: readonly CoordPlane[] = ["xy", "xz", "yz"];
+  const coordPlane = (raw: unknown, path: string): CoordPlane => {
+    if (typeof raw !== "string" || !COORD_PLANES.includes(raw as CoordPlane)) throw new SpecError(`${path} must be one of xy, xz, yz`);
+    return raw as CoordPlane;
+  };
+  const blocks = (input.blocks ?? []).map((raw, i) => {
+    const path = `blocks[${i}]`;
+    const o = v.object(raw, path);
+    const at = coord3(o.at, `${path}.at`);
+    const size: Vec3 = o.size === undefined ? [1, 1, 1] : typeof o.size === "number" ? [o.size, o.size, o.size] : coord3(o.size, `${path}.size`);
+    if (!size.every((x) => x > 0)) throw new SpecError(`${path}.size must be positive`);
+    const projections = o.projections === undefined ? [] : (v.array(o, "projections", path, "projections") as unknown[]).map((p, k) => coordPlane(p, `${path}.projections[${k}]`));
+    const name = o.name === undefined ? `bloco ${i + 1}` : v.requiredString(o, "name", path);
+    if (o.name !== undefined && typesANumber(name)) throw new SpecError(`${path}.name "${name}" types a number`);
+    return { name, at, hi: add(at, size), size, projections };
+  });
+  const paths = (input.paths ?? []).map((raw, i) => {
+    const path = `paths[${i}]`;
+    const o = v.object(raw, path);
+    const name = v.requiredString(o, "name", path);
+    if (typesANumber(name)) throw new SpecError(`${path}.name "${name}" types a number`);
+    if (!Array.isArray(o.through) || o.through.length < 2) throw new SpecError(`${path}.through must list at least two points`);
+    const refs = o.through as unknown[];
+    const pts = refs.map((r, k) => pointOf(r, `${path}.through[${k}]`));
+    pts.forEach((p, k) => {
+      if (k > 0 && distance(p, pts[k - 1]!) <= 1e-12) throw new SpecError(`${path}.through[${k}] repeats the point before it -- a stretch of no length has no direction`);
+    });
+    const label = refs.every((r) => typeof r === "string") ? (refs as string[]).join("") : name;
+    let onto: { plane: Plane3; name: string } | null = null;
+    if (o.projection !== undefined) {
+      if (typeof o.projection !== "string") throw new SpecError(`${path}.projection must be xy, xz, yz or a plane's name`);
+      if ((COORD_PLANES as readonly string[]).includes(o.projection)) {
+        const n: Vec3 = o.projection === "xy" ? [0, 0, 1] : o.projection === "xz" ? [0, 1, 0] : [1, 0, 0];
+        onto = { plane: { point: [0, 0, 0], normal: n }, name: `plano ${o.projection}` };
+      } else onto = { plane: (resolve(o.projection, `${path}.projection`, "plane") as PlaneObj).plane, name: o.projection };
+    }
+    return { name, label, pts, arrows: o.arrows !== false, onto };
+  });
+  const grids = (input.grids ?? []).map((g, k) => coordPlane(g, `grids[${k}]`));
 
   // ---- 2. measures (resolved now, so a refusal names itself before any drawing) ----
   const readings: string[] = [];
@@ -537,6 +621,8 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
     });
   }
   for (const l of linesList) extent.push(l.line.point);
+  for (const b of blocks) extent.push(b.at, b.hi);
+  for (const pa of paths) extent.push(...pa.pts);
   const lo: [number, number, number] = [0, 0, 0];
   const hi: [number, number, number] = [0, 0, 0];
   // The tick step is 1, 2 or 5 x 10^k fitted to the data's own span, so a
@@ -748,6 +834,109 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
     rightAngles.push({ id: `${pp.id}-right1`, pts: rightAngle3(pp.to, pp.l2.direction, scale(d, -1), 0.28) });
   }
 
+  // Grids on coordinate planes: the tick step's lines across the region's first-octant part of the plane.
+  const AX: Record<CoordPlane, [number, number]> = { xy: [0, 1], xz: [0, 2], yz: [1, 2] };
+  grids.forEach((g) => {
+    const [i, j] = AX[g];
+    const at = (ci: number, cj: number): Vec3 => {
+      const p: [number, number, number] = [0, 0, 0];
+      p[i] = ci;
+      p[j] = cj;
+      return p;
+    };
+    const lo0 = Math.max(0, lo[i]!);
+    const lo1 = Math.max(0, lo[j]!);
+    for (const t of ticksIn(lo0, hi[i]!, step)) if (t > 0) segs.push({ id: `grid-${g}-${axesKeys[i]}${String(t).replace(/[.-]/g, "_")}`, group: `grid-${g}`, a: at(t, lo1), b: at(t, hi[j]!), colour: GRID, width: 0.8, skip: new Set(), occludable: true, dashed: true });
+    for (const t of ticksIn(lo1, hi[j]!, step)) if (t > 0) segs.push({ id: `grid-${g}-${axesKeys[j]}${String(t).replace(/[.-]/g, "_")}`, group: `grid-${g}`, a: at(lo0, t), b: at(hi[i]!, t), colour: GRID, width: 0.8, skip: new Set(), occludable: true, dashed: true });
+  });
+
+  // Blocks: each face a reader sees occludes everything behind it; their projections on coordinate planes.
+  const blockFaces: (Patch & { colour: string })[] = [];
+  const projFills: { id: string; corners: Vec3[] }[] = [];
+  blocks.forEach((b, k) => {
+    const [x0, y0, z0] = b.at;
+    const [x1, y1, z1] = b.hi;
+    const C = (x: number, y: number, z: number): Vec3 => [x, y, z];
+    const faces: [Vec3[], Vec3][] = [
+      [[C(x1, y0, z0), C(x1, y1, z0), C(x1, y1, z1), C(x1, y0, z1)], [1, 0, 0]],
+      [[C(x0, y0, z0), C(x0, y0, z1), C(x0, y1, z1), C(x0, y1, z0)], [-1, 0, 0]],
+      [[C(x0, y1, z0), C(x0, y1, z1), C(x1, y1, z1), C(x1, y1, z0)], [0, 1, 0]],
+      [[C(x0, y0, z0), C(x1, y0, z0), C(x1, y0, z1), C(x0, y0, z1)], [0, -1, 0]],
+      [[C(x0, y0, z1), C(x1, y0, z1), C(x1, y1, z1), C(x0, y1, z1)], [0, 0, 1]],
+      [[C(x0, y0, z0), C(x0, y1, z0), C(x1, y1, z0), C(x1, y0, z0)], [0, 0, -1]],
+    ];
+    faces.forEach(([corners, normal], f) => {
+      if (dot(normal, camera.toward) > 0) blockFaces.push({ id: `block-${k}-face${f}`, corners, point: corners[0]!, normal, colour: BLOCK });
+    });
+    const E: [Vec3, Vec3][] = [];
+    for (const [corners] of faces) corners.forEach((c, q) => E.push([c, corners[(q + 1) % 4]!]));
+    const seen = new Set<string>();
+    E.forEach(([a, c], q) => {
+      const key = [a, c].map((p) => p.join(",")).sort().join("|");
+      if (seen.has(key)) return;
+      seen.add(key);
+      segs.push({ id: `block-${k}-edge${q}`, group: `block-${k}`, a, b: c, colour: BLOCK, width: 1.6, skip: new Set(), occludable: true });
+    });
+    if (!showAnswers) return;
+    for (const pl of b.projections) {
+      const [i, j] = AX[pl];
+      const drop = 3 - i - j;
+      const flat = (p: Vec3): Vec3 => {
+        const q: [number, number, number] = [p[0], p[1], p[2]];
+        q[drop] = 0;
+        return q;
+      };
+      const rect: Vec3[] = [];
+      const lo2 = b.at;
+      const hi2 = b.hi;
+      const corner = (ci: number, cj: number): Vec3 => {
+        const q: [number, number, number] = [0, 0, 0];
+        q[i] = ci;
+        q[j] = cj;
+        return q;
+      };
+      rect.push(corner(lo2[i]!, lo2[j]!), corner(hi2[i]!, lo2[j]!), corner(hi2[i]!, hi2[j]!), corner(lo2[i]!, hi2[j]!));
+      projFills.push({ id: `block-${k}-proj-${pl}`, corners: rect });
+      rect.forEach((c, q) => segs.push({ id: `block-${k}-proj-${pl}-edge${q}`, group: `block-${k}-proj-${pl}`, a: c, b: rect[(q + 1) % 4]!, colour: PROJECTION, width: 1.4, skip: new Set(), occludable: true }));
+      // Projecting guides from the face nearest the plane.
+      const near: Vec3[] = [];
+      for (const ci of [lo2[i]!, hi2[i]!]) {
+        for (const cj of [lo2[j]!, hi2[j]!]) {
+          const q: [number, number, number] = [0, 0, 0];
+          q[i] = ci;
+          q[j] = cj;
+          q[drop] = lo2[drop]!;
+          near.push(q);
+        }
+      }
+      near.forEach((p, q) => {
+        if (Math.abs(p[drop]!) > 1e-12) segs.push({ id: `block-${k}-proj-${pl}-guide${q}`, group: `block-${k}-proj-${pl}-perp`, a: p, b: flat(p), colour: GUIDE, width: 1, skip: new Set(), occludable: false, dashed: true });
+      });
+    }
+  });
+
+  // Paths: a polyline with an arrow on each stretch; its projection, the answer, only with answers.
+  const midArrows: { id: string; group: string; at: Vec3; dir: Vec3; colour: string }[] = [];
+  paths.forEach((pa, k) => {
+    pa.pts.forEach((p, q) => {
+      if (q === 0) return;
+      const a = pa.pts[q - 1]!;
+      segs.push({ id: `path-${k}-${q}`, group: `path-${k}`, a, b: p, colour: PATH, width: 2.2, skip: new Set(), occludable: true });
+      if (pa.arrows) midArrows.push({ id: `path-${k}-${q}-arrow`, group: `path-${k}`, at: lerp(a, p, 0.5), dir: sub(p, a), colour: PATH });
+    });
+    const len = pathLength(pa.pts);
+    if (showAnswers) readings.push(`comprimento de ${pa.label} ${len.exact ? "=" : "≈"} ${len.text}`);
+    if (pa.onto !== null && showAnswers) {
+      const feet = pa.pts.map((p) => footOnPlane3(p, pa.onto!.plane));
+      feet.forEach((f, q) => {
+        if (q > 0) segs.push({ id: `path-${k}-proj-${q}`, group: `path-${k}-proj`, a: feet[q - 1]!, b: f, colour: PATH_PROJECTION, width: 1.8, skip: new Set(), occludable: true });
+        if (distance(f, pa.pts[q]!) > 1e-9) segs.push({ id: `path-${k}-drop-${q}`, group: `path-${k}-drop-perp`, a: pa.pts[q]!, b: f, colour: GUIDE, width: 1, skip: new Set(), occludable: false, dashed: true });
+      });
+      const plen = pathLength(feet);
+      readings.push(`projeção de ${pa.label} no ${pa.onto.name}: comprimento ${plen.exact ? "=" : "≈"} ${plen.text}`);
+    }
+  });
+
   // Readings for the objects themselves.
   for (const pl of showAnswers ? planesList : []) {
     const t = planeEquationText(pl.eq, locale);
@@ -772,20 +961,23 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
   // ---- 5. visibility ----
   type Drawn = { id: string; group: string; a: Vec3; b: Vec3; colour: string; width: number; dashed: boolean };
   const drawn: Drawn[] = [];
+  const occluders: Patch[] = [...patches, ...blockFaces];
   const cutSeg = (s: Seg): void => {
     if (!s.occludable) {
       drawn.push({ id: s.id, group: s.group, a: s.a, b: s.b, colour: s.colour, width: s.width, dashed: s.dashed === true });
       return;
     }
-    const pieces = splitByVisibility(camera, s.a, s.b, patches, s.skip);
+    const pieces = splitByVisibility(camera, s.a, s.b, occluders, s.skip);
     pieces.forEach((pc, i) => {
+      // A grid line behind a block is simply not there: it is furniture, not an edge to dash.
+      if (pc.hidden && s.group.startsWith("grid-")) return;
       drawn.push({ id: pieces.length === 1 ? s.id : `${s.id}-${i}`, group: s.group, a: pc.from, b: pc.to, colour: s.colour, width: s.width, dashed: pc.hidden || s.dashed === true });
     });
   };
   for (const s of segs) cutSeg(s);
   const arrowShafts: Drawn[] = [];
   for (const ar of arrows) {
-    const pieces = splitByVisibility(camera, ar.tail, ar.head, patches);
+    const pieces = splitByVisibility(camera, ar.tail, ar.head, occluders);
     pieces.forEach((pc, i) => arrowShafts.push({ id: pieces.length === 1 ? ar.id : `${ar.id}-${i}`, group: ar.group, a: pc.from, b: pc.to, colour: ar.colour, width: 2.1, dashed: pc.hidden }));
   }
 
@@ -793,6 +985,7 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
   const pagePts: Vec2[] = [];
   for (const d of [...drawn, ...arrowShafts]) pagePts.push(project(camera, d.a), project(camera, d.b));
   for (const p of patches) for (const c of p.corners) pagePts.push(project(camera, c));
+  for (const f of [...blockFaces, ...projFills]) for (const c of f.corners) pagePts.push(project(camera, c));
   for (const d of dots) pagePts.push(project(camera, d.p));
   const us = pagePts.map((p) => p[0]);
   const vs = pagePts.map((p) => p[1]);
@@ -834,6 +1027,17 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
     board.poly(pts, { stroke: "none", width: 0, fill: `${p.colour}${PLANE_ALPHA}`, close: true, id: `${p.id}-fill` });
     placer.addInk(`${p.id}-fill`, p.group, [...pts, pts[0]!], false);
   }
+  for (const f of projFills) {
+    const pts = f.corners.map(page);
+    board.poly(pts, { stroke: "none", width: 0, fill: `${PROJECTION}55`, close: true, id: `${f.id}-fill` });
+    placer.addInk(`${f.id}-fill`, f.id, [...pts, pts[0]!], false);
+  }
+  for (const f of blockFaces) {
+    const pts = f.corners.map(page);
+    const shade = f.normal[2] > 0 ? "30" : f.normal[0] > 0 ? "48" : "60";
+    board.poly(pts, { stroke: "none", width: 0, fill: `${f.colour}${shade}`, close: true, id: `${f.id}-fill` });
+    placer.addInk(`${f.id}-fill`, f.id, [...pts, pts[0]!], false);
+  }
   const drawRun = (d: Drawn): void => {
     const a = page(d.a);
     const b = page(d.b);
@@ -860,6 +1064,11 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
     headAt(`axis-${axesKeys[ax.i]}-head`, `axis-${axesKeys[ax.i]}`, page(ax.b), pageDir(unitDir), AXIS);
   }
   for (const ar of arrows) headAt(`${ar.id}-head`, ar.group, page(ar.head), pageDir(sub(ar.head, ar.tail)), ar.colour);
+  for (const m of midArrows) {
+    const d = pageDir(m.dir);
+    const c = page(m.at);
+    headAt(m.id, m.group, { x: c.x + (d.x * HEAD_LEN) / 2, y: c.y + (d.y * HEAD_LEN) / 2 }, d, m.colour);
+  }
 
   // Right-angle marks.
   for (const ra of rightAngles) {
@@ -982,9 +1191,16 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
     placer.reserve({ x: best.centre.x - w / 2, y: best.centre.y - h / 2, width: w, height: h });
     board.label(t.text, best.centre.x, best.centre.y, { ...style, colour: SOFT, width: w, id: `${t.id}-label`, annotatesPlace: { x: t.at.x, y: t.at.y } });
   }
-  if (input.axes?.names !== false) {
+  const axisNames = input.axes?.names;
+  if (Array.isArray(axisNames)) {
+    if (axisNames.length !== 3 || axisNames.some((n) => typeof n !== "string" || n.trim() === "")) throw new SpecError("axes.names must be true, false or three names for x, y and z");
+    axisNames.forEach((n, i) => {
+      if (typesANumber(n)) throw new SpecError(`axes.names[${i}] "${n}" types a number`);
+    });
+  }
+  if (axisNames !== false) {
     for (const ax of axisSegs) {
-      const name = axesKeys[ax.i]!;
+      const name = Array.isArray(axisNames) ? axisNames[ax.i]! : axesKeys[ax.i]!;
       const unitDir: [number, number, number] = [0, 0, 0];
       unitDir[ax.i] = 1;
       const dir = pageDir(unitDir);
@@ -999,8 +1215,8 @@ function buildSpace(input: SpaceInput, compact: ReadonlySet<string>, failed: str
         const n = { x: -dir.y, y: dir.x };
         for (const side of [1, -1]) spots.push({ x: c.x + n.x * side * (w / 2 + 4), y: c.y + n.y * side * (h / 2 + 4) });
       }
-      const best = placer.choose(spots, w, h, (c) => placer.elementCost(`axis-${name}`, c, w, h, 0));
-      board.label(name, best.centre.x, best.centre.y, { ...style, width: w, id: `axis-${name}-name`, freeStanding: true });
+      const best = placer.choose(spots, w, h, (c) => placer.elementCost(`axis-${axesKeys[ax.i]!}`, c, w, h, 0));
+      board.label(name, best.centre.x, best.centre.y, { ...style, width: w, id: `axis-${axesKeys[ax.i]!}-name`, freeStanding: true });
     }
   }
 
@@ -1159,10 +1375,10 @@ export function validateSpaceInput(raw: Record<string, unknown>): void {
   if (raw.axes !== undefined) {
     const a = v.object(raw.axes, `${path}.axes`);
     v.optionalBoolean(a, "ticks", `${path}.axes`);
-    v.optionalBoolean(a, "names", `${path}.axes`);
+    if (!Array.isArray(a.names)) v.optionalBoolean(a, "names", `${path}.axes`);
     v.optionalBoolean(a, "origin", `${path}.axes`);
   }
-  for (const key of ["points", "vectors", "lines", "planes", "measures"]) {
+  for (const key of ["points", "vectors", "lines", "planes", "measures", "grids", "blocks", "paths"]) {
     if (raw[key] !== undefined) v.array(raw, key, path, key);
   }
   // References, arithmetic and every refusal are exercised by building the

@@ -1,0 +1,19 @@
+{
+  "preset": "construction",
+  "title": "Trajeto em malha quadriculada",
+  "grid": true,
+  "objects": [
+    { "A": [0, 4] },
+    { "B": [4, 4] },
+    { "C": [4, 1] },
+    { "D": [1, 1] },
+    { "E": [3, 3] },
+    { "name": "walk", "path": { "through": ["A", "B", "C", "D", "E"], "arrows": "each" }, "colour": "#C2410C" }
+  ],
+  "annotations": [
+    { "length": "walk.1" },
+    { "length": "walk.2" },
+    { "length": "walk.3" },
+    { "length": "walk.4" }
+  ]
+}
