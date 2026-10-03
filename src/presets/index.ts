@@ -80,6 +80,10 @@ import { expandDataTable, validateDataTableInput } from "./data-table/preset.ts"
 import type { DataTableInput } from "./data-table/preset.ts";
 import { expandGenetics, validateGeneticsInput } from "./genetics/preset.ts";
 import type { GeneticsInput } from "./genetics/preset.ts";
+import { expandPictogram, validatePictogramInput } from "./pictogram/preset.ts";
+import type { PictogramInput } from "./pictogram/preset.ts";
+import { expandMechanics, validateMechanicsInput } from "./mechanics/preset.ts";
+import type { MechanicsInput } from "./mechanics/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -113,7 +117,7 @@ export const ANSWER_AWARE: readonly string[] = [
   "chart", "function-graph", "value-table", "sign-chart", "number-line", "vectors", "unit-circle",
   "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map",
   "circuit", "optics", "automaton", "truth-table", "logic-circuit",
-  "statistics", "distribution", "probability-tree", "venn", "acid-base", "data-table", "genetics",
+  "statistics", "distribution", "probability-tree", "venn", "acid-base", "data-table", "genetics", "pictogram", "mechanics",
 ];
 
 export type PresetInput = (
@@ -148,6 +152,8 @@ export type PresetInput = (
   | ({ preset: "acid-base" } & AcidBaseInput)
   | ({ preset: "data-table" } & DataTableInput)
   | ({ preset: "genetics" } & GeneticsInput)
+  | ({ preset: "pictogram" } & PictogramInput)
+  | ({ preset: "mechanics" } & MechanicsInput)
 ) &
   CommonPresetOptions;
 
@@ -231,6 +237,10 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandDataTable(input);
     case "genetics":
       return expandGenetics(input);
+    case "pictogram":
+      return expandPictogram(input);
+    case "mechanics":
+      return expandMechanics(input);
   }
 }
 
@@ -330,6 +340,10 @@ function validateOwn(preset: PresetInput["preset"], raw: Record<string, unknown>
       return validateDataTableInput(raw);
     case "genetics":
       return validateGeneticsInput(raw);
+    case "pictogram":
+      return validatePictogramInput(raw);
+    case "mechanics":
+      return validateMechanicsInput(raw);
   }
 }
 
@@ -367,7 +381,9 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "venn" ||
     preset === "acid-base" ||
     preset === "data-table" ||
-    preset === "genetics"
+    preset === "genetics" ||
+    preset === "pictogram" ||
+    preset === "mechanics"
   );
 }
 
@@ -403,6 +419,8 @@ export type {
   AcidBaseInput,
   DataTableInput,
   GeneticsInput,
+  PictogramInput,
+  MechanicsInput,
 };
 export type { PresetId };
 

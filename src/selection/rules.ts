@@ -1108,6 +1108,54 @@ export const RULES: Rule[] = [
     statement:
       "A family tree has two parents per child; a mindmap has one root and one parent per node.",
   },
+
+  // --- pictogram -------------------------------------------------------------
+  {
+    id: "S-pictogram-favours-pictogram",
+    axis: "structure",
+    when: "pictogram",
+    preset: "pictogram",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "Repeated icons or dot figures are drawn by pictogram: how many icons are filled, and how many dots each figure has, are computed from the data.",
+  },
+  {
+    id: "S-pictogram-disqualifies-chart",
+    axis: "structure",
+    when: "pictogram",
+    preset: "chart",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A pictogram is read by counting icons, not by comparing lengths: bars would answer a different question.",
+  },
+
+  // --- forces ----------------------------------------------------------------
+  {
+    id: "S-forces-favours-mechanics",
+    axis: "structure",
+    when: "forces",
+    preset: "mechanics",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "Forces on a body -- a pulley system, a block on a slope -- are drawn by mechanics: the forces are solved from the situation and every arrow is drawn to one scale.",
+  },
+  {
+    id: "S-forces-disqualifies-vectors",
+    axis: "structure",
+    when: "forces",
+    preset: "vectors",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A force diagram has a body, a rope, a slope: free vectors in the plane would lose what the forces act on and what fixes them.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

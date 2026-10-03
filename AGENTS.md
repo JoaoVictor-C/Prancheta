@@ -115,6 +115,8 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `acid-base` | Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻]. | yes |
 | `data-table` | Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false. | yes |
 | `genetics` | Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact. | yes |
+| `pictogram` | Counts and shares as repeated icons -- filled icons computed from each value (a remainder fills the last icon by its fraction), outline slots for the whole -- and sequences of dot figures whose counts are the polygonal numbers, computed from the construction. | yes |
+| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force, rope traced tangent to every wheel) and a block on an inclined plane (components, normal, kinetic or static friction, acceleration), every arrow to one scale. | yes |
 
 ## Figure modules
 
@@ -275,6 +277,8 @@ resources:
 | `prancheta://preset/acid-base` | acid-base preset |
 | `prancheta://preset/data-table` | data-table preset |
 | `prancheta://preset/genetics` | genetics preset |
+| `prancheta://preset/pictogram` | pictogram preset |
+| `prancheta://preset/mechanics` | mechanics preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |

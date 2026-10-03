@@ -1,0 +1,694 @@
+{
+ "version": 1,
+ "title": "célula a combustível de hidrogênio",
+ "canvas": {
+  "padding": 0,
+  "background": "#FBFAF7",
+  "theme": "print"
+ },
+ "root": {
+  "type": "scene",
+  "layout": "absolute",
+  "width": 560,
+  "height": 380,
+  "children": [
+   {
+    "type": "block",
+    "id": "t1",
+    "label": "carga",
+    "x": 256.5,
+    "y": 49,
+    "width": 47,
+    "height": 22,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#181B21",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 13,
+    "fontWeight": 600,
+    "letterSpacing": 0.1,
+    "annotates": "carga"
+   },
+   {
+    "type": "block",
+    "id": "t2",
+    "label": "e⁻",
+    "x": 176.5,
+    "y": 29.5,
+    "width": 27,
+    "height": 25,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#1D4E89",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 15,
+    "fontWeight": 700,
+    "letterSpacing": 0.1,
+    "annotates": "eletrons"
+   },
+   {
+    "type": "block",
+    "id": "t3",
+    "label": "H₂",
+    "x": 25.5,
+    "y": 149.5,
+    "width": 29,
+    "height": 25,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#181B21",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 15,
+    "fontWeight": 700,
+    "letterSpacing": 0.1,
+    "annotates": "entra-h2"
+   },
+   {
+    "type": "block",
+    "id": "t4",
+    "label": "O₂",
+    "x": 503.5,
+    "y": 149.5,
+    "width": 29,
+    "height": 25,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#181B21",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 15,
+    "fontWeight": 700,
+    "letterSpacing": 0.1,
+    "annotates": "entra-o2"
+   },
+   {
+    "type": "block",
+    "id": "t5",
+    "label": "H₂O",
+    "x": 494,
+    "y": 291.5,
+    "width": 40,
+    "height": 25,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#181B21",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 15,
+    "fontWeight": 700,
+    "letterSpacing": 0.1,
+    "annotates": "sai-h2o"
+   },
+   {
+    "type": "block",
+    "id": "t6",
+    "label": "H⁺",
+    "x": 237.5,
+    "y": 198.5,
+    "width": 29,
+    "height": 25,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#8F3414",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 15,
+    "fontWeight": 700,
+    "letterSpacing": 0.1,
+    "annotates": "ions"
+   },
+   {
+    "type": "block",
+    "id": "t7",
+    "label": "ânodo",
+    "x": 146,
+    "y": 244,
+    "width": 50,
+    "height": 22,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#5B6270",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 13,
+    "fontWeight": 400,
+    "letterSpacing": 0.1,
+    "annotates": "anodo"
+   },
+   {
+    "type": "block",
+    "id": "t8",
+    "label": "membrana",
+    "x": 241.5,
+    "y": 329,
+    "width": 77,
+    "height": 22,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#5B6270",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 13,
+    "fontWeight": 400,
+    "letterSpacing": 0.1,
+    "annotates": "membrana"
+   },
+   {
+    "type": "block",
+    "id": "t9",
+    "label": "cátodo",
+    "x": 360,
+    "y": 244,
+    "width": 54,
+    "height": 22,
+    "padding": 0,
+    "fill": "transparent",
+    "stroke": "transparent",
+    "strokeWidth": 0,
+    "wrap": "none",
+    "textAlign": "center",
+    "verticalAlign": "center",
+    "textColor": "#5B6270",
+    "fontFamily": "\"Prancheta Sans\", \"Segoe UI\", \"Noto Sans\", system-ui, sans-serif",
+    "fontSize": 13,
+    "fontWeight": 400,
+    "letterSpacing": 0.1,
+    "annotates": "catodo"
+   }
+  ],
+  "connectors": [],
+  "marks": [
+   {
+    "id": "camara-a",
+    "from": {
+     "x": 80,
+     "y": 130
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 278,
+       "y": 130
+      }
+     },
+     {
+      "line": {
+       "x": 278,
+       "y": 320
+      }
+     },
+     {
+      "line": {
+       "x": 80,
+       "y": 320
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#DCE9F5",
+    "stroke": "none",
+    "strokeWidth": 1.4
+   },
+   {
+    "id": "camara-c",
+    "from": {
+     "x": 282,
+     "y": 130
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 480,
+       "y": 130
+      }
+     },
+     {
+      "line": {
+       "x": 480,
+       "y": 320
+      }
+     },
+     {
+      "line": {
+       "x": 282,
+       "y": 320
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#F6E1DA",
+    "stroke": "none",
+    "strokeWidth": 1.4
+   },
+   {
+    "id": "celula",
+    "from": {
+     "x": 80,
+     "y": 130
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 480,
+       "y": 130
+      }
+     },
+     {
+      "line": {
+       "x": 480,
+       "y": 320
+      }
+     },
+     {
+      "line": {
+       "x": 80,
+       "y": 320
+      }
+     }
+    ],
+    "close": true,
+    "fill": "none",
+    "stroke": "#181B21",
+    "strokeWidth": 2.2
+   },
+   {
+    "id": "membrana",
+    "from": {
+     "x": 280,
+     "y": 130
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 280,
+       "y": 320
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#5B6270",
+    "strokeWidth": 3,
+    "lineStyle": "dashed"
+   },
+   {
+    "id": "anodo",
+    "from": {
+     "x": 128,
+     "y": 150
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 142,
+       "y": 150
+      }
+     },
+     {
+      "line": {
+       "x": 142,
+       "y": 300
+      }
+     },
+     {
+      "line": {
+       "x": 128,
+       "y": 300
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#3B4350",
+    "stroke": "#181B21",
+    "strokeWidth": 1.2
+   },
+   {
+    "id": "catodo",
+    "from": {
+     "x": 418,
+     "y": 150
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 432,
+       "y": 150
+      }
+     },
+     {
+      "line": {
+       "x": 432,
+       "y": 300
+      }
+     },
+     {
+      "line": {
+       "x": 418,
+       "y": 300
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#3B4350",
+    "stroke": "#181B21",
+    "strokeWidth": 1.2
+   },
+   {
+    "id": "fio-a",
+    "from": {
+     "x": 135,
+     "y": 150
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 135,
+       "y": 60
+      }
+     },
+     {
+      "line": {
+       "x": 245,
+       "y": 60
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#181B21",
+    "strokeWidth": 2
+   },
+   {
+    "id": "fio-c",
+    "from": {
+     "x": 315,
+     "y": 60
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 425,
+       "y": 60
+      }
+     },
+     {
+      "line": {
+       "x": 425,
+       "y": 150
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#181B21",
+    "strokeWidth": 2
+   },
+   {
+    "id": "carga",
+    "from": {
+     "x": 245,
+     "y": 46
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 315,
+       "y": 46
+      }
+     },
+     {
+      "line": {
+       "x": 315,
+       "y": 74
+      }
+     },
+     {
+      "line": {
+       "x": 245,
+       "y": 74
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#FBFAF7",
+    "stroke": "#181B21",
+    "strokeWidth": 2
+   },
+   {
+    "id": "eletrons",
+    "from": {
+     "x": 165,
+     "y": 60
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 204,
+       "y": 60
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#1D4E89",
+    "strokeWidth": 2.2
+   },
+   {
+    "id": "eletrons-head",
+    "from": {
+     "x": 215,
+     "y": 60
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 204,
+       "y": 65.5
+      }
+     },
+     {
+      "line": {
+       "x": 204,
+       "y": 54.5
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#1D4E89",
+    "stroke": "#1D4E89",
+    "strokeWidth": 1
+   },
+   {
+    "id": "entra-h2",
+    "from": {
+     "x": 22,
+     "y": 180
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 67,
+       "y": 180
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#181B21",
+    "strokeWidth": 2.2
+   },
+   {
+    "id": "entra-h2-head",
+    "from": {
+     "x": 78,
+     "y": 180
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 67,
+       "y": 185.5
+      }
+     },
+     {
+      "line": {
+       "x": 67,
+       "y": 174.5
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#181B21",
+    "stroke": "#181B21",
+    "strokeWidth": 1
+   },
+   {
+    "id": "entra-o2",
+    "from": {
+     "x": 538,
+     "y": 180
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 493,
+       "y": 180
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#181B21",
+    "strokeWidth": 2.2
+   },
+   {
+    "id": "entra-o2-head",
+    "from": {
+     "x": 482,
+     "y": 180
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 493,
+       "y": 174.5
+      }
+     },
+     {
+      "line": {
+       "x": 493,
+       "y": 185.5
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#181B21",
+    "stroke": "#181B21",
+    "strokeWidth": 1
+   },
+   {
+    "id": "sai-h2o",
+    "from": {
+     "x": 482,
+     "y": 285
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 527,
+       "y": 285
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#181B21",
+    "strokeWidth": 2.2
+   },
+   {
+    "id": "sai-h2o-head",
+    "from": {
+     "x": 538,
+     "y": 285
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 527,
+       "y": 290.5
+      }
+     },
+     {
+      "line": {
+       "x": 527,
+       "y": 279.5
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#181B21",
+    "stroke": "#181B21",
+    "strokeWidth": 1
+   },
+   {
+    "id": "ions",
+    "from": {
+     "x": 225,
+     "y": 225
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 324,
+       "y": 225
+      }
+     }
+    ],
+    "close": false,
+    "fill": "none",
+    "stroke": "#B8431B",
+    "strokeWidth": 2.2
+   },
+   {
+    "id": "ions-head",
+    "from": {
+     "x": 335,
+     "y": 225
+    },
+    "segments": [
+     {
+      "line": {
+       "x": 324,
+       "y": 230.5
+      }
+     },
+     {
+      "line": {
+       "x": 324,
+       "y": 219.5
+      }
+     }
+    ],
+    "close": true,
+    "fill": "#B8431B",
+    "stroke": "#B8431B",
+    "strokeWidth": 1
+   }
+  ]
+ }
+}

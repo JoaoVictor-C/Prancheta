@@ -74,6 +74,8 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `acid-base` | Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻]. | yes |
 | `data-table` | Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false. | yes |
 | `genetics` | Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact. | yes |
+| `pictogram` | Counts and shares as repeated icons -- filled icons computed from each value (a remainder fills the last icon by its fraction), outline slots for the whole -- and sequences of dot figures whose counts are the polygonal numbers, computed from the construction. | yes |
+| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force, rope traced tangent to every wheel) and a block on an inclined plane (components, normal, kinetic or static friction, acceleration), every arrow to one scale. | yes |
 
 ## Figure modules
 
@@ -202,7 +204,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, a boolean function, raw data to summarise, a probability law, a probability tree, overlapping sets, an acid–base equilibrium, a table of given data, or a genetic cross or pedigree.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, a boolean function, raw data to summarise, a probability law, a probability tree, overlapping sets, an acid–base equilibrium, a table of given data, a genetic cross or pedigree, a pictogram, or forces on a body.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -278,6 +280,10 @@ A table of given values is its own question (`S-table-favours-data-table`). *"A 
 
 A genetic cross or a family tree of a trait is its own question (`S-genetics-favours-genetics`). *"No heredograma de uma doença autossômica recessiva, qual a probabilidade de II-2 ser portador?"* has two parents per child, marriages and generations — not a graph (`S-genetics-disqualifies-graph`) and not a mindmap (`S-genetics-disqualifies-mindmap`). The `genetics` preset computes a Punnett square's gametes, cells and ratios from the genotypes, lays out a pedigree by generation, checks it against the mode of inheritance, and prints each requested probability exactly (2/3), refusing one the pedigree cannot determine.
 
+Counts drawn as repeated icons are their own question (`S-pictogram-favours-pictogram`). *"No pictograma, cada ícone representa 5 % dos entrevistados: quantos por cento vão de ônibus?"* is read by counting, not by comparing lengths, so not a `chart` (`S-pictogram-disqualifies-chart`). The `pictogram` preset fills value/per icons per row, a remainder filling the last icon by its fraction, and its dot figures (*"quantos pontos tem a figura 10?"*) have the polygonal numbers, computed from the construction.
+
+Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ) or the incline (components, normal, friction, acceleration) and draws every arrow to one scale, the values as reading lines.
+
 ## Answer three questions, not two
 
 There is a third axis, and it is short: **whose geometry is this?**
@@ -326,7 +332,7 @@ together would produce a figure neither half agrees to.
 
 **Compose.** When two candidates clear the floor on *disjoint* evidence, the figure is genuinely two things — a topology *and* a set of callouts — and flattening it into one preset repeats the failure at the top of this page. Overlapping evidence is not composition: an org chart fires both the hierarchy and graph rules, but on the same fact, so it is one figure.
 
-**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error.
+**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error. An illustration with nothing to compute — a fuel cell, a solar heater — is the usual case: `fixtures/raw-ir-fuel-cell.json` is one worked example, every shape placed by hand and every label still held to the checks.
 
 Until delegation existed, the module repertoire was a list an agent had to already know to consult — nothing in the ranking could reach it, so for selection purposes eleven figure kinds may as well not have been built. That was a real defect in this table and not a missing feature of the modules.
 
@@ -3860,3 +3866,109 @@ is placed in the later generation; children must be exactly one below).
 
 Fixtures: [`fixtures/genetics/`](../../../fixtures/genetics). Tests:
 `tests/genetics.test.ts`.
+
+### pictogram
+
+Data drawn as rows of icons ("cada ícone representa 5 % dos entrevistados"),
+and sequences of figures made of dots (triangular, square, pentagonal and
+hexagonal numbers). ENEM prints both. What is typed is the data; how many icons
+are filled, and how many dots each figure has, is computed from it (ADR 0072).
+
+**Choose it when** the content is a count or a share shown by repeated icons
+(`S-pictogram-favours-pictogram`), or a sequence of dot figures whose count is
+the question. **Do not choose it when** the values must be compared by length
+(that is a `chart`) or the icons stand for nothing countable.
+
+## Input
+
+```json
+{
+  "preset": "pictogram",
+  "icon": "person",
+  "unit": "%",
+  "per": 5,
+  "rows": [{ "label": "Ônibus", "value": 90 }, { "label": "A pé", "value": 60 }]
+}
+```
+
+- `icon`: `person` (default), `circle`, `square`, `smiley`, `house`, `star`.
+- `rows`: `{ label, value }`, values not negative. `per` is what one icon stands
+  for (default 1); `unit` is printed after each value and in the key.
+- `of`: the whole each row is part of. Every row then shows `of / per` slots,
+  the unfilled ones in outline. Default 100 when `unit` is `"%"`, else the
+  largest row, rounded up.
+- `partial`: `"exact"` (default) fills the last icon by the remainder's
+  fraction (72 casas at 10 per icon: seven icons and a fifth); `"round"`
+  rounds each row to whole icons.
+- `perLine` (default 20) wraps a long row; `key: false` drops the key line.
+- `kind: "figurate"` with `shape` (`triangular`, `square`, `pentagonal`,
+  `hexagonal`), `terms` (1–6, default 4) and `name` (default "Figura").
+  Figure k is the union of the perimeters of nested regular polygons of
+  sides 0…k−1 sharing one vertex, dots at unit spacing. Its count comes out of
+  that construction and equals ((s − 2)k² − (s − 4)k)/2, which the tests
+  check: 1, 5, 12, 22 for pentagons.
+
+## answers: false
+
+The question's figure: the icons, the labels, the key and the figures stay.
+Each row's value and each figure's count of dots are hidden; reading them is
+what the question asks.
+
+## What the checks hold it to
+
+Each value names its row's last icon (`annotation-nearest-its-owner`); labels,
+the key and figure names are free-standing. The canvas widens to its widest
+line of text, not only its icons.
+
+### mechanics
+
+Force diagrams solved before they are drawn: pulley systems and a block on an
+inclined plane (ADR 0073). What is typed is the situation (a mass, g, how many
+movable pulleys, an angle, μ). The forces are computed, and every arrow is
+drawn to one scale, so F is half of P on the page when the physics says so.
+
+**Choose it when** the content is forces on a body — a pulley system, a block
+on a slope (`S-forces-favours-mechanics`). **Do not choose it when** the
+content is a free vector sum in the plane (that is `vectors`) or an
+illustration of a machine with nothing to solve (raw IR, or
+`annotated-figure`).
+
+## Input
+
+```json
+{ "preset": "mechanics", "kind": "pulleys", "mass": 80, "movable": 2, "tensions": true }
+{ "preset": "mechanics", "kind": "incline", "mass": 10, "angle": 37, "friction": 0.25 }
+```
+
+- Both kinds: `mass` (kg, positive), `g` (default 10).
+- **pulleys**:
+  - `movable` (0–3, default 1): movable pulleys in series, each hung by its
+    own rope from the ceiling and lifting the one below.
+  - `redirect` (default true): the free end passes over a fixed pulley, so the
+    hand pulls down.
+  - `tensions: true` labels T₁, T₂… between the two runs of each rope.
+  - The physics: T_i = P/2^i and F = P/2ⁿ (F = P with a fixed pulley alone).
+- **incline**:
+  - `angle` (10–75°): a shallow slope is drawn longer, not lower.
+  - `friction` (μ): with μ the block slides when tg θ > μ, with kinetic
+    friction μN and a = g(sen θ − μ cos θ); otherwise it is held, by static
+    friction equal to Pₓ, and a = 0.
+  - `components` (default true) draws Pₓ and Pᵧ dashed, with the
+    parallelogram back to P.
+  - Friction is drawn from the block's up-slope face, where it acts.
+
+The arrows carry names only (P, N, Pₓ, Pᵧ, Fₐₜ, F, T₁). The values are reading
+lines under the figure: P = m·g, the components, the friction and why, and a.
+
+## answers: false
+
+Everything drawn stays: the arrows and their names, the mass, the angle. The
+reading lines go — every computed value is what the question asks.
+
+## What the checks hold it to
+
+Each arrow's name annotates its head and must be nearer it than any other ink
+(`annotation-nearest-its-owner`). This is why the arrow scale is chosen so the
+tips of P and Pᵧ stay 64 px above the ground, why the angle's label sits at a
+radius where it is nearer its arc than either side of the angle, and why the
+angle is at least 10°.
