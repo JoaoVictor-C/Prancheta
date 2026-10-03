@@ -1,0 +1,20 @@
+{
+  "preset": "annotated-figure",
+  "title": "Regra do quociente: q = g/u lida como g = q·u",
+  "width": 720,
+  "height": 500,
+  "parts": [
+    { "id": "antiga", "x": 170, "y": 140, "width": 300, "height": 200, "label": "q · u = g  (área conhecida)", "role": "primary" },
+    { "id": "topo", "x": 170, "y": 80, "width": 300, "height": 60, "label": "q · Δu", "role": "accent" },
+    { "id": "lado", "x": 470, "y": 140, "width": 90, "height": 200, "label": "Δq · u", "role": "accent" },
+    { "id": "canto", "x": 470, "y": 80, "width": 90, "height": 60, "label": "Δq · Δu", "role": "warning" },
+    { "id": "conta", "x": 40, "y": 420, "width": 640, "height": 64, "label": "Δg = q·Δu + Δq·u + Δq·Δu   ⇒   q′ = (g′ − q·u′) / u = (g′·u − g·u′) / u²", "role": "muted" }
+  ],
+  "callouts": [
+    { "text": "largura q = g/u", "at": { "x": 250, "y": 372 }, "points": { "x": 320, "y": 340 }, "width": 140 },
+    { "text": "+ Δq (o que queremos)", "at": { "x": 520, "y": 368 }, "points": { "x": 515, "y": 340 }, "width": 150 },
+    { "text": "altura u(x)", "at": { "x": 20, "y": 230 }, "points": { "x": 170, "y": 240 }, "width": 100 },
+    { "text": "+ Δu", "at": { "x": 40, "y": 100 }, "points": { "x": 170, "y": 110 }, "width": 60 },
+    { "text": "pedacinho de 2ª ordem: some quando Δx → 0", "at": { "x": 585, "y": 10 }, "points": "canto", "width": 125 }
+  ]
+}

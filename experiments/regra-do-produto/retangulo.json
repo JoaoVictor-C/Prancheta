@@ -1,0 +1,19 @@
+{
+  "preset": "annotated-figure",
+  "title": "Regra do produto: f = g·u como área de um retângulo",
+  "width": 700,
+  "height": 420,
+  "parts": [
+    { "id": "antiga", "x": 160, "y": 140, "width": 300, "height": 200, "label": "g · u  (área em x)", "role": "primary" },
+    { "id": "topo", "x": 160, "y": 80, "width": 300, "height": 60, "label": "g · Δu", "role": "accent" },
+    { "id": "lado", "x": 460, "y": 140, "width": 90, "height": 200, "label": "Δg · u", "role": "accent" },
+    { "id": "canto", "x": 460, "y": 80, "width": 90, "height": 60, "label": "Δg · Δu", "role": "warning" }
+  ],
+  "callouts": [
+    { "text": "largura g(x)", "at": { "x": 250, "y": 375 }, "points": { "x": 310, "y": 340 }, "width": 120 },
+    { "text": "+ Δg", "at": { "x": 480, "y": 375 }, "points": { "x": 505, "y": 340 }, "width": 60 },
+    { "text": "altura u(x)", "at": { "x": 20, "y": 230 }, "points": { "x": 160, "y": 240 }, "width": 100 },
+    { "text": "+ Δu", "at": { "x": 40, "y": 100 }, "points": { "x": 160, "y": 110 }, "width": 60 },
+    { "text": "pedacinho de 2ª ordem: some quando Δx → 0", "at": { "x": 570, "y": 10 }, "points": "canto", "width": 125 }
+  ]
+}
