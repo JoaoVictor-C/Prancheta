@@ -75,7 +75,7 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `data-table` | Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false. | yes |
 | `genetics` | Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact. | yes |
 | `pictogram` | Counts and shares as repeated icons -- filled icons computed from each value (a remainder fills the last icon by its fraction), outline slots for the whole -- and sequences of dot figures whose counts are the polygonal numbers, computed from the construction. | yes |
-| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force, rope traced tangent to every wheel) and a block on an inclined plane (components, normal, kinetic or static friction, acceleration), every arrow to one scale. | yes |
+| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks joined over a pulley at a table's edge, Atwood's machine, and a block on a spring (k·x = m·g, the stretch to scale) -- every arrow to one scale. | yes |
 
 ## Figure modules
 
@@ -282,7 +282,7 @@ A genetic cross or a family tree of a trait is its own question (`S-genetics-fav
 
 Counts drawn as repeated icons are their own question (`S-pictogram-favours-pictogram`). *"No pictograma, cada ícone representa 5 % dos entrevistados: quantos por cento vão de ônibus?"* is read by counting, not by comparing lengths, so not a `chart` (`S-pictogram-disqualifies-chart`). The `pictogram` preset fills value/per icons per row, a remainder filling the last icon by its fraction, and its dot figures (*"quantos pontos tem a figura 10?"*) have the polygonal numbers, computed from the construction.
 
-Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ) or the incline (components, normal, friction, acceleration) and draws every arrow to one scale, the values as reading lines.
+Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ), the incline (components, normal, friction, acceleration), two blocks over a table's edge, Atwood's machine or a spring (k·x = m·g) and draws every arrow to one scale, the values as reading lines.
 
 ## Answer three questions, not two
 
@@ -3922,8 +3922,9 @@ line of text, not only its icons.
 
 ### mechanics
 
-Force diagrams solved before they are drawn: pulley systems and a block on an
-inclined plane (ADR 0073). What is typed is the situation (a mass, g, how many
+Force diagrams solved before they are drawn: pulley systems, a block on an
+inclined plane, two blocks joined over a pulley at a table's edge, Atwood's
+machine, and a block hanging from a spring (ADR 0073). What is typed is the situation (a mass, g, how many
 movable pulleys, an angle, μ). The forces are computed, and every arrow is
 drawn to one scale, so F is half of P on the page when the physics says so.
 
@@ -3938,9 +3939,12 @@ illustration of a machine with nothing to solve (raw IR, or
 ```json
 { "preset": "mechanics", "kind": "pulleys", "mass": 80, "movable": 2, "tensions": true }
 { "preset": "mechanics", "kind": "incline", "mass": 10, "angle": 37, "friction": 0.25 }
+{ "preset": "mechanics", "kind": "table", "masses": [6, 4], "friction": 0.2 }
+{ "preset": "mechanics", "kind": "atwood", "masses": [3, 5] }
+{ "preset": "mechanics", "kind": "spring", "mass": 2, "stiffness": 250 }
 ```
 
-- Both kinds: `mass` (kg, positive), `g` (default 10).
+- Every kind: `g` (default 10). One body takes `mass` (kg, positive), two take `masses`.
 - **pulleys**:
   - `movable` (0–3, default 1): movable pulleys in series, each hung by its
     own rope from the ceiling and lifting the one below.
@@ -3956,6 +3960,26 @@ illustration of a machine with nothing to solve (raw IR, or
   - `components` (default true) draws Pₓ and Pᵧ dashed, with the
     parallelogram back to P.
   - Friction is drawn from the block's up-slope face, where it acts.
+- **table**:
+  - `masses: [m_A, m_B]`: A on the table, B hanging over a pulley at its edge.
+    `friction` (μ) applies between A and the table.
+  - The physics: with P_B > μN the system moves, with
+    a = (P_B − μN)/(m_A + m_B) and T = m_B(g − a); otherwise static friction
+    holds it, and T = P_B.
+- **atwood**:
+  - `masses: [m₁, m₂]` over one fixed pulley. The heavier block is drawn lower.
+  - The physics: a = |m₂ − m₁|g/(m₁ + m₂) and T = 2m₁m₂g/(m₁ + m₂), which
+    always lies between the two weights.
+- **spring**:
+  - `mass`, `stiffness` (k, N/m), `natural` (L₀, m, default 0,2).
+  - The loaded spring hangs beside the same spring unloaded. L₀ and the
+    stretch x = mg/k are dimension lines to one scale, so x/L₀ on the page is
+    x/L₀ in metres.
+  - F_el and P are drawn equal, since the block is in equilibrium.
+  - A stretch too small to draw to scale beside L₀ is refused.
+
+Tension arrows (T) are drawn beside their rope, not on it, so that their name
+reads as the arrow's rather than the rope's.
 
 The arrows carry names only (P, N, Pₓ, Pᵧ, Fₐₜ, F, T₁). The values are reading
 lines under the figure: P = m·g, the components, the friction and why, and a.

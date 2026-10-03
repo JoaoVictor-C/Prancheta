@@ -1,7 +1,8 @@
 # mechanics
 
-Force diagrams solved before they are drawn: pulley systems and a block on an
-inclined plane (ADR 0073). What is typed is the situation (a mass, g, how many
+Force diagrams solved before they are drawn: pulley systems, a block on an
+inclined plane, two blocks joined over a pulley at a table's edge, Atwood's
+machine, and a block hanging from a spring (ADR 0073). What is typed is the situation (a mass, g, how many
 movable pulleys, an angle, μ). The forces are computed, and every arrow is
 drawn to one scale, so F is half of P on the page when the physics says so.
 
@@ -16,9 +17,12 @@ illustration of a machine with nothing to solve (raw IR, or
 ```json
 { "preset": "mechanics", "kind": "pulleys", "mass": 80, "movable": 2, "tensions": true }
 { "preset": "mechanics", "kind": "incline", "mass": 10, "angle": 37, "friction": 0.25 }
+{ "preset": "mechanics", "kind": "table", "masses": [6, 4], "friction": 0.2 }
+{ "preset": "mechanics", "kind": "atwood", "masses": [3, 5] }
+{ "preset": "mechanics", "kind": "spring", "mass": 2, "stiffness": 250 }
 ```
 
-- Both kinds: `mass` (kg, positive), `g` (default 10).
+- Every kind: `g` (default 10). One body takes `mass` (kg, positive), two take `masses`.
 - **pulleys**:
   - `movable` (0–3, default 1): movable pulleys in series, each hung by its
     own rope from the ceiling and lifting the one below.
@@ -34,6 +38,26 @@ illustration of a machine with nothing to solve (raw IR, or
   - `components` (default true) draws Pₓ and Pᵧ dashed, with the
     parallelogram back to P.
   - Friction is drawn from the block's up-slope face, where it acts.
+- **table**:
+  - `masses: [m_A, m_B]`: A on the table, B hanging over a pulley at its edge.
+    `friction` (μ) applies between A and the table.
+  - The physics: with P_B > μN the system moves, with
+    a = (P_B − μN)/(m_A + m_B) and T = m_B(g − a); otherwise static friction
+    holds it, and T = P_B.
+- **atwood**:
+  - `masses: [m₁, m₂]` over one fixed pulley. The heavier block is drawn lower.
+  - The physics: a = |m₂ − m₁|g/(m₁ + m₂) and T = 2m₁m₂g/(m₁ + m₂), which
+    always lies between the two weights.
+- **spring**:
+  - `mass`, `stiffness` (k, N/m), `natural` (L₀, m, default 0,2).
+  - The loaded spring hangs beside the same spring unloaded. L₀ and the
+    stretch x = mg/k are dimension lines to one scale, so x/L₀ on the page is
+    x/L₀ in metres.
+  - F_el and P are drawn equal, since the block is in equilibrium.
+  - A stretch too small to draw to scale beside L₀ is refused.
+
+Tension arrows (T) are drawn beside their rope, not on it, so that their name
+reads as the arrow's rather than the rope's.
 
 The arrows carry names only (P, N, Pₓ, Pᵧ, Fₐₜ, F, T₁). The values are reading
 lines under the figure: P = m·g, the components, the friction and why, and a.

@@ -403,7 +403,7 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
   {
     id: "mechanics",
     implemented: true,
-    summary: "Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force, rope traced tangent to every wheel) and a block on an inclined plane (components, normal, kinetic or static friction, acceleration), every arrow to one scale.",
+    summary: "Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks joined over a pulley at a table's edge, Atwood's machine, and a block on a spring (k·x = m·g, the stretch to scale) -- every arrow to one scale.",
   },
 ];
 

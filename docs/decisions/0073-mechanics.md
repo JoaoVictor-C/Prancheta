@@ -45,6 +45,12 @@ For the same reason:
 
 - 2023 Q109 is covered. 2023 Q114 (a truck pulling by two cords) stays
   partial: the truck is a picture.
-- Not built yet, and the obvious next kinds: blocks joined over a pulley on a
-  table, Atwood's machine, springs. Each is a solve-then-draw kind on the same
-  arrow scale.
+- Three more kinds followed on the same scale:
+  - **table**: a block on a table, joined over a pulley to one hanging. It
+    moves when P_B > μN, with a = (P_B − μN)/(m_A + m_B) and T = m_B(g − a).
+  - **atwood**: a = |m₂ − m₁|g/(m₁ + m₂) and T = 2m₁m₂g/(m₁ + m₂).
+  - **spring**: k·x = m·g. The stretch and L₀ are dimension lines to one scale,
+    beside the spring unloaded.
+
+  Tension arrows sit beside their rope, not on it, so that their name reads as
+  the arrow's.
