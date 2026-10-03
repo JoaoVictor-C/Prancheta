@@ -937,5 +937,5 @@ export function validateVectorsInput(raw: Record<string, unknown>): void {
   // building the figure -- the same discipline sign-chart's validator uses,
   // because a second, hand-written shadow of this logic is a second place
   // for the two to drift.
-  expandVectors(raw as unknown as VectorsInput);
+  v.probe(() => expandVectors(raw as unknown as VectorsInput));
 }

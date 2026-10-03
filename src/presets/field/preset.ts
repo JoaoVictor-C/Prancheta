@@ -1291,5 +1291,5 @@ export function validateFieldInput(raw: Record<string, unknown>): void {
   // actually building the figure -- the same discipline every other preset
   // here uses, because a second, hand-written shadow of this logic is a
   // second place for the two to drift.
-  expandField(raw as unknown as FieldInput);
+  v.probe(() => expandField(raw as unknown as FieldInput));
 }

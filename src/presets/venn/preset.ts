@@ -464,7 +464,7 @@ export function validateVennInput(raw: Record<string, unknown>): void {
   if (raw.counts !== undefined) v.object(raw.counts, `${path}.counts`);
   if (raw.elements !== undefined) v.object(raw.elements, `${path}.elements`);
   // The arithmetic, the expression and the placement are exercised by building the figure.
-  expandVenn(raw as unknown as VennInput);
+  v.probe(() => expandVenn(raw as unknown as VennInput));
 }
 
 // ---- placement of text inside a region ---------------------------------------------------------

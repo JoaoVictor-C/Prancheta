@@ -20,6 +20,12 @@ A plan is written before a body of work, kept current while the work is under wa
 | [PLAN-NEXT.md](PLAN-NEXT.md) | M5–M10: colour, export, scales, module repair, constraints. |
 | [PLAN.md](PLAN.md) | M0–M4: the walking skeleton to the two hard probes. |
 
+**Not pursued**
+
+| plan | what it proposed |
+| --- | --- |
+| [EFFECTS-EXTENSION-PLAN.md](EFFECTS-EXTENSION-PLAN.md) | Patterns, blend modes, distortion and transforms on top of the effects system. Overtaken by ADR 0006 and the paint work; the transforms were refused. |
+
 **Starting a new plan.** Name it `PLAN-<SUBJECT>.md` and add a row under *In progress*. Give it a rules section saying what every item owes, and a phase table with one status per row. When the last row is done:
 
 - add the **Status:** line at its head;

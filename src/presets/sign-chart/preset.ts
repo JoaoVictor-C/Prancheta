@@ -471,5 +471,5 @@ export function validateSignChartInput(raw: Record<string, unknown>): void {
       v.requiredString(o, "expr", `${path}.factors[${i}]`);
     });
   }
-  expandSignChart(raw as unknown as SignChartInput);
+  v.probe(() => expandSignChart(raw as unknown as SignChartInput));
 }

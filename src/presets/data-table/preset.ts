@@ -815,5 +815,5 @@ export function validateDataTableInput(raw: Record<string, unknown>): void {
     if (Object.keys(by).length === 0) throw new SpecError(`${path}.totals.by must name at least one column`);
   }
 
-  expandDataTable(raw as unknown as DataTableInput);
+  v.probe(() => expandDataTable(raw as unknown as DataTableInput));
 }

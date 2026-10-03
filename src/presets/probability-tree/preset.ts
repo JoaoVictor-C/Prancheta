@@ -646,5 +646,5 @@ export function validateProbabilityTreeInput(raw: Record<string, unknown>): void
   v.optionalEnum(raw, "notation", path, ["fraction", "decimal", "percent"] as const);
   v.optionalEnum(raw, "also", path, ["percent", "decimal"] as const);
   // The tree, the arithmetic and every reference are exercised by building the figure.
-  expandProbabilityTree(raw as unknown as ProbabilityTreeInput);
+  v.probe(() => expandProbabilityTree(raw as unknown as ProbabilityTreeInput));
 }

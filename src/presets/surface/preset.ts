@@ -887,5 +887,5 @@ export function validateSurfaceInput(raw: Record<string, unknown>): void {
   // Every refusal that needs f -- a level never crossed, a point in a hole,
   // a corner with no tangent plane -- is exercised by building the figure:
   // one implementation of the rules, not a shadow copy.
-  expandSurface(raw as unknown as SurfaceInput);
+  v.probe(() => expandSurface(raw as unknown as SurfaceInput));
 }

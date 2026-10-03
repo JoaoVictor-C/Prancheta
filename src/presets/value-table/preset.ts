@@ -553,5 +553,5 @@ export function validateValueTableInput(raw: Record<string, unknown>): void {
       v.requiredString(o, "expr", `${path}.functions[${i}]`);
     });
   }
-  expandValueTable(raw as unknown as ValueTableInput);
+  v.probe(() => expandValueTable(raw as unknown as ValueTableInput));
 }

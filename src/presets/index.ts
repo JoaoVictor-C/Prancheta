@@ -445,7 +445,9 @@ export function parseFigureInput(parsed: unknown): FigureSpec {
     const preset = (parsed as { preset?: unknown }).preset;
     if (preset !== undefined) {
       if (!isPresetInput(parsed)) throw unknownPreset(preset);
-      validatePresetInput(parsed);
+      // Validate the document, then expand it once: the expander raises what the
+      // validator's own probe would have, so running both built every figure twice.
+      v.withoutProbe(() => validatePresetInput(parsed));
       return expand(parsed);
     }
     if ((parsed as { version?: unknown }).version === undefined) throw neitherShape();

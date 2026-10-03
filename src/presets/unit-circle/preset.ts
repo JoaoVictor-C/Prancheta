@@ -785,7 +785,7 @@ export function validateUnitCircleInput(raw: Record<string, unknown>): void {
   v.optionalBoolean(raw, "answers", path);
   const angles = v.nonEmptyArray(raw, "angles", path, "angles (a string, or {angle, ...})");
   angles.forEach((a, i) => validateAngleEntry(a, `${path}.angles[${i}]`));
-  expandUnitCircle(raw as unknown as UnitCircleInput);
+  v.probe(() => expandUnitCircle(raw as unknown as UnitCircleInput));
 }
 
 function validateAngleEntry(raw: unknown, path: string): void {

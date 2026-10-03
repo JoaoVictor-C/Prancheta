@@ -2400,7 +2400,7 @@ export function validateConstructionInput(raw: Record<string, unknown>): void {
   if (raw.annotations !== undefined) v.array(raw, "annotations", path, "annotations");
   // References, geometry and every refusal are exercised by building the
   // figure -- one implementation, never a shadow of it that could drift.
-  expandConstruction(raw as unknown as ConstructionInput);
+  v.probe(() => expandConstruction(raw as unknown as ConstructionInput));
 }
 
 // Keep the Block type referenced for readers of the emitted spec.

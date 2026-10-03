@@ -60,7 +60,7 @@ export function validateGeneticsInput(raw: Record<string, unknown>): void {
       v.requiredString(s, "M", `${path}.sexWords`);
     }
     if (raw.highlight !== undefined && (!Array.isArray(raw.highlight) || raw.highlight.some((h) => typeof h !== "string"))) throw new SpecError(`${path}.highlight must be an array of strings`);
-    expandPunnett(raw as unknown as PunnettInput);
+    v.probe(() => expandPunnett(raw as unknown as PunnettInput));
     return;
   }
   only(raw, ["kind", "title", "individuals", "marriages", "carrierStyle", "legend", "analysis", "answers"], path);
@@ -112,5 +112,5 @@ export function validateGeneticsInput(raw: Record<string, unknown>): void {
       });
     }
   }
-  expandPedigree(raw as unknown as PedigreeInput);
+  v.probe(() => expandPedigree(raw as unknown as PedigreeInput));
 }

@@ -1187,5 +1187,5 @@ export function validateDistributionInput(raw: Record<string, unknown>): void {
   v.optionalBoolean(raw, "showZ", path);
   v.optionalBoolean(raw, "tickLabels", path);
   // the model, the event and every number are exercised by building the figure
-  expandDistribution(raw as unknown as DistributionInput);
+  v.probe(() => expandDistribution(raw as unknown as DistributionInput));
 }

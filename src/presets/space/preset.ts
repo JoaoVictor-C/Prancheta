@@ -1383,5 +1383,5 @@ export function validateSpaceInput(raw: Record<string, unknown>): void {
   }
   // References, arithmetic and every refusal are exercised by building the
   // figure: one implementation of the rules, not a shadow copy.
-  expandSpace(raw as unknown as SpaceInput);
+  v.probe(() => expandSpace(raw as unknown as SpaceInput));
 }

@@ -1074,5 +1074,5 @@ export function validateLogicCircuitInput(raw: Record<string, unknown>): void {
     }
     for (const name of vars) if (!(name in inputs)) throw new SpecError(`${path}.inputs: no value for ${name}; give every variable (${vars.join(", ")}).`);
   }
-  expandLogicCircuit(raw as unknown as LogicCircuitInput);
+  v.probe(() => expandLogicCircuit(raw as unknown as LogicCircuitInput));
 }

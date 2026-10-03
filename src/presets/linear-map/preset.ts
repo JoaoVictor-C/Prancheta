@@ -1393,5 +1393,5 @@ export function validateLinearMapInput(raw: Record<string, unknown>): void {
     });
   }
   // Arithmetic, geometry and every reference are exercised by building the figure.
-  expandLinearMap(raw as unknown as LinearMapInput);
+  v.probe(() => expandLinearMap(raw as unknown as LinearMapInput));
 }

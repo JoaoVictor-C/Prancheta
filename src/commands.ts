@@ -714,7 +714,7 @@ const animateCommand: Command = {
         }
       });
       if (!result.ok) {
-        lines.push("  !    no repair strategy for this check — translation repair is not wired (M10 debt)");
+        lines.push("  !    no repair strategy for this check — constraints are checked, not repaired (ADR 0076)");
       }
 
       return { text: lines.join("\n"), data: { manifest, svg: result.svg }, exitCode: result.ok ? 0 : 2 };
@@ -867,7 +867,7 @@ const animateCommand: Command = {
     // with the transition.
     if (!renderedBefore.manifest.ok) lines.push("  FAIL one or more checks on the first state as authored (see manifest.before; it is not a rendered frame)");
     if (!renderedAfter.manifest.ok) lines.push("  FAIL one or more checks on the second state (see manifest.after)");
-    if (!ok) lines.push("  !    no repair strategy for this check — translation repair is not wired (M10 debt)");
+    if (!ok) lines.push("  !    no repair strategy for this check — constraints are checked, not repaired (ADR 0076)");
 
     return { text: lines.join("\n"), data: { manifest, svg }, exitCode: ok ? 0 : 2 };
   },

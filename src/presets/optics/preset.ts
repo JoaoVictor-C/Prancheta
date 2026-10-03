@@ -1094,6 +1094,6 @@ export function validateOpticsInput(raw: Record<string, unknown>): void {
     v.optionalBoolean(raw, "reflected", path);
   }
   // Arithmetic and geometry are exercised by building the figure.
-  expandOptics(raw as unknown as OpticsInput);
+  v.probe(() => expandOptics(raw as unknown as OpticsInput));
 }
 

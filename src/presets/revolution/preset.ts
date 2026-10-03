@@ -1044,5 +1044,5 @@ export function validateRevolutionInput(raw: Record<string, unknown>): void {
   } else if (raw.camera !== undefined) v.optionalEnum(raw, "camera", path, ["cavalier", "isometric", "orthographic"]);
   // Every rule -- the region, the axis, the method, the slice -- is exercised
   // by building the figure: one implementation, not a shadow copy.
-  expandRevolution(raw as unknown as RevolutionInput);
+  v.probe(() => expandRevolution(raw as unknown as RevolutionInput));
 }

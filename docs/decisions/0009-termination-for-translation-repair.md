@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted (2026-08-23). Implementation proceeds in M10 (stage 6, steps 31-34).
+Accepted (2026-08-23). Implemented in M10 (stage 6, steps 31-34) but never wired into the pipeline; the implementation was removed by [ADR 0076](0076-one-expansion-and-no-dead-code.md). The argument below stands as the design should translation repair ever be wanted.
 
 ## Context
 
