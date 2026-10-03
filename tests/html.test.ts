@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import { buildHtml } from "../src/layout/html.ts";
 import { parseSpec } from "../src/ir/types.ts";
 
-const fixturePath = new URL("../fixtures/labelled-blocks.json", import.meta.url);
+const fixturePath = new URL("../fixtures/labelled-blocks/labelled-blocks.json", import.meta.url);
 const fixtureSpec = parseSpec(JSON.parse(readFileSync(fixturePath, "utf8")));
 
 test("buildHtml output contains no <script", () => {

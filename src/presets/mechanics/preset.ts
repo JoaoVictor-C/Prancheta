@@ -1,6 +1,6 @@
 /**
  * mechanics -- physics situations solved before they are drawn (ADR 0073,
- * docs/PLAN-PHYSICS.md). What is typed is the situation -- masses, g, an angle,
+ * docs/plans/PLAN-PHYSICS.md). What is typed is the situation -- masses, g, an angle,
  * μ, a spring constant -- and everything drawn is computed by a solver in
  * physics.ts. Every force arrow is drawn to one scale per figure, so its
  * length IS its magnitude.
@@ -54,6 +54,16 @@ const REGISTRY: readonly Kind[] = [pulleys, incline, table, atwood, spring, proj
 export const KINDS: readonly string[] = REGISTRY.map((k) => k.id);
 const byId = new Map(REGISTRY.map((k) => [k.id, k]));
 const COMMON = ["preset", "title", "locale", "kind", "g", "answers"];
+
+// Names every preset input already owns (src/presets/index.ts validates
+// style, theme and type before any preset sees them). A kind field with one
+// of these names is refused there with a message about type packs; it
+// happened to the collision kind's "type". Refused here at load instead.
+const RESERVED = [...COMMON, "style", "theme", "type"];
+for (const k of REGISTRY) {
+  const clash = k.fields.filter((f) => RESERVED.includes(f));
+  if (clash.length > 0) throw new Error(`mechanics kind "${k.id}" uses reserved field name(s): ${clash.join(", ")}`);
+}
 
 export function validateMechanicsInput(raw: Record<string, unknown>): void {
   const path = "mechanics";

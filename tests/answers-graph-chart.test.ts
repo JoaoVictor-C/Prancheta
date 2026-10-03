@@ -99,13 +99,13 @@ test("asymptotes are still found (a wrong claim is refused) but not drawn", () =
 });
 
 test("a pie keeps its slices and names, without shares; a stack loses its total", () => {
-  const pie = fixture<ChartInput>("chart-pie-market-share.json");
+  const pie = fixture<ChartInput>("chart/chart-pie-market-share.json");
   const shown = labels(expandChart(pie));
   const hidden = labels(expandChart({ ...pie, answers: false }));
   assert.ok(shown.some((t) => t.endsWith("%")));
   assert.ok(!hidden.some((t) => t.includes("%")), hidden.join(" | "));
   for (const c of pie.categories) assert.ok(hidden.includes(c.label), `${c.label} named`);
-  const stacked = fixture<ChartInput>("chart-stacked-budget.json");
+  const stacked = fixture<ChartInput>("chart/chart-stacked-budget.json");
   assert.ok(labels(expandChart({ ...stacked, answers: false })).length < labels(expandChart(stacked)).length);
   // Grouped bars' printed values are the data: they stay.
   const grouped: ChartInput = { categories: [{ label: "A", values: [3] }, { label: "B", values: [5] }] };
@@ -123,7 +123,7 @@ test("question figures render with every check passing", { timeout: 240000 }, as
     const bad = result.manifest.checks.filter((c) => c.status === "fail");
     assert.deepEqual(bad.map((c) => `${c.id}: ${c.detail}`), [], rel);
   }
-  for (const rel of ["chart-pie-market-share.json", "chart-stacked-budget.json"]) {
+  for (const rel of ["chart/chart-pie-market-share.json", "chart/chart-stacked-budget.json"]) {
     const result = await render(expandChart({ ...fixture<ChartInput>(rel), answers: false }), { raster: false });
     const bad = result.manifest.checks.filter((c) => c.status === "fail");
     assert.deepEqual(bad.map((c) => `${c.id}: ${c.detail}`), [], rel);

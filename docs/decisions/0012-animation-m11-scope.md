@@ -6,7 +6,7 @@
 
 ## Context
 
-[docs/PLAN-NEXT.md](../PLAN-NEXT.md) named animation as explicitly out of scope; [ROADMAP.md](../../ROADMAP.md)'s "Where this goes next" names it first, on the strength of decision 0001's anticipation and [src/anim/diff.ts](../../src/anim/diff.ts) (M4's second probe): given two `LaidOutFigure` states, it matches elements by stable id and classifies each as `appeared` / `disappeared` / `moved` / `resized` / `restyled` / `retexted` / `unchanged`. No timeline, no easing, no renderer exists yet.
+[docs/plans/PLAN-NEXT.md](../plans/PLAN-NEXT.md) named animation as explicitly out of scope; [ROADMAP.md](../../ROADMAP.md)'s "Where this goes next" names it first, on the strength of decision 0001's anticipation and [src/anim/diff.ts](../../src/anim/diff.ts) (M4's second probe): given two `LaidOutFigure` states, it matches elements by stable id and classifies each as `appeared` / `disappeared` / `moved` / `resized` / `restyled` / `retexted` / `unchanged`. No timeline, no easing, no renderer exists yet.
 
 The house rule — "every new degree of freedom ships with the check that constrains it" — applies. Nothing in this project's six geometric checks reasons about *time*; a figure that changes over time introduces a class of defect (correct at both authored endpoints, wrong somewhere in between) no existing check can see.
 

@@ -3,7 +3,7 @@
 ## Status
 
 Accepted. Extends [0053](0053-circuits.md); item 5 of
-[`docs/AUDIT-ENEM.md`](../AUDIT-ENEM.md) (2024 Q131, Q132; 2025 Q119, Q130).
+[`docs/research/AUDIT-ENEM.md`](../research/AUDIT-ENEM.md) (2024 Q131, Q132; 2025 Q119, Q130).
 Uses the rich text of [0062](0062-rich-text-and-the-reading-panel.md) and the
 label claims of [0035](0035-what-a-label-hides-and-claims.md).
 

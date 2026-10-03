@@ -4,7 +4,7 @@
 
 Accepted. Extends [ADR 0022](0022-function-graph-preset.md),
 [ADR 0024](0024-didactic-checks.md) and [ADR 0036](0036-areas-and-riemann-sums.md);
-answers item 2 of [AUDIT-ENEM](../AUDIT-ENEM.md).
+answers item 2 of [AUDIT-ENEM](../research/AUDIT-ENEM.md).
 
 ## The need
 
@@ -181,4 +181,4 @@ already covered. 2023 Q177's Ferris wheel is item 3's.
 Fixtures: `fixtures/function-graph/series-monthly-temperature.json`,
 `series-fill-between.json`, `series-dual-axis.json`, `bars-with-line.json`,
 `schematic-position-time.json`, `panels-five-options.json`, and
-`fixtures/chart-bars-overlay.json`.
+`fixtures/chart/chart-bars-overlay.json`.

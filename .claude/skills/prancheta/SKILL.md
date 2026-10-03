@@ -332,7 +332,7 @@ together would produce a figure neither half agrees to.
 
 **Compose.** When two candidates clear the floor on *disjoint* evidence, the figure is genuinely two things — a topology *and* a set of callouts — and flattening it into one preset repeats the failure at the top of this page. Overlapping evidence is not composition: an org chart fires both the hierarchy and graph rules, but on the same fact, so it is one figure.
 
-**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error. An illustration with nothing to compute — a fuel cell, a solar heater — is the usual case: `fixtures/raw-ir-fuel-cell.json` is one worked example, every shape placed by hand and every label still held to the checks.
+**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error. An illustration with nothing to compute — a fuel cell, a solar heater — is the usual case: `fixtures/ir/raw-ir-fuel-cell.json` is one worked example, every shape placed by hand and every label still held to the checks.
 
 Until delegation existed, the module repertoire was a list an agent had to already know to consult — nothing in the ranking could reach it, so for selection purposes eleven figure kinds may as well not have been built. That was a real defect in this table and not a missing feature of the modules.
 
@@ -377,7 +377,7 @@ A `plain-flow` idiom nudges towards this preset but never carries a figure by it
 }
 ```
 
-Fixture: [`fixtures/labelled-blocks.json`](../../../fixtures/labelled-blocks.json) (raw IR — this preset predates the preset layer and its fixture was written directly against the IR)
+Fixture: [`fixtures/labelled-blocks/labelled-blocks.json`](../../../fixtures/labelled-blocks/labelled-blocks.json) (raw IR — this preset predates the preset layer and its fixture was written directly against the IR)
 
 ### graph
 
@@ -416,7 +416,7 @@ ELK decides node positions and edge routes. It is handed the **measured** size o
 }
 ```
 
-Fixture: [`fixtures/graph-pipeline.json`](../../../fixtures/graph-pipeline.json)
+Fixture: [`fixtures/graph/graph-pipeline.json`](../../../fixtures/graph/graph-pipeline.json)
 
 ### mindmap
 
@@ -450,7 +450,7 @@ It is the same ELK ingest as `graph`, with a tree algorithm and edges derived fr
 }
 ```
 
-Fixture: [`fixtures/mindmap-incident.json`](../../../fixtures/mindmap-incident.json)
+Fixture: [`fixtures/mindmap/mindmap-incident.json`](../../../fixtures/mindmap/mindmap-incident.json)
 
 ### annotated-figure
 
@@ -489,7 +489,7 @@ Size the parts to hold their labels, or leave the labels off the parts and put t
 
 `points` takes a part id or a bare `{x, y}` on the figure.
 
-Fixture: [`fixtures/annotated-cell.json`](../../../fixtures/annotated-cell.json)
+Fixture: [`fixtures/annotated-figure/annotated-cell.json`](../../../fixtures/annotated-figure/annotated-cell.json)
 
 ### chart
 
@@ -524,7 +524,7 @@ A slice under 6% carries no inline share — there is no room to set one legibly
 
 ## A ruled bar chart, and a line over the bars (ADR 0066)
 
-`yAxis: {name, range, step}` and/or `overlay: [{label, values, colour, axis}]` (with `y2Axis` for an overlay on a right axis), plus `xName`, draw a vertical grouped bar chart the way an exam prints one. The y axis is numbered and ruled, and a line runs over the bars (stock bars and a demand line). Such a chart is not drawn here. It is translated into `function-graph`'s plane (`ruledChart`): the categories become its category axis, each series a set of `bars`, each overlay a `series`. That plane already numbers, rules and checks an axis, and a line over bars needs one coordinate system for both. Bars without these fields are unchanged. A **line chart of measured data** is function-graph's `series`, not this preset's line mode, which stays the minimal axis-less path below; `yAxis` on `chartType: "line"` is refused with that pointer. Fixture: [`fixtures/chart-bars-overlay.json`](../../../fixtures/chart-bars-overlay.json).
+`yAxis: {name, range, step}` and/or `overlay: [{label, values, colour, axis}]` (with `y2Axis` for an overlay on a right axis), plus `xName`, draw a vertical grouped bar chart the way an exam prints one. The y axis is numbered and ruled, and a line runs over the bars (stock bars and a demand line). Such a chart is not drawn here. It is translated into `function-graph`'s plane (`ruledChart`): the categories become its category axis, each series a set of `bars`, each overlay a `series`. That plane already numbers, rules and checks an axis, and a line over bars needs one coordinate system for both. Bars without these fields are unchanged. A **line chart of measured data** is function-graph's `series`, not this preset's line mode, which stays the minimal axis-less path below; `yAxis` on `chartType: "line"` is refused with that pointer. Fixture: [`fixtures/chart/chart-bars-overlay.json`](../../../fixtures/chart/chart-bars-overlay.json).
 
 ## answers: false
 
@@ -612,7 +612,7 @@ Stacked, showing composition rather than comparison:
 }
 ```
 
-Fixtures: [`fixtures/chart-quarterly-revenue.json`](../../../fixtures/chart-quarterly-revenue.json), [`fixtures/chart-stacked-budget.json`](../../../fixtures/chart-stacked-budget.json), [`fixtures/chart-stacked100-horizontal.json`](../../../fixtures/chart-stacked100-horizontal.json), [`fixtures/chart-line-latency.json`](../../../fixtures/chart-line-latency.json), [`fixtures/chart-scatter-single.json`](../../../fixtures/chart-scatter-single.json)
+Fixtures: [`fixtures/chart/chart-quarterly-revenue.json`](../../../fixtures/chart/chart-quarterly-revenue.json), [`fixtures/chart/chart-stacked-budget.json`](../../../fixtures/chart/chart-stacked-budget.json), [`fixtures/chart/chart-stacked100-horizontal.json`](../../../fixtures/chart/chart-stacked100-horizontal.json), [`fixtures/chart/chart-line-latency.json`](../../../fixtures/chart/chart-line-latency.json), [`fixtures/chart/chart-scatter-single.json`](../../../fixtures/chart/chart-scatter-single.json)
 
 ### function-graph
 
@@ -733,7 +733,7 @@ The Cálculo 1 sheet in `experiments/exercises/calculo1/` was drawn with a helpe
 
 ### sign-chart
 
-The sign table of a function — the *quadro de sinais*: where f, f′, f″ or the factors of a product are positive, negative or zero, where f is undefined, and where f rises and falls. Written once, as the function's expression; every boundary, sign and value in the table is found from it.
+The sign table of a function — the *quadro de sinais*: where f, f′, f″ or the factors of a product are positive, negative or zero, where f is undefined, and where f rises and falls. Written once, as the function's expression; every boundary, sign and value in the table is found from it. ([ADR 0027](../../../docs/decisions/0027-sign-chart.md))
 
 **Choose it when** the question is about intervals rather than shapes: where is f positive, where does it grow, where is it concave up, which x solve an inequality like (x − 1)(x + 2)/(x − 3) ≥ 0. It is offered beside `function-graph` for any function (`S-function-favours-sign-chart-weakly`) and never chosen over it: the graph shows the shape, the table states the intervals, and both are computed from the same expression, so they cannot disagree. In a sheet, put the two side by side (`"solutionFigure": [graph, table]`, markers `{{figure}}` and `{{figure2}}`).
 
@@ -3725,7 +3725,7 @@ The question typically gives the data and asks V_eq, the pH at equivalence, the 
 
 ### data-table
 
-The textbook table of **given** text and numbers: a nutrition label, a price list, a ranking, the properties of five substances. `value-table` computes a function's values from an expression; this preset draws data that are the content. A few cells can be derived (a column from other columns, a totals row) and those are computed and checked, never typed.
+The textbook table of **given** text and numbers: a nutrition label, a price list, a ranking, the properties of five substances. `value-table` computes a function's values from an expression; this preset draws data that are the content. A few cells can be derived (a column from other columns, a totals row) and those are computed and checked, never typed. ([ADR 0065](../../../docs/decisions/0065-data-tables.md))
 
 **Choose it when** the exercise shows rows and columns of facts the reader must read, compare or complete: header row with units, grouped headers, blank cells to fill in, a highlighted cell, a "Total" row. Not for a function's values at points (`value-table`) nor for a truth table (`truth-table`).
 
@@ -3923,7 +3923,7 @@ line of text, not only its icons.
 ### mechanics
 
 Mechanics situations solved before they are drawn (ADRs 0073, 0074; the plan is
-[docs/PLAN-PHYSICS.md](../../../docs/PLAN-PHYSICS.md)). What is typed is the
+[docs/plans/PLAN-PHYSICS.md](../../../docs/plans/PLAN-PHYSICS.md)). What is typed is the
 situation (masses, g, an angle, μ, a speed). Everything drawn is computed, and
 every arrow is drawn to one scale per figure, so F is half of P on the page
 when the physics says so.
@@ -4018,7 +4018,7 @@ reads as the arrow's rather than the rope's.
   - The arms are dimension lines to scale. The class (interfixa,
     inter-resistente, interpotente) is given when there is one load.
 - **collision**:
-  - `masses`, `velocities` (before, signed, right positive) and `type`
+  - `masses`, `velocities` (before, signed, right positive) and `collision`
     (`elastic` | `perfectly-inelastic`) or `restitution` (0–1).
   - Or `explosion: { velocity, initial }`.
   - Momentum is conserved, and the kinetic energy lost (or released) is printed.

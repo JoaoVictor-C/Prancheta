@@ -138,7 +138,7 @@ together would produce a figure neither half agrees to.
 
 **Compose.** When two candidates clear the floor on *disjoint* evidence, the figure is genuinely two things — a topology *and* a set of callouts — and flattening it into one preset repeats the failure at the top of this page. Overlapping evidence is not composition: an org chart fires both the hierarchy and graph rules, but on the same fact, so it is one figure.
 
-**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error. An illustration with nothing to compute — a fuel cell, a solar heater — is the usual case: `fixtures/raw-ir-fuel-cell.json` is one worked example, every shape placed by hand and every label still held to the checks.
+**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error. An illustration with nothing to compute — a fuel cell, a solar heater — is the usual case: `fixtures/ir/raw-ir-fuel-cell.json` is one worked example, every shape placed by hand and every label still held to the checks.
 
 Until delegation existed, the module repertoire was a list an agent had to already know to consult — nothing in the ranking could reach it, so for selection purposes eleven figure kinds may as well not have been built. That was a real defect in this table and not a missing feature of the modules.
 

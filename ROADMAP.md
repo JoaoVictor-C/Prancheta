@@ -2,7 +2,14 @@
 
 Everything that has happened on Prancheta, in order, plus what comes next.
 
-**Status today (2026-08-19): M0 through M3 are done.** Four presets render end to end, deliberately broken figures repair themselves and converge, the selection core ranks requests deterministically and refuses the wrong genre, and the toolkit runs from a shell, over MCP, or as a generated Claude skill. Every exported SVG has been checked in a second, non-browser renderer. Only M4 — the two hard probes — remains, and it has not been started.
+**Status today (2026-10-03):**
+
+- **Repertoire:** 33 presets and 7 figure modules.
+- **Checks:** 26 on every figure, plus 2 for motion and 7 for modules.
+- **Sheets:** the `sheet` command builds whole exercise lists with computed text, seeded variants and a separate answer key.
+- **Coverage:** ENEM day 2 is 66 % covered.
+
+The plan in progress is [PLAN-PHYSICS](docs/plans/PLAN-PHYSICS.md) (P3 next). Every plan, done and open, is listed in [docs/plans/](docs/plans/README.md), and what is open is in [TODO.md](TODO.md). Entries below are in order; the ones from 2026-09-03 on are condensed, one per body of work, because each links an ADR that carries the detail.
 
 ---
 
@@ -47,12 +54,12 @@ Engine and authoring knowledge ship together, because a preset is irreducibly co
 One part cannot be generated: selection knowledge is comparative and belongs to no single preset. It is hand-written, reviewed, and tested with real request phrasings.
 
 ### 2026-08-18 — Build plan
-[docs/PLAN.md](docs/PLAN.md) — milestones ordered by risk retired per day.
+[docs/plans/PLAN.md](docs/plans/PLAN.md) — milestones ordered by risk retired per day.
 
 ### 2026-08-18 — M0 shipped: the walking skeleton works
 The full pipeline runs: spec → HTML mirror → Chromium lays out → measure every box and every wrapped line → absolute-positioned SVG → rasterise that SVG → PNG + manifest with checks.
 
-`npm run render fixtures/labelled-blocks.json` produces a figure in about 1 second. All six worst-case labels — one word, a 120-character sentence, a CJK string, an unbreakable URL, a centred label and a right-aligned one — wrap and sit inside their boxes. 24 tests pass.
+`npm run render fixtures/labelled-blocks/labelled-blocks.json` produces a figure in about 1 second. All six worst-case labels — one word, a 120-character sentence, a CJK string, an unbreakable URL, a centred label and a right-aligned one — wrap and sit inside their boxes. 24 tests pass.
 
 **The assumption held.** A browser can be the layout oracle and still yield clean, portable SVG: 12 `<text>` elements (one per rendered line), zero `foreignObject`, 4 KB.
 
@@ -69,7 +76,7 @@ What M0 taught us, none of which was in the plan:
 ### 2026-08-19 — M1 shipped: the loop repairs, and it converges
 Three geometric checks — `text-fits-box`, `text-clear-of-other-boxes`, `content-within-canvas` — each failure carrying structured overflow numbers rather than prose, and a repair engine that acts on them. 48 tests pass.
 
-`fixtures/broken-boxes.json` has its sizes wrong on purpose. Rendered with `--no-repair` it produces five failures, including a label that escapes its box and lands on the neighbour below. Rendered normally it converges in three passes:
+`fixtures/ir/broken-boxes.json` has its sizes wrong on purpose. Rendered with `--no-repair` it produces five failures, including a label that escapes its box and lands on the neighbour below. Rendered normally it converges in three passes:
 
 ```
 fix  pass 2: too-short.height 44 -> 97   (label overflows bottom by 51.5px)
@@ -429,7 +436,7 @@ One judgement call worth naming: a block is two SVG elements, rect and label, be
 
 ### 2026-08-22 — A collapsed space was measured as nothing and drawn at full width
 
-Found by pointing the new effects layer at a real figure ([fixtures/memory-hierarchy.json](fixtures/memory-hierarchy.json), the Dean/Norvig latency numbers with depth encoding latency). Two labels came out visibly truncated — `20 million × L1` drawn as `20 million` — while all 21 checks passed and the manifest said `ok`.
+Found by pointing the new effects layer at a real figure ([fixtures/ir/memory-hierarchy.json](fixtures/ir/memory-hierarchy.json), the Dean/Norvig latency numbers with depth encoding latency). Two labels came out visibly truncated — `20 million × L1` drawn as `20 million` — while all 21 checks passed and the manifest said `ok`.
 
 Not an effects bug. CSS collapses a run of spaces to one, and the second and third get a client rect with **zero width but a full line's height**, so `measure.ts`'s zero-*size* guard let them through: they contributed nothing to the measured extent and were still appended to the exported string. The SVG carries `xml:space="preserve"`, so they were then drawn at full width. The label was about 45px wider than the box measured for it, every check downstream agreed with the measurement, and none of them could see the drawing.
 
@@ -494,7 +501,7 @@ Still lacking: CI/CD automation (no git repository yet), but all check scripts e
 - **Make toggleable:** constraints 1 (boxes-do-not-overlap), 2 (connector-clear-of-boxes), 4 (straight-lines-only)
 - **Keep as-is:** constraint 3 (axis-aligned — load-bearing for layout solver), 5 (flat-color — gradients add complexity without value), 6 (text limits — acceptable constraints)
 
-**Implementation plan written** — [docs/CONSTRAINT-TOGGLES-PLAN.md](docs/CONSTRAINT-TOGGLES-PLAN.md) breaks the work into 6 phases with clear success criteria, risk mitigation, and estimated 21-33 hours total. Phases 2-3 can run in parallel after the foundation (phase 1).
+**Implementation plan written** — [docs/plans/CONSTRAINT-TOGGLES-PLAN.md](docs/plans/CONSTRAINT-TOGGLES-PLAN.md) breaks the work into 6 phases with clear success criteria, risk mitigation, and estimated 21-33 hours total. Phases 2-3 can run in parallel after the foundation (phase 1).
 
 **Rationale:** The three toggleable constraints share a pattern — each blocks specific legitimate diagram types (Venn diagrams, annotated dense fields, curved flowcharts) without serving as a load-bearing simplification principle. Toggle scope is per-diagram (simpler mental model); all default to `false` (constraints active) so new users get simple, predictable behavior while power users opt into relaxed modes.
 
@@ -510,7 +517,7 @@ Colour joins the list of things this project verifies rather than eyeballs. [dec
 
 **Both checks caught real, pre-existing defects on their first real run — not synthetic ones.** The chart preset's `SERIES_COLOURS` included a `teal` (`#48A9A6`) sitting only 27.7–30.4 apart from `green` under simulation, well under the distinguishability floor: two "different" series colours a colourblind reader could not tell apart, present in every chart this project has ever rendered. Replaced with a magenta chosen to clear every pairwise distance in the set; `palette.teal` is renamed to `palette.magenta` rather than recoloured under its old name, because a constant called `teal` that draws magenta is its own kind of bug.
 
-**The colour parser itself had to be rewritten once, caught by insisting on an end-to-end fixture rather than trusting hand-built test objects.** The first version of `contrast-sufficient` only understood `#rrggbb`. Every unit test passed. Rendering `fixtures/bad-contrast.json` through the real pipeline showed every check reporting `not-applicable` — because `getComputedStyle` in Chromium normalises every colour, hex or otherwise, to `rgb(r, g, b)` before this project ever sees it, so a hex-only parser silently matched nothing on a real render. A second bug in the same feature, found the same way: a `background: transparent` block normalises to `rgba(0, 0, 0, 0)`, not the literal string `"transparent"`, so the callout fallback that compared `owner.fill === "transparent"` never matched real data either. Both fixed together in `src/colour/contrast.ts`'s `parseColour`, which now reads hex, `rgb()`/`rgba()`, and the literal keyword, and an `isTransparent()` helper that checks alpha rather than a string. This is the same lesson the whitespace-measurement bug taught from the other side: a check that examines synthetic fixtures but never a real render can look complete while checking nothing real.
+**The colour parser itself had to be rewritten once, caught by insisting on an end-to-end fixture rather than trusting hand-built test objects.** The first version of `contrast-sufficient` only understood `#rrggbb`. Every unit test passed. Rendering `fixtures/ir/bad-contrast.json` through the real pipeline showed every check reporting `not-applicable` — because `getComputedStyle` in Chromium normalises every colour, hex or otherwise, to `rgb(r, g, b)` before this project ever sees it, so a hex-only parser silently matched nothing on a real render. A second bug in the same feature, found the same way: a `background: transparent` block normalises to `rgba(0, 0, 0, 0)`, not the literal string `"transparent"`, so the callout fallback that compared `owner.fill === "transparent"` never matched real data either. Both fixed together in `src/colour/contrast.ts`'s `parseColour`, which now reads hex, `rgb()`/`rgba()`, and the literal keyword, and an `isTransparent()` helper that checks alpha rather than a string. This is the same lesson the whitespace-measurement bug taught from the other side: a check that examines synthetic fixtures but never a real render can look complete while checking nothing real.
 
 Theme variants land as data, not a rewrite: `THEMES.dark` is the pre-existing constants reassembled under one name — same object references, so every existing fixture renders byte-identical SVG, confirmed by the full suite passing unchanged before a single new check was added. `light` and `print` are new palettes designed against the WCAG floor from the start, not produced by inverting dark (a mechanically inverted palette preserves role *structure* but routinely fails contrast on saturated fills — exactly the defect this decision exists to make checkable). `canvas.theme` selects one; unset renders exactly as before. `node src/cli.ts themes` lists every role's real computed contrast ratio and pass/fail verdict.
 
@@ -526,7 +533,7 @@ A figure becomes a deliverable, not just a correct drawing. [decision 0008](docs
 
 **A real, load-bearing finding: resvg does not support `@font-face` from a data URI, at all.** Tested directly against `@resvg/resvg-js` — a WOFF2 embedded exactly per spec, `loadSystemFonts: false` — and the output PNG was byte-identical to the same SVG with the `@font-face` block deleted. usvg (resvg's parser) only loads fonts via its own `fontFiles`/`fontDirs`/`loadSystemFonts` options, never from the SVG's own markup. This is resvg's limitation, not a defect in the embedding — Chromium renders it correctly — but it means `check:fonts-travel` cannot honestly test `embed` the way it tests `outline`. The two modes are verified against different tools for that reason: `outline` against resvg with zero system fonts (glyph paths must still appear), `embed` against a **fresh, unrelated Chromium page** loading the exported file cold (its `@font-face` must register). Both are `check:independent`'s own argument applied to a new question, answered honestly per mode rather than with one check pretending to cover both.
 
-**A second real finding, in the outline path specifically: the bundled font doesn't cover CJK.** `outlineForChar` reports a `.notdef` (glyph index 0) for scripts Inter was never designed for, detected per character before drawing. A line containing one falls back to ordinary `<text>` — using the real system font the mirror measured it with — rather than emitting a blank `.notdef` box or silently claiming full outline coverage, with a manifest warning naming the line and why. Verified against `fixtures/labelled-blocks.json`'s own CJK case, one of the four "worst-case" fixtures the project has carried since M0.
+**A second real finding, in the outline path specifically: the bundled font doesn't cover CJK.** `outlineForChar` reports a `.notdef` (glyph index 0) for scripts Inter was never designed for, detected per character before drawing. A line containing one falls back to ordinary `<text>` — using the real system font the mirror measured it with — rather than emitting a blank `.notdef` box or silently claiming full outline coverage, with a manifest warning naming the line and why. Verified against `fixtures/labelled-blocks/labelled-blocks.json`'s own CJK case, one of the four "worst-case" fixtures the project has carried since M0.
 
 **PDF output only landed after both of those held**, per the ADR's own ordering. `page.pdf()` produces real vector output — the default page size **is** the figure, unscaled, no margin; named presets (`a4`, `a4-landscape`, `letter`, `letter-landscape`) or an explicit `<width>x<height>mm` scale the figure to fit, centred, aspect preserved. `check:independent` gained a PDF path: decompress every FlateDecode content stream and look for a real paint operator (`f`/`S`/`B`/`Tj`/`TJ`) or text-show — **and this check was wrong on its first version too**, caught the same way as the others: constructing a deliberately raster-only PDF (a full-page `<img>`, nothing else) and finding the first version reported it `ok`, because a clip rectangle around an embedded image (`re W* n`) still contains a `re` operator, which the first version treated as proof of vector content. Fixed to require an actual paint/text-show operator, not merely a path-construction operator that might only be clipping; the raster-only PDF now correctly fails, pinned as a permanent regression test.
 
@@ -538,7 +545,7 @@ Three real defects found and fixed this stage, all caught by insisting on render
 
 **Non-rect block shapes.** `circle`, `ellipse`, `diamond`, `hexagon`, `stadium`, alongside the original `rect`, all sharing the block's own axis-aligned bounding box exactly (`src/geometry/shapes.ts`). Because the mirror still lays out a plain rectangular `<div>` regardless of shape — Chromium never learns a shape exists — every check that reasons about boxes (`text-fits-box`, `boxes-do-not-overlap`, `content-within-canvas`) kept working completely unchanged, exactly as the module's own header comment predicted. What a bounding box genuinely cannot answer is whether a point is inside the *shape* drawn there, not just inside the box around it — `containsPoint`, exact analytic containment per shape, no path sampling.
 
-**`label-within-shape` (step 15) is the check that question was built for.** `text-fits-box` answers the bounding-box question and stops; a label centred in a diamond can pass it while its own corners already sit outside the diamond's slanted sides. The new check tests every wrapped line's four corners against `containsPoint` for the owner's actual shape, and is deliberately `not-applicable` for `rect` (or an unset shape) — `text-fits-box` already answers that exact question for a rectangle, and a second check reporting the same verdict would be noise, not coverage. `fixtures/label-overflows-shape.json` is the planted-defect fixture the plan asked for: a wrapped three-line label inside a diamond and a hexagon, rendered end to end with `--no-repair`. On the real render, `text-fits-box` passes for both (the label's union sits inside the padded content rect) while `label-within-shape` fails, naming the exact lines that spill past the shape — the falsifiable outcome the plan set for this step, confirmed on real geometry rather than a hand-built fixture, and visibly wrong in the rendered PNG (label text spilling past the diamond and hexagon outlines, fully contained in the control rectangle beside them).
+**`label-within-shape` (step 15) is the check that question was built for.** `text-fits-box` answers the bounding-box question and stops; a label centred in a diamond can pass it while its own corners already sit outside the diamond's slanted sides. The new check tests every wrapped line's four corners against `containsPoint` for the owner's actual shape, and is deliberately `not-applicable` for `rect` (or an unset shape) — `text-fits-box` already answers that exact question for a rectangle, and a second check reporting the same verdict would be noise, not coverage. `fixtures/ir/label-overflows-shape.json` is the planted-defect fixture the plan asked for: a wrapped three-line label inside a diamond and a hexagon, rendered end to end with `--no-repair`. On the real render, `text-fits-box` passes for both (the label's union sits inside the padded content rect) while `label-within-shape` fails, naming the exact lines that spill past the shape — the falsifiable outcome the plan set for this step, confirmed on real geometry rather than a hand-built fixture, and visibly wrong in the rendered PNG (label text spilling past the diamond and hexagon outlines, fully contained in the control rectangle beside them).
 
 Full suite: 555/555. Typecheck and `check:docs` clean.
 
@@ -546,7 +553,7 @@ Full suite: 555/555. Typecheck and `check:docs` clean.
 
 **`Block.rotation`** (degrees, clockwise, label only — never the box). The mirror never rotates anything; it measures the label exactly as before, unrotated. [src/geometry/rotate.ts](src/geometry/rotate.ts) then does what the effects layer already does for bleed — "measure with it off, apply at emission" — as pure, exact trigonometry: rotate every corner of every wrapped line's already-measured box around the label's own centre (the union of its unrotated lines), and take the axis-aligned bounding rect of the result. That rotated box **replaces** `TextLine.box` before `runChecks` ever sees it, which means `text-fits-box`, `label-within-shape` and `text-clear-of-other-boxes` needed zero code changes to reason correctly about rotated labels — exactly the same "every existing check keeps working" property step 14 established for non-rect shapes, now shown to hold for rotation too. `render/svg.ts` draws the same unrotated glyphs it always did and wraps them in an SVG `rotate(deg, cx, cy)` transform on the label's own `<g>`, using that identical centre — so the box every check reasons about is provably the box that is actually drawn, by construction rather than by re-measurement.
 
-**Verification, and a limit stated plainly rather than papered over.** The rotation arithmetic itself is unit-tested against known trigonometric identities (90° swaps width/height, 45° on a square scales by exactly `√2`, the rotation centre is a fixed point) — this part is exact and needs no tolerance. `fixtures/rotated-tick-labels.json`, rendered end to end with `--no-repair`, confirms the whole pipeline on real geometry: two labels at ±45° both fail `text-fits-box` with small, correctly-signed overflow (the rotated bounding box is genuinely larger than the unrotated one), a third unrotated control label in an identically-sized box passes, and the exported SVG's `rotate()` transform values match the analytic centre exactly. What this stage does **not** include, and the plan's own "measured … within 0.5px of the analytic" language implied: an independent re-measurement of the *rendered* glyph ink (a pixel bounding-box scan of the rasterised output, the same discipline `check:independent` applies to fonts and PDF). This project has no PNG-decoding dependency today, and adding one is real scope, not a rotation detail — so the honest state is "exact by construction and visually confirmed," not "independently re-measured," and that gap is left open rather than claimed shut.
+**Verification, and a limit stated plainly rather than papered over.** The rotation arithmetic itself is unit-tested against known trigonometric identities (90° swaps width/height, 45° on a square scales by exactly `√2`, the rotation centre is a fixed point) — this part is exact and needs no tolerance. `fixtures/ir/rotated-tick-labels.json`, rendered end to end with `--no-repair`, confirms the whole pipeline on real geometry: two labels at ±45° both fail `text-fits-box` with small, correctly-signed overflow (the rotated bounding box is genuinely larger than the unrotated one), a third unrotated control label in an identically-sized box passes, and the exported SVG's `rotate()` transform values match the analytic centre exactly. What this stage does **not** include, and the plan's own "measured … within 0.5px of the analytic" language implied: an independent re-measurement of the *rendered* glyph ink (a pixel bounding-box scan of the rasterised output, the same discipline `check:independent` applies to fonts and PDF). This project has no PNG-decoding dependency today, and adding one is real scope, not a rotation detail — so the honest state is "exact by construction and visually confirmed," not "independently re-measured," and that gap is left open rather than claimed shut.
 
 Full suite: 567/567. Typecheck and `check:docs` clean.
 
@@ -708,13 +715,13 @@ Full suite: 625/625. Typecheck clean.
 
 A pass over the curve subsystem prompted by asking what was wrong with it. Four things were, and they failed in four different ways.
 
-**A bezier's control points were being read in the wrong coordinate space.** [docs/CONSTRAINTS.md](docs/CONSTRAINTS.md) said scene coordinates, the same frame a block's `x`/`y` and a callout's `to` point are written in — and `to` really was lifted into page space alongside the route, while `control` was not. So a control point aimed the curve at a place offset from where it was written by exactly the scene origin. **Invisible in a scene at the origin, wrong by the canvas padding everywhere else**, which is why it survived: `fixtures/allow-curved-connectors.json` already carried a bezier S-curve, drawn 26px off its authored path, and every check passed because no check and no test ever asserted where a curve was supposed to go. The fix is `liftCurve` in [src/layout/connectors.ts](src/layout/connectors.ts), applied at the same point in [place.ts](src/layout/place.ts) that lifts the route. `arc` and `spline` need nothing — both are derived from the route itself, which is exactly why they are the two that survive being re-routed.
+**A bezier's control points were being read in the wrong coordinate space.** [docs/CONSTRAINTS.md](docs/CONSTRAINTS.md) said scene coordinates, the same frame a block's `x`/`y` and a callout's `to` point are written in — and `to` really was lifted into page space alongside the route, while `control` was not. So a control point aimed the curve at a place offset from where it was written by exactly the scene origin. **Invisible in a scene at the origin, wrong by the canvas padding everywhere else**, which is why it survived: `fixtures/ir/allow-curved-connectors.json` already carried a bezier S-curve, drawn 26px off its authored path, and every check passed because no check and no test ever asserted where a curve was supposed to go. The fix is `liftCurve` in [src/layout/connectors.ts](src/layout/connectors.ts), applied at the same point in [place.ts](src/layout/place.ts) that lifts the route. `arc` and `spline` need nothing — both are derived from the route itself, which is exactly why they are the two that survive being re-routed.
 
 **The flattening tolerance was a claim in a comment rather than a property of the output.** Sampling was a fixed 24 segments per curve, documented as "under a tenth of a pixel for connector-sized geometry" — true at connector size, and quietly false above it, because a fixed segment count over a longer curve is a proportionally worse approximation. Measured: a quadratic bowed 0.3 of a 4000px chord came out **2.08px** from its own true curve, four times the half-pixel EPSILON the checks tolerate, on geometry no bigger than a poster. That is the failure mode this whole design exists to prevent — a curve passing or failing `connector-clear-of-boxes` on the strength of how it was sampled rather than where it goes. Now adaptive: recursive de Casteljau subdivision against the standard cubic flatness bound, arcs stepped by an angle derived from the radius, both to a stated `FLATTEN_TOLERANCE` of 0.05px. The same curve now measures 0.0498px. It costs points where they are needed (243 for that one) and saves them where they are not (17 rather than 25 for a gentle arc). [tests/paths.test.ts](tests/paths.test.ts) tests the tolerance as a guarantee — by walking the true curve and measuring the real distance to the polyline, at four sizes — rather than testing the segment count, which is not the thing promised.
 
-**A connector from a block back to itself drew nothing, and the manifest said `ok`.** Both ends clipped against the same border from the same centre, the route collapsed to a point, and it emitted `d="M 180 146.5 L 180 146.5"` — no ink, no direction for its arrowhead, and green, because a check that finds no geometry finds nothing wrong with it. A state machine silently losing a self-transition is precisely the defect class this tool is for. `routeSelfLoop` gives it a real route, and the interesting decision was **not to curve it**: a loop is loop-shaped and it would be easy to bow, but that would put curvature in a figure that never turned `allowCurvedConnectors` on, and that toggle only means something if nothing routes around it. So the route is orthogonal, and a `curve` bends it like any other route — `spline` being the one that suits it, since the corners are where a loop wants rounding. [fixtures/self-loop.json](fixtures/self-loop.json) draws both.
+**A connector from a block back to itself drew nothing, and the manifest said `ok`.** Both ends clipped against the same border from the same centre, the route collapsed to a point, and it emitted `d="M 180 146.5 L 180 146.5"` — no ink, no direction for its arrowhead, and green, because a check that finds no geometry finds nothing wrong with it. A state machine silently losing a self-transition is precisely the defect class this tool is for. `routeSelfLoop` gives it a real route, and the interesting decision was **not to curve it**: a loop is loop-shaped and it would be easy to bow, but that would put curvature in a figure that never turned `allowCurvedConnectors` on, and that toggle only means something if nothing routes around it. So the route is orthogonal, and a `curve` bends it like any other route — `spline` being the one that suits it, since the corners are where a loop wants rounding. [fixtures/ir/self-loop.json](fixtures/ir/self-loop.json) draws both.
 
-**`src/layout/routing.ts` was never called by anything.** Step 36 was marked ✅ for "edge labels, self-loops, spline routing" on the strength of a module containing `computeEdgeLabelPosition`, `createSelfLoop`, `routeSpline`, `routeOrthogonal` and `pathIntersectsBox` — none of which any spec could reach, tested only by a test file that imported them directly. Its `createSpline` was specifically the midpoint-control spline that [connectors.ts](src/layout/connectors.ts)'s own comment names as producing the cusps `roundCorners` was written to avoid; the working spline was elsewhere and had been all along. Deleted, along with `pathBounds`, `pathToSvgD` and the `Path` type, which only that module used. **The lesson worth keeping is about what "done" was measured against**: 23 passing tests over five exported functions looked exactly like a shipped feature, and a test that calls a function directly cannot tell you whether anything else does. The step is now marked ◐ in [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md) with edge labels named as the part that genuinely does not exist.
+**`src/layout/routing.ts` was never called by anything.** Step 36 was marked ✅ for "edge labels, self-loops, spline routing" on the strength of a module containing `computeEdgeLabelPosition`, `createSelfLoop`, `routeSpline`, `routeOrthogonal` and `pathIntersectsBox` — none of which any spec could reach, tested only by a test file that imported them directly. Its `createSpline` was specifically the midpoint-control spline that [connectors.ts](src/layout/connectors.ts)'s own comment names as producing the cusps `roundCorners` was written to avoid; the working spline was elsewhere and had been all along. Deleted, along with `pathBounds`, `pathToSvgD` and the `Path` type, which only that module used. **The lesson worth keeping is about what "done" was measured against**: 23 passing tests over five exported functions looked exactly like a shipped feature, and a test that calls a function directly cannot tell you whether anything else does. The step is now marked ◐ in [docs/plans/PLAN-NEXT.md](docs/plans/PLAN-NEXT.md) with edge labels named as the part that genuinely does not exist.
 
 Also: `spline` takes an optional `radius` (px, default 16), validated as positive — zero is refused rather than read as "no rounding", since a spline that rounds nothing is a straight route and asking for one that way is a mistake, not an intention.
 
@@ -732,7 +739,7 @@ Four small additions, landed together because they share one property: none of t
 
 **`Block.rotateBox`.** Until now `rotation` only ever turned a label; the box itself stayed axis-aligned underneath it, which is fine for a rotated tick label and wrong for a rotated diagram element. `rotateBox: true` turns the box/shape too, and [src/geometry/rotate.ts](src/geometry/rotate.ts)'s `attachBoxRotation` computes its exact rotated AABB as corner arithmetic (`PlacedBox.bounds`) rather than approximating it — the same discipline `boxes-do-not-overlap`'s rotated-footprint fix already established. The label rotates around the BOX's own centre when the box also rotates, not the label's own text-bbox centre, so the two turn rigidly together instead of the label drifting off a turning box.
 
-`fixtures/new-features-smoke.json` exercises all four together. [README.md](README.md)'s gallery gained a third render, [docs/gallery/argument.png](docs/gallery/argument.png), from a new generator experiment ([experiments/generators/argument.mjs](experiments/generators/argument.mjs)) that only became drawable once blocks could turn — the phase field of a rational function, 6,000 strokes each turned to `arg f`.
+`fixtures/ir/new-features-smoke.json` exercises all four together. [README.md](README.md)'s gallery gained a third render, [docs/gallery/argument.png](docs/gallery/argument.png), from a new generator experiment ([experiments/generators/argument.mjs](experiments/generators/argument.mjs)) that only became drawable once blocks could turn — the phase field of a rational function, 6,000 strokes each turned to `arg f`.
 
 Full suite: 723/723. Typecheck and `check:docs` clean.
 
@@ -740,13 +747,13 @@ Full suite: 723/723. Typecheck and `check:docs` clean.
 
 Prompted by asking whether the project was ready to move on to animation: it wasn't, because the same failure mode the 2026-08-23 `routing.ts` entry names — "a test that calls a function directly cannot tell you whether anything else does" — turned out not to be a one-off. It was the shape of most of stages 5 and 6.
 
-**Audit.** Grepped every module M8/M10 marked ✅ for who actually imports it, outside its own test file. Unreachable from any spec, preset, or CLI path: [src/scales.ts](src/scales.ts) (step 25 — the scale abstraction meant to retire A6, "the agent never does scale arithmetic"), [src/presets/chart/data-binding.ts](src/presets/chart/data-binding.ts) (step 27 — the chart preset never calls `bindData`, so A6 does not actually hold), `src/math/mathjax.ts` (step 28 — and it's an admitted mock besides), `src/dimension/annotation.ts` (step 29), [src/layout/solver.ts](src/layout/solver.ts) (step 32), [src/layout/repair.ts](src/layout/repair.ts) (step 34 — `repairTranslations` implements ADR 0009's lexicographic-potential termination proof correctly, but the check-repair loop never calls it, so a failed `constraints-satisfied` still reports "no repair strategy for this check"), and [src/layout/grouping.ts](src/layout/grouping.ts) (step 37 — no spec can declare a group). All seven are marked ◐ in [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md) now, not ✅. None of this is a defect in the code itself — `repairTranslations`, the solver, the scale math are all correctly implemented and covered — the defect was in what "done" was allowed to mean.
+**Audit.** Grepped every module M8/M10 marked ✅ for who actually imports it, outside its own test file. Unreachable from any spec, preset, or CLI path: [src/scales.ts](src/scales.ts) (step 25 — the scale abstraction meant to retire A6, "the agent never does scale arithmetic"), [src/presets/chart/data-binding.ts](src/presets/chart/data-binding.ts) (step 27 — the chart preset never calls `bindData`, so A6 does not actually hold), `src/math/mathjax.ts` (step 28 — and it's an admitted mock besides), `src/dimension/annotation.ts` (step 29), [src/layout/solver.ts](src/layout/solver.ts) (step 32), [src/layout/repair.ts](src/layout/repair.ts) (step 34 — `repairTranslations` implements ADR 0009's lexicographic-potential termination proof correctly, but the check-repair loop never calls it, so a failed `constraints-satisfied` still reports "no repair strategy for this check"), and [src/layout/grouping.ts](src/layout/grouping.ts) (step 37 — no spec can declare a group). All seven are marked ◐ in [docs/plans/PLAN-NEXT.md](docs/plans/PLAN-NEXT.md) now, not ✅. None of this is a defect in the code itself — `repairTranslations`, the solver, the scale math are all correctly implemented and covered — the defect was in what "done" was allowed to mean.
 
 **The one that mattered most: `constraints-satisfied` was a check that could not fail.** [src/checks.ts](src/checks.ts) built its constraint list as a hardcoded empty array with a comment explaining the wiring was deferred, then unconditionally returned `status: "pass"` in the branch that was supposed to check something — dead code that could only ever report not-applicable or a lie. Run on every figure via `runChecks`, which means every manifest this project has ever produced said `constraints-satisfied: pass` while checking nothing. This is exactly the failure mode the project exists to refuse, stated in its own words: "a checker that reports everything as fine is indistinguishable from a checker that is not running."
 
 **The fix gives it something real to check, without touching the deeper unresolved question of repair.** `FigureSpec.layoutConstraints?: Constraint[]` — a new field, deliberately not reusing `canvas.constraints` (that name is taken by decision 0010's toggles, which *relax* checks; this one *adds* one). Validated shape-by-shape in `parseSpec` (right `kind`, right field types per constraint) the same way `validateEffect` validates effect names, and threaded through `LaidOutFigure` alongside the existing toggle-carrying field. `constraintsSatisfied` now reads it, calls `isConstraintSatisfied` (already correctly implemented in [src/constraints/types.ts](src/constraints/types.ts) since step 31, just never fed real data) per declared constraint, and fails naming exactly which ones and why — `align(left, right, left); keepClear(left, right, 200)`, not "something is wrong somewhere."
 
-**Falsifiable outcome, checked:** `fixtures/constraint-violation.json` declares two boxes an `align` and a `keepClear` constraint that their authored positions violate. Rendered end to end, `constraints-satisfied` reports `FAIL ... 2 of 2 constraint(s) violated`, followed by the honest `! unrepaired constraints-satisfied — no repair strategy for this check` — which is the correct manifest for a check that now works, wired to a repair mechanism (step 34) that still doesn't reach it. Step 31 and step 33 move to ✅ for real; steps 32 and 34 stay ◐ until something calls them.
+**Falsifiable outcome, checked:** `fixtures/ir/constraint-violation.json` declares two boxes an `align` and a `keepClear` constraint that their authored positions violate. Rendered end to end, `constraints-satisfied` reports `FAIL ... 2 of 2 constraint(s) violated`, followed by the honest `! unrepaired constraints-satisfied — no repair strategy for this check` — which is the correct manifest for a check that now works, wired to a repair mechanism (step 34) that still doesn't reach it. Step 31 and step 33 move to ✅ for real; steps 32 and 34 stay ◐ until something calls them.
 
 This does not reach the deeper question — whether translation repair should be wired into the main check-repair loop at all is an architectural decision on the order of ADR 0009 itself, not a fix to freelance alongside a vacuous-check patch — so it is left for a deliberate M10 continuation, not attempted here.
 
@@ -868,17 +875,17 @@ Graph layout gained ELK wrapping (`wrapping`, `aspectRatio`), because a fifteen-
 
 ### 2026-08-29 - Four ways a figure lied and passed: the arrowhead, the wrapped label, the substrate, and the clip
 
-The first exercise figure this project was ever asked for -- a free-body diagram on a 30 degree incline -- rendered with exit code 0 and a slope of roughly 46 degrees, the diagonal of its own bounding box, beside a label reading 30 degrees. It passed every geometric check while asserting something false. Chasing that produced [docs/PLAN-EXERCISES.md](docs/PLAN-EXERCISES.md) and four defects worth fixing before any of it.
+The first exercise figure this project was ever asked for -- a free-body diagram on a 30 degree incline -- rendered with exit code 0 and a slope of roughly 46 degrees, the diagonal of its own bounding box, beside a label reading 30 degrees. It passed every geometric check while asserting something false. Chasing that produced [docs/plans/PLAN-EXERCISES.md](docs/plans/PLAN-EXERCISES.md) and four defects worth fixing before any of it.
 
 **The shaft ran to the tip underneath its own arrowhead, so the line came out the point.** `connectorToSvg` drew the polyline to `points[last]` and then drew the head with its apex on that same point, so with `stroke-linecap="round"` a nub of radius `strokeWidth/2` protruded past the apex -- at a 2px stroke on a 9px head, an arrow that reads as a flare partway along a line that carries on beyond it. `shaftInset` now says how far back each style's ink reaches and `trimForHeads` pulls the drawn polyline back by it: `size` for the filled wedges, `size * 2` for a diamond, `size * 0.6` for a circle, and zero for `open` and `crowsfoot`, whose whole point is that the line shows through the chevron. Only the DRAWING is shortened -- `connector.points` is untouched, every check still walks the original polyline, `connectorInk` already padded by a whole `arrowSize`, and the apex still lands on the route's own endpoint, so the ink ends exactly where it did. A head longer than the segment it terminates drops the shaft rather than pulling the point past its neighbour and drawing it backwards.
 
 **A label could break inside a word, and the repair loop was structurally unable to undo it.** `overflow-wrap: anywhere` in the measurement mirror was chosen so a long unbreakable string would wrap rather than overflow, and so min-content width would stay small for an auto-width block. Both effects were real. The cost was that it applied to every label: `30°` missed its box by 2px and came apart into `3` / `0` / `°`. The loop cannot recover, and the reason is structural rather than a missing branch -- once a label has wrapped, each line fits horizontally by construction, so `textFitsBox` unions the line boxes and reports a DOWNWARD overflow, the width branch never fires, and the height branch grows the box around the damage. One figure grew 12% wider and 153% taller. Leaving the word whole makes the overflow horizontal, which is the one signal `planRepairs` can act on. Measured across all 67 fixtures before and after: zero changed their failure sets, and four repair edits flipped from growing height to growing width -- `block-2` 60 -> 96 wide instead of 60 -> 97 tall.
 
-**The fixture named "worst-case labels" then said what the blunt version had missed.** `a clean figure triggers no repairs at all` went red on [fixtures/labelled-blocks.json](fixtures/labelled-blocks.json), whose `unbreakable-url` and `Antidisestablishmentarianism` blocks exist precisely to exercise intra-word breaking: with the word kept whole they grew 340 -> 500 and 162 -> 227 instead. Both stayed inside budget and both still passed, so the fixture went on being *valid* while no longer testing what it was written to test -- which is the worse failure of the two. So intra-word breaking is not deleted, it is demoted from an unconditional rule to `Block.wrap: "anywhere"`, alongside the `"normal"` and `"none"` that were already there, and the two worst-case blocks declare it. The default decides for the three-glyph label that a URL is not; the author decides for the URL.
+**The fixture named "worst-case labels" then said what the blunt version had missed.** `a clean figure triggers no repairs at all` went red on [fixtures/labelled-blocks/labelled-blocks.json](fixtures/labelled-blocks/labelled-blocks.json), whose `unbreakable-url` and `Antidisestablishmentarianism` blocks exist precisely to exercise intra-word breaking: with the word kept whole they grew 340 -> 500 and 162 -> 227 instead. Both stayed inside budget and both still passed, so the fixture went on being *valid* while no longer testing what it was written to test -- which is the worse failure of the two. So intra-word breaking is not deleted, it is demoted from an unconditional rule to `Block.wrap: "anywhere"`, alongside the `"normal"` and `"none"` that were already there, and the two worst-case blocks declare it. The default decides for the three-glyph label that a URL is not; the author decides for the URL.
 
 **`contrast-sufficient` asked who OWNS a label, when the question is what is UNDER it.** The substrate was the label's own owner-box fill, falling back to the canvas background when that box had none. Demonstrated by render: text at `#141414` centred in a rect filled `#101010` is invisible on the page, and the check reported `18.42:1 against #FFFFFF` and passed. The true ratio is 1.03:1. Worse, `text-clear-of-other-boxes` passed the same figure too, because that box CONTAINS the label's owner and containment is excused there as ancestry -- two independent checks standing down on one illegible label, in a project whose rule is that a relaxed check reports not-applicable and never pass. Substrate is now resolved geometrically, compositing every covering fill in paint order.
 
-**Which immediately produced a false alarm, and the false alarm was the more interesting bug.** `fixtures/allow-overlap.json` went red: its Venn circles are filled `rgba(57, 102, 201, 0.34)`, and scoring those channels raw reads a pale blue on white as saturated blue and fails a label that is perfectly legible. Alpha was being parsed everywhere and composited nowhere. `compositeOver` in [src/colour/contrast.ts](src/colour/contrast.ts) is source-over alpha compositing, returning the author's own string untouched when the layer is opaque so a manifest keeps naming `#171A21` and only a genuinely blended surface reports a colour nobody typed. The Venn labels now read `8.29:1 against rgb(182, 198, 233)` -- the colour actually on the page.
+**Which immediately produced a false alarm, and the false alarm was the more interesting bug.** `fixtures/ir/allow-overlap.json` went red: its Venn circles are filled `rgba(57, 102, 201, 0.34)`, and scoring those channels raw reads a pale blue on white as saturated blue and fails a label that is perfectly legible. Alpha was being parsed everywhere and composited nowhere. `compositeOver` in [src/colour/contrast.ts](src/colour/contrast.ts) is source-over alpha compositing, returning the author's own string untouched when the layer is opaque so a manifest keeps naming `#171A21` and only a genuinely blended surface reports a colour nobody typed. The Venn labels now read `8.29:1 against rgb(182, 198, 233)` -- the colour actually on the page.
 
 **A connector clipped to a rectangle that was never drawn.** `clipToBox` intersected the ray against `box.width / 2 + gap` and never consulted `shapeVertices`, so an arrow aimed at a triangle, diamond or star stopped short on its bounding box. It now ray-casts against the real polygon when there is one, taking the minimum positive parameter so a non-convex `cross` or `star` clips on the edge actually met, and falls through unchanged for `rect` and `stadium`. `circle` and `ellipse` knowingly stay on the rectangular path: an exact ellipse clip is a different computation and was not in scope.
 
@@ -906,7 +913,7 @@ Across all 66 fixtures the new check reports 62 pass and 4 not-applicable, none 
 
 **Both ends may be points, and that earns no exemption.** A free vector joins no box, so `connector-clear-of-boxes` grants it none of the endpoint relief a block-to-block connector gets, and the manifest reports `joins: []` rather than inventing an owner. A vector drawn out of the middle of a block IS crossing that block, and a figure that wants one says so with `allowConnectorCrossing` instead of having it excused quietly.
 
-[fixtures/fbd-incline.json](fixtures/fbd-incline.json) is the deliverable: a block on a 30 degree incline where the slope, the block's rotation, the contact point and all three force bearings are computed from one number. The normal is perpendicular because it is drawn at the angle the slope was drawn at, not because it was placed there by eye.
+[fixtures/ir/fbd-incline.json](fixtures/ir/fbd-incline.json) is the deliverable: a block on a 30 degree incline where the slope, the block's rotation, the contact point and all three force bearings are computed from one number. The normal is perpendicular because it is drawn at the angle the slope was drawn at, not because it was placed there by eye.
 
 Worth recording that the first version of that fixture was WRONG and rendered green -- the normal was given a bearing 90 degrees out, along the surface rather than across it, and every check passed a figure asserting nonsense. That is the declared non-goal working exactly as documented, and it is the case for M1.4's angle arc carrying a check that its swept angle equals the angle its label prints. 889 -> 899.
 
@@ -920,7 +927,7 @@ Every figure in the physics and maths repertoire writes text ON its subject: "N"
 
 **And it exposed a defect in last commit's contrast fix.** Resolving substrate geometrically used `checkRect`, which returns the ROTATED bounding box -- and the rotated bounding box of a 439px rule drawn on a 30 degree diagonal is a 390x219 rectangle covering most of the figure. All three force labels were being scored against a 3px bar they were nowhere near. `inFrameOf` now rotates the label's ink back into each candidate box's own frame before testing, exact for an unrotated box and slightly generous for a rotated one, erring toward "this might be underneath" rather than toward silence.
 
-[fixtures/fbd-incline.json](fixtures/fbd-incline.json) now renders with zero failures and zero unrepaired: a labelled free-body diagram whose slope, block rotation, contact point, three force bearings and three label positions are all computed from one number. Across all 67 fixtures the failure set is byte-identical to before this work began, and the new check reports 66 not-applicable and 1 pass. 899 -> 911.
+[fixtures/ir/fbd-incline.json](fixtures/ir/fbd-incline.json) now renders with zero failures and zero unrepaired: a labelled free-body diagram whose slope, block rotation, contact point, three force bearings and three label positions are all computed from one number. Across all 67 fixtures the failure set is byte-identical to before this work began, and the new check reports 66 not-applicable and 1 pass. 899 -> 911.
 
 ### 2026-08-29 - The angle mark, and the check that stops it rebuilding the defect it exists to cure
 
@@ -932,7 +939,7 @@ M1's last piece is the arc that marks theta. It is not a new element kind: an an
 
 **Two bugs found by building it, both silent.** `PlacedConnector.curve` was stored in SCENE space beside `points` already lifted into PAGE space -- harmless while nothing read both, and this check reads both: it measured 21.4 degrees for an arc subtending exactly 30. The curve is now lifted once and kept. And the SVG sweep flag was inverted, which does not fail loudly: endpoint parameterisation offers two centres for the same endpoints and radius, so the wrong flag draws a perfectly good arc about the MIRROR centre. The points still sit at the stated radius, just not from the centre that was asked for, and only measuring radius from the intended centre reveals it.
 
-[fixtures/fbd-incline.json](fixtures/fbd-incline.json) is M1's deliverable and now renders complete: an inclined-plane free-body diagram with three labelled forces from one application point and a theta arc at the foot, zero failures and zero unrepaired, in which the slope, the block's rotation, the contact point, three force bearings, four label positions and the arc's sweep all follow from one number -- and the arc's swept angle is checked against the 30 its own label prints. Across all 67 fixtures the failure set remains byte-identical to before this work began. 911 -> 920.
+[fixtures/ir/fbd-incline.json](fixtures/ir/fbd-incline.json) is M1's deliverable and now renders complete: an inclined-plane free-body diagram with three labelled forces from one application point and a theta arc at the foot, zero failures and zero unrepaired, in which the slope, the block's rotation, the contact point, three force bearings, four label positions and the arc's sweep all follow from one number -- and the arc's swept angle is checked against the 30 its own label prints. Across all 67 fixtures the failure set remains byte-identical to before this work began. 911 -> 920.
 
 ### 2026-08-29 - Frames: the angle is stated once, and everything else is a consequence of it
 
@@ -948,7 +955,7 @@ ADR 0019 shipped naming its own residue: the fixture's arc was checked against t
 
 **Two checks were measuring against a rotated bounding box and had to stop.** `checkRect` returns `bounds` for a rotated box, exact as a bound and hopeless as an answer for a long thin bar on a diagonal: a 430px rule at 30 degrees has a 372x215 bounding box covering most of the figure, so every label in the picture read as overlapping it. `text-clear-of-other-boxes` and `annotation-nearest-its-owner` now map the label into the box's OWN frame first -- still conservative, but conservative about the label, which is small, rather than about the bar, which is not. Across all 67 fixtures the failure set is unchanged, so nothing was relaxed by it.
 
-[fixtures/fbd-incline.json](fixtures/fbd-incline.json) is rebuilt entirely in frames. The scene declares `world` and `incline` sharing an origin, `incline` rotated 30; the slope, the block and the surface-relative forces live in `incline`, the weight lives in an unrotated frame whose origin is stated in `incline`, and the angle mark runs between THE SAME POINT EXPRESSED IN BOTH FRAMES -- so its sweep is the angle between them, and `sweep-matches-its-label` checks that against the printed 30. **The angle appears exactly once in the document.** Zero failures, zero unrepaired. 921 -> 934.
+[fixtures/ir/fbd-incline.json](fixtures/ir/fbd-incline.json) is rebuilt entirely in frames. The scene declares `world` and `incline` sharing an origin, `incline` rotated 30; the slope, the block and the surface-relative forces live in `incline`, the weight lives in an unrotated frame whose origin is stated in `incline`, and the angle mark runs between THE SAME POINT EXPRESSED IN BOTH FRAMES -- so its sweep is the angle between them, and `sweep-matches-its-label` checks that against the printed 30. **The angle appears exactly once in the document.** Zero failures, zero unrepaired. 921 -> 934.
 
 ### 2026-08-29 - The gridded plane, and what a lattice is allowed to be excused from
 
@@ -966,7 +973,7 @@ The gridline-as-substrate question the plan left open is answered explicitly rat
 
 **A unit error, found by scaling a frame for the first time.** Placing a sized block computed its centre by adding half its width -- in PIXELS -- to its x -- in FRAME UNITS. The two are the same number only while `xUnit` is 1, which is every figure built until this one; at 42px per unit it threw a marker 550px off the plane. The offset is now applied along the frame's directions in pixels. `Block.anchor: "center"` arrived with it, because a dot at (1, 1) means a dot CENTRED there, and making an author subtract half its size in frame units to say so puts arithmetic back in the document.
 
-[fixtures/transformation-grid.json](fixtures/transformation-grid.json) is the deliverable: a numbered coordinate plane from -5 to 5, triangle ABC on exact lattice points, the centre of rotation marked -- a GCSE transformations question, zero failures. Across all 67 fixtures the failure set remains byte-identical to before this work began. 934 -> 944.
+[fixtures/ir/transformation-grid.json](fixtures/ir/transformation-grid.json) is the deliverable: a numbered coordinate plane from -5 to 5, triangle ABC on exact lattice points, the centre of rotation marked -- a GCSE transformations question, zero failures. Across all 67 fixtures the failure set remains byte-identical to before this work began. 934 -> 944.
 
 ### 2026-08-29 - Geometry marks needed no new vocabulary, only a better way to aim a frame
 
@@ -976,7 +983,7 @@ M3 was scoped as equal-side ticks and right-angle squares, and both turned out t
 
 **`src/dimension/annotation.ts` was DELETED rather than folded in, reversing the plan.** It has been unreachable since M8 step 29 -- named in this file's own orphaned-module audit -- and the reason not to wire it is stronger than the reason it was skipped then. `DimensionLine` carries a stated `measurement` alongside its own `start` and `end`: two independent numbers for one length, free to disagree, which is precisely the defect the last four commits have been removing. `FigureScale.realWorldPerPixel` is `Frame.xUnit` inverted. Wiring it would have added a second way to say the same thing, and the second way permits a lie the first one cannot express. A dimension line is now a connector in a frame aimed along what it measures, annotated like anything else. Two historical entries above lose their link to it and keep their text, because they were accurate when written.
 
-[fixtures/isosceles-construction.json](fixtures/isosceles-construction.json) is the deliverable: an isosceles triangle with equal-side ticks perpendicular to their own sides, a right-angle mark at the foot of the altitude, `x` at the apex, and a base angle marked 52 degrees. The apex height is chosen so that angle is exactly 52.0 rather than merely inside `sweep-matches-its-label`'s one-degree tolerance -- a figure that passes on the tolerance is a figure that got away with something. Zero failures. Across all 67 fixtures the failure set is unchanged. 944 -> 937: four tests added for `towards`, eleven removed with the module they covered.
+[fixtures/ir/isosceles-construction.json](fixtures/ir/isosceles-construction.json) is the deliverable: an isosceles triangle with equal-side ticks perpendicular to their own sides, a right-angle mark at the foot of the altitude, `x` at the apex, and a base angle marked 52 degrees. The apex height is chosen so that angle is exactly 52.0 rather than merely inside `sweep-matches-its-label`'s one-degree tolerance -- a figure that passes on the tolerance is a figure that got away with something. Zero failures. Across all 67 fixtures the failure set is unchanged. 944 -> 937: four tests added for `towards`, eleven removed with the module they covered.
 
 ### 2026-08-29 - The Mark: free geometry, admitted without giving up what the polygon rule was protecting
 
@@ -990,7 +997,7 @@ A `Mark` keeps the identity and gives up the box. It is stated as a start point 
 
 **`arc-is-circular` closes a gap this project knew it had.** An arc is stated as two endpoints AND a centre, which is one number more than a circle needs, so the three can disagree -- and `sweepCommands` averages the two radii and draws a perfectly smooth curve matching neither end. Every other check stays happy, because the polyline it walks is the polyline that gets drawn: the figure is well formed and the arc is not the arc that was asked for. ADR 0019 recorded this as implied-but-unwritten when the sweep shipped; the Mark made it reachable a second way, which is the point at which a gap becomes a defect. One check covers both, at the same half-pixel EPSILON everything else tolerates.
 
-[fixtures/circle-theorem.json](fixtures/circle-theorem.json) is the deliverable and the reason marks exist: the shaded region between chord AB and the minor arc is not a rectangle, not an inscribed polygon, and not any transform of one. Zero failures, `arc-is-circular` green over four arcs. Across all 67 fixtures the failure set is unchanged. 937 -> 948.
+[fixtures/ir/circle-theorem.json](fixtures/ir/circle-theorem.json) is the deliverable and the reason marks exist: the shaded region between chord AB and the minor arc is not a rectangle, not an inscribed polygon, and not any transform of one. Zero failures, `arc-is-circular` green over four arcs. Across all 67 fixtures the failure set is unchanged. 937 -> 948.
 
 ### 2026-08-29 - M5 closed rather than deferred, and the last mock deleted
 
@@ -1000,7 +1007,7 @@ A `Mark` keeps the identity and gives up the box. It is stated as a start point 
 
 Nothing is lost by removing it. Unicode subscripts, superscripts, Greek letters and the degree sign -- `m₁g`, `f_k1`, `30°`, `H₂O`, `θ` -- are what the physics and maths repertoire actually needs inside a FIGURE, and all of them already render and measure correctly through the browser mirror, because Inter carries them and the mirror measures what Chromium draws. Real LaTeX begins at fractions, radicals and integrals, which live in the question text beside a figure rather than in it. When a figure needs one, it can be built against a real MathJax dependency and measured like everything else; what it cannot be built on is a stub that guesses.
 
-Step 28 is marked ✗ in [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md) with the reason, not ◐. Two historical entries lose their link and keep their text. 948 -> 943, five tests removed with the module they covered.
+Step 28 is marked ✗ in [docs/plans/PLAN-NEXT.md](docs/plans/PLAN-NEXT.md) with the reason, not ◐. Two historical entries lose their link and keep their text. 948 -> 943, five tests removed with the module they covered.
 
 ### 2026-08-29 - A lattice is ink, and so is a plotted line
 
@@ -1048,27 +1055,139 @@ Two defects surfaced while building it, both caught rather than foreseen. **An a
 
 954 tests, all passing. Eight core checks now run against a module figure where six did before.
 
+### 2026-08-30 - The test loop, and opening the repository
+
+**[ADR 0020](docs/decisions/0020-the-test-loop.md): one browser per process.** It cut 195 Chromium launches per run. The investigation's own measurements were poisoned: aborted `node --test` runs left orphaned workers on Windows, and those orphans slowed every run that followed. The four "Unable to capture screenshot" failures blamed on Chromium were the orphans too. The ladder `test:one` → `test:fast` → `npm test` came out of this.
+
+**[ADR 0021](docs/decisions/0021-opening-the-repository.md): opening the repository.** It brought an MIT licence, CI, issue and PR templates, secrets ignored by the clone itself, and a core suite that runs green on a fresh clone with no Python installed.
+
+### 2026-08-30 to 2026-09-24 - Exercise figures, the function graph and the sheet
+
+[PLAN-EXERCISES](docs/plans/PLAN-EXERCISES.md) (PRs #1–#3) turned the toolkit toward the figure a student is handed.
+
+- **[0022](docs/decisions/0022-function-graph-preset.md), the function graph:** curves are data, labels are computed, and a typed coordinate is refused.
+- **[0023](docs/decisions/0023-one-number-formatter.md), one pt-BR number formatter**, shared by the figure and the text.
+- **[0024](docs/decisions/0024-didactic-checks.md), didactic checks**, for what a teaching figure owes its reader.
+- **[0025](docs/decisions/0025-function-graph-absorbs-plot.md):** the plot module's curves moved into the core.
+- **[0026](docs/decisions/0026-the-sheet-command.md), the `sheet` command:** one JSON document becomes HTML with KaTeX, an A4 PDF and page PNGs.
+- **[0027](docs/decisions/0027-sign-chart.md), the sign table**, found from the function.
+
+The first real list, Cálculo 1, is [experiments/exercises/calculo1](experiments/exercises/calculo1). A Terza session then ordered the next six phases as [PLAN-COVERAGE](docs/plans/PLAN-COVERAGE.md).
+
+### 2026-09-25 to 2026-09-27 - Coverage phases 0–2: Cálculo 1, and sheets that compute
+
+**Phases 0–1** (ADRs [0028](docs/decisions/0028-length-labels-and-place-labels.md)–[0039](docs/decisions/0039-limit-tables.md), PRs #5, #6):
+- `length-matches-its-label`, and labels that name a place;
+- curves beyond graphs of functions, and a numeric kit;
+- four presets: number-line, unit-circle, vectors and value-table;
+- areas and Riemann sums with `area-matches-its-label`;
+- asymptotes, holes and limit tables.
+
+A visual review, which rendered each figure and opened the PNG, found defects every check had passed. That produced [0034](docs/decisions/0034-grid-tick-labels.md) and [0035](docs/decisions/0035-what-a-label-hides-and-claims.md), and a standing rule: look at the PNG before calling a figure done.
+
+**Phase 2** ([0040](docs/decisions/0040-computed-sheet-text.md)–[0042](docs/decisions/0042-variant-sheets-and-gabarito.md), PR #7):
+- `params`, with `{{= …}}` computed text including integrals, derivatives and limits;
+- seeded variants with an admission gate;
+- `sheet --variants N` with one separate gabarito.
+
+CI on Linux caught two environment-only failures (a path assumption, and tick widths under another font), so a pull request now waits for its checks. The core suite went from 1240 to 1492 tests.
+
+### 2026-09-28 - Phases 3–4: geometry, R³, Cálculo 2/3 and linear algebra
+
+ADRs [0043](docs/decisions/0043-one-vector-algebra.md)–[0052](docs/decisions/0052-linear-maps.md), PRs #8–#10:
+- one vector algebra for 2D and 3D;
+- `construction`, where a figure is a chain of definitions and only its free points are typed;
+- a camera and `space` for R³;
+- school solids, with hidden edges decided by real visibility;
+- word-problem pictograms;
+- surfaces, solids of revolution, and slope and vector fields with RK4;
+- sequences and linear maps.
+
+The work was split across parallel agents writing disjoint files, with the main session doing the shared wiring. One lesson came from that: a Haiku draft of a whole preset needed a full rework, so whole presets go to stronger models. The suite reached 1848 tests.
+
+### 2026-09-28 to 2026-09-29 - Phase 5: physics, discrete maths and statistics
+
+ADRs [0053](docs/decisions/0053-circuits.md)–[0061](docs/decisions/0061-venn-diagrams.md), PR #11:
+- circuits solved by nodal analysis, and ray optics by Gauss and Snell;
+- electric field lines;
+- automata, truth tables and logic circuits (Quine–McCluskey);
+- histograms and boxplots, normal, binomial and Poisson events, probability trees, and Venn diagrams.
+
+Stacked PRs taught one rule the hard way: #11 merged into its base branch instead of master. A stacked PR must be retargeted to master before it is merged. The suite reached 2255 tests.
+
+### 2026-09-29 - The full-project review
+
+PR #12 brought:
+- `answers: false` on 22 presets, set automatically on a sheet's statement figures;
+- one fitted scale helper, and the `canvas-size-sane` check;
+- one copy of each shared helper;
+- real sub- and superscripts, and one reading panel lifted into a sheet's page text ([0062](docs/decisions/0062-rich-text-and-the-reading-panel.md));
+- one bundled font, measured at plan time ([0063](docs/decisions/0063-one-font-measured-before-and-after.md)).
+
+The finding that started it: every check passed on a 396 000-pixel canvas, because every check measures a figure against itself. Probe extreme inputs when reviewing. The suite reached 2494 tests.
+
+### 2026-09-30 to 2026-10-02 - Chemistry
+
+[PLAN-CHEMISTRY](docs/plans/PLAN-CHEMISTRY.md), PRs #13 and #14:
+- sheets can use module figures and mhchem `\ce{}`;
+- the molecule and reaction modules gained dative lone pairs (a bug fix), verified curved electron arrows, resonance, states, and coefficients with a balance check;
+- `--answers=false` in modules;
+- the `acid-base` preset ([0064](docs/decisions/0064-acid-base-figures.md)), where the equilibrium is the source of every point.
+
+### 2026-10-02 - The ENEM audit, and Phase 6
+
+[docs/research/AUDIT-ENEM.md](docs/research/AUDIT-ENEM.md) classified 210 figures from ENEM 2023–2025. Day 1 is almost all photographs and artwork. On day 2, 19 % of drawable figures were covered. Phase 6 then built the ranked gaps (ADRs [0065](docs/decisions/0065-data-tables.md)–[0070](docs/decisions/0070-genetics.md), PR #17):
+- `data-table`;
+- measured series and schematic axes;
+- construction, solid and space extensions;
+- circuit symbols;
+- `genetics`.
+
+Re-scored, day 2 went from 19 % to 64 % covered. Before the commit, a visual review caught five defects every check had passed, among them a real hidden-line bug: the near edges of a bore were drawn solid.
+
+### 2026-10-03 - Answers on graphs, pictograms, and mechanics
+
+- **PR #18** brought `answers: false` to function-graph and chart ([0071](docs/decisions/0071-answers-on-graphs-and-charts.md)), plus three leftover fixes.
+- **PR #19, pictograms** ([0072](docs/decisions/0072-pictograms.md)): icon rows counted from the data, and dot figures with polygonal counts.
+- **PR #19, mechanics** ([0073](docs/decisions/0073-mechanics.md)): pulleys, inclines, a table's edge, Atwood's machine and a spring, all solved and drawn to one scale. ENEM day 2 reached 66 %.
+
+[PLAN-PHYSICS](docs/plans/PLAN-PHYSICS.md) then grew mechanics to 27 kinds without letting it become one file ([0074](docs/decisions/0074-physics-kinds.md)):
+- **P0** split it into solvers, drawing, a contract and one file per kind, with byte-identical output;
+- **P1** added projectile, energy, lever, collision, circular, loop, banked, conical and orbit;
+- **P2** added free fall, contact, angled pull, elevator, springs, gravitation, cables, centre of mass, oscillators, buoyancy, the hydraulic press, pressure and efficiency.
+
+Its drawing rules were each forced by a check or by the user's eye. No arrow passes through the ground. A path is cut where a velocity arrow lies on it. Where one scale cannot serve, a line under the figure says what is not to scale. The suite reached 2936 tests.
+
+### 2026-10-03 - Keeping the docs true
+
+New presets were landing daily, and the hand-written documents had fallen behind the code. The README said "seven presets" with 33 shipped, and this file stopped on 2026-08-30. [ADR 0075](docs/decisions/0075-keeping-the-docs-true.md) made five changes:
+- the README's tables and the decision index are generated, and checked like every other generated view;
+- the plans moved to [docs/plans/](docs/plans/README.md), each with a status;
+- every fixture has a folder;
+- a test holds each preset to its doc, fixtures, test, ADR, shelf and selection rule;
+- [CONTRIBUTING.md](CONTRIBUTING.md#the-procedure-for-a-new-preset-or-feature) has the procedure, marking which steps the build checks.
+
+The test found two preset docs that never cited their ADR on its first run.
+
 ## Where this goes next
 
-Every milestone in the original plan reached a ✅ at some point, but a 2026-08-24 reachability audit found several were marked done on the strength of a passing test file rather than a real consumer — the same failure mode step 36 caught first. See [docs/PLAN-NEXT.md](docs/PLAN-NEXT.md)'s stage 5 and 6 tables and the entry below for what is and is not actually wired. What follows here is no longer a schedule — it is the shortlist the probes left behind, in the order the evidence favours.
+What is open, item by item, is [TODO.md](TODO.md). In broad strokes:
 
-**Animation, after M15.** M11 shipped box tweening with a sampling-free check and a real consumer; M11.1 made that check model the animation that actually renders; M11.2 added easing, exits and reduced motion; M13 added stagger; M14 added N-state sequences; M15 retired the M12 debt, so a connector's route animates its own `d` under a check that stayed exact through a separating axis that turns. What is left, in the order the evidence favours: **multi-label diff**, so a box that slides *and* recolours actually slides rather than hard-cutting — it changes `FigureDiff`'s public shape and the `diff` command's output, which is why it was not absorbed into M11.1. **Easing a staggered figure**, designed in ADR 0015 and still unverified. **An arrowhead on a moving route**, refused by M15 because nothing CSS-animatable moves the head in step with the path — as is a route whose two states flatten to different vertex counts. **Video export** (a PNG-frame-sequence encoder), possible as an explicitly lossy convenience but never as the deliverable — it would destroy the `prefers-reduced-motion` behaviour M11.2 shipped. Resize/restyle/retext tweening remain unstarted. Shape morphing, a camera and per-element easing are refused on principle (ADR 0016), not deferred — no check exists for any of them, and for a camera none can, since legibility under zoom is a research problem.
+**Exercise coverage.**
+- **Next:** [PLAN-PHYSICS](docs/plans/PLAN-PHYSICS.md) P3.
+- **ENEM:** the audit's partial rows are the ranked list of what to build after that.
+- **The user's own course lists**, which go in `ProjectHub/Listas/_corpus/`, have not been audited yet. When they arrive, they decide the order instead of ENEM.
 
-**Semantic checks.** Everything verified so far is geometric — that a figure is well-formed. Nothing checks that an arrow points the way the content says, that no entity was invented, that nothing was dropped. That needs a model in the loop and so cannot live in CI, which is exactly the line drawn in [0004](docs/decisions/0004-selection-core.md) and [0005](docs/decisions/0005-module-protocol.md). It ships as a script when it ships.
+**Animation.** After M15 come multi-label diff and easing a staggered figure, the latter designed in ADR 0015 and still unverified. Shape morphing, a camera and video export are refused on principle (ADR 0016).
 
-**A wider repertoire.** Five presets is enough for selection to be a real choice and not enough for it to be interesting. `compose` and `none` are reachable but thinly exercised; the ranking's benefit is still mostly latent. The three design systems that arrived since — themes, style packs, type packs — widen how a figure can *look* without widening what it can *be*, which is the axis still short of evidence.
-
-**KaTeX**, still owed from M2 and still not needed by anything in the repertoire.
+**Semantic checks.** Almost everything verified is still form, plus the narrow agreement family (a printed number against its ink). Checking that an arrow points the way the content says needs a model in the loop, so it cannot live in CI ([0004](docs/decisions/0004-selection-core.md), [0005](docs/decisions/0005-module-protocol.md)).
 
 ---
-
 ## Later, not planned in detail
 
 Animation rendering · manim / Motion Canvas / Remotion integration · interactive figures · publishing to npm.
 
 ## Open questions, not blocking
-
-- LaTeX via KaTeX was listed under M2 design-system work and is **not** done. Nothing in the repertoire needs maths typesetting yet; it lands when a preset does.
 
 - Final rasteriser: Chromium for fidelity, or resvg for identical output across platforms. M0 evidence: on this figure the two are visually indistinguishable, so resvg stays a *check* for now and the decision can wait for a figure that stresses gradients, filters or clipping.
 - Whether `graph` should also front Graphviz, or ELK alone is enough.

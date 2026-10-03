@@ -8,7 +8,7 @@
 
 ## The problem with the plan as written
 
-[The build plan](../PLAN.md) promised the selection core would ship with "~20 real request phrasings → expected preset, judged against expectation". That suite is not constructible as stated: the thing being tested is a judgement made by a model reading prose, and CI has no model, no API key, and must be deterministic and offline.
+[The build plan](../plans/PLAN.md) promised the selection core would ship with "~20 real request phrasings → expected preset, judged against expectation". That suite is not constructible as stated: the thing being tested is a judgement made by a model reading prose, and CI has no model, no API key, and must be deterministic and offline.
 
 Three candidates, and the two obvious ones both fail:
 

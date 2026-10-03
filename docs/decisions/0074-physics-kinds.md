@@ -7,7 +7,7 @@ Accepted.
 ## The need
 
 ADR 0073 built `mechanics` with five dynamics kinds in one file. The physics
-plan ([PLAN-PHYSICS.md](../PLAN-PHYSICS.md)) takes it to about 25 kinds:
+plan ([PLAN-PHYSICS.md](../plans/PLAN-PHYSICS.md)) takes it to about 25 kinds:
 kinematics, energy, statics, momentum, circular motion, gravitation and fluids.
 One file of 25 kinds would be unreadable and fragile, so the preset is
 restructured before it grows.

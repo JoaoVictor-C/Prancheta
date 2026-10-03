@@ -6,7 +6,7 @@ Accepted.
 
 ## The need
 
-Phase 3 (`docs/PLAN-COVERAGE.md`) asks for "scene pictograms for word
+Phase 3 (`docs/plans/PLAN-COVERAGE.md`) asks for "scene pictograms for word
 problems (ladder, wall, pole and shadow, ramp), placed by kernel geometry
 from the problem's numbers." The construction preset (ADR 0044) already
 computes the right triangle behind "uma escada de 5 m está apoiada num

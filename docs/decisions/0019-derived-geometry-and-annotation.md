@@ -10,7 +10,7 @@ The first exercise figure this project was ever asked for — a free-body diagra
 
 **It passed every geometric check while asserting something false.** Every check this project has measures the figure against *itself*: does this label fit its box, do these two boxes collide, does this connector cross something it does not join. None of them asks whether the figure says what it means. The declared non-goal — *"every check answers malformation, not misrepresentation"* — is defensible for a diagram and is the **dominant** failure mode for an exercise.
 
-Chasing it produced [docs/PLAN-EXERCISES.md](../PLAN-EXERCISES.md) and one observation that organises all of it:
+Chasing it produced [docs/plans/PLAN-EXERCISES.md](../plans/PLAN-EXERCISES.md) and one observation that organises all of it:
 
 > The number 30 appeared twice in that spec: once as a printed string, once implicitly as whatever slope a 380×200 isoceles triangle happens to have. Nothing connected them.
 

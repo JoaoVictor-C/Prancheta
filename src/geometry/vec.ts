@@ -1,7 +1,7 @@
 /**
  * Vector algebra shared by every construction that reasons in R² or R³.
  *
- * Phase 3 (`docs/PLAN-COVERAGE.md`) needs two things next: a ruler-and-compass
+ * Phase 3 (`docs/plans/PLAN-COVERAGE.md`) needs two things next: a ruler-and-compass
  * 2D construction kernel (Geometria Plana loci -- intersections, feet of
  * perpendiculars, bisectors, the circle through three points) and a R³
  * projection for Geometria Analítica and school solids (lines, planes, their

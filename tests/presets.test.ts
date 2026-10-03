@@ -16,11 +16,11 @@ function fixture(name: string): unknown {
   return JSON.parse(readFileSync(url, "utf8"));
 }
 
-const graphFixture = fixture("graph-pipeline.json") as Record<string, unknown>;
-const mindmapFixture = fixture("mindmap-incident.json") as Record<string, unknown>;
-const annotatedFixture = fixture("annotated-cell.json") as Record<string, unknown>;
-const rawIrFixture = fixture("labelled-blocks.json") as Record<string, unknown>;
-const chartFixture = fixture("chart-quarterly-revenue.json") as Record<string, unknown>;
+const graphFixture = fixture("graph/graph-pipeline.json") as Record<string, unknown>;
+const mindmapFixture = fixture("mindmap/mindmap-incident.json") as Record<string, unknown>;
+const annotatedFixture = fixture("annotated-figure/annotated-cell.json") as Record<string, unknown>;
+const rawIrFixture = fixture("labelled-blocks/labelled-blocks.json") as Record<string, unknown>;
+const chartFixture = fixture("chart/chart-quarterly-revenue.json") as Record<string, unknown>;
 
 // ---------------------------------------------------------------------------
 // expand() dispatch and isPresetInput

@@ -7,7 +7,7 @@ Accepted. Implemented in `src/presets/solid/`. Not yet registered: see
 
 ## The need
 
-Phase 3 (`docs/PLAN-COVERAGE.md`) asks for convex polyhedra and right
+Phase 3 (`docs/plans/PLAN-COVERAGE.md`) asks for convex polyhedra and right
 cylinders, cones and spheres, drawn with analytic silhouettes. Hidden edges
 are to be dashed by visibility, and composites are to be transparent, with
 visibility decided per solid only. It refuses general hidden-line removal

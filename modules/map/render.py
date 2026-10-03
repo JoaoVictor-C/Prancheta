@@ -260,7 +260,7 @@ def grid_box(col: float, row: float, w: float = 1.0, h: float = 1.0, base_lon: f
     """A rectangular region on a simple lon/lat grid -- no real geography.
 
     Every named campaign map in this module is an illustrative fictional
-    continent, exactly like fixtures/broken-boxes.json is a fictional figure:
+    continent, exactly like fixtures/ir/broken-boxes.json is a fictional figure:
     the point is the DIAGRAM CLASS (categorical shading, a legend, movement
     arrows), not a claim about any real place or historical campaign.
     """

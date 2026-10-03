@@ -1,5 +1,7 @@
 # Plan: covering school and university exercises
 
+**Status:** done. Phases 0–6 shipped by 2026-10-03, with the ENEM audit in [docs/research/AUDIT-ENEM.md](../research/AUDIT-ENEM.md); the per-phase record is the Progress table below.
+
 [PLAN-EXERCISES.md](PLAN-EXERCISES.md) taught the spec to compute what it draws
 from what it says. This plan asks what the spec must be able to *say* so that
 almost any exercise a Brazilian student meets — Cálculo 1 to 3, Geometria
@@ -91,7 +93,7 @@ normal area, probability trees, Venn.
 
 ## Phase 6 — what ENEM asks for
 
-Ranked by the [ENEM audit](AUDIT-ENEM.md): data tables, measured series and
+Ranked by the [ENEM audit](../research/AUDIT-ENEM.md): data tables, measured series and
 schematic axes, construction extensions, solid and space extensions, circuit
 symbols, genetics.
 
@@ -111,56 +113,56 @@ about rectangles, not projected faces).
 
 | item | ADR | status |
 | --- | --- | --- |
-| length and place labels | [0028](decisions/0028-length-labels-and-place-labels.md) | done 2026-09-25 |
-| curves beyond graphs of functions (named variables, contour) | [0029](decisions/0029-curves-beyond-graphs-of-functions.md) | done 2026-09-25 |
+| length and place labels | [0028](../decisions/0028-length-labels-and-place-labels.md) | done 2026-09-25 |
+| curves beyond graphs of functions (named variables, contour) | [0029](../decisions/0029-curves-beyond-graphs-of-functions.md) | done 2026-09-25 |
 | numeric kit (`src/math/numeric.ts`) | — | done 2026-09-25; first consumed by function-graph areas and sums (0036) |
-| number-line | [0030](decisions/0030-number-line.md) | done 2026-09-25 |
-| unit-circle | [0031](decisions/0031-unit-circle.md) | done 2026-09-25 |
-| vectors | [0032](decisions/0032-vectors.md) | done 2026-09-25 |
-| value-table | [0033](decisions/0033-value-table.md) | done 2026-09-25 |
+| number-line | [0030](../decisions/0030-number-line.md) | done 2026-09-25 |
+| unit-circle | [0031](../decisions/0031-unit-circle.md) | done 2026-09-25 |
+| vectors | [0032](../decisions/0032-vectors.md) | done 2026-09-25 |
+| value-table | [0033](../decisions/0033-value-table.md) | done 2026-09-25 |
 | pt-BR angle labels read by `sweep-matches-its-label` | — | done 2026-09-25 (found by unit-circle) |
-| what a label hides and claims (backings, unclaimed labels, axes, line contrast) | [0035](decisions/0035-what-a-label-hides-and-claims.md) | done 2026-09-26 (found by visual review) |
-| areas and Riemann sums in function-graph | [0036](decisions/0036-areas-and-riemann-sums.md) | done 2026-09-27 |
-| `area-matches-its-label` | [0037](decisions/0037-area-matches-its-label.md) | done 2026-09-27 |
-| asymptotes and holes in function-graph | [0038](decisions/0038-asymptotes-and-holes.md) | done 2026-09-27 |
-| limit tables in value-table | [0039](decisions/0039-limit-tables.md) | done 2026-09-27 |
-| computed sheet text: `params`, `{{= …}}`, params in figures; one snapping helper | [0040](decisions/0040-computed-sheet-text.md) | done 2026-09-27 |
+| what a label hides and claims (backings, unclaimed labels, axes, line contrast) | [0035](../decisions/0035-what-a-label-hides-and-claims.md) | done 2026-09-26 (found by visual review) |
+| areas and Riemann sums in function-graph | [0036](../decisions/0036-areas-and-riemann-sums.md) | done 2026-09-27 |
+| `area-matches-its-label` | [0037](../decisions/0037-area-matches-its-label.md) | done 2026-09-27 |
+| asymptotes and holes in function-graph | [0038](../decisions/0038-asymptotes-and-holes.md) | done 2026-09-27 |
+| limit tables in value-table | [0039](../decisions/0039-limit-tables.md) | done 2026-09-27 |
+| computed sheet text: `params`, `{{= …}}`, params in figures; one snapping helper | [0040](../decisions/0040-computed-sheet-text.md) | done 2026-09-27 |
 | slow divergence in `numeric.limit` (ln x at 0⁺ is −∞) | — | done 2026-09-27; slow CONVERGENCE (x·ln x → 0) still reads "none" |
-| seeded variants: domains, declarative predicates, bounded admission loop | [0041](decisions/0041-seeded-variants.md) | done 2026-09-27; its `derive` removed by 0042 (predicates now see `calc.evaluateParams`) |
-| variant sheets and a separate gabarito: `sheet --variants N [--seed S]`, `--answers separate`, manifest, shortfall fails the build | [0042](decisions/0042-variant-sheets-and-gabarito.md) | done 2026-09-27; Phase 2 complete |
-| one vector algebra for 2D and 3D (`src/geometry/vec.ts`) | [0043](decisions/0043-one-vector-algebra.md) | done 2026-09-28 |
-| constructive 2D kernel: `construction` preset (points, lines, circles, conics by definition) | [0044](decisions/0044-constructions.md) | done 2026-09-28 |
-| 3D camera and `space` preset (R³ points, vectors, lines, planes; dashed behind planes) | [0045](decisions/0045-space-and-projection.md) | done 2026-09-28 |
-| school solids: `solid` preset (polyhedra, cylinder, cone, sphere; true-3D measured lengths) | [0046](decisions/0046-school-solids.md) | done 2026-09-28 |
-| word-problem pictograms in `construction`, with a `unit` for lengths | [0047](decisions/0047-word-problem-pictograms.md) | done 2026-09-28 |
+| seeded variants: domains, declarative predicates, bounded admission loop | [0041](../decisions/0041-seeded-variants.md) | done 2026-09-27; its `derive` removed by 0042 (predicates now see `calc.evaluateParams`) |
+| variant sheets and a separate gabarito: `sheet --variants N [--seed S]`, `--answers separate`, manifest, shortfall fails the build | [0042](../decisions/0042-variant-sheets-and-gabarito.md) | done 2026-09-27; Phase 2 complete |
+| one vector algebra for 2D and 3D (`src/geometry/vec.ts`) | [0043](../decisions/0043-one-vector-algebra.md) | done 2026-09-28 |
+| constructive 2D kernel: `construction` preset (points, lines, circles, conics by definition) | [0044](../decisions/0044-constructions.md) | done 2026-09-28 |
+| 3D camera and `space` preset (R³ points, vectors, lines, planes; dashed behind planes) | [0045](../decisions/0045-space-and-projection.md) | done 2026-09-28 |
+| school solids: `solid` preset (polyhedra, cylinder, cone, sphere; true-3D measured lengths) | [0046](../decisions/0046-school-solids.md) | done 2026-09-28 |
+| word-problem pictograms in `construction`, with a `unit` for lengths | [0047](../decisions/0047-word-problem-pictograms.md) | done 2026-09-28 |
 | `length-matches-its-label` reads exact roots ("2√13") | — | done 2026-09-28 |
-| surfaces z = f(x, y): `surface` preset (depth-sorted mesh, level curves, tangent plane exact) | [0048](decisions/0048-surfaces.md) | done 2026-09-28 |
-| solids of revolution: `revolution` preset (discs, washers, shells; volume integral exact) | [0049](decisions/0049-solids-of-revolution.md) | done 2026-09-28 |
-| RK4 in the numeric kit (`rk4`, `rk4Scalar`, `rk4Planar`) | [0050](decisions/0050-fields.md) | done 2026-09-28 |
-| slope fields, vector fields, level curves: `field` preset (inline contour labels) | [0050](decisions/0050-fields.md) | done 2026-09-28 |
-| sequences and series: `sequence` preset (unjoined terms, independent limits) | [0051](decisions/0051-sequences.md) | done 2026-09-28 |
-| linear maps: `linear-map` preset (matrix or named map, image lattice, \|det A\| measured, eigen-lines) | [0052](decisions/0052-linear-maps.md) | done 2026-09-28; Phase 4 complete |
+| surfaces z = f(x, y): `surface` preset (depth-sorted mesh, level curves, tangent plane exact) | [0048](../decisions/0048-surfaces.md) | done 2026-09-28 |
+| solids of revolution: `revolution` preset (discs, washers, shells; volume integral exact) | [0049](../decisions/0049-solids-of-revolution.md) | done 2026-09-28 |
+| RK4 in the numeric kit (`rk4`, `rk4Scalar`, `rk4Planar`) | [0050](../decisions/0050-fields.md) | done 2026-09-28 |
+| slope fields, vector fields, level curves: `field` preset (inline contour labels) | [0050](../decisions/0050-fields.md) | done 2026-09-28 |
+| sequences and series: `sequence` preset (unjoined terms, independent limits) | [0051](../decisions/0051-sequences.md) | done 2026-09-28 |
+| linear maps: `linear-map` preset (matrix or named map, image lattice, \|det A\| measured, eigen-lines) | [0052](../decisions/0052-linear-maps.md) | done 2026-09-28; Phase 4 complete |
 | powers of e in the exact snapper (`= e` for (1 + 1/n)ⁿ) | — | done 2026-09-28 |
-| DC circuits: `circuit` preset (given layout, MNA solver, current arrows in their true direction) | [0053](decisions/0053-circuits.md) | done 2026-09-28 |
-| ray optics: `optics` preset (lenses and mirrors by Gauss, Snell and total internal reflection) | [0054](decisions/0054-ray-optics.md) | done 2026-09-28; dashed extensions drawn per segment, no core line-style change needed |
-| electric field lines and equipotentials: `field` kind `charges` | [0055](decisions/0055-electric-field-lines.md) | done 2026-09-28 |
-| finite automata: `automaton` preset (DFA/NFA, acceptance by simulation, subset construction) | [0056](decisions/0056-automata.md) | done 2026-09-28 |
-| boolean logic: `truth-table` and `logic-circuit` presets on `src/math/boolean.ts` (Quine–McCluskey) | [0057](decisions/0057-boolean-logic.md) | done 2026-09-28 |
-| histograms and boxplots: `statistics` preset on `src/math/statistics.ts` | [0058](decisions/0058-descriptive-statistics.md) | done 2026-09-29 |
-| normal, binomial and Poisson events: `distribution` preset on `src/math/probability.ts` | [0059](decisions/0059-probability-distributions.md) | done 2026-09-29 |
-| probability trees: `probability-tree` preset (urns, exact fractions, Bayes) | [0060](decisions/0060-probability-trees.md) | done 2026-09-29 |
-| Venn diagrams: `venn` preset (shaded expressions, inclusion–exclusion) | [0061](decisions/0061-venn-diagrams.md) | done 2026-09-29; Phase 5 complete |
-| corpus coverage audit: ENEM 2023–2025 (210 figures) | [AUDIT-ENEM](AUDIT-ENEM.md) | done 2026-10-02; day 2: 19 % of drawable figures covered, 57 % partial; course lists pending |
-| tables of given data: `data-table` preset (pt-BR numbers on the comma, grouped headers, derived columns and totals, blanks) | [0065](decisions/0065-data-tables.md) | done 2026-10-02; Phase 6 item 1 |
-| measured series and schematic axes in function-graph and chart (given points, category axes, fill between, dual y, symbolic ticks, five-option panels) | [0066](decisions/0066-measured-series-and-schematic-axes.md) | done 2026-10-02; Phase 6 item 2 |
-| construction extensions (sectors, rings, semicircles, belts, regions, grids, dimension lines, quadrilateral circles) | [0067](decisions/0067-construction-extensions.md) | done 2026-10-02; Phase 6 item 3 |
-| solid and space extensions (frustums, hemispheres, stairs, polyhedra from faces with real hidden-line removal, bores, liquid levels, stacking, nets; gridded planes, projected blocks, paths) | [0068](decisions/0068-solid-and-space-extensions.md) | done 2026-10-02; Phase 6 item 4 |
-| circuit symbols (LED and diode, internal resistance, symbolic values, potentiometer taps, load box) | [0069](decisions/0069-circuit-symbols.md) | done 2026-10-02; Phase 6 item 5 |
-| genetics: `genetics` preset (Punnett squares, pedigrees with exact probabilities) | [0070](decisions/0070-genetics.md) | done 2026-10-02; Phase 6 complete |
-| ENEM audit re-scored after Phase 6 | [AUDIT-ENEM](AUDIT-ENEM.md) | done 2026-10-02; day 2: 64 % of drawable figures covered (was 19 %), 22 % partial |
-| `answers: false` on function-graph and chart (computed values hidden on question figures) | [0071](decisions/0071-answers-on-graphs-and-charts.md) | done 2026-10-03; sheet `graph` figures now honour it too |
-| pictograms: `pictogram` preset (icon rows counted from the data, fractional icons, dot figures with polygonal counts) | [0072](decisions/0072-pictograms.md) | done 2026-10-03 |
-| force diagrams: `mechanics` preset (pulley systems and inclines solved, arrows to one scale) | [0073](decisions/0073-mechanics.md) | done 2026-10-03; ENEM day 2 now 66 % covered |
+| DC circuits: `circuit` preset (given layout, MNA solver, current arrows in their true direction) | [0053](../decisions/0053-circuits.md) | done 2026-09-28 |
+| ray optics: `optics` preset (lenses and mirrors by Gauss, Snell and total internal reflection) | [0054](../decisions/0054-ray-optics.md) | done 2026-09-28; dashed extensions drawn per segment, no core line-style change needed |
+| electric field lines and equipotentials: `field` kind `charges` | [0055](../decisions/0055-electric-field-lines.md) | done 2026-09-28 |
+| finite automata: `automaton` preset (DFA/NFA, acceptance by simulation, subset construction) | [0056](../decisions/0056-automata.md) | done 2026-09-28 |
+| boolean logic: `truth-table` and `logic-circuit` presets on `src/math/boolean.ts` (Quine–McCluskey) | [0057](../decisions/0057-boolean-logic.md) | done 2026-09-28 |
+| histograms and boxplots: `statistics` preset on `src/math/statistics.ts` | [0058](../decisions/0058-descriptive-statistics.md) | done 2026-09-29 |
+| normal, binomial and Poisson events: `distribution` preset on `src/math/probability.ts` | [0059](../decisions/0059-probability-distributions.md) | done 2026-09-29 |
+| probability trees: `probability-tree` preset (urns, exact fractions, Bayes) | [0060](../decisions/0060-probability-trees.md) | done 2026-09-29 |
+| Venn diagrams: `venn` preset (shaded expressions, inclusion–exclusion) | [0061](../decisions/0061-venn-diagrams.md) | done 2026-09-29; Phase 5 complete |
+| corpus coverage audit: ENEM 2023–2025 (210 figures) | [AUDIT-ENEM](../research/AUDIT-ENEM.md) | done 2026-10-02; day 2: 19 % of drawable figures covered, 57 % partial; course lists pending |
+| tables of given data: `data-table` preset (pt-BR numbers on the comma, grouped headers, derived columns and totals, blanks) | [0065](../decisions/0065-data-tables.md) | done 2026-10-02; Phase 6 item 1 |
+| measured series and schematic axes in function-graph and chart (given points, category axes, fill between, dual y, symbolic ticks, five-option panels) | [0066](../decisions/0066-measured-series-and-schematic-axes.md) | done 2026-10-02; Phase 6 item 2 |
+| construction extensions (sectors, rings, semicircles, belts, regions, grids, dimension lines, quadrilateral circles) | [0067](../decisions/0067-construction-extensions.md) | done 2026-10-02; Phase 6 item 3 |
+| solid and space extensions (frustums, hemispheres, stairs, polyhedra from faces with real hidden-line removal, bores, liquid levels, stacking, nets; gridded planes, projected blocks, paths) | [0068](../decisions/0068-solid-and-space-extensions.md) | done 2026-10-02; Phase 6 item 4 |
+| circuit symbols (LED and diode, internal resistance, symbolic values, potentiometer taps, load box) | [0069](../decisions/0069-circuit-symbols.md) | done 2026-10-02; Phase 6 item 5 |
+| genetics: `genetics` preset (Punnett squares, pedigrees with exact probabilities) | [0070](../decisions/0070-genetics.md) | done 2026-10-02; Phase 6 complete |
+| ENEM audit re-scored after Phase 6 | [AUDIT-ENEM](../research/AUDIT-ENEM.md) | done 2026-10-02; day 2: 64 % of drawable figures covered (was 19 %), 22 % partial |
+| `answers: false` on function-graph and chart (computed values hidden on question figures) | [0071](../decisions/0071-answers-on-graphs-and-charts.md) | done 2026-10-03; sheet `graph` figures now honour it too |
+| pictograms: `pictogram` preset (icon rows counted from the data, fractional icons, dot figures with polygonal counts) | [0072](../decisions/0072-pictograms.md) | done 2026-10-03 |
+| force diagrams: `mechanics` preset (pulley systems and inclines solved, arrows to one scale) | [0073](../decisions/0073-mechanics.md) | done 2026-10-03; ENEM day 2 now 66 % covered |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each
 with its rules and a paragraph in SELECTION.md; value-table is offered at the
@@ -244,7 +246,7 @@ What fixed each figure:
   rows are labelled f(x).
 
 Check gaps this exposed. Each one let a visible defect pass green. The
-first four are closed by [ADR 0035](decisions/0035-what-a-label-hides-and-claims.md)
+first four are closed by [ADR 0035](../decisions/0035-what-a-label-hides-and-claims.md)
 (2026-09-26):
 - **Hiding backings — closed.** `backing-hides-no-ink` fails an opaque
   label box over any stroked mark it does not `annotates`, axes included.

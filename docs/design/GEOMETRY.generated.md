@@ -7,7 +7,7 @@ This file is generated with `node scripts/gen-shape-reference.ts`; do not edit i
 
 ## Block shapes (`Block.shape`)
 
-Every shape shares the block's own axis-aligned bounding box exactly -- see [step 14](../PLAN-NEXT.md) and [src/geometry/shapes.ts](../../src/geometry/shapes.ts).
+Every shape shares the block's own axis-aligned bounding box exactly -- see [step 14](../plans/PLAN-NEXT.md) and [src/geometry/shapes.ts](../../src/geometry/shapes.ts).
 
 | shape | inscribed area (of bbox) | top-left | top-right | bottom-left | bottom-right | what it is |
 | --- | --- | --- | --- | --- | --- | --- |

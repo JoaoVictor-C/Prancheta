@@ -10,8 +10,8 @@ import { render } from "../src/pipeline.ts";
 import { parseSpec } from "../src/ir/types.ts";
 import { isMonotone } from "../src/repair.ts";
 
-const brokenBoxesPath = new URL("../fixtures/broken-boxes.json", import.meta.url);
-const labelledBlocksPath = new URL("../fixtures/labelled-blocks.json", import.meta.url);
+const brokenBoxesPath = new URL("../fixtures/ir/broken-boxes.json", import.meta.url);
+const labelledBlocksPath = new URL("../fixtures/labelled-blocks/labelled-blocks.json", import.meta.url);
 
 function loadFixture(url: URL) {
   return parseSpec(JSON.parse(readFileSync(url, "utf8")));

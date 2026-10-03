@@ -257,6 +257,59 @@ export const DELEGATES: { id: ModuleId; domain: Domain; summary: string }[] = [
   { id: "crystal", domain: "crystallographic", summary: "One conventional unit cell, depth-sorted; ASE." },
 ];
 
+/**
+ * Which shelf of the repertoire a preset sits on, for the README and the
+ * docs index (scripts/gen-views.ts). A `Record`, so a new preset without a
+ * shelf is a type error rather than a row that lands nowhere.
+ */
+export type PresetArea = "diagrams" | "data" | "calculus" | "geometry" | "physics" | "chemistry-biology" | "logic";
+
+export const PRESET_AREAS: Record<PresetArea, string> = {
+  diagrams: "Diagrams",
+  data: "Data, statistics and probability",
+  calculus: "Functions and calculus",
+  geometry: "Geometry and linear algebra",
+  physics: "Physics",
+  "chemistry-biology": "Chemistry and biology",
+  logic: "Logic and computing",
+};
+
+export const PRESET_AREA: Record<PresetId, PresetArea> = {
+  "labelled-blocks": "diagrams",
+  graph: "diagrams",
+  mindmap: "diagrams",
+  "annotated-figure": "diagrams",
+  chart: "data",
+  "data-table": "data",
+  statistics: "data",
+  distribution: "data",
+  "probability-tree": "data",
+  venn: "data",
+  pictogram: "data",
+  "function-graph": "calculus",
+  "sign-chart": "calculus",
+  "value-table": "calculus",
+  "number-line": "calculus",
+  sequence: "calculus",
+  surface: "calculus",
+  revolution: "calculus",
+  field: "calculus",
+  vectors: "geometry",
+  "unit-circle": "geometry",
+  construction: "geometry",
+  space: "geometry",
+  solid: "geometry",
+  "linear-map": "geometry",
+  circuit: "physics",
+  optics: "physics",
+  mechanics: "physics",
+  "acid-base": "chemistry-biology",
+  genetics: "chemistry-biology",
+  automaton: "logic",
+  "truth-table": "logic",
+  "logic-circuit": "logic",
+};
+
 export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] = [
   { id: "labelled-blocks", implemented: true, summary: "Stacked labelled boxes; the plain case." },
   { id: "graph", implemented: true, summary: "Nodes and edges, skeleton laid out by ELK." },

@@ -1,6 +1,6 @@
 # Decision 0003 — Effects system extension
 
-**Status:** planned · 2026-08-23
+**Status:** overtaken · 2026-08-23 (planned) — never carried out as written. The effects system shipped through [ADR 0006](0006-effects-are-checked-geometry.md) and the paint work of 2026-08-24 (gradients, line styles, rotation); the remaining transforms were refused (TODO.md, typography: "Refused outright"). The number 0003 is also taken by [0003-repairs-are-edits](0003-repairs-are-edits.md); both keep it, since links point at both.
 **Decision:** Extend effects system with gradients, patterns, blend modes, distortion, color effects, stroke effects, and transforms through a 5-phase implementation with validation gates.
 **Method:** Reasoning session `df45fdfc` — 3 iterations, 2 passes, halt on signal, final confidence 0.94.
 **Context:** Current system has rotation, linear gradients, and comprehensive filter effects. Must maintain SVG 1.1 portability for resvg, librsvg, Inkscape, Illustrator export.

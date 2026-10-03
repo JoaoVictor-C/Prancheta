@@ -1,6 +1,6 @@
 # Corpus coverage audit — ENEM 2023–2025
 
-The audit [PLAN-COVERAGE](PLAN-COVERAGE.md) asked for: classify every figure in
+The audit [PLAN-COVERAGE](../plans/PLAN-COVERAGE.md) asked for: classify every figure in
 a sample of real exams as covered, partial, uncovered or not-generable, and let
 the counts decide what to build next. Done on 2026-10-02.
 
@@ -131,7 +131,7 @@ Then two presets took on what was cheap and recurring (ADRs 0072, 0073):
 2023 Q109. That makes **102 of 154 (66 %)** covered. The rest of the long tail
 — a fuel cell, a cathode-ray tube, an induction cooktop — is illustration with
 nothing to compute. It stays raw IR, written per exercise.
-`fixtures/raw-ir-fuel-cell.json` is the worked example.
+`fixtures/ir/raw-ir-fuel-cell.json` is the worked example.
 
 ## Not yet audited
 

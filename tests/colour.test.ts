@@ -44,7 +44,7 @@ test("parseColour reads the 8-digit hex alpha channel rather than discarding it"
  * hex. Every real render hands this project `rgb(...)`/`rgba(...)`, and a
  * parser that only understood hex made contrast-sufficient silently
  * not-applicable on every real figure -- proven by rendering
- * fixtures/bad-contrast.json end to end, not by a unit test, which is why
+ * fixtures/ir/bad-contrast.json end to end, not by a unit test, which is why
  * this regression is pinned here explicitly.
  */
 test("parseColour reads what a browser actually reports: rgb() and rgba()", () => {

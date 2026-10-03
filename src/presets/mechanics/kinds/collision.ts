@@ -29,15 +29,15 @@ function validate(raw: Record<string, unknown>, path: string): void {
     if (us.length !== 2 || us.some((x) => typeof x !== "number")) throw new SpecError(`${path}.velocities must be two numbers, m/s`);
     const [u1, u2] = us as number[];
     if (!(u1! > u2!)) throw new SpecError(`${path}.velocities: body 1 (left) must move faster to the right than body 2, or they never meet`);
-    if (raw.type !== undefined && raw.restitution !== undefined) throw new SpecError(`${path}: give type or restitution, not both`);
-    v.optionalEnum(raw, "type", path, TYPES);
+    if (raw.collision !== undefined && raw.restitution !== undefined) throw new SpecError(`${path}: give collision or restitution, not both`);
+    v.optionalEnum(raw, "collision", path, TYPES);
     const e = v.optionalNumber(raw, "restitution", path);
     if (e !== undefined && (e < 0 || e > 1)) throw new SpecError(`${path}.restitution must be from 0 to 1, got ${e}`);
   } else {
     const ex = v.object(raw.explosion, `${path}.explosion`);
     v.requiredNumber(ex, "velocity", `${path}.explosion`);
     v.optionalNumber(ex, "initial", `${path}.explosion`);
-    if (raw.type !== undefined || raw.restitution !== undefined) throw new SpecError(`${path}: an explosion takes no type or restitution`);
+    if (raw.collision !== undefined || raw.restitution !== undefined) throw new SpecError(`${path}: an explosion takes no collision or restitution`);
   }
 }
 
@@ -51,7 +51,7 @@ function draw(input: MechanicsInput): FigureSpec {
   const [m1, m2] = input.masses as [number, number];
   const ex = input.explosion as { velocity: number; initial?: number } | undefined;
   const us = input.velocities as [number, number] | undefined;
-  const e = ex !== undefined ? undefined : input.type === "perfectly-inelastic" ? 0 : (input.restitution as number | undefined) ?? 1;
+  const e = ex !== undefined ? undefined : input.collision === "perfectly-inelastic" ? 0 : (input.restitution as number | undefined) ?? 1;
   const s = ex !== undefined ? solveExplosion(m1, m2, ex.velocity, ex.initial ?? 0) : solveCollision(m1, m2, us![0], us![1], e!);
   const u1 = ex !== undefined ? (ex.initial ?? 0) : us![0];
   const u2 = ex !== undefined ? (ex.initial ?? 0) : us![1];
@@ -136,4 +136,4 @@ function draw(input: MechanicsInput): FigureSpec {
   return parseSpec(b.spec(input.title ?? (together ? "explosão" : "colisão")));
 }
 
-export const collision: Kind = { id: "collision", fields: ["masses", "velocities", "type", "restitution", "explosion"], validate, draw };
+export const collision: Kind = { id: "collision", fields: ["masses", "velocities", "collision", "restitution", "explosion"], validate, draw };

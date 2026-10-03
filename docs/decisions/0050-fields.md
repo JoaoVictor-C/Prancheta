@@ -6,7 +6,7 @@ Accepted.
 
 ## The need
 
-Phase 4 (`docs/PLAN-COVERAGE.md`) names three figures Cálculo 2/3 and Álgebra
+Phase 4 (`docs/plans/PLAN-COVERAGE.md`) names three figures Cálculo 2/3 and Álgebra
 Linear both need and this project could not yet draw: the "campo de
 direções" of an ODE `dy/dx = f(x, y)` (a slope field, with solution curves
 through given initial points), a planar vector field `(P(x, y), Q(x, y))`

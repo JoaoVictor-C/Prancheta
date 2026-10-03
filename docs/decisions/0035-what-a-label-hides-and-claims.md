@@ -167,10 +167,10 @@ Every producer the fixture sweep found:
 | `chart` | bar value labels (grouped) | `annotates` their bar |
 | `chart` | category names, stacked totals, legend entries, the series chart's axis numbers | `freeStanding` |
 | `annotated-figure` | callouts | `annotates` their own leader |
-| `fixtures/allow-overlap.json` | "A", "B", "C" | `annotates` their set |
-| `fixtures/calc1-s5-5-chain.json` | each derivative | `annotates` its arrow |
-| `fixtures/calc1-s5-5-chain.json` | the two caption lines | `freeStanding` |
-| `fixtures/bad-contrast.json` | its planted grey box (fill equals the grey canvas) | `freeStanding` |
+| `fixtures/ir/allow-overlap.json` | "A", "B", "C" | `annotates` their set |
+| `fixtures/ir/calc1-s5-5-chain.json` | each derivative | `annotates` its arrow |
+| `fixtures/ir/calc1-s5-5-chain.json` | the two caption lines | `freeStanding` |
+| `fixtures/ir/bad-contrast.json` | its planted grey box (fill equals the grey canvas) | `freeStanding` |
 
 ## What was refused
 

@@ -1,174 +1,64 @@
 # TODO
 
-Full rationale, what's genuinely hard about each, and what check would give it real teeth: [docs/research/candidate-modules.md](docs/research/candidate-modules.md).
+What is open, and what was deliberately refused. What *landed* is in [ROADMAP.md](ROADMAP.md); the plan in progress is in [docs/plans/](docs/plans/README.md). An item that lands is deleted from here in the same change (the procedure in [CONTRIBUTING.md](CONTRIBUTING.md#the-procedure-for-a-new-preset-or-feature)).
 
-## Exercise figures: what M0 through M4 left behind
+Last pruned 2026-10-03.
 
-Shipped against [ADR 0019](docs/decisions/0019-derived-geometry-and-annotation.md) and [docs/PLAN-EXERCISES.md](docs/PLAN-EXERCISES.md); see [ROADMAP.md](ROADMAP.md) for what each milestone found. Open, in the order the evidence favours:
+## Next
 
-- [x] **`length-matches-its-label` — the twin `sweep-matches-its-label` never got.** Shipped: [ADR 0028](docs/decisions/0028-length-labels-and-place-labels.md) — frame resolution keeps the scale a straight run was stated at (`MeasuredIn`, plus an optional `Frame.unit`), and a numeric label on a run with no such scale is reported not-applicable, per run, never passed. An arc that disagrees with its printed angle is caught; a LINE that disagrees with its printed length is not. Both figures reproduced from real exam papers depend on one: `"50m"` and the `50` that draws the dimension are two numbers free to disagree, exactly as the angle case was before M1.4, and so are `vA = 50 m/s` and an arrow scaled at 2px per m/s. Same shape as the existing check — find the label through `annotates`, compare only labels that state a number, tolerate what a reader could not see. The one wrinkle is units: an angle is always degrees, a length is px unless a frame says otherwise, so the check has to know the frame scale a mark or connector was stated in, which frame resolution currently strips.
+- [ ] **PLAN-PHYSICS P3** — six function-graph worked examples: s×t, v×t and a×t on one time axis; two vehicles meeting; work as the area under F×d; impulse under F×t; Eₖ, Eₚ and the total against position; g against distance. Fixtures only, no new code. [docs/plans/PLAN-PHYSICS.md](docs/plans/PLAN-PHYSICS.md)
+- [ ] **A core `GridAxis.schematic` field**, to replace the declaration mark the schematic axes of ADR 0066 use today.
+- [ ] **The `biologia` list's solution figure s1-2 fails `label-nearest-its-place`**, on master too. Found 2026-10-03, before any of the mechanics work.
+- [ ] **ENEM day 2 is 66 % covered** ([docs/research/AUDIT-ENEM.md](docs/research/AUDIT-ENEM.md)). The partial rows are the ranked list of what to build next; re-score after each preset lands.
 
-- [x] **A label that names a PLACE, not an element.** Shipped: [ADR 0028](docs/decisions/0028-length-labels-and-place-labels.md) — `Block.annotatesPlace`, measured by `label-nearest-its-place` (near edge, within the label's own size, lines through the place do not compete). Presets not yet wired to it. `annotation-nearest-its-owner` assumes every label names something drawn. Twice now the honest fix has been to DELETE the annotation rather than move the label: a legend row (association is by row, not proximity — the two texts are always nearer each other than their own swatches) and the `0` on a trajectory (it names the origin, a point where two lines meet, not either line). Deleting means the figure claims nothing and nothing checks it, which is the wrong end state for the commonest labels in the repertoire. Needs either an anchor-point form of `annotates` or an explicit "names a location" that the check measures differently.
+## The core
 
-- [ ] **`tick-labels-do-not-collide` still identifies ticks by id substring.** `id.startsWith("tick-") || id.includes("-tick-")`, and the comment beside it calls this "temporary heuristic until metadata exists". It had zero real producers when written and has two now, so the heuristic is load-bearing: any block whose id happens to contain `-tick-` is treated as an axis tick. The metadata it is waiting for is a one-field change; the reason to do it is that the check is now guarding something.
+- [ ] **`tick-labels-do-not-collide` still identifies ticks by id substring.** `id.startsWith("tick-") || id.includes("-tick-")` (src/checks.ts), with a comment calling it "temporary heuristic until metadata exists". The heuristic now carries real weight: any block whose id contains `-tick-` is treated as an axis tick. The missing metadata is a one-field change.
 
-- [ ] **Four modules are still unreachable from any spec, preset or CLI path.** `presets/chart/data-binding.ts` — and `scales.ts`, which only *it* imports, so the two are dead as a pair — plus `layout/solver.ts`, `layout/repair.ts` and `layout/grouping.ts`. Two others on the original audit list are now resolved: `math/mathjax.ts` and `dimension/annotation.ts` were both deleted rather than wired, for reasons recorded in the ROADMAP.
+- [ ] **Four files are still unreachable from any spec, preset or CLI path.** They are `presets/chart/data-binding.ts` (with `src/scales.ts`, which only it imports), `layout/solver.ts`, `layout/repair.ts` and `layout/grouping.ts`, each imported only by its own tests.
 
-  `layout/repair.ts` is the one with a visible consequence: it is why a failed `constraints-satisfied` reports "no repair strategy for this check" while a correct implementation of ADR 0009's proof sits unused. **It is not a wiring job.** It works on a parallel `PlacementSolution`/`PlacementViolation` world; connecting it needs a POSITION edit kind, and a position edit does not satisfy the existing loop's termination argument ("every edit strictly increases one bounded quantity") — ADR 0009 proves termination a different way, by lexicographic potential, so the two loops would carry two proofs. It also collides with frames: moving a frame-positioned element silently breaks the coordinate it claims, which is the falseness class ADR 0019 exists to close. Its own ADR, or leave it and say so.
+  `layout/repair.ts` has a visible consequence: a failed `constraints-satisfied` reports "no repair strategy". It is **not a wiring job**, for three reasons:
+  - It works on a parallel `PlacementSolution` world and needs a POSITION edit kind.
+  - A position edit does not satisfy the existing loop's termination argument. ADR 0009 proves termination a different way, so the two loops would carry two proofs.
+  - Moving a frame-positioned element silently breaks the coordinate it claims (ADR 0019).
 
-- [ ] **The suite's Playwright screenshot flake.** `page.screenshot: Protocol error (Page.captureScreenshot): Unable to capture screenshot`, four occurrences across four different test files in one session, never reproducible when the file is run alone. Each `render()` launches its own Chromium and the suite runs files in parallel, so the likely cause is contention rather than a defect in any test. Prefer removing the contention over retrying the screenshot: a retry makes the symptom rarer without making the suite honest.
+  Either it gets its own ADR, or it is left as it is and that is said.
 
-- [ ] **README and the plan docs are hand-written and nothing checks them.** `check:refs` and `check:views` cover the four generated references and the two generated host views; the README's own tables are neither. It said "Eleven checks" through four milestones that added four more, and the repertoire section predated frames and marks. No mechanical fix is proposed here — a generator for prose would be worse — but the failure mode is worth stating: the parts of the docs that go stale fastest are exactly the parts no check reads.
+- [ ] **Contrast thresholds ignore size.** WCAG lets large text pass at 3:1; `contrast-sufficient` applies 4.5:1 to everything. The change makes a check more permissive, so it wants its own ADR.
+- [ ] **Text over a colour field cannot pass.** The honest fix is a trade, not a fourth toggle: stand down the collision check and force contrast to run against the box the text sits over.
+- [ ] **Composition is the missing design system.** There is `canvas.padding` and nothing else: no margins, no modular scale, no title-block rhythm.
+- [ ] **Arbitrary block paths.** `flattenPath` already ships and could give `shape: "path"` containment, but it trades away the exact-containment guarantee every shape keeps. Needs its own ADR.
+- [ ] **`star` (27.6 % of its box) and `cross` (55.2 %) are markers, not containers.** A symbol sheet should caption them rather than label them inside. Nothing to fix; worth not forgetting.
 
-## Constraint toggles — shipped
+## The agent-facing surface
 
-**Decision recorded:** [ADR 0010](docs/decisions/0010-constraint-toggles.md) — make constraints 1, 2, and 4 toggleable; keep 3, 5, 6 as-is.
+- [ ] **A module's missing dependency should be a named refusal.** `MODULES` already declares each module's `needs`; nothing says it when `module python --args …` fails on an absent package. This is the same defect ADR 0018 fixed for documents, one surface over.
+- [ ] **Over MCP, `render` returns checks but no figure and no path.** An MCP-only agent is told its figure has a defect and given no way to look at it. Move the artefact write out of `cli.ts` into a helper both bindings call, so MCP returns paths. It revises a documented decision, so it needs its own ADR.
+- [ ] **A validator can drift from its expander.** Stated in ADR 0018 rather than solved; revisit only if a real drift is observed.
 
-**Implementation plan:** [docs/CONSTRAINT-TOGGLES-PLAN.md](docs/CONSTRAINT-TOGGLES-PLAN.md) — 6 phases, 21-33 hours estimated.
+## Animation
 
-Three toggles, all shipped (M10; see ROADMAP and the README's constraint-toggle table):
-- [x] **`allowOverlap`** — disables `boxes-do-not-overlap` check when true (enables Venn diagrams, circle packings, overlapping annotations)
-- [x] **`allowConnectorCrossing`** — disables `connector-clear-of-boxes` check when true (enables callout/leader patterns crossing dense fields)
-- [x] **`allowCurvedConnectors`** — enables bezier/arc connectors in IR (enables curved flowcharts, mind maps, org charts)
+Shipped through ADRs [0012](docs/decisions/0012-animation-m11-scope.md)–[0017](docs/decisions/0017-animation-m15-routes.md). Open, in the order the evidence favours:
 
-All default to `false` (constraints active). Per-diagram scope via `canvas.constraints`. Reasoned through a full session (confidence 0.82, 2 iterations).
+- [ ] **Multi-label diff.** A box that slides *and* recolours is `restyled` and hard-cuts. The fix changes `FigureDiff`'s public shape.
+- [ ] **Easing a staggered figure.** The design is in ADR 0015 and has not been verified: ease the global clock, and give each element the matching sub-arc of the same Bezier.
+- [ ] **Unowned text is not a participant** in the motion check. A figure title has never been checked against anything moving.
+- [ ] **Effects put ink outside the checked rect.** The motion check reasons about the rectangles, not about pixels.
+- [ ] **A sequence launches one browser per state.** This is a measured cost, not an assumed one; worth revisiting for sequences of a dozen or more states.
+- [ ] **The identity-continuity bound is heuristic at its edges.** A slideshow that keeps one persistent header still passes.
 
-**Why these three:** Each blocks specific legitimate diagram types without being load-bearing for the layout solver. Constraints 3 (axis-aligned), 5 (flat-color), and 6 (text limits) are kept as-is because they're either foundational to the solver or add complexity without structural value.
+## Generators
 
-## Animation: what M11.1 through M14 left behind
+- [ ] **Nothing was migrated to `experiments/generators/lib.mjs`.** The six sound generators would be cheap to move; the six legacy ones would not be.
+- [ ] **`navguide` does not belong in the poster series.** It is a node-and-connector diagram, which a core preset would serve better.
 
-Five milestones shipped against [ADR 0012](docs/decisions/0012-animation-m11-scope.md), [0013](docs/decisions/0013-animation-m11-1-check-what-renders.md), [0014](docs/decisions/0014-animation-m11-2-motor.md), [0015](docs/decisions/0015-animation-m13-stagger.md) and [0016](docs/decisions/0016-animation-m14-sequences.md). See [ROADMAP.md](ROADMAP.md) for what each found. What is genuinely open, in the order the evidence favours:
+## Refused, with reasons (not backlog)
 
-- [ ] **Connector motion (M12).** The most visibly wrong thing left in the output: a connector is pinned to its second-state (or, in a sequence, its final-state) route for the whole run while its endpoint boxes glide away from it. Needs motion-crossing via adaptive-tolerance sampling, reusing the `FLATTEN_TOLERANCE` discipline — a routed connector is not guaranteed reducible to one linear inequality the way box motion is — plus true route interpolation. Its own ADR, the same complexity class as the curve-flattening fix.
+- **Shape morphing, a camera, video export** (ADR 0016). No check exists for any of them; for a camera none can, since legibility under zoom is a research problem.
+- **Skew, flip, tile and scale transforms; more effects; a `poster` preset; a selection table for style packs.** Each multiplies what every check must reason about, or arbitrates taste. [ADR 0003-effects-extension](docs/decisions/0003-effects-extension.md) planned some of these and was overtaken.
+- **Music notation, astronomical star charts, PCB layout, knitting charts, knot diagrams** ([docs/research/candidate-modules.md](docs/research/candidate-modules.md)). Geographic routing would fold into `modules/map`. Trusses stay set aside; free-body diagrams with real force computation, set aside with them, are now the `mechanics` preset (ADRs 0073, 0074); logic gates are `logic-circuit` (ADR 0057).
+- **A `generators` command.** Nobody invokes a generator at runtime, so a repertoire table for them would have nothing to do.
 
-- [ ] **Multi-label diff (M12).** `diff.ts` gives each element exactly one delta kind, priority-ordered, so a box that slides *and* recolours is `restyled` and hard-cuts rather than sliding. The root-cause fix for a defect M11.1 could only disclose. Deliberately not absorbed into M11.1: it changes `FigureDiff`'s public shape and the `diff` command's output, neither of which that defect required touching — and it needed the shared trajectory derivation as a prerequisite anyway, since without it `checks.ts` would still derive its own motion and could still disagree.
+## Process reminder
 
-- [ ] **Easing a staggered figure.** Guard 3 currently refuses the combination, because CSS applies a timing function between each *pair of keyframes*, so easing a staggered element eases its own ramp and every element ends up on a different reparametrisation of time. The way out is designed in ADR 0015 and **unverified**: ease the *global* clock, and give each element's ramp the corresponding sub-arc of that same Bezier, which is itself a Bezier by De Casteljau subdivision. Then there is one shared reparametrisation again and the original proof applies verbatim. Applies identically to an N-state sequence.
-
-- [ ] **A stagger profile helper.** Windows are per-element and hand-declared, which is right for a generator (see [experiments/animation/vortex.mjs](experiments/animation/vortex.mjs)) and tedious by hand for a large figure. No flag is offered because any such flag has to invent an ordering rule, and the core is the wrong place for one. If this lands it belongs in a preset or a generator, not in `animate`.
-
-- [ ] **Unowned text is still not a participant.** The motion check's population is drawn *boxes*. A `PlacedText` with no owner — a figure title rather than a label — is drawn too and has never been checked against anything moving. Owned text is covered, since it is contained in its owner's content rect and travels with it. Standing limit since ADR 0012, restated in 0013, still open.
-
-- [ ] **Effects put ink outside the checked rect.** Inherited from every static check rather than introduced by animation, but worth stating in one place: the motion check reasons about the same rectangles the static checks do, not about pixels, so a box with elevation or depth can overlap in ink while its rect-trajectory reports clear.
-
-- [ ] **A sequence launches one browser per state.** `render()` launches and closes its own Chromium instance; an N-state sequence pays that cost N times rather than sharing one browser across states. Not optimised in M14 — stated as a measured cost, not assumed away. Worth revisiting if sequences of a dozen-plus states become common.
-
-- [ ] **The identity-continuity bound is heuristic at the edges.** `persisted > 0` between every consecutive pair (ADR 0016) catches the paradigm slideshow and admits the paradigm evolving figure, but a slideshow with one persistent header element would still pass. Good enough for a feature nobody has stress-tested against adversarial specs yet; would need sharpening before it became a guard people actively try to route around.
-
-**Deliberate non-goals, not backlog (ADR 0016).** Shape morphing, a camera, and video export. None of the three is refused for lack of effort: an axis-aligned-box solver cannot reason about a shape becoming another shape; there is no check for legibility under zoom, and none can exist without a research-grade advance; and encoding to a video file would destroy the `prefers-reduced-motion` behaviour M11.2 deliberately shipped, so it could at most be an explicitly lossy convenience, never the deliverable. "More than two states" is **not** on this list any longer — see M14.
-
-## Agent-facing surface: what ADR 0018 shipped, and what it deliberately left
-
-Shipped against [ADR 0018](docs/decisions/0018-preset-input-validation.md): one `parseFigureInput` dispatch replacing four independently-written copies, an unknown preset refused by name instead of falling through to a complaint about `spec.version`, per-preset validators whose remit is every expander precondition the repair loop cannot reach, and a `validate` command that never launches a browser. Full suite green throughout (812 -> 829).
-
-Left open, in the order the evidence favours:
-
-- [ ] **A module's missing dependency should be a named refusal.** `module python --args "..."` reaches the same CLI and the same MCP tool table as every other command, and never touches `parseFigureInput` at all — its input is an argv string, and its likeliest failure by far is an absent Python package. `MODULES` already declares each module's `needs`, so the repertoire already knows what to say; nothing says it. This is the same defect ADR 0018 fixed for documents, one surface over, and it is cheap for exactly the same reason.
-
-- [ ] **Over MCP, `render` returns checks but no figure and no path.** The svg/png Buffers are dropped deliberately, and the stated reason is good — a base64 image in a tool result is a payload nobody asked for. But the consequence is that an MCP-only agent is strictly worse off than a CLI one: it is told its figure has a defect and given no way to look at it. The minimal fix is not base64 but moving the artefact write out of `cli.ts` into a helper both bindings call, so MCP returns paths. It revises a documented deliberate decision, so it wants its own ADR rather than being smuggled into someone else's change.
-
-- [ ] **A validator can drift from its expander.** Stated in ADR 0018 rather than solved. Co-location under ADR 0002's discipline, a coverage test, and running every shipped fixture through the layer are mitigations; nothing *mechanically* forces a new optional field to gain a clause. Worth revisiting only if a real drift is ever observed — the alternatives (a schema library, generating from erased types) are both worse for reasons the ADR records.
-
-- [x] **`check:root-clean` failed on a pristine tree**, flagging `.git` as an unapproved root item, so `npm run validate` exited 1 even when typecheck, every test and every generated-doc check passed — a green run was indistinguishable from a red one. Pre-existing and unrelated to ADR 0018; found while establishing a baseline for it. The script's allowlist had simply never mirrored its own ADR: [ADR 0011](docs/decisions/0011-project-organization.md) lists `.git/` among approved hidden items, and every other hidden root entry (`.gitignore`, `.npmrc`, `.claude`) was already approved. Which means the check had never passed on an actual clone — only on a copy of the tree with no VCS directory. Fixed in [scripts/check-root-clean.ts](scripts/check-root-clean.ts); `npm run check:all` now exits 0.
-
-## Generators: the shared library became supported, the generators stayed experiments
-
-The poster series had a 137-line `lib.mjs` that six generators used (63-149 lines each) and seven abandoned (111-708 lines each), re-deriving its own `W`/`H`/`BG`/`nid`/`ramp`/`text` on the way out. Reading them settled *why*, and it was not the reason the line counts suggested: `phyllotaxis.mjs` re-implements `poster()` inline with lib's exact magic numbers on lib's exact canvas, so it did not outgrow the frame, it copied one. The cause is that every helper took the accumulator array as its first argument, so a generator wanting one local helper wrote a closure — and having dropped the import, lost everything else in it.
-
-Shipped in [experiments/generators/lib.mjs](experiments/generators/lib.mjs), with [README.md](experiments/generators/README.md) as its contract:
-
-- **`page()`** — closes over its own kids and its own theme, so a call site carries neither. Purely additive: the free functions are unchanged and all six incumbents still run.
-- **Themes** — `midnight`, `bone`, `blueprint` as plain role records, replacing five hardcoded `INK_*` constants. Each poster prints its own contrast, measured with `contrastRatio` from `src/colour/contrast.ts` — the same function `contrast-sufficient` uses. Text roles get a WCAG AA verdict; mark roles and ramp floors get a ratio and explicitly no verdict, because a 1px rule and a data-driven mark are not text.
-- **`carve`** — a rule emitted as segments that stop short of everything reserved. Extracted from `zeta-conformal`'s private `carvedLine`, which had discovered the hard way that a grid drawn as whole rects runs straight through its own axis labels.
-- **`panel`** — a sub-region with a data-space map, `ticks()` that reserves labels before drawing any grid, and an optional `pitch` that snaps marks onto a lattice. Gridlines default OFF: `carve` can route a rule around reserved labels, never around a thousand data points.
-
-**Acceptance test, and it passed:** [collatz.mjs](experiments/generators/collatz.mjs), a genuinely new two-panel poster with real axes, written from the library and README only. **88 lines**, against 340-341 for the comparable hand-rolled ones (`zeta-conformal`, `conjugacy`). Every check green. Its first render found three real defects — origin labels clipping at the axis corner, gridlines through the data, marks touching across lattice cells — each fixed in the library rather than the generator.
-
-Open:
-
-- [ ] **Nothing was migrated,** so no claim is made about how much of the existing 3,199 lines this makes unnecessary; the measured claim is forward-looking only. The six sound generators (`chladni`, `harmonograph`, `bifurcation`, `ulam`, `pascal`, `delaunay`) are 63-149 lines each and would be cheap to move; the six legacy ones are not, and their maths is worth more than their plumbing. The README labels which is which so the corpus stops teaching the retired idiom.
-
-- [ ] **`navguide` does not belong in this series.** It is a node-and-connector diagram sitting in a poster directory; the library does not serve it and a core preset would. Left where it is rather than moved silently.
-
-- [ ] **The library was derived from this corpus.** Panels, carving and the lattice are what fourteen programs actually needed, generalised from them. A genuinely different figure may find a new ceiling; the honest response is to widen the library rather than fork it a fifteenth time.
-
-- [ ] **No `generators` command, and that is deliberate.** `modules` earns its repertoire table because a caller chooses one at runtime; nobody invokes a generator at runtime, so the same table here would be shape without reason.
-
-## Flashy on purpose: style packs and symbol shapes
-
-Two gaps, both measured rather than assumed. An agent asked for something loud had to write `effect` on every element by hand and keep the choices consistent itself, and the shape vocabulary was seven geometric primitives with no symbols in it at all — the word "symbol" appeared exactly once in `src/`, inside a Python module's description.
-
-- [x] **Style packs** — [src/effects/styles.ts](src/effects/styles.ts), documented in [EFFECTS.md](docs/effects/EFFECTS.md). `canvas.style` (or `style` on any preset input) names a whole look, mapped by the `role` an element already declares: `elevated`, `neon`, `spotlight`, `etched`. Applied in the pipeline right before `normalise`, so from there down a packed effect is indistinguishable from a hand-written one — same `resolveEffects`, same bleed, same `effect-within-canvas`, same repair growing `canvas.padding`. Three rules, each with a test: it fills only absences (an authored `effect` wins), it never styles a `callout`, and it buys no exemption. New `styles` command lists each pack with the bleed every role costs, since that reach is the real difference between them.
-
-- [x] **Six symbol shapes** — `parallelogram`, `trapezoid`, `chevron`, `cross`, `star`, `note`, taking the repertoire from 7 to 13. Every one is a polygon, and deliberately: `shapeVertices` hands the *same* vertex list to `inPolygon` for containment and to the `<polygon>` for drawing, so `label-within-shape` answers about the shape actually on the page rather than an approximation. A curved symbol (a cylinder, a cloud) would break that identity and is not offered. Reachable from the preset layer too — `shape` now passes through `graph` nodes and `labelled-blocks` items.
-
-- [x] **`SHAPE_DESCRIPTIONS` was missing `triangle`**, so the generated shape reference had been printing `undefined` in its "what it is" column. Pre-existing; `scripts/` sits outside `tsconfig`, so the `Record<ShapeKind, string>` was never exhaustiveness-checked. All seven gaps filled.
-
-Two things the checks said that are worth keeping in view rather than fixing:
-
-- [ ] **`star` (27.6% of its bounding box) and `cross` (55.2%) are markers, not containers.** `label-within-shape` refuses even a two-character label in a star at ordinary node height, which is correct and is why the generated reference now states the inscribed area of every shape. A symbol sheet should caption them, not label them. Nothing to fix; worth not forgetting.
-
-- [ ] **Nothing has a `shape` in the `mindmap`, `annotated-figure` or `chart` presets.** `graph` and `labelled-blocks` pass it through; the other three do not, and for `chart` that is probably right (a bar is a bar). Left unasserted rather than fixed by reflex.
-
-## Typography: the third design system, and the placement helpers
-
-Colour had THEMES. Depth had STYLE_PACKS. Type had one family stack, one size and one line-height, for everything — a categorical absence, not a gap of degree. Shipped as [src/typography.ts](src/typography.ts) + [typography-apply.ts](src/typography-apply.ts), documented in [docs/design/TYPOGRAPHY.md](docs/design/TYPOGRAPHY.md) and served over MCP as `prancheta://typography`.
-
-- [x] **`level`, a second axis.** Type does NOT key on `role`, and one ordinary poster is why: its date line is the largest type on the page and means nothing, while a safety notice may be the smallest and mean the most. `role` answers *what does this mean*; `level` answers *how loud is this*. A warning caption is `{role: "warning", level: "caption"}`. A test asserts the two never collapse into one vocabulary.
-- [x] **Four packs** — `grotesk`, `editorial`, `poster`, `technical` — over seven levels (`display · title · subtitle · body · caption · eyebrow · mono`). New `type` command lists every step.
-- [x] **`letterSpacing`, measured not just drawn.** Emitted into the HTML mirror as well as the SVG, and read back from `getComputedStyle` rather than carried forward, so the width Chromium measured and the width drawn cannot drift. Emitting it only at draw time would have made every `text-fits-box` result a lie on any tracked label.
-- [x] **Portability is derived, not asserted.** A pack is self-contained only when *every* level's first-choice face is bundled — and only Inter is. The first draft hand-marked `grotesk` self-contained because five of six levels use Inter; its `mono` level does not. `type` now names exactly which levels will fall back.
-- [x] **Placement helpers** in [experiments/generators/lib.mjs](experiments/generators/lib.mjs): `spiral`, `ring`, `serpentine`, `tracked`, `rng`, `scatter`. Each was re-derived by hand in at least two generators before extraction. They return positions and draw nothing.
-
-Two things the tests found rather than the design:
-
-- The **size ladder** (`display → caption`) is asserted monotone, and the first draft failed it: the poster pack's eyebrow had been filed as a `subtitle`. An eyebrow is a *device* — small, widely tracked, sitting above a title — not a size step, so it became its own level and sits outside the ladder alongside `mono`.
-
-Deferred, with reasons rather than as a backlog:
-
-- [ ] **Contrast thresholds still ignore size.** WCAG lets large text pass at 3:1 rather than 4.5:1, and `contrast-sufficient` applies 4.5:1 to everything, so display type can fail a check it should pass. Packs now make size and weight knowable, so the check *could* learn this. It has not: the change makes a check more PERMISSIVE, which is the direction this project is most careful about, and it wants its own ADR rather than arriving as a side effect of typography.
-- [ ] **Composition is the fourth missing system.** There is `canvas.padding` and nothing else — no margins, no modular scale, no title-block rhythm. The generator lib's `poster()` still hardcodes 140/52/916/120. Real and wanted; deliberately not shipped alongside type, because two systems in one pass is how both arrive half-verified.
-- [ ] **Text over a colour field still cannot pass.** `allowOverlap` stands down `boxes-do-not-overlap`; nothing stands down `text-clear-of-other-boxes`. The honest fix is not a fourth toggle but a TRADE — stand down the collision check and force the contrast check to run against the box the text now sits over, since what matters there is legibility, not collision. Depends on the contrast work above.
-- [ ] **Arbitrary block paths.** `flattenPath` already ships (used for connector curves) and is unconsumed by blocks, so a `shape: "path"` flattened for containment is feasible. Own ADR: it trades away the exact-containment guarantee every shape currently keeps.
-
-Refused outright, on current evidence: skew/flip/tile/scale transforms (ceiling, not floor — and each multiplies what every check must reason about); more effects (14 compose from 10 primitives, and too few looks was never the measured problem); a `poster` preset (a poster is compute plus composition, and the compute cannot be JSON); a `select`-style rule table for packs (choosing wrong is a preference, not a defect, and arbitrating taste is authority this project does not have).
-
-## Candidate figure modules, in priority order
-
-- [x] **Reaction schemes** — [modules/reaction](modules/molecule/MODULE.md). Reactants → arrow → products, reusing `molecule`'s per-molecule geometry via a `.`-joined SMILES mini-DSL (repeated components declare a coefficient). Four canned reactions, `--misdeclare` probe, e2e tests.
-- [x] **Phylogenetic trees / dendrograms with real branch lengths** — [modules/dendrogram](modules/dendrogram/MODULE.md). The one tree shape `mindmap` can't honestly serve, since branch length is data, not depth. Draws `scipy.cluster.hierarchy`'s own `icoord`/`dcoord` layout; declares every merge's geometry, so a scaling bug shows up as a failed check, not a plausible-looking wrong picture.
-- [x] **General function & data plots** — [modules/plot/function.py](modules/plot/MODULE.md). Any `f(x)` expression (or several, overlaid) with roots/extrema found numerically, or a scatter with a real `numpy.polyfit` fit and R². `--misdeclare` probe, e2e tests.
-- [x] **Circuit schematics** — modules/circuit. Real component symbols (resistor zigzag, capacitor plates, inductor bumps, switch, diode) around a single-loop series circuit, laid out entirely by this module (no `schemdraw` dependency — every coordinate is owned here or in the shared `modules/symbols_electrical.py` leaf library). `--misdeclare` probe, e2e tests. Scoped deliberately to one loop, not general netlist routing.
-- [x] **Genomic / sequence feature diagrams** — [modules/genomic](modules/genomic/MODULE.md). Gene arrows on a real bp-coordinate axis; row-packing for overlapping features via `dna_features_viewer.compute_features_levels`, called directly rather than re-derived. The one module so far where a label legitimately declares `owner` — arrows are filled shapes, not stroked lines, so `module-label-within-feature` runs for real instead of reporting not-applicable. `--misdeclare` probe, e2e tests.
-- [x] **Protein secondary-structure topology cartoons** — modules/topology. Helices as capsules, strands as arrows, connected by a serpentine meander that wraps rows rather than running off-canvas. Two illustrative named topologies (a four-helix bundle, a β-α-β-α-β Rossmann-fold pattern), explicitly not fetched from any real PDB entry. `--misdeclare` probe, e2e tests. Not yet implemented: reading real `HELIX`/`SHEET` records from an actual `.pdb` file (currently takes a hand-authored element list).
-- [x] **Meteorological Skew-T log-P diagrams** — [modules/skewt](modules/skewt/MODULE.md). Skew transform owned by this module (a straight algebraic definition); the physics borrowed from real `metpy.calc` — dry adiabats, a lifted parcel's full dry+moist ascent, and its LCL. `--misdeclare` probe, e2e tests. Two named soundings, explicitly illustrative, not observed data.
-- [x] **Crystallographic / lattice diagrams** — [modules/crystal](modules/crystal/MODULE.md). Real structures via `ase.build.bulk()`, a fixed isometric projection, painter's-algorithm occlusion. Deliberately schematic: flat fills, no shading, no perspective, staying inside the project's non-goals rather than testing them. `--misdeclare` probe, e2e tests. One real finding: some elements (Na in rocksalt, Cu's corner sites in fcc) sit exactly on a cell edge in *every* projection — a structural fact, not a placement bug — so this module labels an element only when a projection-clear representative atom exists, and says so when one doesn't rather than forcing a colliding label.
-
-**All 8 candidates from the original research are now implemented.** See [ROADMAP.md](ROADMAP.md) for the full build history of each.
-
-## Charts: bar charts (core preset) and pie/donut (module), both shipped
-
-- [x] **Bar charts** — [src/presets/chart](src/presets/chart/PRESET.md). A real, first-class TypeScript preset, not a module: bar length is a linear scale, arithmetic the core already does, so the whole pipeline (text measurement, the repair loop, every existing check) applies with zero new code. Vertical/horizontal orientation, single or grouped multi-series with a legend, values labelled by default. Wired into the selection core: `structure: series` and `idiom: chart` both favour it, and `I-chart-disqualifies-everything` — kept, not retired, since refusing to draw a chart as a graph was always correct — no longer means "this repertoire can't do it."
-- [x] **Pie / donut charts** — modules/piechart. A real circular sector is not expressible as a `Block` (always axis-aligned rectangles), so this is a module, the same boundary that puts curve-fitting in `modules/plot`. Real angle-proportional wedges, a donut variant, every slice named in a legend regardless of whether it's also wide enough for an inline percentage. `--misdeclare` probe, e2e tests.
-
-Together these resolve the gap [docs/selection/SELECTION.md](docs/selection/SELECTION.md) used to state plainly: "when the request wants a chart, this repertoire does not have one." It does now, split honestly across the preset/module boundary by what each chart shape actually needs.
-
-## Chart/CLI usability, from the reasoned priority pass — all three shipped
-
-Decided via a full reasoning session (confidence 0.92) — see the session transcript for the full derivation. Order mattered here: each shipped and was verified by the full suite in isolation, never bundled, so a regression would be traceable to the change that caused it. All three are now done; full suite green throughout.
-
-- [x] **Stacked / 100%-stacked bar mode** — [src/presets/chart](src/presets/chart/PRESET.md). `stacking: "stacked" | "stacked100"`, cumulative segments instead of side-by-side grouping; pure arithmetic on the existing chart preset, no new IR. Scale reference switches to the largest category *total* rather than the largest single value; per-segment value labels are dropped (the repair loop growing one to fit would inflate that segment past its true value) in favour of one total label per stack, since the legend already names every series. `series[0]` always sits closest to the axis. Two new fixtures, unit tests on the raw arithmetic, e2e proportionality tests on the rendered geometry.
-- [x] **CLI `--args` comma-delimiter fix** — [src/cli.ts](src/cli.ts)'s `parseArgs` and [src/commands.ts](src/commands.ts)'s `toStringArray`. Four modules (dendrogram, circuit, genomic, topology) had independently discovered that `node src/cli.ts module`'s own `--args` flag comma-split a single occurrence, and independently invented the same `;`/`:`/`\|` workaround, each documenting it separately in its own `MODULE.md`. Fixed at the source: `--args` (and any other `string[]` param) is now repeatable — `--args a --args b` — and a repeated flag's values are taken verbatim, comma included, while a single occurrence still comma-splits exactly as before for backward compatibility. Shipped and verified alone, full suite green (358/358) both before and after; each affected module's `MODULE.md` now notes the fix without removing its own dataset-shape convention, which was never the workaround, only ever the data's own grammar.
-- [x] **Line / scatter chart series** — [src/presets/chart](src/presets/chart/PRESET.md). Confirmed mid-reasoning to be *not* a cheap extension of bar charts, and it wasn't: `chartType: "line" | "scatter"` is a wholly separate function, `buildSeriesChart`, building a `Scene{layout:"absolute"}` with a point `Block` per category/series and a `Connector` joining consecutive points in `"line"` mode (bare in `"scatter"`) — the same shape `annotated-figure`/`graph` already use, since only a Scene's Connector can express "a point joined to another point". Deliberately minimal (no axis rule, no gridlines — two end labels state the scale instead, the same restraint the bar chart already states for itself). One real geometry bug found and fixed the way this project always finds them: the first render caught the leftmost category's tick label overlapping the y-axis value-label column via `boxes-do-not-overlap`, fixed by edge-aligning the first/last tick labels instead of centring every one. One known, stated limit left in the docs rather than solved: two series with near-identical values at the same category can produce a genuine partial-overlap failure — real scatter data can do this, and no marker size removes it, only narrows it. Two new fixtures, unit tests on the point arithmetic and connector counts, e2e tests on rendered geometry.
-
-## Filed elsewhere: logic gate diagrams
-
-Requested directly (a multi-level OR/NOR gate network). It's a **preset candidate, not a module candidate** — a feed-forward gate network is exactly the layered-DAG shape `graph` already delegates to ELK; the hard part is gate-shaped SVG symbols and pin-accurate connector endpoints, not a real external library. See [docs/research/candidate-modules.md](docs/research/candidate-modules.md), candidate #9, for the full reasoning. Belongs on the repertoire-expansion backlog (a `logic-gates` preset variant), not this module list.
-
-## Considered and set aside (see the doc for why)
-
-Music notation · truss/free-body diagrams with real force computation · astronomical star charts · geographic routing (fold into `modules/map` instead of a new module) · PCB layout, knitting charts, knot diagrams.
-
-## Process reminder for whichever gets picked up
-
-Both shipped modules ([map](modules/map/MODULE.md), [molecule](modules/molecule/MODULE.md)) found real bugs in their own first drafts *because* they declared geometry and let the core's measurement disagree with them. Build the next one the same way — declare only geometry actually computed, let `module-geometry-agrees` and friends run before assuming the first render is correct — rather than skipping straight to "it looks right."
+Every module and preset so far found real bugs in its own first draft *because* it declared what it drew and let the core's measurement disagree. Build the next one the same way: declare only what is actually computed, let the checks run before assuming the first render is right, and then **look at the PNG**, since several defects have passed every check.

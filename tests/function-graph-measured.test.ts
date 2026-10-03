@@ -190,7 +190,7 @@ test("panels: each a graph of its own, ids prefixed by letter, cells of one size
 // --- chart: a ruled bar chart is drawn on function-graph's plane -----------------
 
 test("chart: bars with a line overlay are function-graph's bars and series, on a numbered y axis", () => {
-  const input = JSON.parse(readFileSync(fileURLToPath(new URL("../fixtures/chart-bars-overlay.json", import.meta.url)), "utf8")) as ChartInput;
+  const input = JSON.parse(readFileSync(fileURLToPath(new URL("../fixtures/chart/chart-bars-overlay.json", import.meta.url)), "utf8")) as ChartInput;
   validateChartInput(input as unknown as Record<string, unknown>);
   const spec = expandChart(input);
   const root = spec.root as Scene;

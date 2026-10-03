@@ -1,1 +1,1 @@
-{ "preset": "mechanics", "kind": "collision", "masses": [2, 1], "velocities": [3, 0], "type": "perfectly-inelastic" }
+{ "preset": "mechanics", "kind": "collision", "masses": [2, 1], "velocities": [3, 0], "collision": "perfectly-inelastic" }

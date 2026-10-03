@@ -1,6 +1,8 @@
 # Build plan
 
-Research is done ([landscape](research/landscape.md)) and both architecture decisions are committed ([0001](decisions/0001-language.md), [0002](decisions/0002-deliverable-shape.md)). What follows is ordered by **risk retired per day**, not by what is pleasant to build.
+**Status:** done. M0–M4 shipped 2026-08-18/19; what each found is in [ROADMAP.md](../../ROADMAP.md). Kept as the record of how the first milestones were ordered.
+
+Research is done ([landscape](../research/landscape.md)) and both architecture decisions are committed ([0001](../decisions/0001-language.md), [0002](../decisions/0002-deliverable-shape.md)). What follows is ordered by **risk retired per day**, not by what is pleasant to build.
 
 Three assumptions carry the project. Each milestone below exists to try to break one of them:
 
@@ -12,7 +14,7 @@ Three assumptions carry the project. Each milestone below exists to try to break
 
 ## M0 — Walking skeleton (retires A1) · **done 2026-08-18**
 
-> Shipped. A1 held: the browser can be the layout oracle and still yield portable SVG, confirmed by a second non-browser renderer. Findings — measured baselines, per-glyph-run font resolution, LCD-text fringing — are recorded in [the roadmap](../ROADMAP.md).
+> Shipped. A1 held: the browser can be the layout oracle and still yield portable SVG, confirmed by a second non-browser renderer. Findings — measured baselines, per-glyph-run font resolution, LCD-text fringing — are recorded in [the roadmap](../../ROADMAP.md).
 
 
 One spec, one preset, the full pipeline end to end. No repertoire, no CLI polish, no MCP.
@@ -27,7 +29,7 @@ One spec, one preset, the full pipeline end to end. No repertoire, no CLI polish
 
 ## M1 — The manifest and the repair loop (retires A2) · **done 2026-08-19**
 
-> Shipped. A2 held: the loop repairs rather than merely detects, and it converges — with a pass budget of 3, 5 or 8 it finishes in exactly 3 passes every time. Repairs are edits, not mutations ([decision 0003](decisions/0003-repairs-are-edits.md)); findings are in [the roadmap](../ROADMAP.md).
+> Shipped. A2 held: the loop repairs rather than merely detects, and it converges — with a pass budget of 3, 5 or 8 it finishes in exactly 3 passes every time. Repairs are edits, not mutations ([decision 0003](../decisions/0003-repairs-are-edits.md)); findings are in [the roadmap](../../ROADMAP.md).
 
 
 The manifest is what makes verification possible: for every element, its identity, role, bounding box, and what it was *supposed* to be.
@@ -42,7 +44,7 @@ Semantic checks (right arrow direction, no invented entities, nothing missing) c
 
 ## M2 — Selection core + first real repertoire (retires A3) · **done 2026-08-19**
 
-> The selection core is built and green: two-axis vocabulary, rule table, deterministic ranking, hand-written narrative, twenty annotated fixtures ([decision 0004](decisions/0004-selection-core.md)). A3 is retired — selection is a testable artefact rather than a hope.
+> The selection core is built and green: two-axis vocabulary, rule table, deterministic ranking, hand-written narrative, twenty annotated fixtures ([decision 0004](../decisions/0004-selection-core.md)). A3 is retired — selection is a testable artefact rather than a hope.
 >
 > Four presets ship with their docs and fixtures. The IR grew a scene node and connectors; ELK lays out graph skeletons from browser-measured sizes. Not done from this section: LaTeX via KaTeX — no figure in the repertoire needs maths yet, so it moves to M4-adjacent work rather than being claimed.
 
@@ -57,7 +59,7 @@ The hand-written selection-and-discipline document, plus enough presets for sele
 
 ## M3 — Host bindings · **done 2026-08-19**
 
-> Shipped. One command table, two bindings (CLI and MCP) asserted identical by test; the knowledge tree served as MCP resources; SKILL.md and AGENTS.md generated with a staleness check. Details in [the roadmap](../ROADMAP.md).
+> Shipped. One command table, two bindings (CLI and MCP) asserted identical by test; the knowledge tree served as MCP resources; SKILL.md and AGENTS.md generated with a staleness check. Details in [the roadmap](../../ROADMAP.md).
 
 
 The CLI already exists from M0. Add the MCP adapter *generated* from the same command schema, serving the knowledge tree as MCP resources. Add the build step that renders the Claude skill tree and the `AGENTS.md` digest from preset directories, plus the tests that fail on a missing doc, a dangling preset reference, or a stale generated view.
@@ -66,7 +68,7 @@ At the end of M3, Prancheta is usable from Claude Code, from any shell, and from
 
 ## M4 — The two hard probes · **done 2026-08-19**
 
-> Both probes ran and both found something. The module protocol is [decision 0005](decisions/0005-module-protocol.md); the two-state diff exposed that positional edge ids were not identity. Details in [the roadmap](../ROADMAP.md).
+> Both probes ran and both found something. The module protocol is [decision 0005](../decisions/0005-module-protocol.md); the two-state diff exposed that positional edge ids were not identity. Details in [the roadmap](../../ROADMAP.md).
 
 
 Deliberately last, because both can force IR changes and both are cheap to run once M0–M2 exist.

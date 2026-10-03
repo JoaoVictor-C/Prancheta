@@ -1,6 +1,6 @@
 # data-table
 
-The textbook table of **given** text and numbers: a nutrition label, a price list, a ranking, the properties of five substances. `value-table` computes a function's values from an expression; this preset draws data that are the content. A few cells can be derived (a column from other columns, a totals row) and those are computed and checked, never typed.
+The textbook table of **given** text and numbers: a nutrition label, a price list, a ranking, the properties of five substances. `value-table` computes a function's values from an expression; this preset draws data that are the content. A few cells can be derived (a column from other columns, a totals row) and those are computed and checked, never typed. ([ADR 0065](../../../docs/decisions/0065-data-tables.md))
 
 **Choose it when** the exercise shows rows and columns of facts the reader must read, compare or complete: header row with units, grouped headers, blank cells to fill in, a highlighted cell, a "Total" row. Not for a function's values at points (`value-table`) nor for a truth table (`truth-table`).
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Item 8 of [`docs/PLAN-CHEMISTRY.md`](../PLAN-CHEMISTRY.md). Reads like
+Accepted. Item 8 of [`docs/plans/PLAN-CHEMISTRY.md`](../plans/PLAN-CHEMISTRY.md). Reads like
 [0059](0059-probability-distributions.md) in what it computes and what it lets a
 reader copy, and uses the reading panel of [0062](0062-rich-text-and-the-reading-panel.md),
 the labels' claims of [0035](0035-what-a-label-hides-and-claims.md) and the fitted scale of the

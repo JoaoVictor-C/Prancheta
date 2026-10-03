@@ -10,7 +10,7 @@ import { render } from "../src/pipeline.ts";
 import { expand } from "../src/presets/index.ts";
 import type { PresetInput } from "../src/presets/index.ts";
 
-const fixtures = ["graph-pipeline.json", "mindmap-incident.json", "annotated-cell.json"];
+const fixtures = ["graph/graph-pipeline.json", "mindmap/mindmap-incident.json", "annotated-figure/annotated-cell.json"];
 
 for (const name of fixtures) {
   test(

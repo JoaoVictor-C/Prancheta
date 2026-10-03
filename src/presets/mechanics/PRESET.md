@@ -1,7 +1,7 @@
 # mechanics
 
 Mechanics situations solved before they are drawn (ADRs 0073, 0074; the plan is
-[docs/PLAN-PHYSICS.md](../../../docs/PLAN-PHYSICS.md)). What is typed is the
+[docs/plans/PLAN-PHYSICS.md](../../../docs/plans/PLAN-PHYSICS.md)). What is typed is the
 situation (masses, g, an angle, μ, a speed). Everything drawn is computed, and
 every arrow is drawn to one scale per figure, so F is half of P on the page
 when the physics says so.
@@ -96,7 +96,7 @@ reads as the arrow's rather than the rope's.
   - The arms are dimension lines to scale. The class (interfixa,
     inter-resistente, interpotente) is given when there is one load.
 - **collision**:
-  - `masses`, `velocities` (before, signed, right positive) and `type`
+  - `masses`, `velocities` (before, signed, right positive) and `collision`
     (`elastic` | `perfectly-inelastic`) or `restitution` (0–1).
   - Or `explosion: { velocity, initial }`.
   - Momentum is conserved, and the kinetic energy lost (or released) is printed.

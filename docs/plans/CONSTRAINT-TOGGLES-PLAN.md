@@ -1,8 +1,9 @@
 # Implementation Plan: Constraint Toggles
 
-**Status:** Ready to implement  
+**Status:** done. The three toggles shipped in M10 ([ADR 0010](../decisions/0010-constraint-toggles.md)); how to use them is [docs/CONSTRAINTS.md](../CONSTRAINTS.md). The unticked boxes below were never ticked, but the toggles and their tests are in.
+
 **Date:** 2026-08-23  
-**ADR:** [0010-constraint-toggles.md](decisions/0010-constraint-toggles.md)
+**ADR:** [0010-constraint-toggles.md](../decisions/0010-constraint-toggles.md)
 
 ## Overview
 
@@ -32,7 +33,7 @@ Add three toggleable constraints to enable advanced diagram types while preservi
 | Step | What | File(s) | Details |
 |------|------|---------|---------|
 | 2.1 | Check reads toggle | `src/checks.ts` | `boxes-do-not-overlap` returns `not-applicable` when `canvas.constraints.allowOverlap === true` |
-| 2.2 | Planted fixture | `fixtures/allow-overlap.json` | Venn diagram with `allowOverlap: true` that passes; same diagram with `allowOverlap: false` fails |
+| 2.2 | Planted fixture | `fixtures/ir/allow-overlap.json` | Venn diagram with `allowOverlap: true` that passes; same diagram with `allowOverlap: false` fails |
 | 2.3 | Repair loop guard | `src/repair.ts` | Ensure repair loop doesn't create overlaps as side effect when toggle is false |
 | 2.4 | E2E test | `tests/` | Verify check is skipped when toggle is on, active when off |
 
@@ -50,7 +51,7 @@ Add three toggleable constraints to enable advanced diagram types while preservi
 |------|------|---------|---------|
 | 3.1 | Check reads toggle | `src/checks.ts` | `connector-clear-of-boxes` returns `not-applicable` when `canvas.constraints.allowConnectorCrossing === true` |
 | 3.2 | Performance note | Documentation | Line-box intersection tests with spatial indexing (R-tree/quadtree) tractable for <500 elements |
-| 3.3 | Planted fixture | `fixtures/allow-connector-crossing.json` | Annotated figure with leader lines crossing dense field |
+| 3.3 | Planted fixture | `fixtures/ir/allow-connector-crossing.json` | Annotated figure with leader lines crossing dense field |
 | 3.4 | E2E test | `tests/` | Verify check behavior with toggle on/off |
 
 **Verification:**
@@ -71,7 +72,7 @@ Add three toggleable constraints to enable advanced diagram types while preservi
 | 4.4 | SVG emission | `src/render/svg.ts` | Emit `<path>` with bezier/arc commands instead of straight `<line>` |
 | 4.5 | Bounding box measurement | `src/layout/measure.ts` | Measure curved path bounds via sampling or analytic bezier bounds |
 | 4.6 | Update graph preset | `src/presets/graph/` | Optional curve specification; ELK routes stay polyline, post-process to curves if requested |
-| 4.7 | Planted fixture | `fixtures/allow-curved-connectors.json` | Flowchart with bezier curves |
+| 4.7 | Planted fixture | `fixtures/ir/allow-curved-connectors.json` | Flowchart with bezier curves |
 | 4.8 | E2E test | `tests/` | Verify curved paths render correctly, bounds accurate |
 
 **Verification:**
@@ -109,7 +110,7 @@ Add three toggleable constraints to enable advanced diagram types while preservi
 
 | Step | What | File(s) | Details |
 |------|------|---------|---------|
-| 6.1 | Multi-toggle fixture | `fixtures/all-toggles-enabled.json` | Dense annotated diagram with curved connectors and overlaps |
+| 6.1 | Multi-toggle fixture | `fixtures/ir/all-toggles-enabled.json` | Dense annotated diagram with curved connectors and overlaps |
 | 6.2 | Repair loop interaction | Tests | Verify repair loop behaves correctly with various toggle combinations |
 | 6.3 | Performance test | Tests | Verify connector-crossing check with spatial indexing performs acceptably |
 | 6.4 | Negative test | Tests | Verify curves rejected when `allowCurvedConnectors: false` |

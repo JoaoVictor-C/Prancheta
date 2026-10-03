@@ -114,7 +114,7 @@ lines.push("");
 lines.push("## Block shapes (`Block.shape`)");
 lines.push("");
 lines.push(
-  `Every shape shares the block's own axis-aligned bounding box exactly -- see [step 14](../PLAN-NEXT.md) ` +
+  `Every shape shares the block's own axis-aligned bounding box exactly -- see [step 14](../plans/PLAN-NEXT.md) ` +
     "and [src/geometry/shapes.ts](../../src/geometry/shapes.ts).",
 );
 lines.push("");

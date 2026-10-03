@@ -19,11 +19,12 @@
  *   node scripts/gen-views.ts --check  exit 1 if any view is stale
  */
 
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { COMMANDS } from "../src/commands.ts";
-import { PRESETS } from "../src/selection/vocabulary.ts";
+import { PRESETS, PRESET_AREA, PRESET_AREAS } from "../src/selection/vocabulary.ts";
+import { CHECK_CATALOGUE, CHECK_FAMILIES } from "../src/checks-catalogue.ts";
 import { knowledgeResources } from "../src/mcp/server.ts";
 import { MODULES, exampleArgs } from "../src/modules/repertoire.ts";
 
@@ -343,6 +344,19 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
   ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 \`\`\`
 
+## Adding a preset or a feature
+
+Follow the procedure in \`CONTRIBUTING.md\` ("The procedure for a new preset
+or feature", ADR 0075). The code change and the document change land together:
+
+- **Checked by the build:** \`tests/preset-completeness.test.ts\` requires
+  each preset's doc, fixtures in \`fixtures/<id>/\`, a test, its ADR, a shelf
+  in \`PRESET_AREA\` and a selection rule. \`npm run check:docs\` fails on a
+  stale README table, view or ADR index.
+- **Not checked:** the plan row in \`docs/plans/\`, the TODO pruning and the
+  ROADMAP entry are on you.
+- **Before you finish:** run \`npm run gen:views\`, and look at every new PNG.
+
 ## Commands
 
 ${commandTable()}
@@ -381,8 +395,117 @@ ${resourceTable()}
   return { path: join(root, "AGENTS.md"), content };
 }
 
+// ---- README regions and the decision index (ADR 0075) ----------------------
+//
+// The README is hand-written prose with tables in it, and the tables were what
+// went stale: "seven presets" with thirty-three shipped, "nineteen checks" with
+// thirty-five. Each table now sits between markers and is filled from code;
+// the prose around it stays hand-written.
+
+function readmePresetTable(): string {
+  const out: string[] = [];
+  for (const [area, title] of Object.entries(PRESET_AREAS)) {
+    const rows = PRESETS.filter((p) => p.implemented && PRESET_AREA[p.id] === area);
+    if (rows.length === 0) continue;
+    out.push(`**${title}**`, "", "| preset | what it is |", "| --- | --- |");
+    for (const p of rows) out.push(`| [\`${p.id}\`](src/presets/${p.id}/PRESET.md) | ${p.summary} |`);
+    out.push("");
+  }
+  return out.join("\n").trimEnd();
+}
+
+function readmeCheckTable(): string {
+  const out: string[] = [];
+  for (const [family, title] of Object.entries(CHECK_FAMILIES)) {
+    const rows = Object.entries(CHECK_CATALOGUE).filter(([, c]) => c.family === family);
+    out.push(`**${title}** (${rows.length})`, "", "| check | what it asks |", "| --- | --- |");
+    for (const [id, c] of rows) out.push(`| \`${id}\` | ${c.asks} |`);
+    out.push("");
+  }
+  return out.join("\n").trimEnd();
+}
+
+function readmeCommandTable(): string {
+  const rows = COMMANDS.map((command) => {
+    const required = command.params.filter((p) => p.required === true).map((p) => ` <${p.name}>`).join("");
+    const flags = command.params.filter((p) => p.required !== true).map((p) => `\`--${p.name}\``).join(" ");
+    return `| \`${command.name}${required}\` | ${command.summary.split(". ")[0]}. ${flags} |`;
+  });
+  return ["| command | what it does |", "| --- | --- |", ...rows].join("\n");
+}
+
+function readmeCounts(): string {
+  const presets = PRESETS.filter((p) => p.implemented).length;
+  const core = Object.values(CHECK_CATALOGUE).filter((c) => c.family !== "module" && c.family !== "motion").length;
+  return `**${presets} presets, ${core} checks on every figure, ${MODULES.length} figure modules.**`;
+}
+
+/** Fill every `<!-- generated:name -->…<!-- /generated:name -->` region; a missing marker is an error, never a silent skip. */
+function fillRegions(text: string, regions: Record<string, string>): string {
+  let out = text;
+  for (const [name, body] of Object.entries(regions)) {
+    const re = new RegExp(`(<!-- generated:${name} -->)[\\s\\S]*?(<!-- /generated:${name} -->)`);
+    if (!re.test(out)) throw new Error(`README.md has no <!-- generated:${name} --> region`);
+    out = out.replace(re, (_whole, open: string, close: string) => `${open}\n${body}\n${close}`);
+  }
+  return out;
+}
+
+async function readmeView(): Promise<GeneratedView> {
+  const path = join(root, "README.md");
+  const text = (await readFile(path, "utf8")).replace(/\r\n/g, "\n");
+  const content = fillRegions(text, {
+    counts: readmeCounts(),
+    presets: readmePresetTable(),
+    checks: readmeCheckTable(),
+    commands: readmeCommandTable(),
+    modules: moduleTable(),
+  });
+  return { path, content };
+}
+
+/** The ADR index: number, title and status, read from each record's own head. */
+async function decisionsIndexView(): Promise<GeneratedView> {
+  const dir = join(root, "docs", "decisions");
+  const names = (await readdir(dir)).filter((n) => /^\d{4}-.*\.md$/.test(n)).sort();
+  const rows: string[] = [];
+  for (const name of names) {
+    const lines = (await readFile(join(dir, name), "utf8")).replace(/\r\n/g, "\n").split("\n");
+    const heading = lines.find((l) => l.startsWith("# ")) ?? name;
+    const title = heading
+      .replace(/^# /, "")
+      .replace(/^(Decision|ADR)\s+\d{4}\s*[:—-]\s*/i, "")
+      .replace(/^\d{4}\s*[:—-]\s*/, "")
+      .trim();
+    const at = lines.findIndex((l) => /^(\*\*)?status/i.test(l.replace(/^## /, "")));
+    let status = "";
+    if (at >= 0) {
+      const inline = lines[at]!.replace(/^\*\*Status:\*\*\s*/i, "").replace(/^## Status\s*/i, "").trim();
+      status = inline || (lines.slice(at + 1).find((l) => l.trim() !== "") ?? "").trim();
+    }
+    status = status.replace(/\s*·.*$/, "").replace(/[.;].*$/, "").replace(/\*\*/g, "").trim();
+    rows.push(`| [${name.slice(0, 4)}](${name}) | ${title.replace(/\|/g, "\\|")} | ${status} |`);
+  }
+  const content = [
+    "<!-- GENERATED by scripts/gen-views.ts from each record's heading and status — do not edit by hand. -->",
+    "",
+    "# Decisions",
+    "",
+    "Architecture decision records, oldest first. Each one says what was decided, why, and what it",
+    "cost. A new one takes the next free number; how to write one is in [CONTRIBUTING.md](../../CONTRIBUTING.md#writing-an-adr).",
+    "",
+    `Next free number: **${String(Number(names.at(-1)!.slice(0, 4)) + 1).padStart(4, "0")}**.`,
+    "",
+    "| # | decision | status |",
+    "| --- | --- | --- |",
+    ...rows,
+    "",
+  ].join("\n");
+  return { path: join(dir, "README.md"), content };
+}
+
 export async function generateViews(): Promise<GeneratedView[]> {
-  return [await skillView(), await agentsView()];
+  return [await skillView(), await agentsView(), await readmeView(), await decisionsIndexView()];
 }
 
 const checkOnly = process.argv.includes("--check");

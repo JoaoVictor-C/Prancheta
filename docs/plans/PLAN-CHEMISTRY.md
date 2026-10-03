@@ -1,5 +1,7 @@
 # Chemistry — todo
 
+**Status:** done. All eight items shipped 2026-09-30 to 2026-10-02 (PRs #13, #14; ADR 0064).
+
 Found by building the acid–base list (`experiments/exercises/acidos-bases/lista.json`)
 and probing the molecule and reaction modules on 2026-09-30. In order of
 importance; each item is ticked when it lands with its tests.

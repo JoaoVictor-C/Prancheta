@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Item 1 of phase 6 ([`docs/AUDIT-ENEM.md`](../AUDIT-ENEM.md)). Reuses the
+Accepted. Item 1 of phase 6 ([`docs/research/AUDIT-ENEM.md`](../research/AUDIT-ENEM.md)). Reuses the
 measured column widths of `truth-table` ([0057](0057-boolean-logic.md)), the rich
 text of [0062](0062-rich-text-and-the-reading-panel.md) and the bundled-font
 measurement of [0063](0063-one-font-measured-before-and-after.md).
