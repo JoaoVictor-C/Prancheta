@@ -116,7 +116,7 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `data-table` | Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false. | yes |
 | `genetics` | Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact. | yes |
 | `pictogram` | Counts and shares as repeated icons -- filled icons computed from each value (a remainder fills the last icon by its fraction), outline slots for the whole -- and sequences of dot figures whose counts are the polygonal numbers, computed from the construction. | yes |
-| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks joined over a pulley at a table's edge, Atwood's machine, and a block on a spring (k·x = m·g, the stretch to scale) -- every arrow to one scale. | yes |
+| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring; projectiles, energy along a track, levers, collisions, circular motion (uniform, loop, banked curve, conical pendulum) and Kepler orbits -- every arrow to one scale. | yes |
 
 ## Figure modules
 

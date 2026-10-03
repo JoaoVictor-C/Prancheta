@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "lever", "length": 3, "support": 1, "loads": [ { "at": 0, "force": 400 }, { "at": 0.5, "force": 200 } ], "unknown": { "force": 250 } }

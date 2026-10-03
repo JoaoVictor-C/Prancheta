@@ -172,9 +172,11 @@
  * representa 5 %" -- or a sequence of figures made of dots whose count is
  * the question. Not a "series": the reader counts, not compares lengths.
  *
- * "forces" is forces acting on a body: a pulley system, a block on an
- * inclined plane. Not a "vector" sum in the plane: the body, the rope and
- * the slope are part of what is drawn, and the forces are solved from them.
+ * "forces" is a mechanics situation: forces on a body (pulleys, a slope, a
+ * table, a spring), a launch, a track with energies, a lever, a collision, a
+ * circle, an orbit. Not a "vector" sum in the plane: the bodies, ropes,
+ * tracks and paths are part of what is drawn, and everything is solved from
+ * the situation.
  */
 export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations", "acid-base-equilibrium", "table", "genetics", "pictogram", "forces"] as const;
 
@@ -403,7 +405,7 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
   {
     id: "mechanics",
     implemented: true,
-    summary: "Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks joined over a pulley at a table's edge, Atwood's machine, and a block on a spring (k·x = m·g, the stretch to scale) -- every arrow to one scale.",
+    summary: "Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring; projectiles, energy along a track, levers, collisions, circular motion (uniform, loop, banked curve, conical pendulum) and Kepler orbits -- every arrow to one scale.",
   },
 ];
 

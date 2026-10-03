@@ -88,7 +88,7 @@ A genetic cross or a family tree of a trait is its own question (`S-genetics-fav
 
 Counts drawn as repeated icons are their own question (`S-pictogram-favours-pictogram`). *"No pictograma, cada ícone representa 5 % dos entrevistados: quantos por cento vão de ônibus?"* is read by counting, not by comparing lengths, so not a `chart` (`S-pictogram-disqualifies-chart`). The `pictogram` preset fills value/per icons per row, a remainder filling the last icon by its fraction, and its dot figures (*"quantos pontos tem a figura 10?"*) have the polygonal numbers, computed from the construction.
 
-Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ), the incline (components, normal, friction, acceleration), two blocks over a table's edge, Atwood's machine or a spring (k·x = m·g) and draws every arrow to one scale, the values as reading lines.
+Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ), the incline (components, normal, friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring (k·x = m·g), a projectile, the energies along a track, a lever, a collision, circular motion or a Kepler orbit and draws every arrow to one scale, the values as reading lines.
 
 ## Answer three questions, not two
 

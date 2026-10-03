@@ -75,7 +75,7 @@ render prints its checks; a figure that fails them is reported, never hidden.
 | `data-table` | Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false. | yes |
 | `genetics` | Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact. | yes |
 | `pictogram` | Counts and shares as repeated icons -- filled icons computed from each value (a remainder fills the last icon by its fraction), outline slots for the whole -- and sequences of dot figures whose counts are the polygonal numbers, computed from the construction. | yes |
-| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks joined over a pulley at a table's edge, Atwood's machine, and a block on a spring (k·x = m·g, the stretch to scale) -- every arrow to one scale. | yes |
+| `mechanics` | Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring; projectiles, energy along a track, levers, collisions, circular motion (uniform, loop, banked curve, conical pendulum) and Kepler orbits -- every arrow to one scale. | yes |
 
 ## Figure modules
 
@@ -282,7 +282,7 @@ A genetic cross or a family tree of a trait is its own question (`S-genetics-fav
 
 Counts drawn as repeated icons are their own question (`S-pictogram-favours-pictogram`). *"No pictograma, cada ícone representa 5 % dos entrevistados: quantos por cento vão de ônibus?"* is read by counting, not by comparing lengths, so not a `chart` (`S-pictogram-disqualifies-chart`). The `pictogram` preset fills value/per icons per row, a remainder filling the last icon by its fraction, and its dot figures (*"quantos pontos tem a figura 10?"*) have the polygonal numbers, computed from the construction.
 
-Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ), the incline (components, normal, friction, acceleration), two blocks over a table's edge, Atwood's machine or a spring (k·x = m·g) and draws every arrow to one scale, the values as reading lines.
+Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ), the incline (components, normal, friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring (k·x = m·g), a projectile, the energies along a track, a lever, a collision, circular motion or a Kepler orbit and draws every arrow to one scale, the values as reading lines.
 
 ## Answer three questions, not two
 
@@ -3922,14 +3922,27 @@ line of text, not only its icons.
 
 ### mechanics
 
-Force diagrams solved before they are drawn: pulley systems, a block on an
-inclined plane, two blocks joined over a pulley at a table's edge, Atwood's
-machine, and a block hanging from a spring (ADR 0073). What is typed is the situation (a mass, g, how many
-movable pulleys, an angle, μ). The forces are computed, and every arrow is
-drawn to one scale, so F is half of P on the page when the physics says so.
+Mechanics situations solved before they are drawn (ADRs 0073, 0074; the plan is
+[docs/PLAN-PHYSICS.md](../../../docs/PLAN-PHYSICS.md)). What is typed is the
+situation (masses, g, an angle, μ, a speed). Everything drawn is computed, and
+every arrow is drawn to one scale per figure, so F is half of P on the page
+when the physics says so.
 
-**Choose it when** the content is forces on a body — a pulley system, a block
-on a slope (`S-forces-favours-mechanics`). **Do not choose it when** the
+| area | kinds |
+| --- | --- |
+| dynamics | `pulleys`, `incline`, `table`, `atwood`, `spring` |
+| kinematics | `projectile` |
+| energy | `energy` |
+| statics | `lever` |
+| momentum | `collision` |
+| circular motion | `circular`, `loop`, `banked`, `conical` |
+| gravitation | `orbit` |
+
+Each kind is one file in `kinds/`, with its solver in `physics.ts`.
+
+**Choose it when** the content is a mechanics situation: forces on a body, a
+launch, a track, a lever, a collision, a circle, an orbit
+(`S-forces-favours-mechanics`). **Do not choose it when** the
 content is a free vector sum in the plane (that is `vectors`) or an
 illustration of a machine with nothing to solve (raw IR, or
 `annotated-figure`).
@@ -3981,13 +3994,61 @@ illustration of a machine with nothing to solve (raw IR, or
 Tension arrows (T) are drawn beside their rope, not on it, so that their name
 reads as the arrow's rather than the rope's.
 
+- **projectile**:
+  - `speed` (v₀, m/s), `angle` (0–85°; 0 = horizontal) and `height` (h₀, m).
+  - The path is sampled from the solution, and the top H, the range A and the
+    flight time are computed.
+  - Velocities are drawn at the launch, the top (vₓ) and the landing, to one
+    scale, so vₓ is visibly v₀·cos θ.
+  - The dashed path is cut where an arrow shows the motion.
+  - `components: true` (θ ≤ 70°) adds the decomposition of v₀ as an inset.
+- **energy**:
+  - `track: [{ name, height }]` (2–6 points), `speed` at the first point,
+    `launcher: { stiffness, compression }` and `lost: [J per stretch]`.
+  - E_mec is carried along less the losses, giving E_p = mgh and E_c = E − E_p.
+    These are stacked bars under each point, to one scale, with the initial
+    total dashed.
+  - A point the body cannot reach is said so.
+- **lever**:
+  - `length`, `support` and `loads: [{ at, mass | force }]` (1–3), with
+    `unknown: { at }` (find the force) or `{ force }` (find where it acts).
+  - Torques about the support sum to zero; a negative force pushes up.
+  - The arms are dimension lines to scale. The class (interfixa,
+    inter-resistente, interpotente) is given when there is one load.
+- **collision**:
+  - `masses`, `velocities` (before, signed, right positive) and `type`
+    (`elastic` | `perfectly-inelastic`) or `restitution` (0–1).
+  - Or `explosion: { velocity, initial }`.
+  - Momentum is conserved, and the kinetic energy lost (or released) is printed.
+- **circular**: `radius` with `speed` or `period`, and `positions` (degrees).
+  v is tangent and a_c points to the centre, equal everywhere. T, f, ω and a_c
+  are printed.
+- **loop**:
+  - `radius`, `mass` and `speed` at the top (default: the minimum).
+  - N and P both point to the centre, with v_min = √(gR) and N = mv²/R − P.
+- **banked**: `radius`, `mass` and `angle` (10–60°). N and P add to a
+  horizontal resultant toward the centre, so the ideal speed is √(gR·tg θ).
+- **conical**:
+  - `length`, `mass` and `angle` from the vertical (15–70°).
+  - T and P add to a horizontal resultant, and r = L·sen θ.
+  - The speed and the period 2π√(L·cos θ/g) are printed.
+- **orbit**:
+  - `semiMajor` (UA), `eccentricity` (0,1–0,7) and `interval` (a fraction of
+    the period).
+  - r_p and r_a come from a(1 ∓ e).
+  - Two sectors swept in the same time are traced by Kepler's equation, so
+    their areas are equal.
+  - v_p/v_a = r_a/r_p, and T = a^{3/2} years about the Sun.
+
 The arrows carry names only (P, N, Pₓ, Pᵧ, Fₐₜ, F, T₁). The values are reading
 lines under the figure: P = m·g, the components, the friction and why, and a.
 
 ## answers: false
 
 Everything drawn stays: the arrows and their names, the mass, the angle. The
-reading lines go — every computed value is what the question asks.
+reading lines go — every computed value is what the question asks. Where a
+drawn thing is itself the answer it goes too: the energy bars, and a
+collision's velocities after (an explosion keeps its given one).
 
 ## What the checks hold it to
 

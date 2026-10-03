@@ -22,12 +22,21 @@ import { incline } from "./kinds/incline.ts";
 import { table } from "./kinds/table.ts";
 import { atwood } from "./kinds/atwood.ts";
 import { spring } from "./kinds/spring.ts";
+import { projectile } from "./kinds/projectile.ts";
+import { energy } from "./kinds/energy.ts";
+import { lever } from "./kinds/lever.ts";
+import { collision } from "./kinds/collision.ts";
+import { circular } from "./kinds/circular.ts";
+import { loop } from "./kinds/loop.ts";
+import { banked } from "./kinds/banked.ts";
+import { conical } from "./kinds/conical.ts";
+import { orbit } from "./kinds/orbit.ts";
 
 export type { MechanicsInput } from "./kind.ts";
 export * from "./physics.ts";
 
 /** Every kind, in the order the docs list them. Adding one: a file in kinds/ and a line here. */
-const REGISTRY: readonly Kind[] = [pulleys, incline, table, atwood, spring];
+const REGISTRY: readonly Kind[] = [pulleys, incline, table, atwood, spring, projectile, energy, lever, collision, circular, loop, banked, conical, orbit];
 
 export const KINDS: readonly string[] = REGISTRY.map((k) => k.id);
 const byId = new Map(REGISTRY.map((k) => [k.id, k]));

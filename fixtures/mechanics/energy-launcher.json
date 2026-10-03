@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "energy", "mass": 0.5, "launcher": { "stiffness": 800, "compression": 0.1 }, "track": [ { "name": "A", "height": 0 }, { "name": "B", "height": 0.4 }, { "name": "C", "height": 0.1 } ] }

@@ -34,16 +34,19 @@ school mechanics without letting the preset become one unreadable file.
 | split `mechanics/preset.ts` into registry, `physics.ts`, `draw.ts`, `kinds/*.ts` | done |
 | the 11 existing fixtures re-render byte-identical | done (11/11) |
 
-### P1 — the six most asked
+### P1 — the six most asked (circular motion split into its four setups)
 
 | kind | what is solved | status |
 |---|---|---|
-| `projectile` | trajectory from v₀ and θ (and launch height); H, range, flight time; v and its components at chosen instants | todo |
-| `energy` | a track with points A, B, C…; Eₖ, Eₚ (and spring energy) at each by conservation, optionally with friction losses; bars to one scale | todo |
-| `lever` | a beam on a support with loads; the unknown force or position by torques; the lever's class | todo |
-| `collision` | two bodies before and after; final velocities by momentum (elastic, inelastic, perfectly inelastic, explosion); kinetic energy lost | todo |
-| `circular` | uniform circular motion (v tangent, a_c to the centre, T, f, ω); loop (minimum speed at the top), banked curve, conical pendulum | todo |
-| `orbit` | an ellipse from a and e; perihelion and aphelion; equal areas in equal times as computed sectors; orbital speed and period | todo |
+| `projectile` | trajectory from v₀ and θ (and launch height); H, range, flight time; v and its components at chosen instants | done |
+| `energy` | a track with points A, B, C…; Eₖ, Eₚ (and spring energy) at each by conservation, optionally with friction losses; bars to one scale | done |
+| `lever` | a beam on a support with loads; the unknown force or position by torques; the lever's class | done |
+| `collision` | two bodies before and after; final velocities by momentum (elastic, inelastic, perfectly inelastic, explosion); kinetic energy lost | done |
+| `circular` | uniform circular motion: v tangent and a_c to the centre at chosen positions; T, f, ω | done |
+| `loop` | a loop-the-loop: forces at the top, minimum speed √(gR), the normal force at a given speed | done |
+| `banked` | a banked curve: N and P, the horizontal resultant, the ideal speed √(gR tg θ) | done |
+| `conical` | a conical pendulum: T and P, the horizontal resultant, the radius, speed and period | done |
+| `orbit` | an ellipse from a and e; perihelion and aphelion; equal areas in equal times as computed sectors; orbital speed and period | done |
 
 ### P2 — the rest of dynamics, statics, fluids, oscillations
 

@@ -111,6 +111,20 @@ export function springPath(x: number, y0: number, y1: number, coils = 9, amp = 1
   return pts;
 }
 
+/** A horizontal dimension line with a head at each end, named by its label. */
+export function dimensionH(b: Board, y: number, x0: number, x1: number, id: string): void {
+  b.poly([{ x: x0, y }, { x: x1, y }], { stroke: SOFT, width: 1.3, id });
+  for (const [end, dir] of [[x0, -1], [x1, 1]] as const) {
+    b.poly([{ x: end, y }, { x: end - dir * 9, y: y - 4 }, { x: end - dir * 9, y: y + 4 }], { fill: SOFT, stroke: SOFT, width: 1, close: true, id: `${id}-${dir < 0 ? "left" : "right"}` });
+  }
+}
+
+/** The unit vector from p to q. */
+export function unitTo(p: Point, q: Point): Point {
+  const d = Math.hypot(q.x - p.x, q.y - p.y);
+  return { x: (q.x - p.x) / d, y: (q.y - p.y) / d };
+}
+
 // ---- the reading panel ----------------------------------------------------------------------
 
 export function panelBelow(b0: { W: number; y: number }, lines: PanelLineInput[]): { height: number; draw: (b: Board) => void; width: number } {
