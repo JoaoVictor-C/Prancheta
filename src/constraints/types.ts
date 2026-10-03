@@ -1,9 +1,10 @@
 /**
- * Constraint vocabulary for translation repair (M10, stage 6, step 31).
+ * Constraint vocabulary (M10, stage 6, step 31).
  *
- * Declarative spatial relationships that the placement solver must satisfy.
- * These drive translation repair: when a constraint is violated, the solver
- * can move boxes (within their budgets) to satisfy it.
+ * Declarative spatial relationships a figure states about its boxes, checked
+ * by `constraints-satisfied` against the laid-out figure. They are verified,
+ * not enforced: the translation repair that would have moved boxes to satisfy
+ * them was never wired and was removed (ADR 0076).
  */
 
 export type Constraint =

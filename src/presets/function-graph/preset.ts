@@ -3983,7 +3983,7 @@ export function validateFunctionGraphInput(raw: Record<string, unknown>): void {
     }
   }
   // The dry run: references, expressions, templates and colours.
-  expandFunctionGraph(raw as unknown as FunctionGraphInput);
+  v.probe(() => expandFunctionGraph(raw as unknown as FunctionGraphInput));
 }
 
 /** `arrows`: a list of fractions of the curve's drawn length, or {at, reverse}. */
@@ -4019,7 +4019,7 @@ function validatePanels(raw: Record<string, unknown>, path: string): void {
       throw error;
     }
   });
-  expandFunctionGraph(raw as unknown as FunctionGraphInput);
+  v.probe(() => expandFunctionGraph(raw as unknown as FunctionGraphInput));
 }
 
 function optionalList(raw: Record<string, unknown>, key: string, path: string): unknown[] {

@@ -255,3 +255,30 @@ export function knownId(id: string, known: Set<string>, path: string, what: stri
     `${path} refers to ${what} ${JSON.stringify(id)}, which is not declared (${declared}).${hint}`,
   );
 }
+
+// ---- the expander probe -------------------------------------------------------------------------
+
+let probing = true;
+
+/**
+ * Most validators end by running their own expander, so a precondition only the
+ * expander can see (a curve with no point in range, a circuit with no closed
+ * loop) is refused by `validate` too, without a browser (ADR 0018). But
+ * `parseFigureInput` expands right after validating, and with the probe on
+ * every figure was built twice. It skips the probe; the expansion that follows
+ * throws the same errors (ADR 0076).
+ */
+export function probe(expand: () => unknown): void {
+  if (probing) expand();
+}
+
+/** Run validation without the expander probe, for a caller that expands next. */
+export function withoutProbe<T>(f: () => T): T {
+  const was = probing;
+  probing = false;
+  try {
+    return f();
+  } finally {
+    probing = was;
+  }
+}

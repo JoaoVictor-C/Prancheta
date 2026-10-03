@@ -305,7 +305,7 @@ export function normaliseAutomaton(raw: Record<string, unknown>): Automaton {
 
 export function validateAutomatonInput(raw: Record<string, unknown>): void {
   normaliseAutomaton(raw);
-  expandAutomaton(raw as unknown as AutomatonInput);
+  v.probe(() => expandAutomaton(raw as unknown as AutomatonInput));
 }
 
 // ---- names and text -------------------------------------------------------------------

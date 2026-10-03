@@ -22,6 +22,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { SpecError } from "../src/ir/types.ts";
 import { isPresetInput, parseFigureInput, validatePresetInput } from "../src/presets/index.ts";
 import { PRESETS } from "../src/selection/vocabulary.ts";
+import { withoutProbe } from "../src/presets/validate.ts";
 
 function refusal(input: unknown): string {
   try {
@@ -217,7 +218,11 @@ test("every preset-input fixture this repo ships still passes the layer", () => 
     const parsed: unknown = JSON.parse(readFileSync(new URL(name, pathToFileURL(dir)), "utf8"));
     if (!isPresetInput(parsed)) continue;
     checked += 1;
-    assert.doesNotThrow(() => parseFigureInput(parsed), `fixtures/${name} is now refused`);
+    // The document checks only: the common options and each preset's own. The
+    // expansion is the preset's own render test's business, and many of those
+    // call the expander directly -- which is exactly why the common layer needs
+    // this pass (a collision's `type` clashed with the type pack, unseen).
+    assert.doesNotThrow(() => withoutProbe(() => validatePresetInput(parsed)), `fixtures/${name} is now refused`);
   }
   // A corpus that silently matched nothing would pass this test while proving
   // nothing at all.

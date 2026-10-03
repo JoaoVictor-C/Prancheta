@@ -216,7 +216,7 @@ export function validatePictogramInput(raw: Record<string, unknown>): void {
     v.optionalString(raw, "name", path);
   }
   v.optionalBoolean(raw, "answers", path);
-  expandPictogram(raw as unknown as PictogramInput);
+  v.probe(() => expandPictogram(raw as unknown as PictogramInput));
 }
 
 // ---- drawing --------------------------------------------------------------------

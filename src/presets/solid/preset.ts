@@ -2134,6 +2134,6 @@ export function validateSolidInput(raw: Record<string, unknown>): void {
   v.nonEmptyArray(raw, "solids", path, "solids");
   // References, arithmetic and every refusal are exercised by building the
   // figure: one implementation of the rules, not a shadow copy.
-  expandSolid(raw as unknown as SolidInput);
+  v.probe(() => expandSolid(raw as unknown as SolidInput));
 }
 

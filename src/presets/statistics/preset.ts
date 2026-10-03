@@ -897,5 +897,5 @@ export function validateStatisticsInput(raw: Record<string, unknown>): void {
   v.optionalEnum(raw, "variance", path, ["sample", "population"] as const);
   if (raw.data === undefined) throw new SpecError(`${path}.data is required: a list of numbers, or groups {values, label}`);
   // Arithmetic, classes and layout are exercised by building the figure.
-  expandStatistics(raw as unknown as StatisticsInput);
+  v.probe(() => expandStatistics(raw as unknown as StatisticsInput));
 }

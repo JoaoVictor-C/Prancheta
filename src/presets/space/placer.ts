@@ -23,7 +23,19 @@ import { candidatesBeside, distanceToPolyline, pointToRect, rectAt, rectToPolyli
 /** Extra room kept around every label, px. */
 export const MARGIN = 3;
 
-type Ink = { id: string; group: string; pts: Point[]; stroked: boolean };
+type Ink = { id: string; group: string; pts: Point[]; stroked: boolean; box: Rect };
+
+/** The bounding box of a polyline, kept so a label far from a line skips its segments. */
+function boundsOf(pts: Point[]): Rect {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const q of pts) {
+    if (q.x < x0) x0 = q.x;
+    if (q.x > x1) x1 = q.x;
+    if (q.y < y0) y0 = q.y;
+    if (q.y > y1) y1 = q.y;
+  }
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+}
 
 export class SpacePlacer {
   private readonly ink: Ink[] = [];
@@ -37,7 +49,7 @@ export class SpacePlacer {
 
   /** A drawn polyline. `group` ties the pieces of one object together (a line split into visible and hidden stretches). */
   addInk(id: string, group: string, pts: Point[], stroked = true): void {
-    this.ink.push({ id, group, pts, stroked });
+    this.ink.push({ id, group, pts, stroked, box: boundsOf(pts) });
   }
 
   addPlace(p: Point): void {
@@ -55,6 +67,8 @@ export class SpacePlacer {
     let cost = 0;
     for (const line of this.ink) {
       if (!line.stroked) continue;
+      const lb = line.box;
+      if (lb.x > grown.x + grown.width || lb.x + lb.width < grown.x || lb.y > grown.y + grown.height || lb.y + lb.height < grown.y) continue;
       for (let i = 0; i < line.pts.length - 1; i += 1) {
         if (segmentHitsRect(line.pts[i]!, line.pts[i + 1]!, grown)) {
           cost += 10;

@@ -15,15 +15,6 @@ Last pruned 2026-10-03.
 
 - [ ] **`tick-labels-do-not-collide` still identifies ticks by id substring.** `id.startsWith("tick-") || id.includes("-tick-")` (src/checks.ts), with a comment calling it "temporary heuristic until metadata exists". The heuristic now carries real weight: any block whose id contains `-tick-` is treated as an axis tick. The missing metadata is a one-field change.
 
-- [ ] **Four files are still unreachable from any spec, preset or CLI path.** They are `presets/chart/data-binding.ts` (with `src/scales.ts`, which only it imports), `layout/solver.ts`, `layout/repair.ts` and `layout/grouping.ts`, each imported only by its own tests.
-
-  `layout/repair.ts` has a visible consequence: a failed `constraints-satisfied` reports "no repair strategy". It is **not a wiring job**, for three reasons:
-  - It works on a parallel `PlacementSolution` world and needs a POSITION edit kind.
-  - A position edit does not satisfy the existing loop's termination argument. ADR 0009 proves termination a different way, so the two loops would carry two proofs.
-  - Moving a frame-positioned element silently breaks the coordinate it claims (ADR 0019).
-
-  Either it gets its own ADR, or it is left as it is and that is said.
-
 - [ ] **Contrast thresholds ignore size.** WCAG lets large text pass at 3:1; `contrast-sufficient` applies 4.5:1 to everything. The change makes a check more permissive, so it wants its own ADR.
 - [ ] **Text over a colour field cannot pass.** The honest fix is a trade, not a fourth toggle: stand down the collision check and force contrast to run against the box the text sits over.
 - [ ] **Composition is the missing design system.** There is `canvas.padding` and nothing else: no margins, no modular scale, no title-block rhythm.
@@ -55,7 +46,7 @@ Shipped through ADRs [0012](docs/decisions/0012-animation-m11-scope.md)–[0017]
 ## Refused, with reasons (not backlog)
 
 - **Shape morphing, a camera, video export** (ADR 0016). No check exists for any of them; for a camera none can, since legibility under zoom is a research problem.
-- **Skew, flip, tile and scale transforms; more effects; a `poster` preset; a selection table for style packs.** Each multiplies what every check must reason about, or arbitrates taste. [ADR 0003-effects-extension](docs/decisions/0003-effects-extension.md) planned some of these and was overtaken.
+- **Skew, flip, tile and scale transforms; more effects; a `poster` preset; a selection table for style packs.** Each multiplies what every check must reason about, or arbitrates taste. [An effects-extension plan](docs/plans/EFFECTS-EXTENSION-PLAN.md) proposed some of these and was not pursued.
 - **Music notation, astronomical star charts, PCB layout, knitting charts, knot diagrams** ([docs/research/candidate-modules.md](docs/research/candidate-modules.md)). Geographic routing would fold into `modules/map`. Trusses stay set aside; free-body diagrams with real force computation, set aside with them, are now the `mechanics` preset (ADRs 0073, 0074); logic gates are `logic-circuit` (ADR 0057).
 - **A `generators` command.** Nobody invokes a generator at runtime, so a repertoire table for them would have nothing to do.
 

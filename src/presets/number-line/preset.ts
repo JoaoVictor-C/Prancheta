@@ -511,5 +511,5 @@ export function validateNumberLineInput(raw: Record<string, unknown>): void {
       }
     });
   }
-  expandNumberLine(raw as unknown as NumberLineInput);
+  v.probe(() => expandNumberLine(raw as unknown as NumberLineInput));
 }

@@ -136,6 +136,8 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 
 **Never** put experiments or temporary files in the root directory (`npm run check:root-clean`).
 
+**Code that nothing imports** is deleted in the change that notices it, or given an owner then. It is not left as a TODO (ADR 0076).
+
 ## The procedure for a new preset or feature
 
 Presets and features land often. A document is kept current by the same change that changes the code, never by a later cleanup. Steps marked **(checked)** fail the build if skipped (`tests/preset-completeness.test.ts`, `npm run check:docs`). The others rely on you.
@@ -147,7 +149,7 @@ Presets and features land often. A document is kept current by the same change t
 
 **While building a preset**
 
-3. Create `src/presets/<id>/` with `preset.ts`, a validator, and `PRESET.md`. The doc covers input, what is computed, refusals and `answers: false`, and cites its ADR. **(checked)**
+3. Create `src/presets/<id>/` with `preset.ts`, a validator ending in `v.probe(() => expandX(raw))` (so `validate` sees the expander's refusals while `render` still expands once, ADR 0076), and `PRESET.md`. The doc covers input, what is computed, refusals and `answers: false`, and cites its ADR. **(checked)**
 4. Register it:
    - add it to `PresetId`, `PRESETS` and `PRESET_AREA` in `src/selection/vocabulary.ts` **(checked: type error)**;
    - add at least one selection rule in `src/selection/rules.ts` **(checked)**;

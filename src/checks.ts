@@ -2687,9 +2687,9 @@ function describeConstraint(constraint: Constraint): string {
  * declared -- never a pass with nothing checked, per the house rule that a
  * check indistinguishable from "not running" does not count.
  *
- * This verifies; it does not move anything. Translation repair (step 34,
- * src/layout/repair.ts) is a separate, still-unwired mechanism that would act
- * on a failure reported here.
+ * This verifies; it does not move anything. A translation repair that would
+ * act on a failure here was built (ADR 0009), never wired, and removed (ADR
+ * 0076); a constraint that fails is reported for the author to fix.
  */
 function constraintsSatisfied(figure: LaidOutFigure, boxes: Map<string, PlacedBox>): Check {
   const constraints = figure.layoutConstraints ?? [];

@@ -418,5 +418,5 @@ export function validateTruthTableInput(raw: Record<string, unknown>): void {
     });
     if (names.length > MAX_VARIABLES) throw new SpecError(`${path}.variables has too many names.`);
   }
-  expandTruthTable(raw as unknown as TruthTableInput);
+  v.probe(() => expandTruthTable(raw as unknown as TruthTableInput));
 }

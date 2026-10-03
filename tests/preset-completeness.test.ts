@@ -65,8 +65,7 @@ test("decision records: unique numbers and a status each", () => {
   const names = readdirSync(dir).filter((n) => /^\d{4}-.*\.md$/.test(n));
   const seen = new Map<string, string[]>();
   for (const n of names) seen.set(n.slice(0, 4), [...(seen.get(n.slice(0, 4)) ?? []), n]);
-  // The one historical collision; both files are linked from elsewhere, so both keep it.
-  const dupes = [...seen.entries()].filter(([num, files]) => files.length > 1 && num !== "0003");
+  const dupes = [...seen.entries()].filter(([, files]) => files.length > 1);
   assert.deepEqual(dupes, [], "an ADR number is used twice; take the next free one from docs/decisions/README.md");
   for (const n of names) {
     const head = readFileSync(join(dir, n), "utf8").split(/\r?\n/).slice(0, 14).join("\n");

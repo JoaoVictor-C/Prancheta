@@ -503,5 +503,5 @@ export function validateSequenceInput(raw: Record<string, unknown>): void {
   }
 
   // Perform the actual computation to validate arithmetic.
-  expandSequence(raw as unknown as SequenceInput);
+  v.probe(() => expandSequence(raw as unknown as SequenceInput));
 }

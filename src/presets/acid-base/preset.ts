@@ -1212,5 +1212,5 @@ export function validateAcidBaseInput(raw: Record<string, unknown>): void {
   v.optionalEnum(raw, "locale", path, LOCALES);
   v.optionalBoolean(raw, "answers", path);
   // every number is exercised by building the figure
-  expandAcidBase(raw as unknown as AcidBaseInput);
+  v.probe(() => expandAcidBase(raw as unknown as AcidBaseInput));
 }

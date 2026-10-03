@@ -615,7 +615,7 @@ Full suite: 572/572. Typecheck clean.
 
 ### 2026-08-23 — M8, stage 5 (step 25): Scale abstraction with tick generation
 
-[src/scales.ts](src/scales.ts) — the foundational layer for tick-label collision checks (step 26), data binding for chart (step 27), and dimension annotation (step 29). Four scale types, each mapping a data domain to a canvas range:
+`src/scales.ts` (removed, ADR 0076) — the foundational layer for tick-label collision checks (step 26), data binding for chart (step 27), and dimension annotation (step 29). Four scale types, each mapping a data domain to a canvas range:
 
 **Linear scale:** maps `[min, max]` to `[start, end]` with linear interpolation. Tick generation chooses nice intervals (powers of 10 times 1, 2, or 5) so ticks land on round numbers rather than arbitrary fractional values. Respects `minSpacing` in the tick policy to prevent collision when the range is narrow.
 
@@ -627,7 +627,7 @@ Full suite: 572/572. Typecheck clean.
 
 **Tick policy:** target count, minimum spacing (optional, in pixels), and format function (optional, for custom labels). The scale generates ticks within the policy constraints and returns `{value, position, label}[]` — value is the data value, position is the canvas coordinate, label is the formatted string.
 
-**Tests verify:** domain-to-range mapping, inverse mapping (where applicable), tick generation with nice intervals, minSpacing enforcement, and custom format functions. [tests/scales.test.ts](tests/scales.test.ts) covers all four scale types.
+**Tests verify:** domain-to-range mapping, inverse mapping (where applicable), tick generation with nice intervals, minSpacing enforcement, and custom format functions. `tests/scales.test.ts` (removed, ADR 0076) covers all four scale types.
 
 Full suite: 585/585. Typecheck clean.
 
@@ -645,7 +645,7 @@ Full suite: 585/585. Typecheck clean.
 
 ### 2026-08-23 — M8, stage 5 (step 27): Data binding for chart preset
 
-[src/presets/chart/data-binding.ts](src/presets/chart/data-binding.ts) — the layer that closes "the founding failure": an agent doing scale arithmetic in its head rather than declaring data and letting the toolkit compute the mapping. Two functions:
+`src/presets/chart/data-binding.ts` (removed, ADR 0076) — the layer that closes "the founding failure": an agent doing scale arithmetic in its head rather than declaring data and letting the toolkit compute the mapping. Two functions:
 
 **`bindData(spec)`** transforms a dataset + encoding specification into the `ChartInput` format the chart preset understands. Takes a dataset (array of row objects), an encoding (which fields map to x/y/color/series channels), and chart options (type, title, suffix). Returns categories and series derived from the data: aggregates multiple rows per category (summing values), handles multiple y fields as multiple series, infers scale types from data types (Date → time, number → linear, string → band).
 
@@ -747,7 +747,7 @@ Full suite: 723/723. Typecheck and `check:docs` clean.
 
 Prompted by asking whether the project was ready to move on to animation: it wasn't, because the same failure mode the 2026-08-23 `routing.ts` entry names — "a test that calls a function directly cannot tell you whether anything else does" — turned out not to be a one-off. It was the shape of most of stages 5 and 6.
 
-**Audit.** Grepped every module M8/M10 marked ✅ for who actually imports it, outside its own test file. Unreachable from any spec, preset, or CLI path: [src/scales.ts](src/scales.ts) (step 25 — the scale abstraction meant to retire A6, "the agent never does scale arithmetic"), [src/presets/chart/data-binding.ts](src/presets/chart/data-binding.ts) (step 27 — the chart preset never calls `bindData`, so A6 does not actually hold), `src/math/mathjax.ts` (step 28 — and it's an admitted mock besides), `src/dimension/annotation.ts` (step 29), [src/layout/solver.ts](src/layout/solver.ts) (step 32), [src/layout/repair.ts](src/layout/repair.ts) (step 34 — `repairTranslations` implements ADR 0009's lexicographic-potential termination proof correctly, but the check-repair loop never calls it, so a failed `constraints-satisfied` still reports "no repair strategy for this check"), and [src/layout/grouping.ts](src/layout/grouping.ts) (step 37 — no spec can declare a group). All seven are marked ◐ in [docs/plans/PLAN-NEXT.md](docs/plans/PLAN-NEXT.md) now, not ✅. None of this is a defect in the code itself — `repairTranslations`, the solver, the scale math are all correctly implemented and covered — the defect was in what "done" was allowed to mean.
+**Audit.** Grepped every module M8/M10 marked ✅ for who actually imports it, outside its own test file. Unreachable from any spec, preset, or CLI path: `src/scales.ts` (removed, ADR 0076) (step 25 — the scale abstraction meant to retire A6, "the agent never does scale arithmetic"), `src/presets/chart/data-binding.ts` (removed, ADR 0076) (step 27 — the chart preset never calls `bindData`, so A6 does not actually hold), `src/math/mathjax.ts` (step 28 — and it's an admitted mock besides), `src/dimension/annotation.ts` (step 29), `src/layout/solver.ts` (removed, ADR 0076) (step 32), `src/layout/repair.ts` (removed, ADR 0076) (step 34 — `repairTranslations` implements ADR 0009's lexicographic-potential termination proof correctly, but the check-repair loop never calls it, so a failed `constraints-satisfied` still reports "no repair strategy for this check"), and `src/layout/grouping.ts` (removed, ADR 0076) (step 37 — no spec can declare a group). All seven are marked ◐ in [docs/plans/PLAN-NEXT.md](docs/plans/PLAN-NEXT.md) now, not ✅. None of this is a defect in the code itself — `repairTranslations`, the solver, the scale math are all correctly implemented and covered — the defect was in what "done" was allowed to mean.
 
 **The one that mattered most: `constraints-satisfied` was a check that could not fail.** [src/checks.ts](src/checks.ts) built its constraint list as a hardcoded empty array with a comment explaining the wiring was deferred, then unconditionally returned `status: "pass"` in the branch that was supposed to check something — dead code that could only ever report not-applicable or a lie. Run on every figure via `runChecks`, which means every manifest this project has ever produced said `constraints-satisfied: pass` while checking nothing. This is exactly the failure mode the project exists to refuse, stated in its own words: "a checker that reports everything as fine is indistinguishable from a checker that is not running."
 
@@ -1169,6 +1169,19 @@ New presets were landing daily, and the hand-written documents had fallen behind
 
 The test found two preset docs that never cited their ADR on its first run.
 
+### 2026-10-03 - An audit of every test and ADR
+
+The question was whether the 75 ADRs and 154 test files were all needed. It was answered by timing every test and profiling the slow ones ([ADR 0076](docs/decisions/0076-one-expansion-and-no-dead-code.md)).
+
+**Every figure was built twice.** Validators ran the expander as a probe, and `parseFigureInput` then expanded again. It now expands once.
+
+**Label placement was brute force.** It measured each candidate spot against every segment of curves with thousands of points. It now skips segments that cannot be nearer, with the same answers.
+
+**Two tests paid for expansions they did not test.** Narrowing them took the fixture walk from 59 s to under a second and `panel.test.ts` from 81 s to 5 s.
+
+**Five modules were dead,** including ADR 0009's translation repair. Nothing imported them, and their tests kept them looking alive; they are deleted. The effects-extension "ADR" was a plan never carried out, so it moved to the plans folder and freed its duplicated number.
+
+The core suite went from 127 s to 89 s. The ADRs were kept: each shares under 5 % of its text with its preset's doc, because it records what was refused. The decision index now shows which records amend which.
 ## Where this goes next
 
 What is open, item by item, is [TODO.md](TODO.md). In broad strokes:

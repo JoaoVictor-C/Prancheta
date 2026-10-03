@@ -84,7 +84,7 @@ export function validateMechanicsInput(raw: Record<string, unknown>): void {
   if (g !== undefined && !(g > 0)) throw new SpecError(`${path}.g must be positive, got ${g}`);
   kind.validate(raw, path);
   v.optionalBoolean(raw, "answers", path);
-  expandMechanics(raw as unknown as MechanicsInput);
+  v.probe(() => expandMechanics(raw as unknown as MechanicsInput));
 }
 
 export function expandMechanics(input: MechanicsInput): FigureSpec {

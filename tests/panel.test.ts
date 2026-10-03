@@ -78,11 +78,16 @@ test("layoutPanel: ids under panel-, emphasis to weight and colour, scripts as r
 
 // ---- every migrated preset: a panel is readings, and it lifts cleanly ---------------------------
 
+// Every preset draws its panel through the one builder tested above, so one
+// fixture per preset that has a panel proves the preset is wired to it. This
+// walked every fixture of eighteen presets, twice, for 81 s of expansion that
+// each preset's own render test already pays (ADR 0076).
 for (const preset of MIGRATED) {
-  const files = readdirSync(new URL(`../fixtures/${preset}/`, import.meta.url)).filter((f) => f.endsWith(".json"));
-  test(`${preset}: every fixture's panel is recorded as readings and lifts out of the drawing`, () => {
+  const files = readdirSync(new URL(`../fixtures/${preset}/`, import.meta.url)).filter((f) => f.endsWith(".json")).sort();
+  test(`${preset}: a panel is recorded as readings and lifts out of the drawing`, () => {
     let withReadings = 0;
     for (const file of files) {
+      if (withReadings > 0) break;
       const input = fixture(preset, file);
       const variants = [input, ...(ANSWER_AWARE.includes(preset) ? [{ ...input, answers: false }] : [])];
       for (const raw of variants) {

@@ -80,20 +80,41 @@ export function segmentHitsRect(a: Point, b: Point, r: Rect): boolean {
 /** Distance from a rect to a segment: 0 when they meet. */
 function rectToSegment(r: Rect, a: Point, b: Point): number {
   if (segmentHitsRect(a, b, r)) return 0;
-  const corners = [
-    { x: r.x, y: r.y },
-    { x: r.x + r.width, y: r.y },
-    { x: r.x, y: r.y + r.height },
-    { x: r.x + r.width, y: r.y + r.height },
-  ];
-  return Math.min(pointToRect(a, r), pointToRect(b, r), ...corners.map((c) => distanceToSegment(c, a, b)));
+  const x2 = r.x + r.width;
+  const y2 = r.y + r.height;
+  return Math.min(
+    pointToRect(a, r),
+    pointToRect(b, r),
+    distanceToSegmentXY(r.x, r.y, a.x, a.y, b.x, b.y),
+    distanceToSegmentXY(x2, r.y, a.x, a.y, b.x, b.y),
+    distanceToSegmentXY(r.x, y2, a.x, a.y, b.x, b.y),
+    distanceToSegmentXY(x2, y2, a.x, a.y, b.x, b.y),
+  );
 }
 
-/** Distance from a rect to a polyline: 0 when any stretch of it passes through the rect. */
+/**
+ * Distance from a rect to a polyline: 0 when any stretch of it passes through the rect.
+ *
+ * Label placers call this for every candidate spot against curves of
+ * thousands of points, and it was most of the time a distribution or a
+ * revolution took to expand (ADR 0076). A segment whose bounding box is
+ * already farther from the rect than the best distance so far cannot be
+ * nearer, so it is skipped: the same answer, without the arithmetic.
+ */
 export function rectToPolyline(r: Rect, pts: readonly Point[]): number {
   if (pts.length === 1) return pointToRect(pts[0]!, r);
+  const x2 = r.x + r.width;
+  const y2 = r.y + r.height;
   let best = Infinity;
-  for (let i = 0; i < pts.length - 1; i += 1) best = Math.min(best, rectToSegment(r, pts[i]!, pts[i + 1]!));
+  for (let i = 0; i < pts.length - 1; i += 1) {
+    const a = pts[i]!;
+    const b = pts[i + 1]!;
+    const gx = Math.max(r.x - Math.max(a.x, b.x), 0, Math.min(a.x, b.x) - x2);
+    const gy = Math.max(r.y - Math.max(a.y, b.y), 0, Math.min(a.y, b.y) - y2);
+    if (gx * gx + gy * gy >= best * best) continue;
+    best = Math.min(best, rectToSegment(r, a, b));
+    if (best === 0) return 0;
+  }
   return best;
 }
 

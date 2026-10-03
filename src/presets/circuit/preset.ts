@@ -1369,5 +1369,5 @@ export function validateCircuitInput(raw: Record<string, unknown>): void {
     v.optionalEnum(show, "currentValues", `${path}.show`, ["auto", "drawing", "panel"]);
     if (show.nodeNames !== undefined && !Array.isArray(show.nodeNames)) v.optionalEnum(show, "nodeNames", `${path}.show`, ["letters", "all", "none"]);
   }
-  expandCircuit(raw as unknown as CircuitInput);
+  v.probe(() => expandCircuit(raw as unknown as CircuitInput));
 }
