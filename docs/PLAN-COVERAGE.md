@@ -144,7 +144,7 @@ about rectangles, not projected faces).
 | normal, binomial and Poisson events: `distribution` preset on `src/math/probability.ts` | [0059](decisions/0059-probability-distributions.md) | done 2026-09-29 |
 | probability trees: `probability-tree` preset (urns, exact fractions, Bayes) | [0060](decisions/0060-probability-trees.md) | done 2026-09-29 |
 | Venn diagrams: `venn` preset (shaded expressions, inclusion–exclusion) | [0061](decisions/0061-venn-diagrams.md) | done 2026-09-29; Phase 5 complete |
-| corpus coverage audit | — | not started |
+| corpus coverage audit: ENEM 2023–2025 (210 figures) | [AUDIT-ENEM](AUDIT-ENEM.md) | done 2026-10-02; day 2: 19 % of drawable figures covered, 57 % partial; course lists pending |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each
 with its rules and a paragraph in SELECTION.md; value-table is offered at the
