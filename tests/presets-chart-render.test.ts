@@ -15,14 +15,14 @@ import { expand } from "../src/presets/index.ts";
 import type { PresetInput } from "../src/presets/index.ts";
 
 const fixtures = [
-  "chart-quarterly-revenue.json",
-  "chart-horizontal-single.json",
-  "chart-stacked-budget.json",
-  "chart-stacked100-horizontal.json",
-  "chart-line-latency.json",
-  "chart-scatter-single.json",
-  "chart-pie-market-share.json",
-  "chart-donut-budget.json",
+  "chart/chart-quarterly-revenue.json",
+  "chart/chart-horizontal-single.json",
+  "chart/chart-stacked-budget.json",
+  "chart/chart-stacked100-horizontal.json",
+  "chart/chart-line-latency.json",
+  "chart/chart-scatter-single.json",
+  "chart/chart-pie-market-share.json",
+  "chart/chart-donut-budget.json",
 ];
 
 for (const name of fixtures) {
@@ -43,7 +43,7 @@ for (const name of fixtures) {
     // Only a line chart declares connectors; every other chart shape here is
     // boxes/points only.
     const connectorElements = result.manifest.elements.filter((el) => el.kind === "connector");
-    const expectsConnectors = name.startsWith("chart-line-");
+    const expectsConnectors = name.startsWith("chart/chart-line-");
     assert.equal(
       connectorElements.length > 0,
       expectsConnectors,
@@ -59,7 +59,7 @@ test(
   "grouped bar chart: every bar's box height is proportional to its declared value",
   { timeout: 240000 },
   async () => {
-    const fixtureUrl = new URL("../fixtures/chart-quarterly-revenue.json", import.meta.url);
+    const fixtureUrl = new URL("../fixtures/chart/chart-quarterly-revenue.json", import.meta.url);
     const raw = JSON.parse(readFileSync(fixtureUrl, "utf8")) as PresetInput;
     const spec = expand(raw);
     const result = await render(spec);
@@ -85,7 +85,7 @@ test(
   "stacked bar chart: a category's segments sum in height to that category's total, and series[0] sits at the bottom",
   { timeout: 240000 },
   async () => {
-    const fixtureUrl = new URL("../fixtures/chart-stacked-budget.json", import.meta.url);
+    const fixtureUrl = new URL("../fixtures/chart/chart-stacked-budget.json", import.meta.url);
     const raw = JSON.parse(readFileSync(fixtureUrl, "utf8")) as PresetInput;
     const spec = expand(raw);
     const result = await render(spec);
@@ -128,7 +128,7 @@ test(
   "line chart: point y-position is a linear scale against the largest value, and connectors join adjacent points",
   { timeout: 240000 },
   async () => {
-    const fixtureUrl = new URL("../fixtures/chart-line-latency.json", import.meta.url);
+    const fixtureUrl = new URL("../fixtures/chart/chart-line-latency.json", import.meta.url);
     const raw = JSON.parse(readFileSync(fixtureUrl, "utf8")) as PresetInput;
     const spec = expand(raw);
     const result = await render(spec);
@@ -157,7 +157,7 @@ test(
   "scatter chart: points are declared but never joined by a connector",
   { timeout: 240000 },
   async () => {
-    const fixtureUrl = new URL("../fixtures/chart-scatter-single.json", import.meta.url);
+    const fixtureUrl = new URL("../fixtures/chart/chart-scatter-single.json", import.meta.url);
     const raw = JSON.parse(readFileSync(fixtureUrl, "utf8")) as PresetInput;
     const spec = expand(raw);
     const result = await render(spec);
@@ -175,7 +175,7 @@ test(
   "stacked100 bar chart: every bar rescales to the same total length regardless of its raw values",
   { timeout: 240000 },
   async () => {
-    const fixtureUrl = new URL("../fixtures/chart-stacked100-horizontal.json", import.meta.url);
+    const fixtureUrl = new URL("../fixtures/chart/chart-stacked100-horizontal.json", import.meta.url);
     const raw = JSON.parse(readFileSync(fixtureUrl, "utf8")) as PresetInput;
     const spec = expand(raw);
     const result = await render(spec);

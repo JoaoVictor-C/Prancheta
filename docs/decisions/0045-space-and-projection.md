@@ -6,7 +6,7 @@ Accepted.
 
 ## The need
 
-Phase 3 (`docs/PLAN-COVERAGE.md`) asks for R³ lines, planes and vectors, with
+Phase 3 (`docs/plans/PLAN-COVERAGE.md`) asks for R³ lines, planes and vectors, with
 hidden edges dashed by visibility. It also refuses general hidden-line
 removal and inter-solid occlusion. The algebra already exists:
 [ADR 0043](0043-one-vector-algebra.md)'s `geometry/vec.ts` classifies lines

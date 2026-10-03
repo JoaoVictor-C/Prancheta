@@ -26,4 +26,4 @@ A `plain-flow` idiom nudges towards this preset but never carries a figure by it
 }
 ```
 
-Fixture: [`fixtures/labelled-blocks.json`](../../../fixtures/labelled-blocks.json) (raw IR — this preset predates the preset layer and its fixture was written directly against the IR)
+Fixture: [`fixtures/labelled-blocks/labelled-blocks.json`](../../../fixtures/labelled-blocks/labelled-blocks.json) (raw IR — this preset predates the preset layer and its fixture was written directly against the IR)

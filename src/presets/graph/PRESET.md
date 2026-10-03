@@ -35,4 +35,4 @@ ELK decides node positions and edge routes. It is handed the **measured** size o
 }
 ```
 
-Fixture: [`fixtures/graph-pipeline.json`](../../../fixtures/graph-pipeline.json)
+Fixture: [`fixtures/graph/graph-pipeline.json`](../../../fixtures/graph/graph-pipeline.json)

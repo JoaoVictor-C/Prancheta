@@ -61,6 +61,19 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
   ForEach-Object { Stop-Process -Id $_.ProcessId -Force }
 ```
 
+## Adding a preset or a feature
+
+Follow the procedure in `CONTRIBUTING.md` ("The procedure for a new preset
+or feature", ADR 0075). The code change and the document change land together:
+
+- **Checked by the build:** `tests/preset-completeness.test.ts` requires
+  each preset's doc, fixtures in `fixtures/<id>/`, a test, its ADR, a shelf
+  in `PRESET_AREA` and a selection rule. `npm run check:docs` fails on a
+  stale README table, view or ADR index.
+- **Not checked:** the plan row in `docs/plans/`, the TODO pruning and the
+  ROADMAP entry are on you.
+- **Before you finish:** run `npm run gen:views`, and look at every new PNG.
+
 ## Commands
 
 | command | arguments | what it does |

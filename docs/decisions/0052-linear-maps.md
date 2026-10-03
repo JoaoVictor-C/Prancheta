@@ -14,7 +14,7 @@ facts about a matrix — where the lattice goes, which columns T(e₁) and T(e�
 are, the factor |det A| by which every area is multiplied, which lines the map
 keeps — and every one of them is computed from four numbers.
 
-The project's answer so far was raw IR. `fixtures/transformation-grid.json` is
+The project's answer so far was raw IR. `fixtures/ir/transformation-grid.json` is
 the example: a hand-placed triangle, the same triangle turned by hand, vertex
 dots at typed coordinates and 42-pixel units in the frame. Nothing ties the
 second triangle to the first; nothing stops the rotation being the wrong way,

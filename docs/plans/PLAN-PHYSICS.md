@@ -1,5 +1,7 @@
 # Physics plan — mechanics, kinematics, energy, momentum, gravitation, statics, fluids
 
+**Status:** in progress. P0–P2 done (ADRs 0073, 0074); P3, six function-graph worked examples, is next.
+
 The `mechanics` preset (ADR 0073) proved the approach: type the situation,
 solve it, draw the solution to one scale. This plan extends it to the rest of
 school mechanics without letting the preset become one unreadable file.

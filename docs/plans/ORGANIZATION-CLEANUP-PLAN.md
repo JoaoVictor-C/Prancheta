@@ -1,6 +1,7 @@
 # Organization Cleanup Plan
 
-**Status:** In Progress  
+**Status:** done. Carried out 2026-08-23 as [ADR 0011](../decisions/0011-project-organization.md), CONTRIBUTING.md and `check:root-clean`; of the git follow-ups below, CI and the PR template exist; pre-commit hooks were not added. Document upkeep is now [ADR 0075](../decisions/0075-keeping-the-docs-true.md).
+
 **Date:** 2026-08-23  
 **Confidence:** 0.80 (from deep reasoning)
 

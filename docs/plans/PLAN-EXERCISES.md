@@ -1,5 +1,7 @@
 # Plan: physics and maths exercise figures
 
+**Status:** done. Its milestones shipped through PRs #1–#3 (ADR 0019 onward); the leftovers are the first section of [TODO.md](../../TODO.md), and the work continued as [PLAN-COVERAGE.md](PLAN-COVERAGE.md).
+
 Where M5–M10 came from a gap analysis against human-oriented figure tools, this
 one comes from a gap analysis against **exam papers**. The target is the figure
 a student is handed: a free-body diagram, a circle theorem, a transformation on
@@ -37,7 +39,7 @@ sitting on disk.
 
 **Outcome.** Four defects fixed, not three: a fourth (alpha never composited
 before contrast was measured) surfaced only because fixing M0.2 made
-`fixtures/allow-overlap.json` go red, which is the render-and-measure loop
+`fixtures/ir/allow-overlap.json` go red, which is the render-and-measure loop
 catching a false alarm as readily as a silent pass. Blast radius measured
 across all 67 fixtures before and after: **zero changed their failure sets**,
 and four repair edits flipped from growing height around mangled text to
@@ -46,7 +48,7 @@ the full account. A fifth defect — the arrowhead's own shaft protruding past
 its apex — was fixed alongside them.
 
 **M0.1 — a label may break inside a word, and the repair loop could not undo
-it.** `overflow-wrap: anywhere` at [html.ts:126](../src/layout/html.ts) was
+it.** `overflow-wrap: anywhere` at [html.ts:126](../../src/layout/html.ts) was
 what turned `30°` into three stacked lines `3` / `0` / `°`. The repair loop's
 wrap flip was never the cause and never fired: `planWrapFallback` skips any
 block that did not explicitly declare `wrap: "none"`, and the default was to
@@ -59,7 +61,7 @@ against +153% in height.
 The fix replaced the mirror's global `overflow-wrap: anywhere` with
 `overflow-wrap: normal; word-break: normal`. Intra-word breaking was not
 deleted, only demoted to an opt-in `Block.wrap` value, `"anywhere"`, joining
-the existing `"normal"` and `"none"`. `fixtures/labelled-blocks.json` — titled
+the existing `"normal"` and `"none"`. `fixtures/labelled-blocks/labelled-blocks.json` — titled
 "worst-case labels" — is the fixture that needed it: its `unbreakable-url` and
 `narrow-right` blocks (the latter carrying "Antidisestablishmentarianism") now
 declare `"wrap": "anywhere"`, because with the word kept whole they grew
@@ -71,7 +73,7 @@ altered no fixture's failure set; four repair edits flipped from growing
 height around mangled text to growing width around intact text.
 
 **M0.2 — `contrast-sufficient` scored a label against the wrong thing.**
-[checks.ts:580-584](../src/checks.ts) used to resolve the substrate as the
+[checks.ts:580-584](../../src/checks.ts) used to resolve the substrate as the
 label's own owner-box fill, falling back to the canvas background when that
 box had no fill. It never asked what the label geometrically sat *over*.
 
@@ -80,7 +82,7 @@ Demonstrated: a label with `textColor: "#141414"` placed inside a rect filled
 `ok contrast-sufficient — 18.42:1 against #FFFFFF`. The true ratio was about
 1.03:1. Worse, `text-clear-of-other-boxes` **also** passed, because the dark
 patch fully contained the label's owner rect and
-[checks.ts:412](../src/checks.ts) treats containment as ancestry and skips it.
+[checks.ts:412](../../src/checks.ts) treats containment as ancestry and skips it.
 
 Two independent checks stood down on one figure and the render came back
 green. That was not-applicable-never-pass defeated twice over.
@@ -88,13 +90,13 @@ green. That was not-applicable-never-pass defeated twice over.
 ownership: it composites, in paint order, every filled box whose rect covers
 the label's ink, starting from the canvas background. A label straddling a
 surface is scored against the worse of the surfaces it lies on. A new helper,
-`compositeOver`, was added to [contrast.ts](../src/colour/contrast.ts) to do
+`compositeOver`, was added to [contrast.ts](../../src/colour/contrast.ts) to do
 source-over alpha compositing; it returns the author's own colour string
 unchanged when the layer is opaque, so manifests keep naming `#171A21` and only
 genuinely blended surfaces report a colour nobody typed.
 
 **M0.2b — the geometric fix immediately produced a false alarm.** Making
-`contrast-sufficient` geometric turned `fixtures/allow-overlap.json` red: its
+`contrast-sufficient` geometric turned `fixtures/ir/allow-overlap.json` red: its
 Venn circles are filled `rgba(57, 102, 201, 0.34)`, and scoring those channels
 raw read a pale blue on white as saturated blue, failing a perfectly legible
 label. Alpha was being parsed everywhere in the pipeline and composited
@@ -104,7 +106,7 @@ plainly: the render-and-measure loop caught this false alarm as readily as it
 had caught the earlier silent pass.
 
 **M0.3 — connector endpoints clipped to the bounding box, not the drawn
-shape.** `clipToBox` ([connectors.ts:123-137](../src/layout/connectors.ts))
+shape.** `clipToBox` ([connectors.ts:123-137](../../src/layout/connectors.ts))
 used `halfWidth = box.width / 2 + gap` and never consulted `shapeVertices`, so
 an arrow aimed at a triangle stopped on a rectangle that was never drawn. The
 rendered effect was mild and was *not* what made the force arrows in the
@@ -120,7 +122,7 @@ path — an exact ellipse clip is a different computation and was out of scope.
 was drawn all the way to `points[last]`, which is also where the arrowhead's
 apex sits, so with `stroke-linecap="round"` a nub of radius `strokeWidth / 2`
 protruded past the point of the arrow. New `shaftInset(style)` and
-`trimForHeads` in [svg.ts](../src/render/svg.ts) pull the *drawn* polyline back
+`trimForHeads` in [svg.ts](../../src/render/svg.ts) pull the *drawn* polyline back
 by each head's reach: `size` for the filled wedges (`closed`, `half`),
 `size * 2` for `diamond`, `size * 0.6` for `circle`, and zero for `open` and
 `crowsfoot`, whose whole point is that the line shows through the chevron.
@@ -128,15 +130,15 @@ Only the drawing is shortened — `connector.points` is untouched, so every
 check still walks the original polyline and the apex still lands on the
 route's real endpoint.
 
-### M1 — derived position ([ADR 0019](decisions/0019-derived-geometry-and-annotation.md)) — **DONE (2026-08-29)**
+### M1 — derived position ([ADR 0019](../decisions/0019-derived-geometry-and-annotation.md)) — **DONE (2026-08-29)**
 
 Four items, one ADR, one fixture. **Deliverable:
-`fixtures/fbd-incline.json`** — an inclined-plane free-body diagram in which
+`fixtures/ir/fbd-incline.json`** — an inclined-plane free-body diagram in which
 the drawn slope, the θ arc and the printed angle are all one number.
 
 Before writing anything, spend a day on this: `Block.rotation` with
 `rotateBox` already exists and is analytically exact
-([geometry/rotate.ts](../src/geometry/rotate.ts)), so a rotated rect gives a
+([geometry/rotate.ts](../../src/geometry/rotate.ts)), so a rotated rect gives a
 *true* slope today. It fails only because the arrows and labels around it
 cannot be placed in the rotated frame — which is exactly what the rest of M1
 supplies. If that goes better than expected, M1 gets smaller.
@@ -144,8 +146,8 @@ supplies. If that goes better than expected, M1 gets smaller.
 **M1.1 — an Annotation node carrying an `owner`.** Text that names a thing must
 be allowed to sit on it. Today every label is a Block, so it collides with the
 substrate it annotates. The exemption goes at
-[checks.ts:406-414](../src/checks.ts), mirroring the precedent already at
-[checks.ts:288-296](../src/checks.ts) in `connectorClearOfBoxes`; the `owner`
+[checks.ts:406-414](../../src/checks.ts), mirroring the precedent already at
+[checks.ts:288-296](../../src/checks.ts) in `connectorClearOfBoxes`; the `owner`
 concept is not invented here, the module protocol already ships it. This *adds*
 a check (`annotation-clear-of-non-owners`) rather than relaxing one.
 
@@ -162,7 +164,7 @@ Two constraints, both load-bearing:
   rotation. The manifest records which frame each element was authored in.
 - **Frame-positioned elements are exempt from size repair and report
   `unrepaired`.** `applyEdits` writes `block.width`/`height` directly
-  ([repair.ts:294](../src/repair.ts)); left alone it would silently move an
+  ([repair.ts:294](../../src/repair.ts)); left alone it would silently move an
   element off the coordinate it claims, reintroducing the falseness class
   through the back door.
 
@@ -178,13 +180,13 @@ enough for this figure.
 
 **M1.3 — `Connector.from` accepts a bare `Point`.** `to` already does. Force
 arrows then share one application point at arbitrary bearings. Seven sites; the
-sharp ones are the two refusals at [types.ts:996-999](../src/ir/types.ts), the
-*silent drop* at [place.ts:142-143](../src/layout/place.ts), the non-nullable
+sharp ones are the two refusals at [types.ts:996-999](../../src/ir/types.ts), the
+*silent drop* at [place.ts:142-143](../../src/layout/place.ts), the non-nullable
 `PlacedConnector.fromId`, and the endpoint-exemption degradation at
-[checks.ts:279-281](../src/checks.ts).
+[checks.ts:279-281](../../src/checks.ts).
 
 **M1.4 — an angle arc.** One `A` command through `flattenPath`
-([geometry/paths.ts](../src/geometry/paths.ts)), which is zero-import,
+([geometry/paths.ts](../../src/geometry/paths.ts)), which is zero-import,
 tolerance-bounded at 0.05px and already handles full SVG elliptical arcs. The
 maths is free; the plumbing is not — an IR node and its validation clause, a
 renderer branch, an ink-bounds entry so `content-within-canvas` sees it, an
@@ -221,7 +223,7 @@ thing, and the second way permits a lie the first cannot. A dimension line is
 now a connector in a frame aimed along what it measures, annotated like
 anything else.
 
-**Deliverable: [fixtures/isosceles-construction.json](../fixtures/isosceles-construction.json)**
+**Deliverable: [fixtures/ir/isosceles-construction.json](../../fixtures/ir/isosceles-construction.json)**
 — an isosceles triangle with equal-side ticks, a right-angle mark at the foot
 of the altitude, a base angle marked 52° and *checked* against the arc drawn
 for it, and `x` as the unknown at the apex.

@@ -78,7 +78,7 @@ minute. Almost none of that minute concerns the file you just edited, so
 | `npm run test:all` | Everything. What `check:all` runs, and CI. | slowest |
 | `npm run test:watch` | Continuous re-run as you edit. | — |
 
-**The split is by dependency, not by strictness.** Fifteen test files spawn
+**The split is by dependency, not by strictness.** The test files that spawn
 `python` and fail loudly when the interpreter or a module import is missing,
 rather than skipping — a probe that goes quietly green is indistinguishable
 from one that never ran. That behaviour is unchanged; it simply lives behind
@@ -113,84 +113,87 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 
 ## Project Structure
 
-Knowing where code belongs keeps the project coherent:
-
-- **src/** - Core TypeScript implementation
-  - IR, checks, repair, rendering, CLI, and MCP server code
-  - Main entry point for features and logic
-
-- **tests/** - Test files
-  - Follow kebab-case naming with `.test.ts` suffix
-  - Structure mirrors what you're testing
-
-- **fixtures/** - JSON test fixtures
-  - Descriptive kebab-case names
-  - Organized by what they test
-
-- **modules/** - Python modules for specialized work
-  - Each module (map, molecule, etc.) is a self-contained directory
-  - Every module includes a `MODULE.md` describing its purpose and interface
-  - See `modules/map/MODULE.md` or `modules/molecule/MODULE.md` for the template
-
-- **docs/** - Documentation
-  - Architectural decisions in `docs/decisions/` (ADRs)
-  - Follows established ADR template (check existing examples)
-
-- **experiments/** - Research and prototyping
-  - **generators/** - Code generation and synthesis research
-  - **probes/** - Observability and analysis tools
-  - **sketches/** - Exploratory implementations
-  - Clean up or formalize to src/ or modules/ when ready
-
-- **temp/** - Temporary files (gitignored)
-  - For scratch work, logs, and temporary outputs
-  - Never commit these
+| folder | what is in it |
+| --- | --- |
+| `src/` | The core: the IR (`ir/`), layout (`layout/`), `checks.ts` and `checks-catalogue.ts`, `repair.ts`, rendering and export (`render/`, `export/`), animation (`anim/`), the CLI and MCP bindings (`cli.ts`, `commands.ts`, `mcp/`), selection (`selection/`), sheets (`sheet/`), and shared maths, geometry, locale and colour. |
+| `src/presets/<id>/` | One folder per preset: `preset.ts` (expand), its validator, its solvers, and `PRESET.md` beside the code. A preset that grows past one file splits by kind, as `mechanics/` does (`physics.ts`, `draw.ts`, `kind.ts`, `kinds/`). |
+| `fixtures/<id>/` | One folder per preset, named after it. Raw IR specs go in `fixtures/ir/`, animation states in `fixtures/animate/`, selection cases in `fixtures/selection/`. Nothing sits loose in `fixtures/`; a test fails if it does. |
+| `tests/` | One file per subject, kebab-case, `.test.ts`. Tests that spawn Python are routed to `test:modules` automatically by `scripts/run-tests.ts`. |
+| `modules/<id>/` | Python figure modules, each with a `MODULE.md` ([modules/README.md](modules/README.md)). |
+| `docs/` | Decisions, plans, research, design and selection docs. [docs/README.md](docs/README.md) is the map. |
+| `experiments/exercises/<list>/` | Exercise lists (`lista.json`), built by `sheet` into `ProjectHub/Listas/<list>/`. |
+| `experiments/generators/`, `probes/`, `sketches/` | Generators for the gallery, investigation scripts, sketches. Promote to `src/` or `modules/` when ready. |
+| `scripts/` | Generators for docs (`gen-*.ts`), the test runner, and the standalone checks. |
+| `temp/`, `out/` | Scratch and render output. Gitignored; never commit them. |
 
 ## Where to Put Your Code
 
-**New core features** → `src/`
-- Updates to IR, checks, rendering, CLI, or MCP
-- When in doubt, start here
+- **A new kind of figure with something to compute** → a preset, following the procedure below.
+- **A new kind of figure that needs a real Python library** → a module ([modules/README.md](modules/README.md) has the bar it must clear).
+- **A new check** → `src/checks.ts`, plus its line in `src/checks-catalogue.ts`. The type system refuses the check without that line.
+- **A new option on an existing preset** → its `preset.ts`, its validator, a fixture, a test, and the option documented in its `PRESET.md`.
+- **A one-off illustration with nothing to compute** → raw IR; `fixtures/ir/raw-ir-fuel-cell.json` is the worked example.
 
-**New tests** → `tests/`
-- Name the test file after what you're testing
-- E.g., testing `src/render.ts` → `tests/render.test.ts`
+**Never** put experiments or temporary files in the root directory (`npm run check:root-clean`).
 
-**Test fixtures** → `fixtures/`
-- Use descriptive kebab-case names
-- E.g., `fixtures/complex-ir-with-cycles.json`
+## The procedure for a new preset or feature
 
-**New Python modules** → `modules/`
-- Create a directory with your module name
-- Include `MODULE.md` describing purpose and interface (use existing MODULE.md files as templates)
-- Keep modules self-contained and independently testable
+Presets and features land often. A document is kept current by the same change that changes the code, never by a later cleanup. Steps marked **(checked)** fail the build if skipped (`tests/preset-completeness.test.ts`, `npm run check:docs`). The others rely on you.
 
-**Experimental work** → `experiments/`
-- Categorize under `generators/`, `probes/`, or `sketches/`
-- Move to src/ or modules/ when it's ready
-- Avoid committing incomplete experiments; clean up or formalize first
+**Before**
 
-**Never** put experiments or temporary files in the root directory.
+1. **Plan, if it takes more than one sitting.** Add a `docs/plans/PLAN-<SUBJECT>.md` with a rules section and a status table, and add its row to [docs/plans/README.md](docs/plans/README.md).
+2. **Decide, if it changes how something works.** Write an ADR with the next free number from [docs/decisions/README.md](docs/decisions/README.md) (see [Writing an ADR](#writing-an-adr)).
+
+**While building a preset**
+
+3. Create `src/presets/<id>/` with `preset.ts`, a validator, and `PRESET.md`. The doc covers input, what is computed, refusals and `answers: false`, and cites its ADR. **(checked)**
+4. Register it:
+   - add it to `PresetId`, `PRESETS` and `PRESET_AREA` in `src/selection/vocabulary.ts` **(checked: type error)**;
+   - add at least one selection rule in `src/selection/rules.ts` **(checked)**;
+   - write the paragraph in `docs/selection/SELECTION.md` saying when to choose it and when not to.
+5. Put fixtures in `fixtures/<id>/` **(checked)** and write a test that renders every fixture with every check passing, with answers on and off **(checked: a test names it)**.
+6. **Look at the PNGs.** Green checks do not mean legible. Every new figure is opened and inspected before it is called done.
+
+**Before the pull request**
+
+7. Run `npm run gen:views` and `npm run gen:rules`. The README tables, AGENTS.md, the skill and the ADR index regenerate. **(checked: `check:docs`)**
+8. Edit the hand-written prose the change made untrue: the README paragraphs, the preset's neighbours' `PRESET.md` ("not for … use `<id>`"), and AGENTS.md's hand-written sections in `scripts/gen-views.ts`.
+9. Tick the plan's row. If it was the last row, add the **Status:** line and move the plan to *Done*.
+10. Prune [TODO.md](TODO.md) of what this landed, and add what it found and left open.
+11. Write the [ROADMAP.md](ROADMAP.md) entry: dated, what landed, and what building it found.
+12. Run `npm run typecheck`, `npm test` and `npm run check:docs`, and say in the PR what you ran.
+
+A feature that is not a preset (a check, a sheet option, a command) follows the same steps minus 3–5. A new check's line in `checks-catalogue.ts` is **(checked: type error)**.
+
+## Writing an ADR
+
+`docs/decisions/NNNN-short-name.md`, taking the next free number from the generated [index](docs/decisions/README.md). Never reuse a number. The shape:
+
+```markdown
+# NNNN — The decision, stated as a sentence
+
+## Status
+
+Accepted · YYYY-MM-DD
+
+## The need
+
+## Decision
+
+## Consequences
+```
+
+The `# NNNN — ` heading and the `## Status` block are read by the index generator, and a test requires the status. When a later ADR changes an earlier one, edit the earlier one's status line to say so ("amended by 0075"); leave its text as it was.
 
 ## Documentation Standards
 
-**Architectural Decision Records (ADRs)**
-- Store in `docs/decisions/` with a descriptive filename
-- Follow the ADR template used in existing decision records
-- Document the decision, context, alternatives considered, and consequences
-- ADRs guide implementation; keep them and code in sync
-
-**Module Documentation (MODULE.md)**
-- Every Python module must have a `MODULE.md` at its root
-- Document the module's purpose, interface, and key design decisions
-- See `modules/map/MODULE.md` or `modules/molecule/MODULE.md` for the structure to follow
-
-**Generated Files**
-- `AGENTS.md`, `.claude/skills/prancheta/SKILL.md` are auto-generated
-- Their prose lives in `scripts/gen-views.ts`; edit it there
-- Update them by running `npm run gen:views`
-- Never edit these files manually; changes will be overwritten
-
+- **Generated files** are rebuilt by `scripts/gen-*.ts`; edit the generator, never the output. They are:
+  - `AGENTS.md`, `.claude/skills/prancheta/SKILL.md` and `docs/decisions/README.md`;
+  - the `<!-- generated:… -->` regions of `README.md`;
+  - every `*.generated.md`.
+- **Module docs:** every module has a `MODULE.md` covering its purpose, interface and the bugs its checks caught.
+- **History is not rewritten.** ROADMAP entries, finished plans, research notes and old ADRs keep their text. When a file moves, its links are updated and nothing else.
 ## Key Principles
 
 - **Every new degree of freedom ships with the check that constrains it**

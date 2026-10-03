@@ -134,7 +134,7 @@ output rather than of how big the figure happened to be.
 
 A connector whose `from` and `to` are the same block is a self-loop, and it is
 routed rather than curved: out of the top edge, up, across, and back down.
-`tests/` carries the case, and [fixtures/self-loop.json](../fixtures/self-loop.json)
+`tests/` carries the case, and [fixtures/ir/self-loop.json](../fixtures/ir/self-loop.json)
 draws it.
 
 **Straight runs, deliberately.** A loop is inherently loop-shaped, and it would
@@ -172,5 +172,5 @@ toggleable are the three that only ever said no.
 Toggles are independent and per-figure. Turning one on does not affect
 another — a figure with `allowOverlap` on still has its connectors checked.
 
-`fixtures/all-toggles-enabled.json` is the combined case: overlapping regions,
+`fixtures/ir/all-toggles-enabled.json` is the combined case: overlapping regions,
 a leader line crossing them, and curved edges, all in one figure.

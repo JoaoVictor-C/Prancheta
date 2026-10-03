@@ -30,7 +30,7 @@ its current runs backwards.
 
 ### The layout is given; circuit auto-layout is not built
 
-`docs/PLAN-COVERAGE.md` rules out laying out a circuit from a bare netlist.
+`docs/plans/PLAN-COVERAGE.md` rules out laying out a circuit from a bare netlist.
 Here is why:
 
 - A textbook circuit's shape carries meaning. The source sits on the left,

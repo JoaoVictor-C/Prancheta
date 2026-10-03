@@ -1,6 +1,8 @@
 # Build plan, part two — M5 to M10
 
-[Part one](PLAN.md) took the project from nothing to a verified repertoire: M0–M4 are done and A1–A3 are retired. This is what comes after, derived from a gap analysis against human-oriented figure tools (TikZ, Asymptote, CeTZ, Illustrator, Inkscape, Figma, matplotlib, Vega-Lite, Penrose, Bluefish, draw.io, Excalidraw, D2, Graphviz, ChemDraw, KiCad, GeoGebra, Manim's static side). Animation stays out of scope for M5–M10 specifically — **it started 2026-08-24 as M11**, outside this document's own numbering; see [ADR 0012](decisions/0012-animation-m11-scope.md) and the ROADMAP entry of the same date.
+**Status:** done. M5–M10 shipped or closed by 2026-08-29 (see the ROADMAP entries of 2026-08-22 to 2026-08-29); what they left open is in [TODO.md](../../TODO.md).
+
+[Part one](PLAN.md) took the project from nothing to a verified repertoire: M0–M4 are done and A1–A3 are retired. This is what comes after, derived from a gap analysis against human-oriented figure tools (TikZ, Asymptote, CeTZ, Illustrator, Inkscape, Figma, matplotlib, Vega-Lite, Penrose, Bluefish, draw.io, Excalidraw, D2, Graphviz, ChemDraw, KiCad, GeoGebra, Manim's static side). Animation stays out of scope for M5–M10 specifically — **it started 2026-08-24 as M11**, outside this document's own numbering; see [ADR 0012](../decisions/0012-animation-m11-scope.md) and the ROADMAP entry of the same date.
 
 Ordered by **risk retired per day**, same as part one, with one addition that is now the house rule:
 
@@ -44,7 +46,7 @@ Interactive editing, snapping and alignment guides, photorealism, verifying that
 
 One correction to the record: **producing an editable handoff file is not covered by the editing non-goal.** Refusing to *be* an editor is not refusing to emit a file an editor can open. That belongs in M6, not here.
 
-A second correction: **animation was listed here when this document was written and is no longer a non-goal.** It started 2026-08-24 as M11, outside this document's M5–M10 numbering — see [ADR 0012](decisions/0012-animation-m11-scope.md).
+A second correction: **animation was listed here when this document was written and is no longer a non-goal.** It started 2026-08-24 as M11, outside this document's M5–M10 numbering — see [ADR 0012](../decisions/0012-animation-m11-scope.md).
 
 ---
 
@@ -69,7 +71,7 @@ M5 → M6 is a hard dependency. M7 → M8 is soft (scales want symbols and rotat
 
 ## M5 — Colour becomes a variable, and a checkable one (retires A4) · **done 2026-08-22**
 
-> Shipped. A4 held: two variants ship, both provably legible, with a third check catching the exact defect this decision exists to prevent -- caught it twice, in fact, once in the design system's own chart palette. Findings are in [the roadmap](../ROADMAP.md).
+> Shipped. A4 held: two variants ship, both provably legible, with a third check catching the exact defect this decision exists to prevent -- caught it twice, in fact, once in the design system's own chart palette. Findings are in [the roadmap](../../ROADMAP.md).
 
 **A4** — a second palette can exist without the project losing the ability to say whether a figure is legible.
 
@@ -90,7 +92,7 @@ The two halves must land together. A second theme with nothing able to verify it
 
 ## M6 — The export layer (retires A5) · **done 2026-08-22**
 
-> Shipped. A5 held: a figure can leave the tool. Two real bugs found in the process (resvg does not honour @font-face at all; the first version of the PDF-vector check was fooled by a clip-only `re`), both fixed and pinned as regression tests. Findings are in [the roadmap](../ROADMAP.md).
+> Shipped. A5 held: a figure can leave the tool. Two real bugs found in the process (resvg does not honour @font-face at all; the first version of the PDF-vector check was fooled by a clip-only `re`), both fixed and pinned as regression tests. Findings are in [the roadmap](../../ROADMAP.md).
 
 **A5** — a figure can leave the tool: survive print, survive a machine without the fonts, and hand off to a human.
 
@@ -223,17 +225,17 @@ The milestones above are grouped by theme. This is the linear sequence to actual
 
 | # | step | note |
 | --- | --- | --- |
-| 1 | ✅ ADR 0007 — colour is checked, not chosen | [docs/decisions/0007-colour-is-checked-not-chosen.md](decisions/0007-colour-is-checked-not-chosen.md) |
-| 2 | ✅ `contrast-sufficient` check + planted bad-palette fixture | Found a real hex-vs-rgb() parser bug on the first end-to-end run; fixtures/bad-contrast.json |
+| 1 | ✅ ADR 0007 — colour is checked, not chosen | [docs/decisions/0007-colour-is-checked-not-chosen.md](../decisions/0007-colour-is-checked-not-chosen.md) |
+| 2 | ✅ `contrast-sufficient` check + planted bad-palette fixture | Found a real hex-vs-rgb() parser bug on the first end-to-end run; fixtures/ir/bad-contrast.json |
 | 3 | ✅ Colourblind-distance check for categorical palettes | Found a real defect in the chart preset's own SERIES_COLOURS (teal vs green) |
-| 4 | ✅ Theme variants as data: `dark` (unchanged), `light`, `print` | fixtures/theme-light.json, fixtures/theme-print.json |
+| 4 | ✅ Theme variants as data: `dark` (unchanged), `light`, `print` | fixtures/ir/theme-light.json, fixtures/ir/theme-print.json |
 | 5 | ✅ Generated palette reference with `--check` + tests | docs/design/PALETTE.generated.md; plus a `themes` CLI/MCP command |
 
 **Stage 2 — The export layer** *(needs stage 1; nothing here is architecturally risky)* · **done 2026-08-22**
 
 | # | step | note |
 | --- | --- | --- |
-| 6 | ✅ ADR 0008 — the deliverable, not the drawing | [docs/decisions/0008-the-deliverable-not-the-drawing.md](decisions/0008-the-deliverable-not-the-drawing.md) |
+| 6 | ✅ ADR 0008 — the deliverable, not the drawing | [docs/decisions/0008-the-deliverable-not-the-drawing.md](../decisions/0008-the-deliverable-not-the-drawing.md) |
 | 7 | ✅ Per-element `<title>`/`<desc>` metadata | render/svg.ts |
 | 8 | ✅ Structured SVG output — groups, stable ids, layers | pr-boxes/pr-connectors/pr-text |
 | 9 | ✅ Font embedding (WOFF2 data URI) and text-to-outline mode | Bundled Inter under assets/fonts/; opentype.js |
@@ -247,7 +249,7 @@ The milestones above are grouped by theme. This is the linear sequence to actual
 | --- | --- | --- |
 | 13 | ✅ Arrowhead vocabulary (open, closed, diamond, circle, crow's foot, half) + line-style roles | Explicit paths, never `<marker>` |
 | 14 | ✅ Non-rect shapes — circle, ellipse, diamond, hexagon, stadium (rounded polygon deferred) | Same bbox as a rect, so all six checks keep working; src/geometry/shapes.ts |
-| 15 | ✅ `label-within-shape` check via `containsPoint` + planted fixture | Fails where `text-fits-box` passes; fixtures/label-overflows-shape.json |
+| 15 | ✅ `label-within-shape` check via `containsPoint` + planted fixture | Fails where `text-fits-box` passes; fixtures/ir/label-overflows-shape.json |
 | 16 | ✅ Rotated text + oriented-box arithmetic | Measure unrotated, emit with transform, derive the box exactly; src/geometry/rotate.ts |
 | 17 | ✅ Symbol library — reusable leaf primitives with declared bbox | modules/symbols_electrical.py, extracted from circuit; e2e tests unmodified and still green |
 | 18 | ✅ Generated shape/arrowhead reference with `--check` | docs/design/GEOMETRY.generated.md; inscribed-area fractions computed via real containsPoint samples |
@@ -280,7 +282,7 @@ The milestones above are grouped by theme. This is the linear sequence to actual
 | 30 | ✅ Land ADR 0009 | Status changed from Draft to Accepted; termination proof reviewed and sound |
 | 31 | ✅ Constraint vocabulary in the IR — `align`, `distribute`, `keepClear`, `sameSize`, `anchor` | src/constraints/types.ts; `FigureSpec.layoutConstraints` (2026-08-24) makes it authorable and `constraints-satisfied` (step 33) makes it checked — reachable from a real spec |
 | 32 | ◐ Placement layer owns positions as a solution, not a final answer | src/layout/solver.ts implements `PlacementSolution`, `detectViolations`, `adjustPositions`; only imported by its own tests and by layout/repair.ts, which is itself unreachable (step 34) |
-| 33 | ✅ `constraints-satisfied` check | Added to CheckId type and wired into `runChecks` (2026-08-24). Was previously a hardcoded-empty-array check that could only ever report not-applicable or an unconditional pass — vacuous by the project's own house rule. Now reads `figure.layoutConstraints`, calls `isConstraintSatisfied` per constraint, and fails naming the violated ones. Planted-defect fixture: fixtures/constraint-violation.json |
+| 33 | ✅ `constraints-satisfied` check | Added to CheckId type and wired into `runChecks` (2026-08-24). Was previously a hardcoded-empty-array check that could only ever report not-applicable or an unconditional pass — vacuous by the project's own house rule. Now reads `figure.layoutConstraints`, calls `isConstraintSatisfied` per constraint, and fails naming the violated ones. Planted-defect fixture: fixtures/ir/constraint-violation.json |
 | 34 | ◐ Translation repair edits, bounded by the budget | src/layout/repair.ts implements `repairTranslations` with the lexicographic potential descent and per-element budgets ADR 0009 specifies, but nothing in the check-repair loop (repair.ts at the project root, distinct from this file) calls it — a failed `constraints-satisfied` reports "no repair strategy for this check" today, same as before this step was marked done |
 | 35 | ✅ Curves and arbitrary paths in the IR | src/geometry/paths.ts; PathCommand types (M/L/C/Q/A/Z) and adaptive `flattenPath`. Reached the IR through `ConnectorCurve` (decision 0010), not as a path primitive |
 | 36 | ◐ Edge labels, self-loops, spline routing | Spline routing and self-loops ship in src/layout/connectors.ts. **Edge labels do not.** The first pass at this step landed a src/layout/routing.ts that nothing ever called — see the 2026-08-23 roadmap entry |

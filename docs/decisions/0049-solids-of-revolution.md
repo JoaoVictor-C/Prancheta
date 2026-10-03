@@ -7,7 +7,7 @@ Accepted. Implemented in `src/presets/revolution/`. Not yet registered: see
 
 ## The need
 
-Phase 4 of `docs/PLAN-COVERAGE.md` asks for "arbitrary-profile solids of
+Phase 4 of `docs/plans/PLAN-COVERAGE.md` asks for "arbitrary-profile solids of
 revolution … volumes". This is the Cálculo 2 exercise "volume de sólido de
 revolução": a region under y = f(x), or between two curves, turned about an
 axis, with its volume by discs, washers or shells. The textbook figure has

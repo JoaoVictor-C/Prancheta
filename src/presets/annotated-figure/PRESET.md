@@ -35,4 +35,4 @@ Size the parts to hold their labels, or leave the labels off the parts and put t
 
 `points` takes a part id or a bare `{x, y}` on the figure.
 
-Fixture: [`fixtures/annotated-cell.json`](../../../fixtures/annotated-cell.json)
+Fixture: [`fixtures/annotated-figure/annotated-cell.json`](../../../fixtures/annotated-figure/annotated-cell.json)

@@ -11,7 +11,7 @@ import { render } from "../src/pipeline.ts";
 import { parseFigureInput } from "../src/presets/index.ts";
 
 test("chart-bars-overlay.json renders with every check passing", { timeout: 240000 }, async () => {
-  const raw = JSON.parse(readFileSync(new URL("../fixtures/chart-bars-overlay.json", import.meta.url), "utf8"));
+  const raw = JSON.parse(readFileSync(new URL("../fixtures/chart/chart-bars-overlay.json", import.meta.url), "utf8"));
   const result = await render(parseFigureInput(raw), { raster: false });
   const failing = result.manifest.checks.filter((c) => c.status === "fail");
   assert.equal(result.manifest.ok, true, failing.map((c) => `${c.id} ${c.target}: ${c.detail}`).join("\n"));

@@ -6,7 +6,7 @@ Accepted.
 
 ## The need
 
-Phase 3 (`docs/PLAN-COVERAGE.md`) needs two consumers next: a ruler-and-compass
+Phase 3 (`docs/plans/PLAN-COVERAGE.md`) needs two consumers next: a ruler-and-compass
 2D construction kernel (intersections, perpendiculars, loci — for conics and
 school-solid pictograms) and a R³ projection for Geometria Analítica (lines,
 planes, their relative positions, for school solids' silhouettes). Both need

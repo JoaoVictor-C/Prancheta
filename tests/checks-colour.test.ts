@@ -107,7 +107,7 @@ test("a label straddling a filled box and the canvas is scored against the worse
 });
 
 test("a semi-transparent fill is composited before it is measured, not scored raw", () => {
-  // Caught by fixtures/allow-overlap.json: a Venn circle filled
+  // Caught by fixtures/ir/allow-overlap.json: a Venn circle filled
   // rgba(57,102,201,0.34) on white is a PALE blue on the page. Scoring the
   // raw channels reads it as saturated blue and fails a label that is
   // perfectly legible -- a false alarm is as much a lie as a silent pass.

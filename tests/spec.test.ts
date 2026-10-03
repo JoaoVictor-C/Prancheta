@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 import { parseSpec, SpecError } from "../src/ir/types.ts";
 
 const fixturePath = fileURLToPath(
-  new URL("../fixtures/labelled-blocks.json", import.meta.url),
+  new URL("../fixtures/labelled-blocks/labelled-blocks.json", import.meta.url),
 );
 
 test("parseSpec accepts the real labelled-blocks fixture", () => {

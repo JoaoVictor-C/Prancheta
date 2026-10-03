@@ -1,6 +1,6 @@
 # sign-chart
 
-The sign table of a function — the *quadro de sinais*: where f, f′, f″ or the factors of a product are positive, negative or zero, where f is undefined, and where f rises and falls. Written once, as the function's expression; every boundary, sign and value in the table is found from it.
+The sign table of a function — the *quadro de sinais*: where f, f′, f″ or the factors of a product are positive, negative or zero, where f is undefined, and where f rises and falls. Written once, as the function's expression; every boundary, sign and value in the table is found from it. ([ADR 0027](../../../docs/decisions/0027-sign-chart.md))
 
 **Choose it when** the question is about intervals rather than shapes: where is f positive, where does it grow, where is it concave up, which x solve an inequality like (x − 1)(x + 2)/(x − 3) ≥ 0. It is offered beside `function-graph` for any function (`S-function-favours-sign-chart-weakly`) and never chosen over it: the graph shows the shape, the table states the intervals, and both are computed from the same expression, so they cannot disagree. In a sheet, put the two side by side (`"solutionFigure": [graph, table]`, markers `{{figure}}` and `{{figure2}}`).
 

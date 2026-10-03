@@ -22,7 +22,7 @@ const figures = [
   ...readdirSync(dir)
     .filter((name) => name.endsWith(".json"))
     .map((name) => join(dir, name)),
-  fileURLToPath(new URL("../fixtures/calc1-s5-5-chain.json", import.meta.url)),
+  fileURLToPath(new URL("../fixtures/ir/calc1-s5-5-chain.json", import.meta.url)),
 ];
 
 test("the sheet has fifteen figures", () => {

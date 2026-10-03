@@ -7,7 +7,7 @@ Accepted. Implemented in `src/presets/surface/`. Not yet registered: see
 
 ## The need
 
-Phase 4 (`docs/PLAN-COVERAGE.md`) asks for surfaces z = f(x, y) and level
+Phase 4 (`docs/plans/PLAN-COVERAGE.md`) asks for surfaces z = f(x, y) and level
 curves, marked high risk with the matplotlib module as the fallback. These
 are the first figures of Cálculo 2/3: the paraboloid and its curvas de
 nível projected onto the xy-plane, the saddle x² − y², a bump

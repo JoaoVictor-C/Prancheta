@@ -6,7 +6,7 @@
  * resistance, a resistive wire with taps, an appliance as a labelled box.
  *
  * The LAYOUT IS GIVEN, not computed (ADR 0053; circuit auto-layout from a
- * netlist is out of scope, docs/PLAN-COVERAGE.md "Not building"): every node
+ * netlist is out of scope, docs/plans/PLAN-COVERAGE.md "Not building"): every node
  * has grid coordinates, and every component -- wires included -- runs
  * between two nodes on a horizontal or vertical straight run, or on an L
  * through a stated `via` corner. A layout that would mislead a reader is

@@ -7,10 +7,10 @@ vocabulary is pending (`src/presets/construction/INTEGRATION.md`).
 
 ## The need
 
-Phase 3 (`docs/PLAN-COVERAGE.md`) asks for a constructive 2D kernel:
+Phase 3 (`docs/plans/PLAN-COVERAGE.md`) asks for a constructive 2D kernel:
 intersections, perpendiculars, loci, and conics drawn analytically from their
 foci. The two plane-geometry figures this project already has,
-`fixtures/isosceles-construction.json` and `fixtures/circle-theorem.json`, show
+`fixtures/ir/isosceles-construction.json` and `fixtures/ir/circle-theorem.json`, show
 why a preset is needed and not just more IR. Each is raw IR with its
 coordinates worked out elsewhere: the isosceles apex is `(190, 243.19)`
 because someone computed `190·tan 52°` outside the document, the circle

@@ -18,7 +18,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { SpecError } from "../src/ir/types.ts";
 import { isPresetInput, parseFigureInput, validatePresetInput } from "../src/presets/index.ts";
 import { PRESETS } from "../src/selection/vocabulary.ts";
@@ -208,11 +208,13 @@ test("every implemented preset has a validator wired into the dispatch", () => {
 });
 
 test("every preset-input fixture this repo ships still passes the layer", () => {
+  // Every folder under fixtures/, since fixtures live in fixtures/<preset>/ (ADR 0075).
   const dir = fileURLToPath(new URL("../fixtures/", import.meta.url));
   let checked = 0;
-  for (const name of readdirSync(dir)) {
+  for (const entry of readdirSync(dir, { recursive: true })) {
+    const name = String(entry).split("\\").join("/");
     if (!name.endsWith(".json")) continue;
-    const parsed: unknown = JSON.parse(readFileSync(new URL(name, `file://${dir}`), "utf8"));
+    const parsed: unknown = JSON.parse(readFileSync(new URL(name, pathToFileURL(dir)), "utf8"));
     if (!isPresetInput(parsed)) continue;
     checked += 1;
     assert.doesNotThrow(() => parseFigureInput(parsed), `fixtures/${name} is now refused`);

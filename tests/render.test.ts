@@ -8,7 +8,7 @@ import { readFileSync } from "node:fs";
 import { render } from "../src/pipeline.ts";
 import { parseSpec } from "../src/ir/types.ts";
 
-const fixturePath = new URL("../fixtures/labelled-blocks.json", import.meta.url);
+const fixturePath = new URL("../fixtures/labelled-blocks/labelled-blocks.json", import.meta.url);
 
 test(
   "render() end-to-end over the labelled-blocks fixture",

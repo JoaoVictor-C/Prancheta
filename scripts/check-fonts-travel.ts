@@ -34,7 +34,7 @@ import { render } from "../src/pipeline.ts";
 import { readFile } from "node:fs/promises";
 
 const mode = (process.argv[2] as "outline" | "embed" | undefined) ?? "outline";
-const fixture = process.argv[3] ?? "fixtures/labelled-blocks.json";
+const fixture = process.argv[3] ?? "fixtures/labelled-blocks/labelled-blocks.json";
 
 if (mode !== "outline" && mode !== "embed") {
   console.error(`mode must be "outline" or "embed", got "${mode}"`);

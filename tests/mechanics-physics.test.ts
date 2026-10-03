@@ -1,5 +1,5 @@
 /**
- * The P1 solvers of the mechanics preset (docs/PLAN-PHYSICS.md) against
+ * The P1 solvers of the mechanics preset (docs/plans/PLAN-PHYSICS.md) against
  * hand-worked values, before anything is drawn from them.
  */
 import { test } from "node:test";

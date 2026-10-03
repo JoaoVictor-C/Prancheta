@@ -13,7 +13,7 @@ node experiments/exercises/phys-lens.mjs && npm run render experiments/exercises
 
 Drawing an unknown at a false value — a ray at a slope the stated focal length
 does not produce — would be [this project's founding
-defect](../../docs/PLAN-EXERCISES.md) committed on purpose, and every check
+defect](../../docs/plans/PLAN-EXERCISES.md) committed on purpose, and every check
 that makes a plate worth anything would have to be switched off for it to pass.
 So a quantity the exercise asks for is drawn exactly where it is and carries a
 `?` instead of a number. A reader can measure an estimate off the page. Good:
@@ -24,7 +24,7 @@ an estimate they then have to justify by calculation is the exercise working.
 A plate earns its place when it carries **two representations of one
 computation, reaching the page by different code paths from a shared input** —
 so the figure can contradict itself and a check can say so. That criterion is
-*sufficient, not necessary*: `fixtures/circle-theorem.json` has one construction
+*sufficient, not necessary*: `fixtures/ir/circle-theorem.json` has one construction
 and one printed angle, and `sweep-matches-its-label` compares them. Either route
 counts; a plate with neither does not.
 
@@ -117,7 +117,7 @@ label with no fill of its own — which every angle label here is, since
 exemption, the arc still passes directly through its glyph, and
 `text-clear-of-ink` reports a pass on a figure a reader can see is broken.
 That is precisely how `phys-collision`'s θ₂ and, it turned out, two more
-figures (`fixtures/circle-theorem.json`'s "x", `fixtures/isosceles-construction.json`'s
+figures (`fixtures/ir/circle-theorem.json`'s "x", `fixtures/ir/isosceles-construction.json`'s
 "x") all got past a check built to catch exactly this.
 
 The fix narrows the exemption to what it was always supposed to mean:
@@ -133,7 +133,7 @@ overlap it never earned.
 
 Measured with the same before/after blast-radius method as the check
 itself: 82 of the full fixture-and-plate suite were unaffected. One more
-real defect surfaced — `fixtures/isosceles-construction.json`'s own "x"
+real defect surfaced — `fixtures/ir/isosceles-construction.json`'s own "x"
 label, sliced by its "apex" arc, never looked at by hand because nothing
 had pointed at it — fixed the same way as the other two, by moving the label
 further out along its own radial direction until its nearest point clears

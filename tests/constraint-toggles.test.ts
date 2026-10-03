@@ -286,7 +286,7 @@ test("flattenPath drops duplicate points so an arrowhead always has a direction"
 // --- end to end -------------------------------------------------------------
 
 const fixture = (name: string) =>
-  parseSpec(JSON.parse(readFileSync(new URL(`../fixtures/${name}.json`, import.meta.url), "utf8")));
+  parseSpec(JSON.parse(readFileSync(new URL(`../fixtures/ir/${name}.json`, import.meta.url), "utf8")));
 
 test("the planted fixtures render green with their toggle on", { timeout: 180000 }, async () => {
   for (const name of ["allow-overlap", "allow-connector-crossing", "allow-curved-connectors"]) {
@@ -368,7 +368,7 @@ test("a self-transition is drawn, not silently collapsed to nothing", { timeout:
   // arrowhead direction, and every check green because there was nothing there
   // to be wrong.
   const spec = parseSpec(
-    JSON.parse(readFileSync(new URL("../fixtures/self-loop.json", import.meta.url), "utf8")),
+    JSON.parse(readFileSync(new URL("../fixtures/ir/self-loop.json", import.meta.url), "utf8")),
   );
   const result = await render(spec);
   assert.equal(result.manifest.ok, true, "the self-loop fixture should be green");

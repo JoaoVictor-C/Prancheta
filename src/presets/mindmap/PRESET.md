@@ -30,4 +30,4 @@ It is the same ELK ingest as `graph`, with a tree algorithm and edges derived fr
 }
 ```
 
-Fixture: [`fixtures/mindmap-incident.json`](../../../fixtures/mindmap-incident.json)
+Fixture: [`fixtures/mindmap/mindmap-incident.json`](../../../fixtures/mindmap/mindmap-incident.json)

@@ -1,5 +1,5 @@
 /**
- * The P1 mechanics kinds (docs/PLAN-PHYSICS.md) drawn to their solutions:
+ * The P1 mechanics kinds (docs/plans/PLAN-PHYSICS.md) drawn to their solutions:
  * every length below is read back from the figure and compared with the
  * solved quantity it stands for. Rendering with every check passing is
  * covered for every fixture by tests/mechanics.test.ts.

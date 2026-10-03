@@ -3,7 +3,7 @@
 ## Status
 
 Accepted. Built in `src/presets/construction/` (`shapes.ts`, `preset.ts`), `tests/construction-extensions.test.ts`
-and ten fixtures. Phase 6 item 3 of `docs/AUDIT-ENEM.md` (14 partial figures: 2023 Q145, 154, 163, 172b, 177;
+and ten fixtures. Phase 6 item 3 of `docs/research/AUDIT-ENEM.md` (14 partial figures: 2023 Q145, 154, 163, 172b, 177;
 2024 Q144, 150, 155, 163, 174; 2025 Q139, 148, 156, 173, 177).
 
 ## The need

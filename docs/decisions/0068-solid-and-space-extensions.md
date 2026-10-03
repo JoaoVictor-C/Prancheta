@@ -7,7 +7,7 @@ Accepted. Implemented in `src/presets/solid/` (`preset.ts`, `geometry.ts`,
 
 ## The need
 
-The ENEM audit ([AUDIT-ENEM](../AUDIT-ENEM.md), item 4) found 13 figures of
+The ENEM audit ([AUDIT-ENEM](../research/AUDIT-ENEM.md), item 4) found 13 figures of
 day 2 that the `solid` and `space` presets came close to but could not draw:
 a cone's frustum with a cylindrical bore (2023 Q136), a stair (2023 Q165), a
 tank with water at a level (2025 Q170, 2024 Q161), rectangles rolled into

@@ -20,7 +20,7 @@ assignees: ''
 
 - [ ] The [presets](../../src/presets) — same IR, no new geometry
 - [ ] The [modules](../../modules/README.md) — geometry the core cannot compute
-- [ ] [ROADMAP.md](../../ROADMAP.md) and [docs/PLAN-NEXT.md](../../docs/PLAN-NEXT.md)
+- [ ] [ROADMAP.md](../../ROADMAP.md) and [docs/plans/PLAN-NEXT.md](../../docs/plans/PLAN-NEXT.md)
 
 ## If this is a new check
 
