@@ -92,8 +92,10 @@ function draw(input: MechanicsInput): FigureSpec {
   hatchLine(b, (h0 > 0 ? launch.x - 70 : launch.x - 30), X(s.range) + 50, ground, 1, "solo");
   // The path, sampled from the solution and cut where a velocity arrow shows the motion
   // (after the launch and after the top), as a guide is cut around an axis number.
+  const vEndLen = Math.hypot(vEnd.x, vEnd.y);
   const hidden = (q: Point): boolean =>
     Math.hypot(q.x - launch.x, q.y - launch.y) < v0Len + 36 ||
+    Math.hypot(q.x - landing.x, q.y - landing.y) < vEndLen + 30 ||
     (hasApex && q.x > apex.x - 4 && q.x < apex.x + vxLen + 36 && Math.abs(q.y - apex.y) < 24);
   const runs: Point[][] = [];
   let run: Point[] = [];
@@ -134,9 +136,12 @@ function draw(input: MechanicsInput): FigureSpec {
     const mid = -(theta * Math.PI) / 360;
     b.label(`${formatNumber(theta, locale)}°`, launch.x + (arcR + dArc) * Math.cos(mid), launch.y + (arcR + dArc) * Math.sin(mid), { size: 14, weight: 700, colour: INK, annotates: "angulo" });
   }
-  const landTip = { x: landing.x + vEnd.x, y: landing.y + vEnd.y };
-  arrow(b, landing, landTip, RUST, "v-solo");
-  arrowLabel(b, "v", landTip, { x: 1, y: 0 }, RUST, "v-solo");
+  // The landing velocity arrives along the path and ends at the ground -- it never goes through it.
+  const landFrom = { x: landing.x - vEnd.x, y: landing.y - vEnd.y };
+  arrow(b, landFrom, landing, RUST, "v-solo");
+  const out = { x: -vEnd.y / vEndLen, y: vEnd.x / vEndLen }; // the side away from the path's inside
+  const side = out.x < 0 ? { x: -out.x, y: -out.y } : out;
+  name(b, "v", (landFrom.x + landing.x) / 2 + side.x * 16, (landFrom.y + landing.y) / 2 + side.y * 16, "v-solo", RUST, 15);
   if (components) {
     // The inset: v₀ with its components and the angle, on its own (longer) scale.
     const c = Math.cos((theta * Math.PI) / 180);

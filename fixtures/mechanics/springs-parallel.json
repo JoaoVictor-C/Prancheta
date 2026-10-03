@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "springs", "mass": 3, "stiffness": [100, 300], "arrangement": "parallel", "natural": 0.1 }

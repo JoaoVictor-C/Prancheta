@@ -137,3 +137,52 @@ test("the new kinds refuse what cannot be drawn or solved", () => {
   bad({ kind: "banked", radius: 10, mass: 1, angle: 80 }, /10 to 60/);
   bad({ kind: "orbit", semiMajor: 1, eccentricity: 0.95 }, /0,1 to 0,7/);
 });
+
+// ---- P2 ------------------------------------------------------------------------------------
+
+test("contact, elevator: forces to one scale, action and reaction equal", () => {
+  const c = expandMechanics(fixture("contact-blocks"));
+  // a = (20 − 0,2·50)/5 = 2 m/s²; A pushes B with m_B·a + μ·m_B·g = 12 N.
+  assert.ok(near(arrowOf(c, "fab").length, arrowOf(c, "fba").length), "F_AB = F_BA");
+  assert.ok(near(arrowOf(c, "forca").length / arrowOf(c, "fab").length, 20 / 12));
+  const e = expandMechanics(fixture("elevator-up"));
+  assert.ok(near(arrowOf(e, "normal").length / arrowOf(e, "peso").length, 12 / 10)); // N = m(g + a)
+});
+
+test("gravitation and cables: pairs equal, the force triangle closes", () => {
+  const g = expandMechanics(fixture("gravitation-compare"));
+  for (const i of [0, 1]) assert.ok(near(arrowOf(g, `f12-${i}`).length, arrowOf(g, `f21-${i}`).length), `pair ${i}`);
+  const k = expandMechanics(fixture("cables-knot"));
+  assert.ok(near(arrowOf(k, "t1").length / arrowOf(k, "t2").length, arrowOf(k, "tri-t1").length / arrowOf(k, "tri-t2").length));
+});
+
+test("buoyancy: a floating body sinks to ρ_c/ρ_l with E = P; a sinking one has E/P = ρ_l/ρ_c", () => {
+  const f = expandMechanics(fixture("buoyancy-float"));
+  assert.ok(near(height(mark(f, "submersa")) / height(mark(f, "corpo")), 0.6));
+  assert.ok(near(arrowOf(f, "empuxo").length, arrowOf(f, "peso").length));
+  const s = expandMechanics(fixture("buoyancy-sink"));
+  assert.ok(near(arrowOf(s, "empuxo").length / arrowOf(s, "peso").length, 1000 / 2700));
+});
+
+test("hydraulic, pressure, efficiency: lengths as solved", () => {
+  const h = expandMechanics(fixture("hydraulic-press"));
+  const width = (m: MarkLike): number => { const xs = points(m).map((p) => p.x); return Math.max(...xs) - Math.min(...xs); };
+  // Pistons inset 2 px each side; diameters ∝ √A.
+  assert.ok(near((width(mark(h, "embolo-1")) + 4) / (width(mark(h, "embolo-2")) + 4), Math.sqrt(0.01 / 0.5)));
+  const p = expandMechanics(fixture("pressure-depth"));
+  // Each depth drop stops 7 px above its point and starts 2 px below the surface.
+  const drop = (i: number): number => height(mark(p, `prof-${i}`)) + 9;
+  assert.ok(near(drop(1) / drop(2), 5 / 10) && near(drop(0) / drop(2), 2 / 10));
+  const e = expandMechanics(fixture("efficiency-motor"));
+  assert.ok(near(height(mark(e, "util")) / height(mark(e, "entrada")), 0.25));
+});
+
+test("the P2 kinds refuse what cannot be drawn or solved", () => {
+  const bad = (raw: Record<string, unknown>, re: RegExp) => assert.throws(() => validateMechanicsInput(raw), (e: unknown) => e instanceof SpecError && re.test(e.message));
+  bad({ kind: "hydraulic", force: 10, areas: [0.5, 0.01] }, /must be the larger/);
+  bad({ kind: "oscillator", system: "pendulum", length: 1, amplitude: 0.5 }, /0,35·L/);
+  bad({ kind: "oscillator", system: "spring", mass: 1, stiffness: 10, amplitude: 0.1, length: 1 }, /belongs to a pendulum/);
+  bad({ kind: "efficiency", input: 100, useful: 120 }, /cannot exceed/);
+  bad({ kind: "efficiency", input: 100, useful: 50, losses: [{ name: "calor", value: 60 }] }, /more than the input/);
+  bad({ kind: "pressure", points: [{ name: "A", depth: 1 }] }, /setup is required/);
+});

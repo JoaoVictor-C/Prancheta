@@ -405,7 +405,7 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
   {
     id: "mechanics",
     implemented: true,
-    summary: "Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring; projectiles, energy along a track, levers, collisions, circular motion (uniform, loop, banked curve, conical pendulum) and Kepler orbits -- every arrow to one scale.",
+    summary: "Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring; projectiles, energy along a track, levers, collisions, circular motion (uniform, loop, banked curve, conical pendulum), Kepler orbits and gravitation; free fall, blocks in contact, an angled pull, an elevator, springs in series and parallel, a knot on two cables, the centre of mass, oscillators; buoyancy, a hydraulic press, pressure at depth and in a U-tube, and efficiency band diagrams -- every arrow to one scale, or the figure says it is not.",
   },
 ];
 

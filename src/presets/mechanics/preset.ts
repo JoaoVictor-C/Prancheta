@@ -31,12 +31,25 @@ import { loop } from "./kinds/loop.ts";
 import { banked } from "./kinds/banked.ts";
 import { conical } from "./kinds/conical.ts";
 import { orbit } from "./kinds/orbit.ts";
+import { freeFall } from "./kinds/free-fall.ts";
+import { contact } from "./kinds/contact.ts";
+import { angledPull } from "./kinds/angled-pull.ts";
+import { elevator } from "./kinds/elevator.ts";
+import { springs } from "./kinds/springs.ts";
+import { gravitation } from "./kinds/gravitation.ts";
+import { cables } from "./kinds/cables.ts";
+import { centerOfMass } from "./kinds/center-of-mass.ts";
+import { oscillator } from "./kinds/oscillator.ts";
+import { buoyancy } from "./kinds/buoyancy.ts";
+import { hydraulic } from "./kinds/hydraulic.ts";
+import { pressure } from "./kinds/pressure.ts";
+import { efficiency } from "./kinds/efficiency.ts";
 
 export type { MechanicsInput } from "./kind.ts";
 export * from "./physics.ts";
 
 /** Every kind, in the order the docs list them. Adding one: a file in kinds/ and a line here. */
-const REGISTRY: readonly Kind[] = [pulleys, incline, table, atwood, spring, projectile, energy, lever, collision, circular, loop, banked, conical, orbit];
+const REGISTRY: readonly Kind[] = [pulleys, incline, table, atwood, spring, projectile, energy, lever, collision, circular, loop, banked, conical, orbit, freeFall, contact, angledPull, elevator, springs, gravitation, cables, centerOfMass, oscillator, buoyancy, hydraulic, pressure, efficiency];
 
 export const KINDS: readonly string[] = REGISTRY.map((k) => k.id);
 const byId = new Map(REGISTRY.map((k) => [k.id, k]));

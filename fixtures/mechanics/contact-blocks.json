@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "contact", "masses": [2, 3], "force": 20, "friction": 0.2 }

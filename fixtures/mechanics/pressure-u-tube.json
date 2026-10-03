@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "pressure", "setup": "u-tube", "densities": [800, 1000], "height": 0.2 }

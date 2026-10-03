@@ -46,6 +46,21 @@ textbook draws it anyway:
   it would sit on the track.
 - **A name sits beside an arrow's head**, the end that does the naming.
 
+**Rules added in P2.**
+
+- **No arrow passes through the ground.** A velocity at the landing arrives
+  along the path and ends at the ground; a falling body's arrow that would
+  cross the floor ends at the body instead.
+- **When one scale cannot serve, the figure says so.** A hydraulic press's
+  forces differ fifty-fold or more, and a small pendulum swing is a few
+  degrees. The pistons stay to scale and the arrows do not; the swing is drawn
+  at 20°. A line under the figure says what is not to scale. It is not an
+  answer, so it stays under `answers: false`.
+- **Bands never cross.** In the efficiency diagram the lowest loss turns down
+  first, so each band leaves below the ones above it.
+- **Every force leaves its body.** The buoyancy scale is set so the smaller
+  force clears the cube; a label inside a body would be read as the body's.
+
 **Question figures.** `answers: false` drops the reading lines everywhere. Where
 a drawn thing is itself the answer, it goes too: the energy bars, and the
 velocities after a collision.
@@ -57,5 +72,10 @@ velocities after a collision.
 - Tests compare drawn lengths and areas with solved values, for example
   vₓ/v₀ = cos θ, bar heights in joules, F/P from torques, N/P = 1/cos θ, and
   equal Kepler sectors.
-- P2 (the rest of dynamics, statics, fluids and oscillations) follows the same
-  contract.
+- P2 adds thirteen kinds on the same contract: free-fall, contact,
+  angled-pull, elevator, springs, gravitation, cables, center-of-mass,
+  oscillator, buoyancy, hydraulic, pressure and efficiency. Its tests check
+  action and reaction equal, N/P = (g + a)/g, the force triangle's ratios,
+  the submerged fraction, pistons ∝ √A, depths and band widths to scale.
+- Every fixture renders with every check passing under both `answers` states
+  (tests/mechanics.test.ts).

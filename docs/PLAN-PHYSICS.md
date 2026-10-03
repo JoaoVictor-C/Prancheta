@@ -52,19 +52,19 @@ school mechanics without letting the preset become one unreadable file.
 
 | kind | what is solved | status |
 |---|---|---|
-| `free-fall` | vertical throw or fall: positions at equal time steps (the strobe), v at each | todo |
-| `contact` | blocks in contact pushed by F: a and the contact force | todo |
-| `angled-pull` | a block pulled by F at an angle: Fx, Fy, the reduced normal, friction, a | todo |
-| `elevator` | apparent weight going up or down, speeding up or slowing down | todo |
-| `springs` | springs in series and in parallel: equivalent k and each stretch | todo |
-| `gravitation` | two bodies: equal and opposite forces; F at d and at another distance (1/d²) | todo |
-| `cables` | a hanging load on two cables: tensions from the angles, the force triangle | todo |
-| `center-of-mass` | point masses on a line or a plane: the centre of mass | todo |
-| `oscillator` | spring-mass or pendulum at its phases: x, v, a; the period | todo |
-| `buoyancy` | a floating body: submerged fraction from the densities; E = P | todo |
-| `hydraulic` | a hydraulic press: F₂ = F₁·A₂/A₁, pistons to scale | todo |
-| `pressure` | pressure at depth p = p₀ + ρgh; connected vessels with two liquids | todo |
-| `efficiency` | an energy-flow strip: input, useful output and losses, widths to scale | todo |
+| `free-fall` | vertical throw or fall: positions at equal time steps (the strobe), v at each | done |
+| `contact` | blocks in contact pushed by F: a and the contact force | done |
+| `angled-pull` | a block pulled by F at an angle: Fx, Fy, the reduced normal, friction, a | done |
+| `elevator` | apparent weight going up or down, speeding up or slowing down | done |
+| `springs` | springs in series and in parallel: equivalent k and each stretch | done |
+| `gravitation` | two bodies: equal and opposite forces; F at d and at another distance (1/d²) | done |
+| `cables` | a hanging load on two cables: tensions from the angles, the force triangle | done |
+| `center-of-mass` | point masses on a line or a plane: the centre of mass | done |
+| `oscillator` | spring-mass or pendulum at its phases: x, v, a; the period | done |
+| `buoyancy` | a floating body: submerged fraction from the densities, E = P; a sinking one, E/P = ρ_l/ρ_c | done |
+| `hydraulic` | a hydraulic press: F₂ = F₁·A₂/A₁, pistons to scale | done |
+| `pressure` | pressure at depth p = p₀ + ρgh; connected vessels with two liquids | done |
+| `efficiency` | an energy-flow strip: input, useful output and losses, widths to scale | done |
 
 ### P3 — worked examples on `function-graph` (no new code)
 

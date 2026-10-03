@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "angled-pull", "mass": 10, "force": 50, "angle": 37, "friction": 0.2 }

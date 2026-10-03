@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "oscillator", "system": "spring", "mass": 0.5, "stiffness": 50, "amplitude": 0.1 }

@@ -8,13 +8,15 @@ when the physics says so.
 
 | area | kinds |
 | --- | --- |
-| dynamics | `pulleys`, `incline`, `table`, `atwood`, `spring` |
-| kinematics | `projectile` |
-| energy | `energy` |
-| statics | `lever` |
+| dynamics | `pulleys`, `incline`, `table`, `atwood`, `spring`, `contact`, `angled-pull`, `elevator`, `springs` |
+| kinematics | `projectile`, `free-fall` |
+| energy | `energy`, `efficiency` |
+| statics | `lever`, `cables`, `center-of-mass` |
 | momentum | `collision` |
 | circular motion | `circular`, `loop`, `banked`, `conical` |
-| gravitation | `orbit` |
+| oscillations | `oscillator` |
+| gravitation | `orbit`, `gravitation` |
+| fluids | `buoyancy`, `hydraulic`, `pressure` |
 
 Each kind is one file in `kinds/`, with its solver in `physics.ts`.
 
@@ -118,6 +120,66 @@ reads as the arrow's rather than the rope's.
     their areas are equal.
   - v_p/v_a = r_a/r_p, and T = a^{3/2} years about the Sun.
 
+```json
+{ "preset": "mechanics", "kind": "free-fall", "height": 45 }
+{ "preset": "mechanics", "kind": "contact", "masses": [2, 3], "force": 20, "friction": 0.2 }
+{ "preset": "mechanics", "kind": "buoyancy", "density": 600, "side": 0.2 }
+{ "preset": "mechanics", "kind": "pressure", "setup": "u-tube", "densities": [800, 1000], "height": 0.2 }
+```
+
+- **free-fall**:
+  - `height` (h₀, m), `speed` (v₀ upward, m/s; either may be 0, not both) and
+    `interval` (the time step, s; chosen when absent).
+  - A strobe photo: the body at equal time steps, to scale, with v to one
+    scale at each, so the gaps grow as it falls. A throw upward is drawn as two
+    columns, the rise and the fall. An arrow that would cross the ground ends
+    at its body instead.
+- **contact**: `masses: [m_A, m_B]` side by side, `force` on A, `friction`
+  (μ, optional). One a for both; A pushes B with F_AB = m_B·a + f_B, drawn with
+  its reaction F_BA, equal, at the shared face.
+- **angled-pull**: `mass`, `force`, `angle` above the horizontal (10–70°),
+  `friction`. Fₓ and Fᵧ are dashed components; N = P − F·sen θ, so the pull
+  lightens the normal and the friction with it. A pull that would lift the
+  block is refused.
+- **elevator**: `mass` and signed `acceleration` (up positive). N = m(g + a),
+  the apparent weight a floor scale reads: more than P while a points up, less
+  while it points down, zero in free fall.
+- **springs**: `mass`, `stiffness: [k₁, k₂]`, `arrangement` (`series` |
+  `parallel`), `natural` (L₀). In series the force is the same and the
+  stretches add; in parallel the stretch is the same and the forces add. The
+  loaded system hangs beside the unloaded one, every length to one scale.
+- **gravitation**: `masses`, `distance` and `compare` (another distance,
+  optional). F = G·m₁·m₂/d², equal and opposite whatever the masses. With
+  `compare` the same pair is drawn below at the other distance, its arrows
+  scaled by (d/d')²: the inverse square law made visible.
+- **cables**: `mass` hung from a knot by two cables at `angles: [α, β]`
+  above the horizontal (15–75°). The three forces are drawn at the knot, and
+  an inset closes them head to tail into the force triangle, to the same
+  scale.
+- **center-of-mass**: `bodies: [{ mass, x[, y] }]` (2–5) on a line or in the
+  plane; the centre of mass, the mass-weighted mean, is marked by a cross and
+  its coordinates computed.
+- **oscillator**: `system` (`spring` with `mass`, `stiffness`; `pendulum`
+  with `length`), and `amplitude`. The extremes and the middle: v is greatest
+  in the middle, a at the ends, toward the middle. A pendulum swing under 20°
+  is drawn at 20°, and the figure says the angle is exaggerated; an amplitude
+  over 0,35·L is refused (the pendulum would not be simple).
+- **buoyancy**: a cube of `side` and `density` in a liquid (`liquidDensity`,
+  default 1000). It floats sunk to ρ_c/ρ_l of its height with E = P, or is
+  drawn sinking with E/P = ρ_l/ρ_c. If the scale that lets E leave the cube
+  would make P too long, neither is to scale, and the figure says so.
+- **hydraulic**: `force` on the small piston, `areas: [A₁, A₂]`, `travel`
+  (optional). The pistons are to scale (diameter ∝ √A); the force arrows are
+  not, since their ratio is often 50 or more — the reading lines say so.
+- **pressure**: `setup: "depth"` with `points: [{ name, depth }]` (1–4) at
+  their depths to scale, p = p₀ + ρgh at each; or `setup: "u-tube"` with two
+  `densities` and the `height` of the lighter column: ρ₁h₁ = ρ₂h₂ above the
+  interface.
+- **efficiency**: `input`, `useful`, `losses: [{ name, value }]` (up to 3)
+  and `unit`. A band diagram, every band as wide as its value; what the named
+  losses do not cover is "outras perdas". The lowest loss turns down first, so
+  no band crosses another. η = útil/entrada.
+
 The arrows carry names only (P, N, Pₓ, Pᵧ, Fₐₜ, F, T₁). The values are reading
 lines under the figure: P = m·g, the components, the friction and why, and a.
 
@@ -126,7 +188,8 @@ lines under the figure: P = m·g, the components, the friction and why, and a.
 Everything drawn stays: the arrows and their names, the mass, the angle. The
 reading lines go — every computed value is what the question asks. Where a
 drawn thing is itself the answer it goes too: the energy bars, and a
-collision's velocities after (an explosion keeps its given one).
+collision's velocities after (an explosion keeps its given one), the centre of
+mass's cross. A note that a drawing is not to scale is not an answer, and stays.
 
 ## What the checks hold it to
 

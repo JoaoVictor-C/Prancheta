@@ -125,6 +125,22 @@ export function unitTo(p: Point, q: Point): Point {
   return { x: (q.x - p.x) / d, y: (q.y - p.y) / d };
 }
 
+/** A number in scientific notation, pt-BR: 6,67 · 10^{−11} (as `_{…}`/`^{…}` markup for runs). */
+export function sci(x: number, locale: Locale): string {
+  if (x === 0) return "0";
+  const e = Math.floor(Math.log10(Math.abs(x)));
+  if (e >= -2 && e <= 4) return quantity(x, locale).text;
+  const m = Math.round((x / 10 ** e) * 100) / 100;
+  return `${formatNumber(m, locale)} · 10^{${e < 0 ? "−" : ""}${Math.abs(e)}}`;
+}
+
+/** A label with `_{…}`/`^{…}` scripts that names nothing in particular (a caption, a legend row). */
+export function freeName(b: Board, text: string, cx: number, cy: number, colour = SOFT, size = 13): void {
+  const runs = rich(text);
+  const block = b.label(runsText(runs), cx, cy, { size, weight: 700, colour, freeStanding: true });
+  if (hasScripts(runs)) block.runs = runs.map((q) => ({ ...q }));
+}
+
 // ---- the reading panel ----------------------------------------------------------------------
 
 export function panelBelow(b0: { W: number; y: number }, lines: PanelLineInput[]): { height: number; draw: (b: Board) => void; width: number } {

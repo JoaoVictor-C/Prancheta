@@ -249,3 +249,145 @@ export function solveOrbit(a: number, e: number): OrbitSolution {
   };
   return { a, b, e, rp: a * (1 - e), ra: a * (1 + e), speedRatio: (1 + e) / (1 - e), at };
 }
+// ---- P2: dynamics, statics, fluids, oscillations, gravitation, efficiency ---------------------
+
+export type FallSample = { t: number; y: number; v: number };
+export type FallSolution = { up: FallSample[]; down: FallSample[]; tTop: number; H: number; tGround: number; vGround: number };
+
+/**
+ * A body thrown vertically from height h0 with speed v0 (up positive; 0 is a
+ * drop), sampled every dt: the rise (while v > 0) and the fall, to the ground.
+ */
+export function solveFreeFall(v0: number, h0: number, g: number, dt: number): FallSolution {
+  const tTop = Math.max(0, v0 / g);
+  const H = h0 + (v0 > 0 ? (v0 * v0) / (2 * g) : 0);
+  const tGround = (v0 + Math.sqrt(v0 * v0 + 2 * g * h0)) / g;
+  const at = (t: number): FallSample => ({ t, y: h0 + v0 * t - (g * t * t) / 2, v: v0 - g * t });
+  const up: FallSample[] = [];
+  const down: FallSample[] = [];
+  for (let k = 0; ; k += 1) {
+    const t = k * dt;
+    if (t > tGround + 1e-9) break;
+    (t < tTop - 1e-9 ? up : down).push(at(t));
+  }
+  // The top ends the rise and starts the fall -- once each, even when a sample lands on it.
+  if (tTop > 1e-9) {
+    if (Math.abs((up.at(-1)?.t ?? -1) - tTop) > 1e-9) up.push(at(tTop));
+    if (Math.abs((down[0]?.t ?? -1) - tTop) > 1e-9) down.unshift(at(tTop));
+  }
+  return { up, down, tTop, H, tGround, vGround: Math.abs(v0 - g * tGround) };
+}
+
+export type ContactSolution = { a: number; contact: number; fA: number; fB: number; moving: boolean };
+
+/** Blocks A and B side by side, pushed by F on A; one μ for both (kinetic and static). */
+export function solveContact(mA: number, mB: number, F: number, g: number, mu = 0): ContactSolution {
+  const fA = mu * mA * g;
+  const fB = mu * mB * g;
+  if (F <= fA + fB + 1e-12) return { a: 0, contact: Math.max(0, F - fA), fA: Math.min(F, fA), fB: Math.max(0, F - fA), moving: false };
+  const a = (F - fA - fB) / (mA + mB);
+  return { a, contact: mB * a + fB, fA, fB, moving: true };
+}
+
+export type PullSolution = { Fx: number; Fy: number; P: number; N: number; friction: number; a: number; moving: boolean; lifts: boolean };
+
+/** A block pulled by F at θ above the horizontal: N = P − F sen θ, friction μN when it slides. */
+export function solveAngledPull(mass: number, g: number, F: number, angleDeg: number, mu = 0): PullSolution {
+  const t = (angleDeg * Math.PI) / 180;
+  const Fx = F * Math.cos(t);
+  const Fy = F * Math.sin(t);
+  const P = mass * g;
+  const N = P - Fy;
+  if (N < 0) return { Fx, Fy, P, N: 0, friction: 0, a: Fx / mass, moving: true, lifts: true };
+  const limit = mu * N;
+  if (Fx > limit) return { Fx, Fy, P, N, friction: limit, a: (Fx - limit) / mass, moving: true, lifts: false };
+  return { Fx, Fy, P, N, friction: Fx, a: 0, moving: false, lifts: false };
+}
+
+/** A body on an elevator's floor accelerating at a (up positive): N = m(g + a). */
+export function solveElevator(mass: number, g: number, a: number): { P: number; N: number } {
+  return { P: mass * g, N: Math.max(0, mass * (g + a)) };
+}
+
+export type SpringsSolution = { k: number; x: number; parts: { k: number; x: number; F: number }[]; P: number };
+
+/** Two springs holding a weight, in series (one under the other) or in parallel (side by side, equal stretch). */
+export function solveSprings(k1: number, k2: number, mass: number, g: number, arrangement: "series" | "parallel"): SpringsSolution {
+  const P = mass * g;
+  if (arrangement === "series") {
+    const k = (k1 * k2) / (k1 + k2);
+    return { k, x: P / k, P, parts: [{ k: k1, x: P / k1, F: P }, { k: k2, x: P / k2, F: P }] };
+  }
+  const k = k1 + k2;
+  const x = P / k;
+  return { k, x, P, parts: [{ k: k1, x, F: k1 * x }, { k: k2, x, F: k2 * x }] };
+}
+
+export const G_NEWTON = 6.67e-11;
+
+/** Newton's gravitation between two masses at distance d (SI). */
+export function solveGravitation(m1: number, m2: number, d: number): number {
+  return (G_NEWTON * m1 * m2) / (d * d);
+}
+
+export type CablesSolution = { P: number; T1: number; T2: number };
+
+/** A weight hung from a knot held by two cables at α (left) and β (right) above the horizontal. */
+export function solveCables(mass: number, g: number, alphaDeg: number, betaDeg: number): CablesSolution {
+  const a = (alphaDeg * Math.PI) / 180;
+  const b = (betaDeg * Math.PI) / 180;
+  const P = mass * g;
+  // T1 cos α = T2 cos β; T1 sen α + T2 sen β = P.
+  const T1 = (P * Math.cos(b)) / Math.sin(a + b);
+  const T2 = (P * Math.cos(a)) / Math.sin(a + b);
+  return { P, T1, T2 };
+}
+
+/** The centre of mass of point masses at (x, y). */
+export function solveCenterOfMass(bodies: { mass: number; x: number; y?: number }[]): { x: number; y: number; total: number } {
+  const total = bodies.reduce((s, b) => s + b.mass, 0);
+  return {
+    x: bodies.reduce((s, b) => s + b.mass * b.x, 0) / total,
+    y: bodies.reduce((s, b) => s + b.mass * (b.y ?? 0), 0) / total,
+    total,
+  };
+}
+
+export type OscillatorSolution = { period: number; omega: number; vMax: number; aMax: number };
+
+/** A spring-mass system (m, k) or a simple pendulum (L), amplitude A. */
+export function solveOscillator(system: { mass: number; stiffness: number } | { length: number }, amplitude: number, g: number): OscillatorSolution {
+  const omega = "stiffness" in system ? Math.sqrt(system.stiffness / system.mass) : Math.sqrt(g / system.length);
+  return { period: (2 * Math.PI) / omega, omega, vMax: omega * amplitude, aMax: omega * omega * amplitude };
+}
+
+export type BuoyancySolution = { fraction: number; floats: boolean; P: number; E: number; apparent: number };
+
+/** A body of density ρ_c and volume V in a liquid of density ρ_l: floats when ρ_c < ρ_l, with ρ_c/ρ_l of it submerged. */
+export function solveBuoyancy(rhoBody: number, rhoLiquid: number, volume: number, g: number): BuoyancySolution {
+  const P = rhoBody * volume * g;
+  if (rhoBody < rhoLiquid) return { fraction: rhoBody / rhoLiquid, floats: true, P, E: P, apparent: 0 };
+  const E = rhoLiquid * volume * g;
+  return { fraction: 1, floats: false, P, E, apparent: P - E };
+}
+
+/** Pascal: F₂ = F₁·A₂/A₁, and the large piston moves A₁/A₂ of the small one's travel. */
+export function solveHydraulic(F1: number, A1: number, A2: number): { F2: number; ratio: number } {
+  return { F2: (F1 * A2) / A1, ratio: A2 / A1 };
+}
+
+/** Pressure at depth h: p = p₀ + ρgh. */
+export function pressureAt(p0: number, rho: number, g: number, h: number): number {
+  return p0 + rho * g * h;
+}
+
+/** Two immiscible liquids in a U-tube meet at one level: ρ₁h₁ = ρ₂h₂ above it. */
+export function solveUTube(rho1: number, h1: number, rho2: number): number {
+  return (rho1 * h1) / rho2;
+}
+
+/** Energy in, useful out and named losses: the efficiency, and the unnamed rest of the losses. */
+export function solveEfficiency(input: number, useful: number, losses: { name: string; value: number }[]): { eta: number; rest: number } {
+  const named = losses.reduce((s, l) => s + l.value, 0);
+  return { eta: useful / input, rest: input - useful - named };
+}
