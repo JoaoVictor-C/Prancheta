@@ -266,3 +266,24 @@ test("thousandths: a variance of 0,00000565 is not printed as 0, and the quartil
   assert.deepEqual(describeNumber(0.0042), { sym: "=", text: "0,0042" });
   await assertChecks({ kind: "both", data, unit: "g", showTable: true, polygon: true }, "statistics thousandths");
 });
+
+test("a quartile label that cannot sit centred hangs outward from its own edge, never inward", () => {
+  const input = JSON.parse(readFileSync(join(dir, "boxplot-outliers.json"), "utf8")) as StatisticsInput;
+  const scene = expandStatistics(input).root as Scene;
+  const box = (scene.marks ?? []).find((m: Mark) => m.id === "box-0")!;
+  const path = box as unknown as { from: { x: number }; segments: { line: { x: number } }[] };
+  const xs = [path.from.x, ...path.segments.map((s) => s.line.x)];
+  const q1x = Math.min(...xs), q3x = Math.max(...xs);
+  const label = (prefix: string) => (scene.children as (Block & { x: number; width: number })[]).find((b) => (b.label ?? "").startsWith(prefix) && !(b.label ?? "").includes("·"))!;
+  const q1 = label("Q₁ ="), q3 = label("Q₃ =");
+  // Each label spans its own edge (within the 4 px the placer allows)...
+  assert.ok(q1.x <= q1x + 4 && q1.x + q1.width >= q1x - 4, "Q₁'s label reaches Q₁");
+  assert.ok(q3.x <= q3x + 4 && q3.x + q3.width >= q3x - 4, "Q₃'s label reaches Q₃");
+  // ...and leans away from the box, not into it.
+  assert.ok(q1.x + q1.width / 2 <= q1x + 0.5, "Q₁'s label is not shifted towards Q₃");
+  assert.ok(q3.x + q3.width / 2 >= q3x - 0.5, "Q₃'s label is not shifted towards Q₁");
+  // Centred over its edge, or hanging from it: never a quarter-width in between.
+  const centred = (b: { x: number; width: number }, e: number) => Math.abs(b.x + b.width / 2 - e) < 1;
+  assert.ok(centred(q1, q1x) || Math.abs(q1.x + q1.width - (q1x + 4)) < 1.5, "Q₁'s label ends at Q₁");
+  assert.ok(centred(q3, q3x) || Math.abs(q3.x - (q3x - 4)) < 1.5, "Q₃'s label starts at Q₃");
+});

@@ -63,8 +63,9 @@ input with the default `answers: true`. When `answers: false`:
 
 - **Number line**: the row names, axis labels, tick marks and boundary numbers remain;
   the coloured interval lines (thick strokes and endpoint circles/arrows) are hidden. Each
-  row shows only a thin light reference line — the question is where to shade and what
-  endpoints to mark.
+  row is drawn as firmly as the axis, with a tick under every boundary and dashed guides
+  carrying each axis number up to it (broken at every row) — a line the reader completes,
+  not a faint backdrop.
 
 This is the "mark the solution set" figure — the student must identify the boundaries and
 decide which intervals to include.

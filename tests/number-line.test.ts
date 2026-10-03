@@ -209,6 +209,23 @@ test("answers:false draws the axis line and row names, but no intervals", () => 
   assert.equal(intervals.length, 0, "no interval marks should be drawn with answers:false");
 });
 
+test("answers:false marks each boundary on every empty row, with guides that stop at each row", () => {
+  const input: NumberLineInput = {
+    rows: [{ label: "A", set: "[-1, 3)" }, { label: "B", set: "x > 0" }, { label: "A ∩ B", op: "intersection" }],
+    answers: false,
+  };
+  const marks = ((expandNumberLine(input).root as Scene).marks ?? []).filter((m) => m.id !== undefined);
+  // Boundaries -1, 0, 3 on each of three rows.
+  for (let r = 1; r <= 3; r += 1) {
+    assert.equal(marks.filter((m) => m.id!.startsWith(`row-${r}-tick-`)).length, 3, `row ${r} has a tick per boundary`);
+  }
+  // Each boundary's guide is cut at the three rows: three pieces, down to the axis.
+  assert.equal(marks.filter((m) => /^guide-\d+-\d+$/.test(m.id!)).length, 9);
+  // With answers the rows carry intervals, not these blanks.
+  const shown = ((expandNumberLine({ ...input, answers: true }).root as Scene).marks ?? []).filter((m) => /tick|guide/.test(m.id ?? "") && /^(row-\d-tick|guide)/.test(m.id!));
+  assert.equal(shown.length, 0);
+});
+
 test("answers:true (default) draws intervals with endpoints", () => {
   const input: NumberLineInput = { set: "[-2, 3)" };
   const spec = expandNumberLine(input);

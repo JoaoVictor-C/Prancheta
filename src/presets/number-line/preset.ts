@@ -389,11 +389,29 @@ export function expandNumberLine(input: NumberLineInput): FigureSpec {
       });
     }
     drawLine(board, row.set, cy, leftArrowX, rightArrowX, xOfValue, `row-${ri + 1}`, answers);
+    if (!answers) {
+      // An empty row is where the reader draws: a tick under each boundary says so.
+      crits.forEach((c, i) => {
+        const x = xOfValue(c.value);
+        board.poly([{ x, y: cy - 5 }, { x, y: cy + 5 }], { stroke: SOFT, width: 1.2, id: `row-${ri + 1}-tick-${i + 1}` });
+      });
+    }
     top += ROW_H;
   });
 
   // The shared axis: reference line, tick marks and numbers, both arrows.
   const axisY = top + 24;
+  if (!answers) {
+    // Dashed guides carry each axis number up to the rows to be completed,
+    // broken at every row so they never draw over its tick.
+    const stops = [...rows.map((_, ri) => M + ri * ROW_H + ROW_H / 2), axisY];
+    crits.forEach((c, i) => {
+      const x = xOfValue(c.value);
+      for (let k = 0; k + 1 < stops.length; k += 1) {
+        board.poly([{ x, y: stops[k]! + 7 }, { x, y: stops[k + 1]! - 7 }], { stroke: LIGHT, width: 1.1, lineStyle: "dashed", id: `guide-${i + 1}-${k + 1}` });
+      }
+    });
+  }
   board.poly([{ x: leftArrowX - 4, y: axisY }, { x: rightArrowX + 4, y: axisY }], { stroke: RULE, width: 1.6 });
   arrowHead(board, { x: rightArrowX + 4, y: axisY }, { x: 1, y: 0 }, RULE);
   arrowHead(board, { x: leftArrowX - 4, y: axisY }, { x: -1, y: 0 }, RULE);
@@ -426,7 +444,9 @@ function drawLine(
   idPrefix: string,
   answers: boolean = true,
 ): void {
-  board.poly([{ x: leftX, y }, { x: rightX, y }], { stroke: LIGHT, width: 1.4 });
+  // An empty row (answers:false) is drawn as firmly as the axis: it is the
+  // reader's line to complete, not a faint backdrop for intervals.
+  board.poly([{ x: leftX, y }, { x: rightX, y }], { stroke: answers ? LIGHT : RULE, width: answers ? 1.4 : 1.6 });
   if (answers) {
     set.forEach((iv, i) => {
       const x0 = iv.lo.value === -INF ? leftX : xOfValue(iv.lo.value);

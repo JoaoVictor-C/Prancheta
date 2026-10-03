@@ -16,6 +16,7 @@ import { SpecError } from "../src/ir/types.ts";
 import type { Block, Scene } from "../src/ir/types.ts";
 import { render } from "../src/pipeline.ts";
 import { NARROW_SPACE } from "../src/locale/format.ts";
+import { runsWidth } from "../src/presets/shared/panel.ts";
 
 const dir = fileURLToPath(new URL("../fixtures/data-table/", import.meta.url));
 const fixtures = readdirSync(dir).filter((n) => n.endsWith(".json"));
@@ -308,4 +309,22 @@ test('grouping "space" groups from four digits, as exam booklets print; a parent
   assert.deepEqual(t.rows.map((r) => r[0]), [`2${NARROW_SPACE}000,00`, `108${NARROW_SPACE}000,50`, "950,00"]);
   const heads = blocksOf({ columns: [{ header: "Quantidade de funcionários contratados no período", unit: "em real" }], rows: [[1]] }).filter((b) => b.id.startsWith("head-0-"));
   assert.ok(heads.every((b) => !/^real\)/.test(b.label ?? "")), "the unit stays whole");
+});
+
+test("a column of numbers typed as text is aligned on its decimal comma", () => {
+  const blocks = blocksOf({
+    columns: [{ header: "Espécie" }, { header: "Concentração", unit: "mol/L" }],
+    rows: [["A", "4,0 · 10^-4"], ["B", "55,5"], ["C", "0,1"], ["D", "1 200,25"]],
+  });
+  // A cell's left edge plus the width of what stands before its comma.
+  const commaX = [0, 1, 2, 3].map((r) => {
+    const b = blocks.find((x) => x.id === `cell-${r}-1`)!;
+    const before = (b.runs?.[0]?.text ?? b.label!).split(",")[0]!;
+    return b.x + runsWidth([{ text: before }], 14, 400);
+  });
+  for (const x of commaX) assert.ok(Math.abs(x - commaX[0]!) < 0.6, `commas at ${commaX.map((v) => v.toFixed(1)).join(", ")}`);
+  // One cell that is not a number keeps the column textual, and left-aligned.
+  const words = blocksOf({ columns: [{ header: "x" }, { header: "y" }], rows: [["A", "55,5"], ["B", "chuva"]] });
+  const a = words.find((x) => x.id === "cell-0-1")!, b = words.find((x) => x.id === "cell-1-1")!;
+  assert.ok(Math.abs(a.x - b.x) < 0.5, "a mixed column is left-aligned");
 });
