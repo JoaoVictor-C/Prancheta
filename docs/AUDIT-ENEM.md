@@ -126,6 +126,13 @@ flag, beetles). The few small clusters a preset could still take on:
 None reaches the size of Phase 6's items. The next ranking should come from the
 course lists below.
 
+Then two presets took on what was cheap and recurring (ADRs 0072, 0073):
+`pictogram` covers 2023 Q176, 2024 Q142 and 2025 Q137, and `mechanics` covers
+2023 Q109. That makes **102 of 154 (66 %)** covered. The rest of the long tail
+— a fuel cell, a cathode-ray tube, an induction cooktop — is illustration with
+nothing to compute. It stays raw IR, written per exercise.
+`fixtures/raw-ir-fuel-cell.json` is the worked example.
+
 ## Not yet audited
 
 University course lists (the user's own Cálculo 1, Geometria Analítica, Química

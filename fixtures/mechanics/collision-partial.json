@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "collision", "masses": [2, 3], "velocities": [5, -2], "restitution": 0.5 }

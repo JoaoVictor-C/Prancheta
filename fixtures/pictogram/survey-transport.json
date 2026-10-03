@@ -1,0 +1,1 @@
+{ "preset": "pictogram", "title": "Como os entrevistados vão ao trabalho", "icon": "person", "unit": "%", "per": 5, "rows": [ { "label": "Ônibus", "value": 90 }, { "label": "Bicicleta", "value": 35 }, { "label": "A pé", "value": 60 } ] }

@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "pulleys", "mass": 80, "movable": 2, "tensions": true }

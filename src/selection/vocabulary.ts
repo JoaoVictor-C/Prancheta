@@ -167,8 +167,18 @@
  * and generations, with the ratios and probabilities read off it. Not a
  * "hierarchy": a pedigree has two parents per child and its meaning is the
  * inheritance, not the tree.
+ *
+ * "pictogram" is a count or a share shown by REPEATED icons -- "cada ícone
+ * representa 5 %" -- or a sequence of figures made of dots whose count is
+ * the question. Not a "series": the reader counts, not compares lengths.
+ *
+ * "forces" is a mechanics situation: forces on a body (pulleys, a slope, a
+ * table, a spring), a launch, a track with energies, a lever, a collision, a
+ * circle, an orbit. Not a "vector" sum in the plane: the bodies, ropes,
+ * tracks and paths are part of what is drawn, and everything is solved from
+ * the situation.
  */
-export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations", "acid-base-equilibrium", "table", "genetics"] as const;
+export const STRUCTURE = ["graph", "hierarchy", "series", "scene", "set", "function", "interval", "vector", "angle", "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map", "electric-field", "circuit", "optics", "automaton", "boolean", "logic-circuit", "data", "distribution", "probability-tree", "set-relations", "acid-base-equilibrium", "table", "genetics", "pictogram", "forces"] as const;
 
 /** How it must be DRAWN. */
 export const IDIOM = ["plain-flow", "annotated", "cross-section", "substrate", "chart"] as const;
@@ -227,7 +237,9 @@ export type PresetId =
   | "venn"
   | "acid-base"
   | "data-table"
-  | "genetics";
+  | "genetics"
+  | "pictogram"
+  | "mechanics";
 
 /**
  * A figure module the selection core may DELEGATE to (decision 0005).
@@ -384,6 +396,16 @@ export const PRESETS: { id: PresetId; implemented: boolean; summary: string }[] 
     id: "genetics",
     implemented: true,
     summary: "Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact.",
+  },
+  {
+    id: "pictogram",
+    implemented: true,
+    summary: "Counts and shares as repeated icons -- filled icons computed from each value (a remainder fills the last icon by its fraction), outline slots for the whole -- and sequences of dot figures whose counts are the polygonal numbers, computed from the construction.",
+  },
+  {
+    id: "mechanics",
+    implemented: true,
+    summary: "Force diagrams solved before they are drawn: pulley systems (each movable pulley halves the force), a block on an inclined plane (components, normal, kinetic or static friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring; projectiles, energy along a track, levers, collisions, circular motion (uniform, loop, banked curve, conical pendulum), Kepler orbits and gravitation; free fall, blocks in contact, an angled pull, an elevator, springs in series and parallel, a knot on two cables, the centre of mass, oscillators; buoyancy, a hydraulic press, pressure at depth and in a U-tube, and efficiency band diagrams -- every arrow to one scale, or the figure says it is not.",
   },
 ];
 

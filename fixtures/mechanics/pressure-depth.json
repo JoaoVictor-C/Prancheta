@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "pressure", "setup": "depth", "points": [ { "name": "A", "depth": 2 }, { "name": "B", "depth": 5 }, { "name": "C", "depth": 10 } ] }

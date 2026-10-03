@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "efficiency", "input": 1000, "useful": 250, "losses": [ { "name": "calor", "value": 600 } ] }

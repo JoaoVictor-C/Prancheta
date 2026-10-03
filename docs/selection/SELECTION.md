@@ -10,7 +10,7 @@ So the first question is never "how do I draw this". It is **"what is this, and 
 
 ## Answer two questions, not one
 
-**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, a boolean function, raw data to summarise, a probability law, a probability tree, overlapping sets, an acid–base equilibrium, a table of given data, or a genetic cross or pedigree.
+**What is the content?** — a graph, a hierarchy, a series, a scene, a set, a function, an interval, a vector, an angle, a construction, a configuration in space, a school solid, a surface, a solid of revolution, a field, a sequence, a linear map, an electric field, a circuit, a ray diagram, an automaton, a boolean function, raw data to summarise, a probability law, a probability tree, overlapping sets, an acid–base equilibrium, a table of given data, a genetic cross or pedigree, a pictogram, or forces on a body.
 
 **How must it be drawn?** — plain flow, annotated, a cross-section, over a substrate, or as a chart.
 
@@ -86,6 +86,10 @@ A table of given values is its own question (`S-table-favours-data-table`). *"A 
 
 A genetic cross or a family tree of a trait is its own question (`S-genetics-favours-genetics`). *"No heredograma de uma doença autossômica recessiva, qual a probabilidade de II-2 ser portador?"* has two parents per child, marriages and generations — not a graph (`S-genetics-disqualifies-graph`) and not a mindmap (`S-genetics-disqualifies-mindmap`). The `genetics` preset computes a Punnett square's gametes, cells and ratios from the genotypes, lays out a pedigree by generation, checks it against the mode of inheritance, and prints each requested probability exactly (2/3), refusing one the pedigree cannot determine.
 
+Counts drawn as repeated icons are their own question (`S-pictogram-favours-pictogram`). *"No pictograma, cada ícone representa 5 % dos entrevistados: quantos por cento vão de ônibus?"* is read by counting, not by comparing lengths, so not a `chart` (`S-pictogram-disqualifies-chart`). The `pictogram` preset fills value/per icons per row, a remainder filling the last icon by its fraction, and its dot figures (*"quantos pontos tem a figura 10?"*) have the polygonal numbers, computed from the construction.
+
+Forces on a body are their own question (`S-forces-favours-mechanics`). *"Um bloco de 40 kg é erguido com uma polia móvel: qual a força necessária?"* has a body, a rope and wheels, not free vectors (`S-forces-disqualifies-vectors`). The `mechanics` preset solves the pulleys (F = P/2ⁿ), the incline (components, normal, friction, acceleration), two blocks over a table's edge, Atwood's machine, a spring (k·x = m·g), a projectile, the energies along a track, a lever, a collision, circular motion or a Kepler orbit and draws every arrow to one scale, the values as reading lines.
+
 ## Answer three questions, not two
 
 There is a third axis, and it is short: **whose geometry is this?**
@@ -134,7 +138,7 @@ together would produce a figure neither half agrees to.
 
 **Compose.** When two candidates clear the floor on *disjoint* evidence, the figure is genuinely two things — a topology *and* a set of callouts — and flattening it into one preset repeats the failure at the top of this page. Overlapping evidence is not composition: an org chart fires both the hierarchy and graph rules, but on the same fact, so it is one figure.
 
-**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error.
+**None.** When nothing clears the floor, say so and author raw IR. A request the repertoire cannot serve is information, not an error. An illustration with nothing to compute — a fuel cell, a solar heater — is the usual case: `fixtures/raw-ir-fuel-cell.json` is one worked example, every shape placed by hand and every label still held to the checks.
 
 Until delegation existed, the module repertoire was a list an agent had to already know to consult — nothing in the ranking could reach it, so for selection purposes eleven figure kinds may as well not have been built. That was a real defect in this table and not a missing feature of the modules.
 

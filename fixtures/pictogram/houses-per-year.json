@@ -1,0 +1,1 @@
+{ "preset": "pictogram", "title": "Casas entregues por um programa habitacional", "icon": "house", "unit": "casas", "per": 10, "rows": [ { "label": "2022", "value": 45 }, { "label": "2023", "value": 72 }, { "label": "2024", "value": 30 } ] }

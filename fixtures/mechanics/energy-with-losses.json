@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "energy", "mass": 2, "speed": 4, "track": [ { "name": "A", "height": 4 }, { "name": "B", "height": 0 }, { "name": "C", "height": 3.5 } ], "lost": [16, 10] }

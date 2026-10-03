@@ -789,3 +789,39 @@ This file is generated from `src/selection/rules.ts`. Regenerate it with `node s
 - **Effect:** disqualifies
 - **Priority:** 90
 - **Statement:** A family tree has two parents per child; a mindmap has one root and one parent per node.
+
+## S-pictogram-favours-pictogram
+
+- **Axis:** structure
+- **When:** `pictogram`
+- **Preset:** `pictogram`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Repeated icons or dot figures are drawn by pictogram: how many icons are filled, and how many dots each figure has, are computed from the data.
+
+## S-pictogram-disqualifies-chart
+
+- **Axis:** structure
+- **When:** `pictogram`
+- **Preset:** `chart`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A pictogram is read by counting icons, not by comparing lengths: bars would answer a different question.
+
+## S-forces-favours-mechanics
+
+- **Axis:** structure
+- **When:** `forces`
+- **Preset:** `mechanics`
+- **Effect:** favours (weight `4`)
+- **Priority:** 55
+- **Statement:** Forces on a body -- a pulley system, a block on a slope -- are drawn by mechanics: the forces are solved from the situation and every arrow is drawn to one scale.
+
+## S-forces-disqualifies-vectors
+
+- **Axis:** structure
+- **When:** `forces`
+- **Preset:** `vectors`
+- **Effect:** disqualifies
+- **Priority:** 90
+- **Statement:** A force diagram has a body, a rope, a slope: free vectors in the plane would lose what the forces act on and what fixes them.

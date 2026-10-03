@@ -1,0 +1,1 @@
+{ "preset": "pictogram", "icon": "smiley", "unit": "rostos", "key": false, "rows": [ { "label": "Etapa 1", "value": 2 }, { "label": "Etapa 2", "value": 5 }, { "label": "Etapa 3", "value": 8 }, { "label": "Etapa 4", "value": 11 } ] }

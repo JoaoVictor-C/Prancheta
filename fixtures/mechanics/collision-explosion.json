@@ -1,0 +1,1 @@
+{ "preset": "mechanics", "kind": "collision", "masses": [1, 3], "explosion": { "velocity": -6 } }
