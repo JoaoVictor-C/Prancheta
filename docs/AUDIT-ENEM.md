@@ -91,7 +91,40 @@ once each, and a toolkit adds little to an illustration; it stays out of scope
 unless a course list shows it recurring.
 
 Items 1–5 would turn roughly 75 of the 87 partial figures into covered ones —
-from 19 % to about 60–65 % of the drawable day-2 figures.
+from 19 % to about 60–65 % of the drawable day-2 figures. (Measured after
+Phase 6: 64 %; see below.)
+
+## After Phase 6 (re-scored 2026-10-02)
+
+Phase 6 built items 1–6 (ADRs 0065–0070). Every row that was partial or
+uncovered was re-scored. A row became covered only when the specific piece its
+verdict named as missing now exists. The judgement uses the verdict notes, the
+agents' renders of their own exercises in the same style, and the question
+numbers each agent reported; it does not re-read every page.
+
+| | drawable | covered | partial | uncovered |
+|---|---|---|---|---|
+| Day 2, before Phase 6 | 154 | 30 (19 %) | 87 (57 %) | 37 |
+| Day 2, after Phase 6 | 154 | **98 (64 %)** | 34 (22 %) | 22 |
+
+By kind, tables went from 1 to 23 of 25 covered; function graphs from 7 to 12 of
+12; circuits from 1 to 7 of 7; solids from 0 to 7 of 8; line charts from 1 to 8
+of 9. Day 1 has 4 drawable figures, and 3 are now covered.
+
+What stays open is mostly the long tail this page already set aside:
+illustrations (fuel cell, CRT, induction cooktop, nuclear plant, pulleys, a
+truck), pictograms and icon rows, and pictures inside a figure (an aircraft, a
+flag, beetles). The few small clusters a preset could still take on:
+
+- **uniform field between plates** (3: 2024 Q127 twice, 2025 Q113) — `field`
+  draws point charges only;
+- **routes with bearings** and a compass dial (3: 2024 Q119, 2025 Q164 twice);
+- **nodes at given positions** (2: 2023 Q146, 2025 Q180) — `graph` always lays
+  out with ELK;
+- merged body cells in `data-table` (2023 Q100), baffles in a tank (2024 Q161).
+
+None reaches the size of Phase 6's items. The next ranking should come from the
+course lists below.
 
 ## Not yet audited
 
