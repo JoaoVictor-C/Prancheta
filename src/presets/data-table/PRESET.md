@@ -38,7 +38,7 @@ Text cells, headers, title, caption and source take real sub/superscripts: `_{�
 
 ## Numbers
 
-Given numbers print pt-BR through the one formatter: decimal comma, the minus `−`, a narrow space from five digits. A column with no `format` prints every number with the same number of decimals (the fewest that write all of them: 2,5 / 10,0 / 0,25 → 2,50 / 10,00 / 0,25) so the decimal commas line up; numeric columns are right-aligned as a block centred under the header (`align` overrides). `format`:
+Given numbers print pt-BR through the one formatter: decimal comma, the minus `−`, a narrow space from five digits. A column with no `format` prints every number with the same number of decimals (the fewest that write all of them: 2,5 / 10,0 / 0,25 → 2,50 / 10,00 / 0,25) so the decimal commas line up; numeric columns are right-aligned as a block centred under the header (`align` overrides). A column whose every cell is a number typed as text (`"4,0 · 10^-4"`, `"55,5"`) is aligned on its decimal comma the same way; one word in it keeps the column textual and left-aligned. `format`:
 
 - `"integer"`, `"money"` (2 decimals, `1.234,50`), `"percent"` (the value is a fraction: 0,256 → `25,6%`)
 - `{ decimals?, grouping?, prefix?, suffix?, percent? }` — `grouping: true` is the traditional `1.234,50`; `grouping: "space"` groups from four digits with a narrow space, as exam booklets print (`2 000,00`).

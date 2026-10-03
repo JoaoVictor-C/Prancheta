@@ -104,6 +104,13 @@ export type ChartInput = {
    */
   overlay?: { label: string; values: number[]; colour?: string; axis?: "y" | "y2" }[];
   y2Axis?: { name?: string; range?: [number, number]; step?: number };
+  /**
+   * false: the question's figure. The data stay -- every bar, slice and point,
+   * and each given value printed on a grouped bar -- but what the chart
+   * COMPUTES is not printed: a pie's or donut's percentages (on the slices
+   * and in the legend) and a stacked bar's total.
+   */
+  answers?: boolean;
 };
 
 // Drawn from the same canonical palette every other preset uses (theme.ts) —
@@ -363,7 +370,7 @@ export function expandChart(input: ChartInput): FigureSpec {
         children: orderedSegments,
       };
 
-      const totalLabel: FigureNode | null = showValues
+      const totalLabel: FigureNode | null = showValues && input.answers !== false
         ? {
             type: "block",
             label: formatValue(stacking === "stacked100" ? 100 : total, stacking === "stacked100" ? "%" : suffix),
@@ -791,7 +798,7 @@ function buildPieChart(input: ChartInput, chartType: "pie" | "donut"): FigureSpe
           },
     );
 
-    if (fraction >= INLINE_SHARE_FLOOR) {
+    if (fraction >= INLINE_SHARE_FLOOR && input.answers !== false) {
       const mid = (start + end) / 2;
       const labelRadius = holeRatio > 0 ? (radius + innerRadius) / 2 : radius * 0.64;
       const at = pointAt(mid, labelRadius);
@@ -863,7 +870,7 @@ function buildPieChart(input: ChartInput, chartType: "pie" | "donut"): FigureSpe
         },
         {
           type: "block",
-          label: `${category.label} — ${Math.round((shares[i] ?? 0) * 1000) / 10}%`,
+          label: input.answers === false ? category.label : `${category.label} — ${Math.round((shares[i] ?? 0) * 1000) / 10}%`,
           // A legend entry: free-standing (ADR 0035).
           freeStanding: true,
           role: "muted",

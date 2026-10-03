@@ -33,6 +33,10 @@ A slice under 6% carries no inline share — there is no room to set one legibly
 
 `yAxis: {name, range, step}` and/or `overlay: [{label, values, colour, axis}]` (with `y2Axis` for an overlay on a right axis), plus `xName`, draw a vertical grouped bar chart the way an exam prints one. The y axis is numbered and ruled, and a line runs over the bars (stock bars and a demand line). Such a chart is not drawn here. It is translated into `function-graph`'s plane (`ruledChart`): the categories become its category axis, each series a set of `bars`, each overlay a `series`. That plane already numbers, rules and checks an axis, and a line over bars needs one coordinate system for both. Bars without these fields are unchanged. A **line chart of measured data** is function-graph's `series`, not this preset's line mode, which stays the minimal axis-less path below; `yAxis` on `chartType: "line"` is refused with that pointer. Fixture: [`fixtures/chart-bars-overlay.json`](../../../fixtures/chart-bars-overlay.json).
 
+## answers: false
+
+The question's figure (ADR 0071). The data stay: every bar, slice and point, and each value printed on a grouped bar, since those values are given. What the chart computes is not printed: a pie's or donut's percentages, on the slices and in the legend, which then names only the categories, and a stacked bar's total.
+
 ## Conventions
 
 - Bar length is a straight linear scale against the largest value in the data — no log scale, no truncated axis. A bar chart's whole claim is that length is proportional to value; anything else needs a different chart type and a label saying so.

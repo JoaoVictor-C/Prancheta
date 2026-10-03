@@ -41,7 +41,7 @@ x numbers at the class edges (thinned if they would touch), frequency above each
 or inside it where clear of ink (omitted when no clear spot exists; the table and
 axis still carry it). Boxplot: box Q₁–Q₃, median bar, whiskers to the most extreme
 observation within 1,5·IQR of the box, outliers as open circles, labels `Q₁ = 12`,
-`Md = 15`, `Q₃ = 18` placed above or below to stay clear; groups on one numbered
+`Md = 15`, `Q₃ = 18` placed above or below to stay clear, each centred over its edge or, when two would collide, hanging outward from it (Q₁'s text ending at Q₁, Q₃'s starting at Q₃); groups on one numbered
 axis with dotted row guides. Horizontal only.
 
 Limits: horizontal boxplots only; at most 4 groups; the numbers in the panel are

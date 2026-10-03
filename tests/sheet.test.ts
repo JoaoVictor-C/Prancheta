@@ -38,6 +38,8 @@ function small(overrides: Partial<SheetInput> = {}): SheetInput {
             statement: "<p>Seja \\(P={{fig.P}}\\). Em texto: {{fig.P}}.</p>{{figure}}<p>Depois da figura.</p>",
             figure: {
               graph: {
+                // The statement states P, so its figure prints P too (ADR 0071).
+                answers: true,
                 x: { range: [-1, 4], unit: 60 },
                 y: { range: [-1, 8], unit: 30 },
                 functions: [{ id: "f", expr: "x^2", label: { text: "y = {expr}", at: [-0.5, 3], towards: ["U"] } }],

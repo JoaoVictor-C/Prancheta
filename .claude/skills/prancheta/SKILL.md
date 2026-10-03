@@ -520,6 +520,10 @@ A slice under 6% carries no inline share — there is no room to set one legibly
 
 `yAxis: {name, range, step}` and/or `overlay: [{label, values, colour, axis}]` (with `y2Axis` for an overlay on a right axis), plus `xName`, draw a vertical grouped bar chart the way an exam prints one. The y axis is numbered and ruled, and a line runs over the bars (stock bars and a demand line). Such a chart is not drawn here. It is translated into `function-graph`'s plane (`ruledChart`): the categories become its category axis, each series a set of `bars`, each overlay a `series`. That plane already numbers, rules and checks an axis, and a line over bars needs one coordinate system for both. Bars without these fields are unchanged. A **line chart of measured data** is function-graph's `series`, not this preset's line mode, which stays the minimal axis-less path below; `yAxis` on `chartType: "line"` is refused with that pointer. Fixture: [`fixtures/chart-bars-overlay.json`](../../../fixtures/chart-bars-overlay.json).
 
+## answers: false
+
+The question's figure (ADR 0071). The data stay: every bar, slice and point, and each value printed on a grouped bar, since those values are given. What the chart computes is not printed: a pie's or donut's percentages, on the slices and in the legend, which then names only the categories, and a stacked bar's total.
+
 ## Conventions
 
 - Bar length is a straight linear scale against the largest value in the data — no log scale, no truncated axis. A bar chart's whole claim is that length is proportional to value; anything else needs a different chart type and a label saying so.
@@ -693,6 +697,17 @@ A literal pair such as `(2; 5)` or `(2, 5)` in label text is **refused**: it is 
 - **Bars.** `bars: [{id, values, legend, valueLabels}]`, grouped on a category axis, height = value from zero (a range without zero is refused). A bar chart is authored through `chart` (`yAxis`, `overlay`), which expands to this.
 - **Schematic axes.** `axes: {schematic: true}` or `x.schematic` / `y.schematic`: no numbers, no lattice (`axes.grid` to keep it), arrowheads (`axes.arrows`). `ticks: [{at: 2, label: "T"}, {at: 5, label: "P_0"}]` names places on any axis, with real subscripts; a number typed as a label is refused. `guides: "x" | "y"` on a point draws one guide. `arrows: [0.5]` (or `{at, reverse}`) on a function or series sets arrowheads along it.
 - **Panels.** `panels: [{…}, …]` with `columns` (default 2): each panel a function-graph whose missing fields come from the set (one scale for all), lettered (A), (B)… (`label` to rename). Ids are prefixed `pA-`, `pB-`…
+
+## answers: false
+
+The question's figure (ADR 0071). Everything drawn stays: curves, shaded
+regions, Riemann rectangles, series and their given values, a function's
+formula. Nothing the figure computes is printed: area, sum and integral values
+and their total captions, slopes, a line's equation, the coordinates of a point
+read off a curve, asymptotes (neither line nor equation). A label is cut at its
+first computed placeholder: `P{coords}` prints `P`, `A₁ = {area}` prints `A₁`,
+and one that was all answer is not drawn. A typed point's coordinates are given
+and stay. A point label cut to its name takes the closest clear side.
 
 ## What the checks hold it to
 
@@ -947,8 +962,9 @@ input with the default `answers: true`. When `answers: false`:
 
 - **Number line**: the row names, axis labels, tick marks and boundary numbers remain;
   the coloured interval lines (thick strokes and endpoint circles/arrows) are hidden. Each
-  row shows only a thin light reference line — the question is where to shade and what
-  endpoints to mark.
+  row is drawn as firmly as the axis, with a tick under every boundary and dashed guides
+  carrying each axis number up to it (broken at every row) — a line the reader completes,
+  not a faint backdrop.
 
 This is the "mark the solution set" figure — the student must identify the boundaries and
 decide which intervals to include.
@@ -3185,7 +3201,7 @@ x numbers at the class edges (thinned if they would touch), frequency above each
 or inside it where clear of ink (omitted when no clear spot exists; the table and
 axis still carry it). Boxplot: box Q₁–Q₃, median bar, whiskers to the most extreme
 observation within 1,5·IQR of the box, outliers as open circles, labels `Q₁ = 12`,
-`Md = 15`, `Q₃ = 18` placed above or below to stay clear; groups on one numbered
+`Md = 15`, `Q₃ = 18` placed above or below to stay clear, each centred over its edge or, when two would collide, hanging outward from it (Q₁'s text ending at Q₁, Q₃'s starting at Q₃); groups on one numbered
 axis with dotted row guides. Horizontal only.
 
 Limits: horizontal boxplots only; at most 4 groups; the numbers in the panel are
@@ -3741,7 +3757,7 @@ Text cells, headers, title, caption and source take real sub/superscripts: `_{�
 
 ## Numbers
 
-Given numbers print pt-BR through the one formatter: decimal comma, the minus `−`, a narrow space from five digits. A column with no `format` prints every number with the same number of decimals (the fewest that write all of them: 2,5 / 10,0 / 0,25 → 2,50 / 10,00 / 0,25) so the decimal commas line up; numeric columns are right-aligned as a block centred under the header (`align` overrides). `format`:
+Given numbers print pt-BR through the one formatter: decimal comma, the minus `−`, a narrow space from five digits. A column with no `format` prints every number with the same number of decimals (the fewest that write all of them: 2,5 / 10,0 / 0,25 → 2,50 / 10,00 / 0,25) so the decimal commas line up; numeric columns are right-aligned as a block centred under the header (`align` overrides). A column whose every cell is a number typed as text (`"4,0 · 10^-4"`, `"55,5"`) is aligned on its decimal comma the same way; one word in it keeps the column textual and left-aligned. `format`:
 
 - `"integer"`, `"money"` (2 decimals, `1.234,50`), `"percent"` (the value is a fraction: 0,256 → `25,6%`)
 - `{ decimals?, grouping?, prefix?, suffix?, percent? }` — `grouping: true` is the traditional `1.234,50`; `grouping: "space"` groups from four digits with a narrow space, as exam booklets print (`2 000,00`).

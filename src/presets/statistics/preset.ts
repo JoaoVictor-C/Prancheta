@@ -790,10 +790,10 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
       if (g.name !== "") {
         put(board, g.name, plotLeft - 14, a.cy, { anchor: "end", size: LABEL_SIZE, weight: 700, colour: INK, annotates: `row-${gi}` });
       }
-      const items: { key: string; text: string; x: number; sides: (-1 | 1)[] }[] = m.answers ? [
-        { key: "q1", text: withUnit(`Q₁ = ${describeNumber(st.q1, locale).text}`, unit), x: a.q1, sides: [-1, 1] },
-        { key: "med", text: withUnit(`Md = ${describeNumber(st.median, locale).text}`, unit), x: a.med, sides: [1, -1] },
-        { key: "q3", text: withUnit(`Q₃ = ${describeNumber(st.q3, locale).text}`, unit), x: a.q3, sides: [-1, 1] },
+      const items: { key: string; text: string; x: number; sides: (-1 | 1)[]; outward: -1 | 0 | 1 }[] = m.answers ? [
+        { key: "q1", text: withUnit(`Q₁ = ${describeNumber(st.q1, locale).text}`, unit), x: a.q1, sides: [-1, 1], outward: -1 },
+        { key: "med", text: withUnit(`Md = ${describeNumber(st.median, locale).text}`, unit), x: a.med, sides: [1, -1], outward: 0 },
+        { key: "q3", text: withUnit(`Q₃ = ${describeNumber(st.q3, locale).text}`, unit), x: a.q3, sides: [-1, 1], outward: 1 },
       ] : [];
       for (const it of items) {
         const { w, h } = board.extent(it.text, { size: LABEL_SIZE, weight: 700 });
@@ -802,7 +802,11 @@ export function expandStatistics(input: StatisticsInput): FigureSpec {
           const anchor = { x: it.x, y: a.cy + side * BOX_HALF };
           const centres: Point[] = [];
           for (const rowsOut of [0, 1]) {
-            for (const dx of [0, -w / 4, w / 4, -w / 2 + 4, w / 2 - 4]) {
+            // Centred over its edge first; then hanging OUTWARD from it (Q₁'s text ending at Q₁,
+            // Q₃'s starting at Q₃), which still reads as that edge's label; sideways shifts last.
+            const out = it.outward === 0 ? [] : [it.outward * (w / 2 - 4)];
+            const rest = [-w / 4, w / 4, -w / 2 + 4, w / 2 - 4].filter((d) => !out.includes(d));
+            for (const dx of [0, ...out, ...rest]) {
               centres.push({ x: it.x + dx, y: a.cy + side * (BOX_HALF + 5 + h / 2 + rowsOut * (h + 3)) });
             }
           }

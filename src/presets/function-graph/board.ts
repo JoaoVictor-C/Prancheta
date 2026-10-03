@@ -338,7 +338,7 @@ export class Board {
     cx: number,
     cy: number,
     dirs: Point[],
-    o: LabelOptions & { steps?: number; avoidInk?: boolean } = {},
+    o: LabelOptions & { steps?: number; avoidInk?: boolean; nearest?: boolean } = {},
   ): Block {
     const { w, h } = this.extent(text, o);
     // Start inside the canvas. An anchor near the edge -- an axis name at the
@@ -347,7 +347,10 @@ export class Board {
     // set where it started: off the page.
     cx = Math.min(Math.max(cx, 16 + w / 2), this.W - 16 - w / 2);
     cy = Math.min(Math.max(cy, 10 + h / 2), this.H - 10 - h / 2);
-    let best: { x: number; y: number; n: number } | null = null;
+    let best: { x: number; y: number; n: number; k: number } | null = null;
+    // Default: the first direction that reaches a clear spot wins, however far
+    // out. `nearest`: every direction is walked and the closest clear spot wins
+    // (a one-letter label must sit within its own size of its place).
     outer: for (const d of dirs) {
       for (let k = 0; k <= (o.steps ?? 26); k += 1) {
         const px = cx + d.x * 6 * k;
@@ -357,8 +360,11 @@ export class Board {
         const boxes = this.taken.filter((t) => this.hits(b, t)).length;
         const lines = o.avoidInk === false ? 0 : Math.min(this.inkThrough(b, 2), 4);
         const n = boxes * 3 + lines;
-        if (best === null || n < best.n) best = { x: px, y: py, n };
-        if (n === 0) break outer;
+        if (best === null || n < best.n || (o.nearest === true && n === best.n && k < best.k)) best = { x: px, y: py, n, k };
+        if (n === 0) {
+          if (o.nearest === true) break;
+          break outer;
+        }
       }
     }
     const at = best ?? { x: cx, y: cy };

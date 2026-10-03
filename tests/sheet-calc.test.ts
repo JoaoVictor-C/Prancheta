@@ -188,6 +188,8 @@ function paramSheet(): SheetInput {
             statement: "<p>Calcule a área sob \\(y = {{f}}\\) de \\(0\\) a \\({{b}}\\).</p>{{figure}}",
             figure: {
               graph: {
+                // This figure is checked against {{A}}, so it keeps its area label (ADR 0071).
+                answers: true,
                 x: { range: [-0.6, "{{= b + 0.6}}"], unit: 110, step: 0.5, labelEvery: 2 },
                 y: { range: [-0.8, "{{= f(b) + 0.8}}"], unit: 50 },
                 functions: [{ id: "f", expr: "{{f}}", label: { text: "y = {expr}", at: "{{= b + 0.15}}", towards: ["L", "U"] } }],
@@ -226,6 +228,17 @@ test("a graph written with params renders with every check passing, its area lab
   assert.match(svg, /A = 8\/3/, "the figure's own area label agrees with {{A}}");
   const html = readFileSync(result.html, "utf8");
   assert.doesNotMatch(html, /\{\{(?!figure)/, "no placeholder left in the page");
+});
+
+test("a statement's graph figure hides what it computes unless it asks to keep it", { timeout: 240000 }, async () => {
+  const sheet = paramSheet();
+  const graph = (sheet.sections[0]!.exercises[0]!.figure as { graph: Record<string, unknown> }).graph;
+  delete graph.answers;
+  const result = await buildSheet(sheet, { out: mkdtempSync(join(tmpdir(), "prancheta-calc-")), katex: STUB, pdf: false });
+  assert.deepEqual(result.figureFailures, []);
+  const svg = readFileSync(result.figures[0]!, "utf8");
+  assert.doesNotMatch(svg, /A = 8\/3/, "the area the exercise asks for is not printed in its statement");
+  assert.match(svg, /<title>A<\/title>/, "the region keeps its name");
 });
 
 test("the example list with params resolves with no raw placeholder", () => {

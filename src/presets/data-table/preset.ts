@@ -173,6 +173,23 @@ export function markup(text: string): TextRun[] {
 
 const letter = (i: number): string | undefined => (i < 26 ? String.fromCharCode(65 + i) : undefined);
 
+/** A pt-BR number written by hand: 55,5 · 1 200 · −3 · 4,0 · 10^-4 · 2,5 × 10^{3}. */
+const WRITTEN_NUMBER = /^[−-]?\d+(?:[ .  ]\d{3})*(?:,\d+)?(?:\s*[·×]\s*10\^\{?[−-]?\d+\}?)?$/;
+
+/** Width of a written number's integer part: what stands left of its comma, or of the "· 10" if it has none. */
+function intPartWidth(runs: TextRun[], size: number, weight: number): number {
+  const out: TextRun[] = [];
+  for (const r of runs) {
+    const cut = r.text.search(/,|\s*[·×]/);
+    if (cut >= 0) {
+      if (cut > 0) out.push({ ...r, text: r.text.slice(0, cut) });
+      return runsWidth(out, size, weight);
+    }
+    out.push(r);
+  }
+  return runsWidth(out, size, weight);
+}
+
 type Kind = "text" | "number" | "blank";
 type Cell = {
   runs: TextRun[];
@@ -331,6 +348,16 @@ export function expandDataTable(input: DataTableInput): FigureSpec {
     const x = cell !== null && typeof cell === "object" ? cell.answer : cell;
     return typeof x === "number";
   }));
+  // Columns of numbers TYPED as text ("4,0 · 10^-4", "55,5"): drawn aligned on the
+  // decimal comma like a number column, since a reader compares them the same way.
+  const numberLike = cols.map((c, ci) => {
+    if (numeric[ci] || c.from !== undefined || (stub && ci === 0)) return false;
+    const texts = raw.map((row) => {
+      const cell = row[ci];
+      return cell !== null && typeof cell === "object" ? cell.answer : cell;
+    }).filter((x): x is string => typeof x === "string" && x.trim() !== "");
+    return texts.length > 0 && texts.every((t) => WRITTEN_NUMBER.test(t.trim()));
+  });
 
   // Totals.
   const totalCols: { ci: number; how: Reduce }[] = [];
@@ -653,7 +680,21 @@ export function expandDataTable(input: DataTableInput): FigureSpec {
         const w = runsWidth(line, SIZE, marker ? 400 : weight);
         const centre = xs[ci]! + colW[ci]! / 2;
         let cx: number;
-        if (align === "center") cx = centre;
+        if (numberLike[ci] && cols[ci]!.align === undefined && !marker && lines.length === 1 && c.kind === "text") {
+          // Commas on one vertical, the block of numbers centred under the header.
+          const parts = body
+            .map((row) => row[ci]!)
+            .filter((cell) => cell.kind === "text" && cell.runs.length > 0)
+            .map((cell) => {
+              const cw = weightOf(cell, ci);
+              const left = intPartWidth(cell.runs, SIZE, cw);
+              return { left, right: runsWidth(cell.runs, SIZE, cw) - left };
+            });
+          const maxL = Math.max(...parts.map((p) => p.left));
+          const maxR = Math.max(...parts.map((p) => p.right));
+          const comma = centre - (maxL + maxR) / 2 + maxL;
+          cx = comma - intPartWidth(line, SIZE, weight) + w / 2;
+        } else if (align === "center") cx = centre;
         else if (align === "left") cx = xs[ci]! + PAD_X + w / 2;
         else cx = (c.kind === "number" || marker ? centre + Math.max(numW, 0) / 2 : xs[ci]! + colW[ci]! - PAD_X) - w / 2;
         put(line, cx, ys[li]!, {

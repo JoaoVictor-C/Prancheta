@@ -402,6 +402,14 @@ export type FunctionGraphInput = {
   panels?: PanelInput[];
   /** Panels per row. Default 2. */
   columns?: number;
+  /**
+   * false: the question's figure. Everything drawn stays -- curves, regions,
+   * sums, series and their given values -- but what the figure COMPUTES is
+   * not printed: area, sum and integral values, asymptotes (lines and
+   * equations), and in any label the part from its first computed placeholder
+   * on ("P{coords}" prints "P"; a label left empty is not drawn).
+   */
+  answers?: boolean;
 };
 
 export type PanelInput = Partial<Omit<FunctionGraphInput, "panels" | "columns" | "x" | "y" | "y2">> & {
@@ -574,6 +582,8 @@ const BOTTOM = 34;
 
 class Build {
   readonly input: FunctionGraphInput;
+  /** false: print nothing the figure computes (see FunctionGraphInput.answers). */
+  readonly answers: boolean;
   readonly locale: Locale;
   readonly board: Board;
   readonly xr: [number, number];
@@ -614,6 +624,7 @@ class Build {
 
   constructor(input: FunctionGraphInput) {
     this.input = input;
+    this.answers = input.answers !== false;
     this.locale = input.locale ?? "pt-BR";
     this.xr = input.x.range;
     this.yr = input.y.range;
@@ -1200,6 +1211,50 @@ class Build {
           `add ":2" for fixed decimals.`,
       );
     });
+  }
+
+  /**
+   * `fill` (or `fillValues`) for a label that may state an answer. With
+   * answers:false it keeps only what precedes the first placeholder the
+   * figure COMPUTES -- trailing "=", "≈", ":" and spaces dropped -- and gives
+   * null when nothing is left: that label is not drawn. The whole template is
+   * still filled first, so a broken one is refused either way.
+   *
+   * Computed: an area, integral or sum; a slope or a line's equation; a
+   * line's {expr}; and a point's coordinates unless they were typed ([x, y]
+   * given; for {of, x} only its x). A function's {expr} and {=…} are given.
+   */
+  asked(
+    template: string,
+    own: { point?: Resolved; curve?: Curve; at?: unknown },
+    path: string,
+    values?: Record<string, number | string>,
+  ): string | null {
+    const full = values === undefined ? this.fill(template, own, path) : this.fillValues(template, values, path);
+    if (this.answers) return full;
+    const lineIds = new Set((this.input.lines ?? []).map((l) => l.id));
+    const typed = (at: unknown, key: string): boolean =>
+      Array.isArray(at) || (key === "x" && typeof at === "object" && at !== null && (at as { x?: unknown }).x !== undefined);
+    const computes = (key: string): boolean => {
+      if (key.startsWith("=")) return false;
+      if (values !== undefined && Object.hasOwn(values, key)) return key === "area" || key === "integral" || key === "sum";
+      if (key === "coords" || key === "x" || key === "y") return !typed(own.at, key === "coords" ? "coords" : key);
+      if (key === "slope" || key === "eq") return true;
+      if (key === "expr") return own.curve !== undefined && lineIds.has(own.curve.id);
+      const dot = key.indexOf(".");
+      const name = dot < 0 ? key : key.slice(0, dot);
+      const field = dot < 0 ? "coords" : key.slice(dot + 1);
+      const point = (this.input.points ?? []).find((p) => p.id === name);
+      if (point !== undefined) return !typed(point.at, field);
+      return field === "slope" || field === "eq" || (field === "expr" && lineIds.has(name));
+    };
+    for (const m of template.matchAll(/\{([^{}]*)\}/g)) {
+      if (!computes(m[1]!.split(":")[0]!.trim())) continue;
+      const head = template.slice(0, m.index).replace(/[\s=≈:]+$/u, "");
+      if (head.trim() === "") return null;
+      return values === undefined ? this.fill(head, own, path) : this.fillValues(head, values, path);
+    }
+    return full;
   }
 
   curveField(curve: Curve, field: "expr" | "slope" | "eq", path: string, decimals?: number): string {
@@ -1997,7 +2052,9 @@ class Build {
       const where = this.labelAnchor(curve, item.label.at, `${path}.label.at`);
       if (!Number.isFinite(where.y)) throw new SpecError(`${path}.label.at: ${item.id} is not defined there`);
       const c = this.at(where.x, where.y);
-      this.board.place(this.fill(item.label.text, { curve }, `${path}.label.text`), c.x, c.y, dirsOf(item.label.towards, ["R", "U", "L", "D"]), {
+      const text = this.asked(item.label.text, { curve }, `${path}.label.text`);
+      if (text === null) continue;
+      this.board.place(text, c.x, c.y, dirsOf(item.label.towards, ["R", "U", "L", "D"]), {
         size: item.label.size ?? 14,
         weight: 600,
         colour: curve.colour,
@@ -2035,10 +2092,19 @@ class Build {
       const at = this.resolve(p.at, `points[${i}].at`);
       const c = this.at(at.x, at.y);
       const colour = colourOf(p.colour, INK, `points[${i}].colour`);
-      this.board.place(this.fill(p.label, { point: at }, `points[${i}].label`), c.x, c.y, dirsOf(p.towards, ["NE", "NW", "SE", "SW"]), {
+      const text = this.asked(p.label, { point: at, at: p.at }, `points[${i}].label`);
+      if (text === null) continue;
+      const preferred = dirsOf(p.towards, ["NE", "NW", "SE", "SW"]);
+      // The author's directions were chosen for the whole label; one cut down
+      // to its name may take any side, the closest clear one.
+      const dirs = this.answers ? preferred : [...preferred, ...Object.values(DIRS).filter((d) => !preferred.includes(d))];
+      this.board.place(text, c.x, c.y, dirs, {
         size: p.size ?? 14,
         weight: 600,
         colour,
+        // A label cut down to its name ("A") is small, and must sit within its own
+        // size of the point: take the closest clear spot, not the first direction's.
+        ...(this.answers ? {} : { nearest: true }),
         // It names the point (ADR 0035), so `label-nearest-its-place` holds
         // it beside that point; the dot drawn there is the place made
         // visible and does not compete.
@@ -2056,7 +2122,9 @@ class Build {
         v.knownId(l.names, new Set(this.seriesColour.keys()), `${path}.names`, "a series");
       }
       const fallback = l.names === undefined ? INK : this.seriesColour.get(l.names)!.colour;
-      this.board.place(this.fill(l.text, { point: at }, `${path}.text`), c.x, c.y, dirsOf(l.towards, ["R", "U", "L", "D"]), {
+      const text = this.asked(l.text, { point: at, at: l.at }, `${path}.text`);
+      if (text === null) continue;
+      this.board.place(text, c.x, c.y, dirsOf(l.towards, ["R", "U", "L", "D"]), {
         size: l.size ?? 14,
         weight: l.weight ?? 600,
         colour: colourOf(l.colour, fallback, `${path}.colour`),
@@ -2145,8 +2213,10 @@ class Build {
     for (const [item, path] of all) {
       if (item.legend === undefined) continue;
       const curve = this.curveById(item.id, path);
+      const text = this.asked(item.legend, { curve }, `${path}.legend`);
+      if (text === null) continue;
       rows.push({
-        text: this.fill(item.legend, { curve }, `${path}.legend`),
+        text,
         colour: curve.colour,
         width: curve.width,
         lineStyle: curve.lineStyle,
@@ -2485,10 +2555,9 @@ class Build {
               : several || area.total === true
                 ? "A = {area}"
                 : null;
-      const caption =
-        captionTemplate === null
-          ? undefined
-          : { id: `${id}-total`, text: this.fillValues(captionTemplate, totals, `${path}.total`), colour: INK };
+      // A total or an integral is all answer: under answers:false no caption at all, not a bare "A".
+      const captionText = captionTemplate === null || !this.answers ? null : this.fillValues(captionTemplate, totals, `${path}.total`);
+      const caption = captionText === null ? undefined : { id: `${id}-total`, text: captionText, colour: INK };
       parts.forEach((part, k) => {
         const partId = several ? `${id}-${k + 1}` : id;
         const top = this.edge(f, part.from, part.to);
@@ -2507,11 +2576,7 @@ class Build {
         const text =
           template === null
             ? ""
-            : this.fillValues(
-                template,
-                { area: Math.abs(part.value), integral: part.value, i: subscript(k + 1) },
-                `${path}.label`,
-              );
+            : (this.asked(template, {}, `${path}.label`, { area: Math.abs(part.value), integral: part.value, i: subscript(k + 1) }) ?? "");
         this.regionLabels.push({
           id: `${partId}-label`,
           owner: partId,
@@ -2528,9 +2593,10 @@ class Build {
         first.caption = caption;
         first.group = this.regionsPx.slice(-parts.length);
       }
-      if (area.legend !== undefined) {
+      const areaLegend = area.legend === undefined ? null : this.asked(area.legend, {}, `${path}.legend`, totals);
+      if (areaLegend !== null) {
         this.regionLegend.push({
-          text: this.fillValues(area.legend, totals, `${path}.legend`),
+          text: areaLegend,
           colour: positive,
           width: 1,
           lineStyle: undefined,
@@ -2594,28 +2660,23 @@ class Build {
       const px = mixed ? this.region(id, deduped, "none") : this.region(id, deduped, "none", { colour: edge, width: 1.8 });
       this.regionsPx.push(px);
       const values = { sum: result.sum, n: subscript(sum.n), ...(exact === undefined ? {} : { integral: exact }) };
-      const caption =
-        exact === undefined
-          ? undefined
-          : {
-              id: `${id}-integral`,
-              text: this.fillValues(typeof sum.integral === "string" ? sum.integral : "∫ = {integral}", values, `${path}.integral`),
-              colour: INK,
-            };
+      const integralText = exact === undefined || !this.answers ? null : this.fillValues(typeof sum.integral === "string" ? sum.integral : "∫ = {integral}", values, `${path}.integral`);
+      const caption = integralText === null ? undefined : { id: `${id}-integral`, text: integralText, colour: INK };
       const labelled = sum.label !== undefined && sum.label !== false;
       this.regionLabels.push({
         id: `${id}-sum`,
         owner: id,
         polygon: px,
-        text: labelled ? this.fillValues(typeof sum.label === "string" ? sum.label : "S{n} = {sum}", values, `${path}.label`) : "",
+        text: labelled ? (this.asked(typeof sum.label === "string" ? sum.label : "S{n} = {sum}", {}, `${path}.label`, values) ?? "") : "",
         colour: edge,
         inside: false,
         ...(signs.size === 1 ? { across: signs.has(-1) ? (-1 as const) : (1 as const) } : {}),
         ...(caption === undefined ? {} : { caption }),
       });
-      if (sum.legend !== undefined) {
+      const sumLegend = sum.legend === undefined ? null : this.asked(sum.legend, {}, `${path}.legend`, values);
+      if (sumLegend !== null) {
         this.regionLegend.push({
-          text: this.fillValues(sum.legend, values, `${path}.legend`),
+          text: sumLegend,
           colour: edge,
           width: 1.1,
           lineStyle: undefined,
@@ -2906,6 +2967,11 @@ class Build {
       const colour = curve.colour;
       let drawn = 0;
       const line = (pts: Point[], text: string, prefer: { at: Point; bias: number }[]): void => {
+        // answers:false: found and confirmed (a wrong claim is still refused), never drawn.
+        if (!this.answers) {
+          drawn += 1;
+          return;
+        }
         const id = `${fn.id}-asymptote-${drawn + 1}`;
         const mark = this.board.poly(pts, { id, stroke: colour, width: 1.4, lineStyle: "dashed", series: id });
         // A vertical or horizontal asymptote runs along a gridline, through
@@ -3092,7 +3158,9 @@ class Build {
     for (const hole of this.holeDots) {
       if (hole.label === undefined) continue;
       const c = this.at(hole.at.x, hole.at.y);
-      this.board.place(this.fill(hole.label, { point: hole.at }, hole.path), c.x, c.y, dirsOf(hole.towards, ["NW", "SE", "NE", "SW"]), {
+      const text = this.asked(hole.label, { point: hole.at }, hole.path);
+      if (text === null) continue;
+      this.board.place(text, c.x, c.y, dirsOf(hole.towards, ["NW", "SE", "NE", "SW"]), {
         size: 14,
         weight: 600,
         colour: hole.colour,

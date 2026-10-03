@@ -764,7 +764,8 @@ export function defaultSheetDir(name: string): string {
 
 function figureSpec(f: SheetFigure, where: string, statement: boolean): FigureSpec {
   try {
-    return f.graph !== undefined ? parseFigureInput({ preset: "function-graph", ...f.graph }) : parseFigureInput(statement ? withoutAnswers(f.spec) : f.spec);
+    const spec = f.graph !== undefined ? { preset: "function-graph", ...f.graph } : f.spec;
+    return parseFigureInput(statement ? withoutAnswers(spec) : spec);
   } catch (error) {
     throw new SpecError(`${where}: ${(error as Error).message}`);
   }
