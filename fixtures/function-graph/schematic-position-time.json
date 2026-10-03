@@ -1,0 +1,19 @@
+{
+  "preset": "function-graph",
+  "title": "Posição de um ciclista ao longo do tempo",
+  "axes": { "schematic": true },
+  "x": { "range": [0, 10], "unit": 44, "name": "t", "ticks": [{ "at": 3, "label": "t_1" }, { "at": 6, "label": "t_2" }, { "at": 9, "label": "t_3" }] },
+  "y": { "range": [0, 8], "unit": 30, "name": "s", "ticks": [{ "at": 1.5, "label": "s_0" }, { "at": 6.5, "label": "s_1" }, { "at": 4, "label": "s_2" }] },
+  "series": [
+    {
+      "id": "s",
+      "points": [[0, 1.5], [3, 6.5], [6, 6.5], [9, 4]],
+      "arrows": [0.2, 0.55, 0.88]
+    }
+  ],
+  "points": [
+    { "at": [3, 6.5], "guides": true },
+    { "at": [6, 6.5], "guides": "x" },
+    { "at": [9, 4], "guides": true }
+  ]
+}

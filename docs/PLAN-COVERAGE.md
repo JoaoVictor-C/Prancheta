@@ -89,6 +89,12 @@ solver, field lines, automata (acceptance by simulation), logic gates, truth
 tables computed from the expression. Fillers at any time: histogram, boxplot,
 normal area, probability trees, Venn.
 
+## Phase 6 — what ENEM asks for
+
+Ranked by the [ENEM audit](AUDIT-ENEM.md): data tables, measured series and
+schematic axes, construction extensions, solid and space extensions, circuit
+symbols, genetics.
+
 ## CAS
 
 SymPy only as an optional leaf module feeding computed sheet text. No CAS in
@@ -96,8 +102,8 @@ the TypeScript core — ADR 0027's refusal stands.
 
 ## Not building
 
-A GeoGebra clone; photoreal 3D; general hidden-line removal or inter-solid
-occlusion; image-model illustrations; circuit auto-layout from a netlist;
+A GeoGebra clone; photoreal 3D; hidden-line removal beyond polyhedral solids
+(ADR 0068 removes it for stairs and polyhedra) or general inter-solid occlusion; image-model illustrations; circuit auto-layout from a netlist;
 matrices as figures (KaTeX suffices); 3D animation (the motion check reasons
 about rectangles, not projected faces).
 
@@ -145,6 +151,12 @@ about rectangles, not projected faces).
 | probability trees: `probability-tree` preset (urns, exact fractions, Bayes) | [0060](decisions/0060-probability-trees.md) | done 2026-09-29 |
 | Venn diagrams: `venn` preset (shaded expressions, inclusion–exclusion) | [0061](decisions/0061-venn-diagrams.md) | done 2026-09-29; Phase 5 complete |
 | corpus coverage audit: ENEM 2023–2025 (210 figures) | [AUDIT-ENEM](AUDIT-ENEM.md) | done 2026-10-02; day 2: 19 % of drawable figures covered, 57 % partial; course lists pending |
+| tables of given data: `data-table` preset (pt-BR numbers on the comma, grouped headers, derived columns and totals, blanks) | [0065](decisions/0065-data-tables.md) | done 2026-10-02; Phase 6 item 1 |
+| measured series and schematic axes in function-graph and chart (given points, category axes, fill between, dual y, symbolic ticks, five-option panels) | [0066](decisions/0066-measured-series-and-schematic-axes.md) | done 2026-10-02; Phase 6 item 2 |
+| construction extensions (sectors, rings, semicircles, belts, regions, grids, dimension lines, quadrilateral circles) | [0067](decisions/0067-construction-extensions.md) | done 2026-10-02; Phase 6 item 3 |
+| solid and space extensions (frustums, hemispheres, stairs, polyhedra from faces with real hidden-line removal, bores, liquid levels, stacking, nets; gridded planes, projected blocks, paths) | [0068](decisions/0068-solid-and-space-extensions.md) | done 2026-10-02; Phase 6 item 4 |
+| circuit symbols (LED and diode, internal resistance, symbolic values, potentiometer taps, load box) | [0069](decisions/0069-circuit-symbols.md) | done 2026-10-02; Phase 6 item 5 |
+| genetics: `genetics` preset (Punnett squares, pedigrees with exact probabilities) | [0070](decisions/0070-genetics.md) | done 2026-10-02; Phase 6 complete |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each
 with its rules and a paragraph in SELECTION.md; value-table is offered at the
@@ -154,6 +166,9 @@ Phase 3 and 4 added eight more — `construction`, `space`, `solid`, `surface`,
 `revolution`, `field`, `sequence`, `linear-map` — each with a favour rule, the refusals
 that keep a neighbouring preset from drawing it, and a paragraph in
 SELECTION.md.
+
+Phase 6 added two — `table` and `genetics` — the rest of its work extends
+existing presets and kept their routes.
 
 Known residue: the vectors preset still copies the tick LABEL geometry
 (offsets and sizes) from `ir/frames.ts` to keep its labels off the grid

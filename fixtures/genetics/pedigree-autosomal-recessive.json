@@ -1,0 +1,23 @@
+{
+  "preset": "genetics",
+  "kind": "pedigree",
+  "title": "Heredograma de uma doença autossômica recessiva",
+  "individuals": [
+    { "id": "I-1", "sex": "M" },
+    { "id": "I-2", "sex": "F" },
+    { "id": "II-1", "sex": "F", "affected": true, "parents": ["I-1", "I-2"] },
+    { "id": "II-2", "sex": "M", "parents": ["I-1", "I-2"], "proband": true },
+    { "id": "II-3", "sex": "F", "parents": ["I-1", "I-2"] },
+    { "id": "II-4", "sex": "M" },
+    { "id": "III-1", "sex": "F", "parents": ["II-3", "II-4"] },
+    { "id": "III-2", "sex": "M", "affected": true, "parents": ["II-3", "II-4"] }
+  ],
+  "analysis": {
+    "mode": "autosomal recessive",
+    "queries": [
+      { "of": "II-2", "is": "carrier" },
+      { "of": "III-1", "is": "carrier" },
+      { "childOf": ["II-2", "II-3"], "is": "affected" }
+    ]
+  }
+}

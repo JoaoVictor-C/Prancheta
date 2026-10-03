@@ -383,3 +383,69 @@ test("constraints-satisfied fails on a keepClear violation while an unrelated al
   assert.match(constraints?.detail ?? "", /keepClear\(a, b, 30\)/);
   assert.doesNotMatch(constraints?.detail ?? "", /align/);
 });
+
+// --- axis-number-present: axes declared without numbers (ADR 0066) -----------
+
+import type { PlacedMark } from "../src/ir/types.ts";
+
+function mark(id: string, points: { x: number; y: number }[], extra: Partial<PlacedMark> = {}): PlacedMark {
+  return {
+    kind: "mark", id, points, closed: false, fill: "none", stroke: "none", strokeWidth: 0, lineStyle: "solid",
+    arcCentres: [], ...extra,
+  };
+}
+
+/** A frame "plane" ruling one horizontal and one vertical line, with a required y number printed at its tick. */
+function plane(extra: PlacedMark[]): LaidOutFigure {
+  const h = mark("plane-grid-h-0", [{ x: 50, y: 200 }, { x: 350, y: 200 }], { gridOf: "plane", stroke: "#ddd", strokeWidth: 1 });
+  const vline = mark("plane-grid-v-0", [{ x: 50, y: 20 }, { x: 50, y: 200 }], { gridOf: "plane", stroke: "#ddd", strokeWidth: 1 });
+  const tick = mark("plane-require-y-0", [{ x: 50, y: 100 }, { x: 50, y: 100 }], { gridOf: "plane", tick: { axis: "y", value: 4, within: 20, reach: 44 } });
+  const four = box({ id: "four", x: 30, y: 92, width: 14, height: 16, fill: "transparent", stroke: "transparent", strokeWidth: 0 });
+  const fourText = text({ id: "four--label", ownerId: "four", lines: [{ text: "4", x: 32, y: 104, box: { x: 30, y: 92, width: 14, height: 16 }, baselineUncertain: false }] });
+  return { width: 400, height: 260, background: "#FCFBF7", elements: [h, vline, tick, four, fourText, ...extra] };
+}
+
+const axisCheck = (f: LaidOutFigure) => runChecks(f).find((c) => c.id === "axis-number-present")!;
+
+test("axis-number-present fails a numberless axis its frame does not declare schematic", () => {
+  // y is numbered; the x axis is ruled (a horizontal line) and prints nothing.
+  const c = axisCheck(plane([]));
+  assert.equal(c.status, "fail");
+  assert.match(c.detail!, /x axis of plane prints no number and is not declared schematic/);
+});
+
+test("axis-number-present passes the same axis once it is declared schematic", () => {
+  const declared = mark("plane-schematic-x", [{ x: 350, y: 200 }, { x: 350, y: 200 }], { gridOf: "plane" });
+  const c = axisCheck(plane([declared]));
+  assert.equal(c.status, "pass", c.detail);
+  assert.match(c.detail!, /declared without numbers \(plane x\)/);
+});
+
+test("axis-number-present fails an axis declared schematic that still requires numbers", () => {
+  const declared = mark("plane-schematic-y", [{ x: 50, y: 20 }, { x: 50, y: 20 }], { gridOf: "plane" });
+  const x = mark("plane-schematic-x", [{ x: 350, y: 200 }, { x: 350, y: 200 }], { gridOf: "plane" });
+  const c = axisCheck(plane([declared, x]));
+  assert.equal(c.status, "fail");
+  assert.match(c.detail!, /y axis of plane is declared without numbers and still requires some/);
+});
+
+test("axis-number-present: a declaration counts only on its own frame's grid", () => {
+  // Same id shape, but not grid furniture of "plane": no declaration.
+  const stray = mark("plane-schematic-x", [{ x: 350, y: 200 }, { x: 350, y: 200 }]);
+  assert.equal(axisCheck(plane([stray])).status, "fail");
+});
+
+test("axis-number-present: a frame with no number and no declaration is not asked (a unit circle's bare axes)", () => {
+  const h = mark("c-axis-x", [{ x: 50, y: 200 }, { x: 350, y: 200 }], { gridOf: "c", stroke: "#999", strokeWidth: 2 });
+  const f: LaidOutFigure = { width: 400, height: 260, background: "#FCFBF7", elements: [h] };
+  assert.equal(axisCheck(f).status, "not-applicable");
+});
+
+test("series-distinguishable-without-colour compares series within a panel, never across panels", () => {
+  const curve = (id: string, series: string, y: number) =>
+    mark(id, [{ x: 50, y }, { x: 300, y }], { series, stroke: "#1D4E89", strokeWidth: 2 });
+  const apart = { width: 400, height: 260, background: "#FCFBF7", elements: [curve("a", "pA-v", 50), curve("b", "pB-v", 150)] } as LaidOutFigure;
+  assert.equal(runChecks(apart).find((c) => c.id === "series-distinguishable-without-colour")!.status, "not-applicable");
+  const together = { ...apart, elements: [curve("a", "pA-v", 50), curve("b", "pA-w", 150)] } as LaidOutFigure;
+  assert.equal(runChecks(together).find((c) => c.id === "series-distinguishable-without-colour")!.status, "fail");
+});

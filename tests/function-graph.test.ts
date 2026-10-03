@@ -80,7 +80,8 @@ for (const name of fixtures) {
     const spec = parseFigureInput(load(name));
     const scene = spec.root as Scene;
     assert.equal(scene.frames, undefined, "the plane's frame is resolved to canvas coordinates");
-    assert.ok((scene.marks ?? []).some((m) => m.gridOf === "plane"), "the grid is drawn");
+    // A set of panels grids one plane per panel: pA-plane, pB-plane, …
+    assert.ok((scene.marks ?? []).some((m) => m.gridOf !== undefined && /(^|-)plane$/.test(m.gridOf)), "the grid is drawn");
   });
 }
 
@@ -116,7 +117,7 @@ test("unknown placeholders, points and curves are refused by name", () => {
   );
   assert.throws(
     () => expandFunctionGraph({ ...base(), points: [{ at: { of: "g", x: 1 } }] }),
-    /refers to a function or line "g"/,
+    /refers to a function, line or series "g"/,
   );
   assert.throws(
     () => expandFunctionGraph({ ...base(), lines: [{ id: "s", through: ["A", "B"], domain: [0, 1] }] }),

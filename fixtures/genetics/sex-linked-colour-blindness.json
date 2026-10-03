@@ -1,0 +1,9 @@
+{
+  "preset": "genetics",
+  "kind": "punnett",
+  "title": "Daltonismo: XᴬXᵃ × XᴬY",
+  "parents": ["XᴬXᵃ", "XᴬY"],
+  "phenotypes": { "X": { "dominant": "visão normal", "recessive": "daltônica(o)" } },
+  "sexWords": { "F": "menina", "M": "menino" },
+  "highlight": ["XᵃY"]
+}

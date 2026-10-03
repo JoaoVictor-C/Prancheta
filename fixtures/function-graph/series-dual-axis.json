@@ -1,0 +1,28 @@
+{
+  "preset": "function-graph",
+  "title": "Temperatura e umidade relativa ao longo de um dia",
+  "x": { "range": [0, 24], "step": 2, "unit": 22, "name": "Hora" },
+  "y": { "range": [10, 35], "step": 5, "unit": 10, "name": "Temperatura (°C)", "colour": "rust" },
+  "y2": { "range": [20, 100], "step": 20, "name": "Umidade (%)", "colour": "key" },
+  "series": [
+    {
+      "id": "temp",
+      "points": [[0, 17], [3, 15.5], [6, 15], [9, 21], [12, 28], [15, 31], [18, 26], [21, 21], [24, 18]],
+      "interpolate": "smooth",
+      "colour": "rust",
+      "markers": "circle",
+      "label": { "text": "temperatura", "at": 7.5, "towards": ["D", "R"] }
+    },
+    {
+      "id": "umid",
+      "axis": "y2",
+      "points": [[0, 86], [3, 92], [6, 94], [9, 72], [12, 48], [15, 38], [18, 52], [21, 70], [24, 82]],
+      "interpolate": "smooth",
+      "colour": "key",
+      "style": "dashed",
+      "markers": "square",
+      "label": { "text": "umidade", "at": 19.5, "towards": ["D", "R"] }
+    }
+  ],
+  "guides": [{ "x": 15, "colour": "soft" }]
+}

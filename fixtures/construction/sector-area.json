@@ -1,0 +1,16 @@
+{
+  "preset": "construction",
+  "title": "Setor circular com ângulo, raio, arco e área",
+  "unit": "cm",
+  "objects": [
+    { "O": [0, 0] },
+    { "A": [5, 0] },
+    { "name": "S", "sector": { "center": "O", "through": "A", "angle": 72 }, "fill": "#F3E6B8" }
+  ],
+  "annotations": [
+    { "radius": "S", "given": true },
+    { "angle": "S", "given": true },
+    { "arc": "S" },
+    { "area": "S" }
+  ]
+}

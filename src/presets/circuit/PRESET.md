@@ -68,6 +68,34 @@ you place the nodes the way the exercise draws them.
 - **`symbols`**: `"zigzag"` (default) or `"iec"`. **`title`** and **`locale`**
   work as in every other preset.
 
+## Diodes, real sources, symbols, taps and load boxes (ADR 0069)
+
+| kind / field | meaning |
+| --- | --- |
+| `led`, `diode` | triangle and bar; current flows `from` (anode) to `to` (cathode). `vf`: forward voltage in V (default 0, ideal). An LED has two emission arrows and, when the answers are shown and it conducts, is filled yellow. |
+| `battery` + `r` | a real source: the battery and its internal resistance r in series (towards the + terminal) inside a dashed box. The terminals are `from` and `to`, so `U_AB` across them is ε − r·i. `show.terminal: true` prints `U = ε − r·i = 12 − 0,5 · 4 = 10 V`. |
+| `value`, `r` as a string | symbolic: `"R"`, `"2R"`, `"0,2 R_c"`, `"E"`. |
+| `potentiometer` | a resistive wire from `from` to `to` (one straight run, no `via`) of total `value`. `taps`: `[{ "node": "W", "at": 0.25 }]` (`at` a number in (0, 1) or `"1/6"`, measured from `from`) or `{ "equal": ["A", "B", "C"] }`. A tap is a node **placed by the preset** (do not list it in `nodes`); other components connect to it by name. |
+| a node as `{ "at": "C", "dx": 0, "dy": 2 }` | a node placed relative to another one (a tap included), so a lead stays above its tap. |
+| `load` | a labelled box (`label`, default "aparelho") with `value` Ω **or** `rated: { "power": W, "voltage": V }` (R = U²/P derived). |
+| `hideValue: true` | no value beside the component. |
+
+**Diode states.** Every on/off assignment is solved (2ⁿ, n ≤ 14) and only a
+self-consistent one is kept: an ON diode holds V_a − V_b = V_f and carries
+i ≥ 0, an OFF one carries nothing and sees V_a − V_b ≤ V_f. None consistent, or
+two that differ electrically, is refused by name. The panel says
+`D₁: aceso, i = 20 mA` or `D₁: apagado` (`show.states`, default on). Currents
+under 0,1 A are written in mA.
+
+**Symbolic values.** The solver scales: every resistance (resistors, lamps,
+loads, potentiometers, internal r) must be a multiple of ONE symbol and every
+EMF a multiple of ONE other symbol (all numbers, or all symbols; mixing is
+refused). It solves with each symbol = 1 and prints currents as multiples of
+E/R, voltages of E and powers of E²/R: `i = E/(3R)`, `U = 6E/11`,
+`P = 25E²/(121R)`. This is a scale solve, not a computer-algebra system: a
+resistance `r` unrelated to `R` (a second symbol) is not supported, and neither
+are current sources, `vf > 0` or a rated load among symbols.
+
 ## What is drawn
 
 - **Symbols**: see the table above. The battery's "+" is drawn as two strokes,
@@ -139,7 +167,10 @@ arrowhead back and checks it against the sign of its current.
 
 - Automatic layout from a netlist.
 - Capacitors, inductors and AC.
-- Internal resistance as an attribute (draw it as a resistor in series).
+- Two or more different symbols for one quantity type (see "Symbolic values"),
+  a current source or a non-zero diode drop in a symbolic circuit.
+- A movable meter lead drawn as a motion: draw one figure per tap (the tap is
+  a node; move the ammeter's `to`).
 - Dependent sources.
 - Non-ideal meters.
 - Diagonal runs (the diamond-drawn Wheatstone bridge; draw it rectangular).
@@ -147,9 +178,10 @@ arrowhead back and checks it against the sign of its current.
 ## answers: false
 
 `answers: false` draws what the exercise gives and none of what it asks. Kept:
-the symbols with their given values (and names), node letters, the ground, the
+the symbols with their given values (and names; an LED's V_f, a source's r, a
+load's rating and label, symbolic values), node letters, the ground, the
 meters' letters (A, V). Hidden: every branch-current arrow and its label, the
-meters' readings, and the whole panel (`U_AB`, node potentials, powers,
+meters' readings, an LED's lit fill, and the whole panel (`U_AB`, node potentials, powers,
 currents listed in panel mode). The current arrows are part of the answer
 because their direction is what "qual o sentido da corrente" asks. The circuit
 is still solved, so an unsolvable netlist is refused either way.

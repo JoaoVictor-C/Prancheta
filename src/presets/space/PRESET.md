@@ -125,6 +125,26 @@ Each plane takes three options:
 The panel prints the equação geral in canonical form: whole coefficients, no
 common factor, a positive leading coefficient, `= 0`.
 
+### Grids, blocks and paths (ADR 0068)
+
+- **`"grids": ["xy", "xz", "yz"]`** draws those coordinate planes as a dashed
+  grid of the tick step over the region's first-octant part.
+- **`"blocks": [{ "name": "C", "at": [3, 4, 3], "size": 1, "projections":
+  ["xy", "xz", "yz"] }]`** draws a box (`size` an edge or `[dx, dy, dz]`,
+  default a unit cube) from its corner nearest the origin. Its faces that face
+  the reader hide what is behind them: a line, an axis, a patch edge or the
+  block's own back edges are dashed there, and a grid line there is left
+  out. Each projection is the block's rectangle on that coordinate plane,
+  filled, with dashed guides from the block's nearest face.
+- **`"paths": [{ "name": "t", "through": ["A", "B", "C"], "projection": "xy"
+  }]`** draws the polyline through points (names or coordinates) with an
+  arrowhead mid-way along each stretch (`"arrows": false` drops them), dashed
+  where a patch or a block hides it. The panel prints its length exact,
+  `comprimento de ABCDE = 2 + 2√10 + √14 + √41`. `projection` (a coordinate
+  plane or a declared plane's name) draws its orthogonal projection, with a
+  dashed guide from each point to its foot, and prints that length.
+- **`"axes": { "names": ["N", "L", "altura"] }`** renames the axes.
+
 ### Measures
 
 Measures go to the panel only.
@@ -183,12 +203,15 @@ the coordinates of every derived point (an intersection, midpoint or foot),
 the derivation lines, every `distance`, `angle`, `position` and
 `commonPerpendicular` reading, the printed equation of each plane and line,
 `|v|` and the components of a derived or two-point vector, and the numbers at
-a plane's marked intercepts. A figure with nothing to say in the panel has
+a plane's marked intercepts. A block's projections and their guides, a path's
+projection and its guides, and every path length are hidden too: the
+projection is what such an exercise asks for. A figure with nothing to say in the panel has
 no panel. The dashed guides and the common perpendicular's segment stay:
 they are the construction, not a number.
 
 ## What is not covered
 
+- Pictures (an aircraft, a flag): a path or a block stands for them.
 - School solids (cylinders, cones, spheres, prisms). `geometry/projection.ts`
   exports what they need: `projectCircle`, `sphereOutline`,
   `tangentParamsParallelTo`, `tangentParamsFrom` and `depth`.

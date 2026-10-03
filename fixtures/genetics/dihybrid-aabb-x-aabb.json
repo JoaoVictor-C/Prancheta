@@ -1,0 +1,11 @@
+{
+  "preset": "genetics",
+  "kind": "punnett",
+  "title": "Cruzamento di-híbrido AaBb × AaBb",
+  "parents": ["AaBb", "AaBb"],
+  "phenotypes": {
+    "A": { "dominant": "amarela", "recessive": "verde" },
+    "B": { "dominant": "lisa", "recessive": "rugosa" }
+  },
+  "highlight": ["A_bb"]
+}

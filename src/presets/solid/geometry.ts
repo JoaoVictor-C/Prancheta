@@ -252,3 +252,109 @@ export function convexHull(pts: readonly Vec2[]): Vec2[] {
   }
   return [...lower.slice(0, -1), ...upper.slice(0, -1)];
 }
+
+// ---- frustums, inverted cones, hemispheres, bores (ADR 0068) ----------------------
+
+/**
+ * A piecewise classification of the parameter range [t0, t1] by a visibility
+ * predicate with no closed form (a bore's rim seen through its opening):
+ * sampled `samples` times, each change of state refined by bisection to
+ * 1e-12 of the range, neighbours in one state merged. The predicate must be
+ * piecewise constant with finitely many changes, as every visibility here is.
+ */
+export function splitParam(visibleAt: (t: number) => boolean, t0: number, t1: number, samples = 360): Arc[] {
+  const span = t1 - t0;
+  const pieces: Arc[] = [];
+  let start = t0;
+  let prevT = t0;
+  let prev = visibleAt(t0 + span * 1e-9);
+  for (let k = 1; k <= samples; k += 1) {
+    const t = k === samples ? t1 : t0 + (span * k) / samples;
+    const now = visibleAt(k === samples ? t1 - span * 1e-9 : t);
+    if (now !== prev) {
+      let lo = prevT;
+      let hi = t;
+      while (hi - lo > 1e-12 * Math.max(1, Math.abs(span))) {
+        const mid = (lo + hi) / 2;
+        if (visibleAt(mid) === prev) lo = mid;
+        else hi = mid;
+      }
+      const cut = (lo + hi) / 2;
+      pieces.push({ t0: start, t1: cut, visible: prev });
+      start = cut;
+      prev = now;
+    }
+    prevT = t;
+  }
+  pieces.push({ t0: start, t1, visible: prev });
+  return pieces.filter((p) => p.t1 - p.t0 > 1e-12 * Math.max(1, Math.abs(span)));
+}
+
+/** A circle's whole range split by `visibleAt`, merged across 2π like `splitCircle`. */
+export function splitWholeCircle(visibleAt: (t: number) => boolean, samples = 720): Arc[] {
+  const arcs = splitParam(visibleAt, 0, TAU, samples);
+  if (arcs.length > 1 && arcs[0]!.visible === arcs[arcs.length - 1]!.visible) {
+    const first = arcs.shift()!;
+    arcs[arcs.length - 1]!.t1 = first.t1 + TAU;
+  }
+  return arcs;
+}
+
+export interface FrustumView {
+  bottom: ProjectedCircle;
+  top: ProjectedCircle;
+  /** Parameters of the two outline generators: tangents from the image of the cone's virtual apex. */
+  silhouette: number[];
+  /** The outward lateral normal at parameter t. */
+  lateral: (t: number) => Vec3;
+}
+
+/**
+ * A frustum of a right circular cone (bottom radius R, top radius r ≠ R,
+ * height h), or -- with R = 0 -- a cone standing on its apex. The outline
+ * generators are the full cone's: tangents to the bottom ellipse from the
+ * image of the virtual apex, at height h·R/(R − r) (below the base when the
+ * frustum widens upward). The lateral normal at t is radial·h + ẑ·(R − r).
+ */
+export function frustumView(camera: Camera, centre: Vec3, R: number, r: number, height: number): FrustumView {
+  const top = projectCircle(camera, add(centre, [0, 0, height]), Z, r);
+  const bottom = R > 0 ? projectCircle(camera, centre, Z, R) : top;
+  const apexZ = (height * R) / (R - r);
+  const apex = add(centre, [0, 0, apexZ]);
+  const silhouette = tangentParamsFrom(R > 0 ? bottom : top, project(camera, apex));
+  return { bottom, top, silhouette, lateral: (t) => add(scale(radial(top, t), height), scale(Z, R - r)) };
+}
+
+export interface DomeView {
+  /** The sphere's outline circle (perpendicular to `toward`), as a parameterised circle. */
+  outline: ProjectedCircle;
+  /** The parameter range of the outline lying on the upper half (z ≥ centre): [t0, t0 + π]. */
+  upper: [number, number];
+  base: ProjectedCircle;
+}
+
+/** A hemisphere (dome) on the plane z = centre.z: its base rim, and the half of the sphere's outline above that plane. */
+export function domeView(camera: Camera, centre: Vec3, radius: number): DomeView {
+  const outline = sphereOutline(camera, centre, radius);
+  // z of the outline point is r(cos t·u_z + sin t·v_z): it is highest at
+  // atan2(v_z, u_z), and the upper half is the π around that.
+  const top = Math.atan2(outline.v[2], outline.u[2]);
+  return { outline, upper: [top - Math.PI / 2, top + Math.PI / 2], base: projectCircle(camera, centre, Z, radius) };
+}
+
+/**
+ * Is a point of a bore's wall seen THROUGH an opening? The bore is a vertical
+ * convex hole from z = zBottom to z = zTop; its cross-section is `inside`
+ * (strict). The ray from p toward the reader meets the cap plane it rises (or
+ * falls) to; the point is seen when it leaves through the hole there, never
+ * through the solid's material. Convexity makes that one test exact: the ray
+ * from a point on the wall to a point inside the opening runs inside the hole.
+ */
+export function seenThroughOpening(camera: Camera, p: Vec3, zBottom: number, zTop: number, inside: (x: number, y: number) => boolean): boolean {
+  const tz = camera.toward[2];
+  if (Math.abs(tz) < 1e-12) return false;
+  const zCap = tz > 0 ? zTop : zBottom;
+  const s = (zCap - p[2]) / tz;
+  const q = add(p, scale(camera.toward, s));
+  return inside(q[0], q[1]);
+}

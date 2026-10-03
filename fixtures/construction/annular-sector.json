@@ -1,0 +1,14 @@
+{
+  "preset": "construction",
+  "title": "Trecho de uma coroa, hachurado",
+  "unit": "m",
+  "objects": [
+    { "O": [0, 0], "label": false },
+    { "name": "lagoa", "circle": { "center": "O", "radius": 6 }, "fill": "#CFE3F2" },
+    { "name": "faixa", "ring": { "center": "O", "inner": 6, "outer": 7.5, "from": 40, "angle": 50 }, "hatch": { "angle": 45, "gap": 5 }, "fill": "#E8E2D0" }
+  ],
+  "annotations": [
+    { "radius": "lagoa", "given": true, "at": 200 },
+    { "area": "faixa" }
+  ]
+}

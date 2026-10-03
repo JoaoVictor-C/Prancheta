@@ -1,0 +1,14 @@
+{
+  "preset": "construction",
+  "title": "Coroa circular",
+  "unit": "m",
+  "objects": [
+    { "O": [0, 0] },
+    { "name": "C", "ring": { "center": "O", "inner": 3, "outer": 5 }, "fill": "#CFE3F2" }
+  ],
+  "annotations": [
+    { "radius": "C", "which": "inner", "given": true },
+    { "radius": "C", "which": "outer", "given": true },
+    { "area": "C" }
+  ]
+}

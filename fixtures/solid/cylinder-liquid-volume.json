@@ -1,0 +1,9 @@
+{
+  "preset": "solid",
+  "title": "copo cilíndrico com 18π cm³ de água: a que altura chega?",
+  "unit": "cm",
+  "solids": [
+    { "kind": "cylinder", "radius": 3, "height": 5, "labels": true,
+      "liquid": { "volume": "18π" }, "show": ["radius", "height", "level"], "readings": ["measures", "volume"] }
+  ]
+}

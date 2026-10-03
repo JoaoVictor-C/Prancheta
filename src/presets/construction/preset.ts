@@ -28,7 +28,7 @@
  * approximately.
  */
 
-import type { Block, Connector, FigureSpec, Frame, FramedPoint, GridSpec, Mark, Point, Scene } from "../../ir/types.ts";
+import type { Block, Connector, FigureSpec, Frame, FramedPoint, GridSpec, Mark, MarkSegment, Point, Scene } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { resolveInFrame, tickPlan } from "../../ir/frames.ts";
 import { LOCALES, MINUS, asFraction, formatNumber, formatPoint } from "../../locale/format.ts";
@@ -43,6 +43,26 @@ import { typedCoordinate } from "../function-graph/preset.ts";
 import { measuredLabel, sqrtLabel, writeSnapped } from "../../locale/write.ts";
 import { fitUnits, niceStep } from "../shared/scale.ts";
 import { Placer, aroundPoint, besidePolyline, besideRun } from "./place.ts";
+import {
+  TAU,
+  annularSectorPieces,
+  arcPoint,
+  arrowHead,
+  beltGeometry,
+  chainGap,
+  dimensionGeometry,
+  hatchLines,
+  pieceEnd,
+  pieceStart,
+  piecesArcLength,
+  piecesArea,
+  ringOutline,
+  sampleArc,
+  samplePieces,
+  sectorPieces,
+  semicirclePieces,
+} from "./shapes.ts";
+import type { BeltGeometry, Piece } from "./shapes.ts";
 import type { Claim } from "./place.ts";
 import { rectAt } from "../../geometry/hit.ts";
 
@@ -52,10 +72,13 @@ import { rectAt } from "../../geometry/hit.ts";
 export type ConstructionItem = Record<string, unknown>;
 
 export type ConstructionAnnotation =
-  | { length: string | [string, string]; name?: string }
-  | { angle: [string, string, string]; name?: string }
+  | { length: string | [string, string]; name?: string; given?: boolean }
+  | { angle: [string, string, string] | string; name?: string; given?: boolean }
   | { equal: (string | [string, string])[] }
-  | { equation: string };
+  | { equation: string }
+  | { area: string; name?: string; given?: boolean }
+  | { arc: string; name?: string; given?: boolean }
+  | { radius: string; which?: "inner" | "outer"; at?: number; name?: string; given?: boolean };
 
 export type ConstructionInput = {
   title?: string;
@@ -77,6 +100,8 @@ export type ConstructionInput = {
    * `"answer": true` is not drawn at all, with its labels and every annotation on it. Default true.
    */
   answers?: boolean;
+  /** An unnumbered square lattice under the figure (ADR 0067): `true` for unit cells, or `{ "step": 2 }`. Not with `axes`. */
+  grid?: boolean | { step?: number };
   objects: ConstructionItem[];
   annotations?: ConstructionAnnotation[];
 };
@@ -143,11 +168,26 @@ const POINT_PICTOS = ["sun", "boat"] as const;
 export type SegmentPicto = (typeof SEGMENT_PICTOS)[number];
 export type PointPicto = (typeof POINT_PICTOS)[number];
 
+/** A hatch over a region (ADR 0067): parallel lines `gap` pixels apart at `angle` degrees, in `colour` (the object's own when null). */
+export type HatchSpec = { angle: number; gap: number; colour: string | null };
+
+/** What an extension shape is, computed from the objects it names -- radii, angles and boundaries in plane units, angles in radians. */
+export type ShapeData =
+  | { shape: "sector"; c: Vec2; r: number; a0: number; span: number }
+  | { shape: "ring"; c: Vec2; rIn: number; rOut: number; a0?: number; span?: number }
+  | { shape: "semicircle"; a: Vec2; b: Vec2; side: 1 | -1; c: Vec2; r: number }
+  | { shape: "belt"; c1: Circle2; c2: Circle2; mode: "external" | "crossed"; geo: BeltGeometry; touch: string[] }
+  | { shape: "region"; pieces: Piece[] }
+  | { shape: "path"; names: string[]; pts: Vec2[]; closed: boolean; arrows: "each" | "end" | "none" }
+  | { shape: "dimension"; a: Vec2; b: Vec2; offset: number; side: 1 | -1; names: [string, string] }
+  | { shape: "axis"; p: Vec2; q: Vec2; extend: number; arrows: "both" | "first" | "last" | "none"; turn: 1 | -1 };
+
 export type ConstructionObject =
   | { kind: "point"; name: string; p: Vec2; style: Style; dot: boolean; label: string | null; coords: boolean; free?: true; picto?: PointPicto }
   | { kind: "linear"; name: string; line: Line2; extent: Extent; ends?: [string, string]; style: Style; label: string | null; picto?: SegmentPicto; side?: 1 | -1 }
-  | { kind: "circle"; name: string; circle: Circle2; style: Style; label: string | null }
-  | { kind: "polygon"; name: string; vertices: string[]; pts: Vec2[]; fill: string | null; style: Style }
+  | { kind: "circle"; name: string; circle: Circle2; style: Style; label: string | null; fill?: string | null; hatch?: HatchSpec | null }
+  | { kind: "polygon"; name: string; vertices: string[]; pts: Vec2[]; fill: string | null; style: Style; hatch?: HatchSpec | null }
+  | { kind: "shape"; name: string; data: ShapeData; style: Style; label: string | null; fill: string | null; hatch: HatchSpec | null; given: boolean }
   | { kind: "conic"; name: string; conic: Conic; style: Style; show: Set<string>; label: string | null; focusNames?: [string, string] };
 
 const POINT_KINDS = [
@@ -166,8 +206,24 @@ const POINT_KINDS = [
 const LINEAR_KINDS = ["segment", "line", "ray", "perpendicular", "parallel", "perpendicularBisector", "angleBisector", "tangent"] as const;
 const CIRCLE_KINDS = ["circle", "circumcircle", "incircle"] as const;
 const OTHER_KINDS = ["polygon", "ellipse", "hyperbola", "parabola"] as const;
-const ALL_KINDS: readonly string[] = [...POINT_KINDS, ...LINEAR_KINDS, ...CIRCLE_KINDS, ...OTHER_KINDS];
-const OPTION_KEYS = new Set(["name", "label", "hidden", "dashed", "colour", "draw", "which", "other", "fill", "show", "dot", "coords", "touch", "focusNames", "picto", "side", "answer"]);
+/** The extension shapes of ADR 0067. */
+const SHAPE_KINDS = ["sector", "ring", "belt", "semicircle", "region", "path", "dimension", "rotationAxis"] as const;
+const ALL_KINDS: readonly string[] = [...POINT_KINDS, ...LINEAR_KINDS, ...CIRCLE_KINDS, ...OTHER_KINDS, ...SHAPE_KINDS];
+const OPTION_KEYS = new Set(["name", "label", "hidden", "dashed", "colour", "draw", "which", "other", "fill", "show", "dot", "coords", "touch", "focusNames", "picto", "side", "answer", "hatch", "given"]);
+
+/** `raw.hatch` read: `true` is 45° at 7 px; an object sets `angle` (degrees), `gap` (px) and `colour`. */
+function hatchOf(raw: unknown, path: string): HatchSpec | null {
+  if (raw === undefined || raw === false) return null;
+  if (raw === true) return { angle: 45, gap: 7, colour: null };
+  const o = v.object(raw, path);
+  const angle = o.angle === undefined ? 45 : v.finite(o.angle, `${path}.angle`);
+  const gap = o.gap === undefined ? 7 : v.finite(o.gap, `${path}.gap`);
+  if (!(gap >= 3 && gap <= 40)) throw new SpecError(`${path}.gap is a gap in pixels, from 3 to 40, got ${gap}`);
+  if (o.colour !== undefined && typeof o.colour !== "string") throw new SpecError(`${path}.colour must be a colour string`);
+  return { angle, gap, colour: typeof o.colour === "string" ? o.colour : null };
+}
+
+const rad = (deg: number): number => (deg * Math.PI) / 180;
 
 /** `raw.picto` checked against the list a kind of object allows, or `undefined` when none was asked. */
 function checkedPicto<T extends string>(raw: unknown, allowed: readonly T[], path: string): T | undefined {
@@ -565,6 +621,15 @@ export function computeConstruction(input: ConstructionInput): Model {
     nonDegenerate(a, b, c, path, Array.isArray(value) ? (value as string[]).join("") : "");
     return [a, b, c];
   };
+  /** Four vertices -- a polygon of four points, or four point names -- or null when `value` is not one (ADR 0067: a circle about a square). */
+  const quadrilateral = (value: unknown, path: string): [Vec2, Vec2, Vec2, Vec2] | null => {
+    if (typeof value === "string") {
+      const o = objects.get(value);
+      return o !== undefined && o.kind === "polygon" && o.pts.length === 4 ? (o.pts as [Vec2, Vec2, Vec2, Vec2]) : null;
+    }
+    if (Array.isArray(value) && value.length === 4) return names(value, 4, path).map((n, i) => point(n, `${path}[${i}]`)) as [Vec2, Vec2, Vec2, Vec2];
+    return null;
+  };
   const length = (value: unknown, path: string): number => {
     if (typeof value === "number") {
       if (!(value > 0) || !Number.isFinite(value)) throw new SpecError(`${path} must be a positive length, got ${value}`);
@@ -864,6 +929,27 @@ export function computeConstruction(input: ConstructionInput): Model {
           }
           return { center, radius: length(o.radius, `${kp}.radius`) };
         }
+        const quad = quadrilateral(arg, kp);
+        if (quad !== null) {
+          const [qa, qb, qc, qd] = quad;
+          if (kind === "circumcircle") {
+            nonDegenerate(qa, qb, qc, kp, "of the first three vertices");
+            const cc4 = vec.circleThroughThreePoints2(qa, qb, qc);
+            if (Math.abs(vec.distance(qd, cc4.center) - cc4.radius) > 1e-7 * Math.max(1, cc4.radius)) {
+              throw new SpecError(`${path}: the four vertices are not on one circle -- the fourth is ${formatNumber(vec.distance(qd, cc4.center), locale, { decimals: 3 })} from the centre of the circle through the other three, whose radius is ${formatNumber(cc4.radius, locale, { decimals: 3 })}`);
+            }
+            return cc4;
+          }
+          // incircle: the internal bisectors at the first two vertices meet at the centre; every side must then be as far.
+          const bis = (p: Vec2, prev: Vec2, next: Vec2): Line2 => ({ point: p, direction: vec.add(vec.normalize(vec.sub(prev, p)), vec.normalize(vec.sub(next, p))) });
+          const hit = vec.intersectLines2(bis(qa, qd, qb), bis(qb, qa, qc));
+          if (hit.kind !== "point") throw new SpecError(`${path}: the bisectors of the first two angles do not meet -- the quadrilateral has no incircle`);
+          const ring4 = [qa, qb, qc, qd];
+          const dists = ring4.map((p, i) => vec.distancePointToLine2(hit.point, vec.lineThrough2(p, ring4[(i + 1) % 4]!)));
+          const rIn = Math.min(...dists);
+          if (Math.max(...dists) - rIn > 1e-7 * Math.max(1, rIn)) throw new SpecError(`${path}: the sides are not all the same distance from one point -- this quadrilateral has no incircle (a square, a rhombus or a kite does)`);
+          return { center: hit.point, radius: rIn };
+        }
         const [a, b, cc] = triangle(arg, kp);
         if (kind === "circumcircle") return vec.circleThroughThreePoints2(a, b, cc);
         const center = incenterOf(a, b, cc);
@@ -875,6 +961,8 @@ export function computeConstruction(input: ConstructionInput): Model {
         circle: c,
         style: { colour: colour ?? (dashed ? GUIDE : CIRCLE), width: dashed ? 1.4 : 1.8, dashed, ...hid },
         label,
+        fill: typeof raw.fill === "string" ? raw.fill : null,
+        hatch: hatchOf(raw.hatch, `${path}.hatch`),
       });
       order.push(name);
       return;
@@ -892,7 +980,200 @@ export function computeConstruction(input: ConstructionInput): Model {
         if (vec.approxEqual(pts[j]!, pts[(j + 1) % pts.length]!)) throw new SpecError(`${kp}: ${vs[j]} and ${vs[(j + 1) % vs.length]} coincide -- the polygon has a side of length zero`);
       }
       const fill = typeof raw.fill === "string" ? raw.fill : null;
-      objects.set(name, { kind: "polygon", name, vertices: vs, pts, fill, style: { colour: colour ?? INK, width: 2, dashed, ...hid } });
+      objects.set(name, { kind: "polygon", name, vertices: vs, pts, fill, hatch: hatchOf(raw.hatch, `${path}.hatch`), style:{ colour: colour ?? INK, width: 2, dashed, ...hid } });
+      order.push(name);
+      return;
+    }
+
+    // ---- extension shapes (ADR 0067) ----
+    if ((SHAPE_KINDS as readonly string[]).includes(kind)) {
+      const data = run(path, (): ShapeData => {
+        const o = v.object(arg, kp);
+        switch (kind) {
+          case "sector": {
+            const c = point(o.center, `${kp}.center`);
+            let r: number;
+            let a0: number;
+            if (o.through !== undefined) {
+              const p = point(o.through, `${kp}.through`);
+              r = vec.distance(c, p);
+              if (r <= TOL) throw new SpecError(`${path}: "${String(o.through)}" is the centre -- the sector has no radius`);
+              a0 = Math.atan2(p[1] - c[1], p[0] - c[0]);
+            } else {
+              if (o.radius === undefined) throw new SpecError(`${kp} needs "through" (a point on its first radius) or "radius" with "from" (degrees)`);
+              r = length(o.radius, `${kp}.radius`);
+              a0 = rad(o.from === undefined ? 0 : v.finite(o.from, `${kp}.from`));
+            }
+            let span: number;
+            if (o.to !== undefined) {
+              if (o.angle !== undefined) throw new SpecError(`${kp}: give "angle" or "to", not both -- one of them is computed from the other`);
+              const q = point(o.to, `${kp}.to`);
+              if (vec.approxEqual(q, c)) throw new SpecError(`${path}: "${String(o.to)}" is the centre -- it gives no second radius`);
+              span = (((Math.atan2(q[1] - c[1], q[0] - c[0]) - a0) % TAU) + TAU) % TAU;
+              if (span <= 1e-9) throw new SpecError(`${path}: both radii run the same way -- there is no sector between them`);
+            } else {
+              const deg = v.finite(o.angle, `${kp}.angle`);
+              if (!(Math.abs(deg) > 0 && Math.abs(deg) < 360)) throw new SpecError(`${kp}.angle must be between 0° and 360° (exclusive), got ${deg}`);
+              span = rad(deg);
+              if (span < 0) {
+                a0 += span;
+                span = -span;
+              }
+            }
+            return { shape: "sector", c, r, a0, span };
+          }
+          case "ring": {
+            const c = point(o.center, `${kp}.center`);
+            const rIn = length(o.inner, `${kp}.inner`);
+            const rOut = length(o.outer, `${kp}.outer`);
+            if (!(rIn < rOut - TOL)) throw new SpecError(`${path}: the inner radius ${formatNumber(rIn, locale)} is not smaller than the outer ${formatNumber(rOut, locale)}`);
+            if (o.angle === undefined) {
+              if (o.from !== undefined) throw new SpecError(`${kp}: "from" without "angle" -- a whole ring has no start`);
+              return { shape: "ring", c, rIn, rOut };
+            }
+            const deg = v.finite(o.angle, `${kp}.angle`);
+            if (!(Math.abs(deg) > 0 && Math.abs(deg) < 360)) throw new SpecError(`${kp}.angle must be between 0° and 360° (exclusive), got ${deg}`);
+            let a0 = rad(o.from === undefined ? 0 : v.finite(o.from, `${kp}.from`));
+            let span = rad(deg);
+            if (span < 0) {
+              a0 += span;
+              span = -span;
+            }
+            return { shape: "ring", c, rIn, rOut, a0, span };
+          }
+          case "semicircle": {
+            const [na, nb] = names(o.on, 2, `${kp}.on`);
+            const a = point(na, `${kp}.on[0]`);
+            const b = point(nb, `${kp}.on[1]`);
+            if (vec.approxEqual(a, b)) throw new SpecError(`${path}: ${na} and ${nb} coincide -- no diameter`);
+            let side: 1 | -1;
+            if (o.away !== undefined) {
+              if (o.side !== undefined) throw new SpecError(`${kp}: give "side" or "away", not both`);
+              const ref = get(o.away, `${kp}.away`, "a point or polygon");
+              let rp: Vec2;
+              if (ref.kind === "point") rp = ref.p;
+              else if (ref.kind === "polygon") rp = [ref.pts.reduce((t, p) => t + p[0], 0) / ref.pts.length, ref.pts.reduce((t, p) => t + p[1], 0) / ref.pts.length];
+              else throw new SpecError(`${kp}.away: "${String(o.away)}" is a ${describe(ref)}, not a point or polygon`);
+              const cr = vec.cross2(vec.sub(b, a), vec.sub(rp, a));
+              if (Math.abs(cr) <= TOL * Math.max(1, vec.lengthSquared(vec.sub(b, a)))) throw new SpecError(`${path}: "${String(o.away)}" is on the line ${na}${nb}, so "away" names no side`);
+              side = cr > 0 ? -1 : 1;
+            } else if (o.side === 1 || o.side === -1) side = o.side;
+            else throw new SpecError(`${kp}: say which side the half-disc bulges to -- "side": 1 (left of ${na}→${nb}) or -1, or "away": a point or polygon it bulges away from`);
+            const sc = semicirclePieces(a, b, side);
+            return { shape: "semicircle", a, b, side, c: sc.centre, r: sc.r };
+          }
+          case "belt": {
+            const [n1, n2] = names(o.circles, 2, `${kp}.circles`);
+            const c1 = circle(n1, `${kp}.circles[0]`);
+            const c2 = circle(n2, `${kp}.circles[1]`);
+            const mode = o.tangents === undefined ? "external" : o.tangents;
+            if (mode !== "external" && mode !== "crossed") throw new SpecError(`${kp}.tangents must be "external" or "crossed", got ${JSON.stringify(mode)}`);
+            const d = vec.distance(c1.center, c2.center);
+            if (mode === "external" && !(d > Math.abs(c1.radius - c2.radius) + TOL)) throw new SpecError(`${path}: the circles are nested or equal (centres ${formatNumber(d, locale, { decimals: 2 })} apart, radii ${formatNumber(c1.radius, locale, { decimals: 2 })} and ${formatNumber(c2.radius, locale, { decimals: 2 })}) -- they have no external tangent`);
+            if (mode === "crossed" && !(d > c1.radius + c2.radius + TOL)) throw new SpecError(`${path}: the circles touch or overlap (centres ${formatNumber(d, locale, { decimals: 2 })} apart, radii sum ${formatNumber(c1.radius + c2.radius, locale, { decimals: 2 })}) -- they have no crossed tangent`);
+            const geo = beltGeometry(c1, c2, mode);
+            const touchNames = o.touch === undefined ? [] : names(o.touch, 4, `${kp}.touch`);
+            const pts = [geo.tangents[0][0], geo.tangents[0][1], geo.tangents[1][0], geo.tangents[1][1]];
+            touchNames.forEach((tn, j) => {
+              if (objects.has(tn) || tn === name) throw new SpecError(`${kp}.touch[${j}]: "${tn}" is already declared`);
+              objects.set(tn, { kind: "point", name: tn, p: pts[j]!, style: { colour: INK, width: 0, dashed: false, hidden: false }, dot: true, label: tn, coords: false });
+              order.push(tn);
+            });
+            return { shape: "belt", c1, c2, mode, geo, touch: touchNames };
+          }
+          case "region": {
+            if (typeof o.start !== "string") throw new SpecError(`${kp}.start must name the point the boundary starts from`);
+            if (!Array.isArray(o.then) || o.then.length < 2) throw new SpecError(`${kp}.then must list at least two pieces ({"line": "B"} or {"arc": {"center": "O", "to": "C", "ccw": true}})`);
+            const startP = point(o.start, `${kp}.start`);
+            let here: Vec2 = startP;
+            const pieces: Piece[] = [];
+            (o.then as unknown[]).forEach((rawPiece, j) => {
+              const pp = `${kp}.then[${j}]`;
+              const pc = v.object(rawPiece, pp);
+              if (pc.line !== undefined) {
+                const to = point(pc.line, `${pp}.line`);
+                if (vec.approxEqual(here, to)) throw new SpecError(`${pp}: the line starts and ends at the same point`);
+                pieces.push({ kind: "line", a: here, b: to });
+                here = to;
+                return;
+              }
+              const ac = v.object(pc.arc, `${pp}.arc`);
+              const co = get(ac.center, `${pp}.arc.center`, "a point or circle");
+              const centre = co.kind === "point" ? co.p : co.kind === "circle" ? co.circle.center : null;
+              if (centre === null) throw new SpecError(`${pp}.arc.center: "${String(ac.center)}" is a ${describe(co)}, not a point or circle`);
+              const to = point(ac.to, `${pp}.arc.to`);
+              const r = vec.distance(centre, here);
+              if (r <= TOL) throw new SpecError(`${pp}: the arc's centre is where it starts -- it has no radius`);
+              if (Math.abs(vec.distance(centre, to) - r) > 1e-6 * Math.max(1, r)) {
+                throw new SpecError(`${pp}: "${String(ac.to)}" is ${formatNumber(vec.distance(centre, to), locale, { decimals: 3 })} from "${String(ac.center)}" but the arc starts ${formatNumber(r, locale, { decimals: 3 })} from it -- they are not on one circle`);
+              }
+              if (ac.ccw !== true && ac.ccw !== false) throw new SpecError(`${pp}.arc.ccw must say which way round the arc runs: true (counter-clockwise) or false`);
+              const a0 = Math.atan2(here[1] - centre[1], here[0] - centre[0]);
+              const a1 = Math.atan2(to[1] - centre[1], to[0] - centre[0]);
+              const ccwSpan = (((a1 - a0) % TAU) + TAU) % TAU;
+              const cwSpan = (((a0 - a1) % TAU) + TAU) % TAU;
+              const span = ac.ccw === true ? ccwSpan : -cwSpan;
+              if (Math.abs(span) <= 1e-9) throw new SpecError(`${pp}: the arc starts and ends at the same point`);
+              pieces.push({ kind: "arc", c: centre, r, a0, span });
+              here = to;
+            });
+            const scale = Math.max(1, ...pieces.map((pc) => vec.distance(pieceStart(pc), pieceEnd(pc))));
+            if (chainGap(pieces) > 1e-7 * scale) throw new SpecError(`${kp}: the boundary does not close -- it ends ${formatNumber(vec.distance(here, startP), locale, { decimals: 3 })} from where it started`);
+            return { shape: "region", pieces };
+          }
+          case "path": {
+            const ns = Array.isArray(o.through) ? (o.through as unknown[]) : [];
+            if (ns.length < 2 || !ns.every((x) => typeof x === "string")) throw new SpecError(`${kp}.through must list at least two point names`);
+            const pts = (ns as string[]).map((n, j) => point(n, `${kp}.through[${j}]`));
+            const closed = o.closed === true;
+            const n = pts.length;
+            for (let j = 0; j < (closed ? n : n - 1); j += 1) {
+              if (vec.approxEqual(pts[j]!, pts[(j + 1) % n]!)) throw new SpecError(`${kp}: ${String(ns[j])} and ${String(ns[(j + 1) % n])} coincide -- a step of length zero`);
+            }
+            const arrows = o.arrows === undefined ? "each" : o.arrows;
+            if (arrows !== "each" && arrows !== "end" && arrows !== "none") throw new SpecError(`${kp}.arrows must be "each", "end" or "none", got ${JSON.stringify(arrows)}`);
+            return { shape: "path", names: ns as string[], pts, closed, arrows };
+          }
+          case "dimension": {
+            const a = point(o.from, `${kp}.from`);
+            const b = point(o.to, `${kp}.to`);
+            if (vec.approxEqual(a, b)) throw new SpecError(`${path}: the two points coincide -- there is no length to dimension`);
+            const offset = o.offset === undefined ? 0.12 * vec.distance(a, b) : v.finite(o.offset, `${kp}.offset`);
+            if (!(offset > 0)) throw new SpecError(`${kp}.offset is a distance from the measured points to the dimension line, and must be positive`);
+            const side = o.side === -1 ? -1 : 1;
+            return { shape: "dimension", a, b, offset, side, names: [o.from as string, o.to as string] };
+          }
+          default: {
+            // rotationAxis: a dashed axis through P and Q, extended past both, with curved turn arrows.
+            const [np, nq] = names(o.through, 2, `${kp}.through`);
+            const p = point(np, `${kp}.through[0]`);
+            const q = point(nq, `${kp}.through[1]`);
+            if (vec.approxEqual(p, q)) throw new SpecError(`${path}: ${np} and ${nq} coincide -- no axis`);
+            const extend = o.extend === undefined ? 0.3 : v.finite(o.extend, `${kp}.extend`);
+            if (!(extend >= 0 && extend <= 2)) throw new SpecError(`${kp}.extend is a fraction of the axis length, 0 to 2`);
+            const arrows = o.arrows === undefined ? "last" : o.arrows;
+            if (arrows !== "both" && arrows !== "first" && arrows !== "last" && arrows !== "none") throw new SpecError(`${kp}.arrows must be "both", "first", "last" or "none"`);
+            return { shape: "axis", p, q, extend, arrows, turn: o.turn === -1 ? -1 : 1 };
+          }
+        }
+      });
+      const dim = data.shape === "dimension";
+      const ax = data.shape === "axis";
+      objects.set(name, {
+        kind: "shape",
+        name,
+        data,
+        style: {
+          colour: colour ?? (data.shape === "path" ? CONIC : ax ? SOFT : INK),
+          width: dim ? 1.3 : data.shape === "belt" ? 2.6 : data.shape === "path" ? 2.6 : ax ? 1.5 : 2,
+          dashed: ax || dashed,
+          ...hid,
+        },
+        label,
+        fill: typeof raw.fill === "string" ? raw.fill : null,
+        hatch: hatchOf(raw.hatch, `${path}.hatch`),
+        given: raw.given === true,
+      });
       order.push(name);
       return;
     }
@@ -971,7 +1252,7 @@ function checkedLabelName(n: string, path: string): string {
 }
 
 function describe(o: ConstructionObject): string {
-  return o.kind === "linear" ? "line" : o.kind === "conic" ? o.conic.type : o.kind;
+  return o.kind === "linear" ? "line" : o.kind === "conic" ? o.conic.type : o.kind === "shape" ? o.data.shape : o.kind;
 }
 
 function nonDegenerate(a: Vec2, b: Vec2, c: Vec2, path: string, label: string): void {
@@ -1069,7 +1350,13 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   // ---- annotations: read and computed before anything is drawn ----
   // `withheld` segments (answers: false, "answer": true) stay addressable so an annotation on one is not an error;
   // they are simply never drawn, ticked or measured.
-  type Seg = { id: string; a: Vec2; b: Vec2; ends: [string, string]; poly: string | null; withheld: boolean };
+  type SegStyle = { colour: string; width: number; dashed: boolean };
+  /**
+   * `alias` is how an annotation names a run an extension shape owns ("belt.t1", "S.r2", "walk.3"). A `lazy` run
+   * (a sector's radii, already inside its outline) is drawn only when an annotation measures it (`need`); an `extra`
+   * run (a circle's radius, asked for by a radius annotation) is drawn in its own `style`.
+   */
+  type Seg = { id: string; a: Vec2; b: Vec2; ends: [string, string]; poly: string | null; withheld: boolean; alias?: string; shape?: string; lazy?: boolean; need?: boolean; extra?: SegStyle };
   const segments: Seg[] = [];
   for (const name of model.order) {
     const o = objects.get(name)!;
@@ -1085,13 +1372,39 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
         segments.push({ id: `side-${safeId(name)}-${safeId(vn)}-${safeId(wn)}`, a: o.pts[j]!, b: o.pts[(j + 1) % o.pts.length]!, ends: [vn, wn], poly: name, withheld });
       });
     }
+    if (o.kind === "shape") {
+      const d = o.data;
+      const base = `o-${safeId(name)}`;
+      if (d.shape === "sector") {
+        const p0 = arcPoint(d.c, d.r, d.a0);
+        const p1 = arcPoint(d.c, d.r, d.a0 + d.span);
+        segments.push({ id: `${base}-r1`, a: d.c, b: p0, ends: ["", ""], poly: null, withheld, alias: `${name}.r1`, shape: name, lazy: true });
+        segments.push({ id: `${base}-r2`, a: d.c, b: p1, ends: ["", ""], poly: null, withheld, alias: `${name}.r2`, shape: name, lazy: true });
+      } else if (d.shape === "belt") {
+        const t = d.touch;
+        segments.push({ id: `${base}-t1`, a: d.geo.tangents[0][0], b: d.geo.tangents[0][1], ends: [t[0] ?? "", t[1] ?? ""], poly: null, withheld, alias: `${name}.t1`, shape: name });
+        segments.push({ id: `${base}-t2`, a: d.geo.tangents[1][0], b: d.geo.tangents[1][1], ends: [t[2] ?? "", t[3] ?? ""], poly: null, withheld, alias: `${name}.t2`, shape: name });
+      } else if (d.shape === "path") {
+        const n = d.pts.length;
+        for (let j = 0; j < (d.closed ? n : n - 1); j += 1) {
+          segments.push({ id: `${base}-${j + 1}`, a: d.pts[j]!, b: d.pts[(j + 1) % n]!, ends: [d.names[j]!, d.names[(j + 1) % n]!], poly: null, withheld, alias: `${name}.${j + 1}`, shape: name });
+        }
+      }
+    }
   }
   // A segment's endpoints by name, when it has them: a drawn segment whose
   // ends are two named points is "AB" to an annotation.
   const endsOf = (s: Seg): string => [...s.ends].sort().join("|");
   const findSegment = (ref: unknown, path: string): Seg => {
+    const found = findSegment0(ref, path);
+    found.need = true;
+    return found;
+  };
+  const findSegment0 = (ref: unknown, path: string): Seg => {
     if (typeof ref === "string") {
-      const direct = segments.find((s) => s.id === `o-${safeId(ref)}`);
+      const aliased = segments.find((s) => s.alias === ref);
+      if (aliased !== undefined) return aliased;
+      const direct =segments.find((s) => s.id === `o-${safeId(ref)}`);
       if (direct !== undefined) return direct;
       if (objects.has(ref)) {
         const o = objects.get(ref)!;
@@ -1100,7 +1413,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
       }
       // "AB" as two point names run together, when both exist.
       const pair = splitPair(ref, objects);
-      if (pair !== null) return findSegment(pair, path);
+      if (pair !== null) return findSegment0(pair, path);
       v.knownId(ref, new Set(segments.filter((s) => s.poly === null).map((s) => s.id.slice(2))), path, "a segment");
     }
     if (Array.isArray(ref) && ref.length === 2 && ref.every((x) => typeof x === "string")) {
@@ -1115,25 +1428,99 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
     throw new SpecError(`${path} must name a segment, or give its two endpoints as ["A", "B"]`);
   };
 
-  type LengthNote = { seg: Seg; name: string | null };
+  type LengthNote = { seg: Seg; name: string | null; given: boolean };
   type AngleNote = { a: Vec2; vtx: Vec2; b: Vec2; label: string; names: [string, string, string]; name: string | null; degrees: number };
+  /** An area, arc length or sector angle printed beside a shape (ADR 0067). */
+  type ShapeNote = { kind: "area" | "arc" | "angle"; target: string; text: string; colour: string };
   const lengthNotes: LengthNote[] = [];
   const angleNotes: AngleNote[] = [];
+  const shapeNotes: ShapeNote[] = [];
+  const needFill = new Set<string>();
+  const needArc = new Set<string>();
   const tickGroups: Seg[][] = [];
   const readings: string[] = [];
+  let radiusCount = 0;
 
   (input.annotations ?? []).forEach((raw, i) => {
     const path = `annotations[${i}]`;
     const o = v.object(raw, path);
-    const kinds = ["length", "angle", "equal", "equation"].filter((k) => o[k] !== undefined);
-    if (kinds.length !== 1) throw new SpecError(`${path} must be exactly one of length, angle, equal, equation`);
+    const kinds = ["length", "angle", "equal", "equation", "area", "arc", "radius"].filter((k) => o[k] !== undefined);
+    if (kinds.length !== 1) throw new SpecError(`${path} must be exactly one of length, angle, equal, equation, area, arc, radius`);
     const kind = kinds[0]!;
     const name = o.name === undefined ? null : checkedText(o.name, `${path}.name`);
+    if (o.given !== undefined && typeof o.given !== "boolean") throw new SpecError(`${path}.given must be true or false`);
+    // `given`: the exercise states this value, so it stays when answers is false.
+    const given = o.given === true;
+    const shows = answers || given;
+    const refObj = (key: string, what: string): ConstructionObject => {
+      const t = o[key];
+      if (typeof t !== "string") throw new SpecError(`${path}.${key} must name ${what}`);
+      v.knownId(t, new Set(objects.keys()), `${path}.${key}`, what);
+      return objects.get(t)!;
+    };
+    const unit2 = input.unit === undefined ? "" : ` ${input.unit}²`;
+    if (kind === "area" || kind === "arc") {
+      const obj = refObj(kind, "a shape, polygon or circle");
+      const region = regionOf(obj);
+      if (region === null) throw new SpecError(`${path}.${kind}: "${obj.name}" is a ${describe(obj)}, which encloses no region`);
+      if (obj.style.hidden) throw new SpecError(`${path}.${kind}: "${obj.name}" is hidden, so there is nothing drawn to label`);
+      if (kind === "arc") {
+        const ok = (obj.kind === "shape" && (obj.data.shape === "sector" || obj.data.shape === "semicircle")) || obj.kind === "circle";
+        if (!ok || region.arcLength === undefined) throw new SpecError(`${path}.arc: an arc length is of a sector, a semicircle or a circle, and "${obj.name}" is a ${describe(obj)}`);
+        const len = obj.kind === "circle" ? region.arcLength : (region.pieces ?? []).reduce((s, p) => s + (p.kind === "arc" ? p.r * Math.abs(p.span) : 0), 0);
+        needArc.add(obj.name);
+        const full = `${name === null ? "ℓ" : name} = ${measuredLabel(len, locale)}${unitSuffix}`;
+        if (shows) shapeNotes.push({ kind: "arc", target: obj.name, text: full, colour: INK });
+        else if (name !== null) shapeNotes.push({ kind: "arc", target: obj.name, text: name, colour: INK });
+        return;
+      }
+      needFill.add(obj.name);
+      const full = `${name === null ? "A" : name} = ${measuredLabel(region.area, locale)}${unit2}`;
+      if (shows) shapeNotes.push({ kind: "area", target: obj.name, text: full, colour: INK });
+      else if (name !== null) shapeNotes.push({ kind: "area", target: obj.name, text: name, colour: INK });
+      return;
+    }
+    if (kind === "radius") {
+      const obj = refObj("radius", "a sector, ring, semicircle or circle");
+      const which = o.which === undefined ? "outer" : o.which;
+      if (which !== "inner" && which !== "outer") throw new SpecError(`${path}.which must be "inner" or "outer"`);
+      if (obj.style.hidden) throw new SpecError(`${path}.radius: "${obj.name}" is hidden`);
+      if (obj.kind === "shape" && obj.data.shape === "sector") {
+        const seg = findSegment(`${obj.name}.r1`, `${path}.radius`);
+        if (!seg.withheld) lengthNotes.push({ seg, name: name ?? "r", given });
+        return;
+      }
+      let centre: Vec2;
+      let r: number;
+      let defaultName = "r";
+      if (obj.kind === "circle") ({ center: centre, radius: r } = obj.circle);
+      else if (obj.kind === "shape" && obj.data.shape === "semicircle") ({ c: centre, r } = obj.data);
+      else if (obj.kind === "shape" && obj.data.shape === "ring") {
+        centre = obj.data.c;
+        r = which === "inner" ? obj.data.rIn : obj.data.rOut;
+        defaultName = which === "inner" ? "r" : "R";
+      } else throw new SpecError(`${path}.radius: "${obj.name}" is a ${describe(obj)} -- a radius is of a sector, ring, semicircle or circle`);
+      const at = o.at === undefined ? (which === "inner" ? 135 : 45) : v.finite(o.at, `${path}.at`);
+      radiusCount += 1;
+      const seg: Seg = { id: `o-${safeId(obj.name)}-rad${radiusCount}`, a: centre, b: arcPoint(centre, r, rad(at)), ends: ["", ""], poly: null, withheld: false, extra: { colour: INK, width: 1.5, dashed: false }, need: true };
+      segments.push(seg);
+      lengthNotes.push({ seg, name: name ?? defaultName, given });
+      return;
+    }
     if (kind === "length") {
       const seg = findSegment(o.length, `${path}.length`);
       // Without answers a length is what the exercise asks for: a named one prints as its bare name (the unknown),
       // an unnamed one prints nothing.
-      if (!seg.withheld && (answers || name !== null)) lengthNotes.push({ seg, name });
+      if (!seg.withheld && (answers || name !== null || given)) lengthNotes.push({ seg, name, given });
+      return;
+    }
+    if (kind === "angle" && typeof o.angle === "string") {
+      const obj = refObj("angle", "a sector");
+      if (obj.kind !== "shape" || obj.data.shape !== "sector") throw new SpecError(`${path}.angle: "${obj.name}" is a ${describe(obj)} -- a sector's angle is the only one named by one word; give three points otherwise`);
+      if (obj.style.hidden) throw new SpecError(`${path}.angle: "${obj.name}" is hidden`);
+      const degrees = (obj.data.span * 180) / Math.PI;
+      const shown = shows ? name : name ?? "?";
+      shapeNotes.push({ kind: "angle", target: obj.name, text: shown ?? `${measuredLabel(degrees, locale)}°`, colour: shown === null ? INK : UNKNOWN });
       return;
     }
     if (kind === "angle") {
@@ -1152,7 +1539,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
       }
       if (withheld) return;
       // Without answers an unnamed angle is marked "?": the value is the answer, the arc says which angle.
-      const shownName = answers ? name : name ?? "?";
+      const shownName = answers || given ? name : name ?? "?";
       angleNotes.push({ a: pts[0], vtx: pts[1], b: pts[2], names: ns, name: shownName, degrees, label: shownName ?? `${measuredLabel(degrees, locale)}°` });
       return;
     }
@@ -1188,7 +1575,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
 
   if (input.equalTicks === true) {
     const used = new Set(tickGroups.flat().map((s) => s.id));
-    const free = segments.filter((s) => !used.has(s.id) && !s.withheld);
+    const free = segments.filter((s) => !used.has(s.id) && !s.withheld && !(s.lazy === true && s.need !== true));
     const groups: Seg[][] = [];
     for (const s of free) {
       const l = vec.distance(s.a, s.b);
@@ -1256,6 +1643,13 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
       readings.push(`${who} = ${exactText}${unitSuffix} ≈ ${drawn}${unitSuffix}`);
     }
   }
+  // A belt's length is made of arcs and tangents: the drawing cannot state it as one run, so the panel does (computed, never typed).
+  for (const name of answers ? model.order : []) {
+    const o = objects.get(name)!;
+    if (o.kind === "shape" && o.data.shape === "belt" && !o.style.hidden) {
+      readings.push(`comprimento de ${o.label ?? name} = ${measuredLabel(o.data.geo.length, locale)}${unitSuffix}`);
+    }
+  }
   for (const n of angleNotes) {
     if (n.name !== null) continue; // (every angle has a name without answers, so none is read out then)
     const rounded = Math.abs(n.degrees - Math.round(n.degrees * 100) / 100) > 1e-9 * n.degrees;
@@ -1282,7 +1676,25 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
       } else if (o.extent.kind === "ray") touch(o.extent.from);
     } else if (o.kind === "circle") touch(o.circle.center, o.circle.radius);
     else if (o.kind === "polygon") o.pts.forEach((p) => touch(p));
-    else {
+    else if (o.kind === "shape") {
+      const d = o.data;
+      if (d.shape === "belt") {
+        touch(d.c1.center, d.c1.radius);
+        touch(d.c2.center, d.c2.radius);
+      } else if (d.shape === "path") d.pts.forEach((p) => touch(p));
+      else if (d.shape === "dimension") {
+        const g = dimensionGeometry(d.a, d.b, d.offset, d.side, 0, 0);
+        g.line.forEach((p) => touch(p));
+        touch(d.a);
+        touch(d.b);
+      } else if (d.shape === "axis") {
+        const e = vec.scale(vec.sub(d.q, d.p), d.extend);
+        touch(vec.sub(d.p, e));
+        touch(vec.add(d.q, e));
+      } else if (d.shape === "ring") touch(d.c, d.rOut);
+      else if (d.shape === "semicircle") touch(d.c, d.r);
+      else regionOf(o)?.poly.forEach((p) => touch(p));
+    } else {
       const c = o.conic;
       if (c.type === "ellipse") {
         const w = vec.perpendicular2(c.axis);
@@ -1318,10 +1730,16 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   // Everything below is in proportion to the figure's own extent: the same triangle at 3, at 3000 or at 0,03 is the same
   // figure, with a tick step of 1, 2 or 5 x 10^k and about a dozen numbers to an axis at most.
   const spanRaw = Math.max(view.xMax - view.xMin, view.yMax - view.yMin) || 1;
-  const pad = (axes ? 0.13 : 0.08) * spanRaw;
+  const lattice = !axes && input.grid !== undefined && input.grid !== false;
+  const latticeStep = typeof input.grid === "object" && input.grid.step !== undefined ? input.grid.step : 1;
+  if (lattice && !(latticeStep > 0)) throw new SpecError("construction.grid.step must be a positive cell size");
+  const pad = lattice ? 0.5 * latticeStep : (axes ? 0.13 : 0.08) * spanRaw;
   view = { xMin: view.xMin - pad, xMax: view.xMax + pad, yMin: view.yMin - pad, yMax: view.yMax + pad };
-  const step = niceStep(Math.max(view.xMax - view.xMin, view.yMax - view.yMin), AXIS_TICKS);
-  if (axes) {
+  const step = lattice ? latticeStep : niceStep(Math.max(view.xMax - view.xMin, view.yMax - view.yMin), AXIS_TICKS);
+  if (lattice && (view.xMax - view.xMin) / latticeStep + (view.yMax - view.yMin) / latticeStep > 80) {
+    throw new SpecError(`construction.grid: a cell of ${formatNumber(latticeStep, locale)} makes more than 80 cells across the figure -- give a larger "step"`);
+  }
+  if (axes || lattice) {
     view = {
       xMin: Math.floor(view.xMin / step) * step,
       xMax: Math.ceil(view.xMax / step) * step,
@@ -1349,7 +1767,9 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
 
   const grid: GridSpec | undefined = axes
     ? { x: { from: view.xMin, to: view.xMax, step, origin: 0 }, y: { from: view.yMin, to: view.yMax, step, origin: 0 }, locale }
-    : undefined;
+    : lattice
+      ? { x: { from: view.xMin, to: view.xMax, step, origin: 0 }, y: { from: view.yMin, to: view.yMax, step, origin: 0 }, axes: false, labels: false, stroke: "#C4CAD3", locale }
+      : undefined;
   const frame: Frame & { origin: Point } = {
     id: "plane",
     origin: { x: offsetX + MARGIN - view.xMin * unit, y: MARGIN + view.yMax * unit },
@@ -1366,7 +1786,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   const placer = new Placer({ x: 6, y: 6, width: width - 12, height: plotHeight - 10 });
   if (grid !== undefined) {
     for (const t of tickPlan(frame, grid)) placer.reserve(t.spots[0]!.box);
-    const spans = (a: { from: number; to: number }): boolean => a.from <= 0 && a.to >= 0;
+    const spans = (a: { from: number; to: number }): boolean => axes && a.from <= 0 && a.to >= 0;
     if (spans(grid.y)) placer.addInk("plane-axis-x", [at([view.xMin, 0]), at([view.xMax, 0])], false);
     if (spans(grid.x)) placer.addInk("plane-axis-y", [at([0, view.yMin]), at([0, view.yMax])], false);
   }
@@ -1433,12 +1853,143 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
   // What a name label beside each object is placed along.
   const nameRuns = new Map<string, { id: string; pts: Point[]; centre?: Point }>();
 
+  // ---- extension shapes (ADR 0067): their marks ----
+  type ShapeObj = Extract<ConstructionObject, { kind: "shape" }>;
+  type DimNote = { id: string; a: Point; b: Point; outward: Point; text: string | null };
+  const dimNotes: DimNote[] = [];
+  const hatchMarks = (id: string, poly: Point[], h: HatchSpec, colour: string): void => {
+    hatchLines(poly, h.angle, h.gap).forEach(([p, q], k) => {
+      const hid = `hatch-${id}-${k}`;
+      marks.push({ id: hid, from: p, segments: [{ line: q }], close: false, fill: "none", stroke: h.colour ?? colour, strokeWidth: 1 });
+      placer.addInk(hid, [p, q]);
+    });
+  };
+  const arrowMark = (id: string, tip: Point, dir: Point, colour: string): void => {
+    const pts = arrowHead(tip, dir);
+    marks.push({ id, from: pts[0]!, segments: [{ line: pts[1]! }, { line: pts[2]! }], close: true, fill: colour, stroke: "none", strokeWidth: 0 });
+    placer.addInk(id, [...pts, pts[0]!]);
+  };
+  const strokeMark = (id: string, from: Point, segs: MarkSegment[], style: { colour: string; width: number; dashed: boolean }, close: boolean): void => {
+    marks.push({ id, from, segments: segs, close, fill: "none", stroke: style.colour, strokeWidth: style.width, ...(style.dashed ? { lineStyle: "dashed" as const } : {}) });
+  };
+  /** A closed outline as ONE mark whose arcs turn about their own centres, so a sector is a sector to the sweep check. */
+  const outlineMark = (id: string, pieces: Piece[], style: { colour: string; width: number; dashed: boolean }): void => {
+    const segs: MarkSegment[] = [];
+    pieces.forEach((pc, i) => {
+      if (pc.kind === "line") {
+        if (i === pieces.length - 1 && vec.approxEqual(pc.b, pieceStart(pieces[0]!), 1e-9)) return;
+        segs.push({ line: at(pc.b) });
+        return;
+      }
+      const n = Math.max(1, Math.ceil(Math.abs(pc.span) / (Math.PI / 2) - 1e-9));
+      for (let k = 1; k <= n; k += 1) segs.push({ arc: at(arcPoint(pc.c, pc.r, pc.a0 + (pc.span * k) / n)), centre: at(pc.c) });
+    });
+    strokeMark(id, at(pieceStart(pieces[0]!)), segs, style, true);
+    const ring = samplePieces(pieces).map(at);
+    placer.addInk(id, [...ring, ring[0]!]);
+  };
+  const circleMark = (id: string, c: Vec2, r: number, style: { colour: string; width: number; dashed: boolean }): Point[] => {
+    const cc = at(c);
+    strokeMark(id, at(arcPoint(c, r, 0)), [90, 180, 270, 360].map((deg) => ({ arc: at(arcPoint(c, r, rad(deg))), centre: cc })), style, true);
+    const pts = circlePts({ center: c, radius: r });
+    placer.addInk(id, pts);
+    return pts;
+  };
+  const drawShape = (name: string, o: ShapeObj, id: string): void => {
+    const d = o.data;
+    const style = { colour: o.style.colour, width: o.style.width, dashed: o.style.dashed };
+    const own = segments.filter((s) => s.shape === name && (s.lazy !== true || s.need === true));
+    const pieces = shapePieces(d);
+    if (pieces !== null) {
+      outlineMark(id, pieces, style);
+      nameRuns.set(name, { id, pts: samplePieces(pieces).map(at) });
+      for (const s of own) measuredRun(s.id, s.a, s.b, { ...style, dashed: false });
+      if (needArc.has(name) && (d.shape === "sector" || d.shape === "semicircle")) {
+        const arcPiece = pieces.find((pc): pc is Extract<Piece, { kind: "arc" }> => pc.kind === "arc")!;
+        lineMark(`${id}-arc`, sampleArc(arcPiece.c, arcPiece.r, arcPiece.a0, arcPiece.span).map(at), style);
+      }
+      return;
+    }
+    if (d.shape === "ring") {
+      const outer = circleMark(`${id}-outer`, d.c, d.rOut, style);
+      circleMark(`${id}-inner`, d.c, d.rIn, style);
+      nameRuns.set(name, { id: `${id}-outer`, pts: outer, centre: at(d.c) });
+      return;
+    }
+    if (d.shape === "belt") {
+      for (const s of own) measuredRun(s.id, s.a, s.b, style);
+      d.geo.arcs.forEach((a, k) => lineMark(`${id}-a${k + 1}`, sampleArc(a.c, a.r, a.a0, a.span).map(at), style));
+      return;
+    }
+    if (d.shape === "path") {
+      own.forEach((s, j) => {
+        measuredRun(s.id, s.a, s.b, style);
+        const a = at(s.a);
+        const b = at(s.b);
+        const len = Math.hypot(b.x - a.x, b.y - a.y);
+        const dir = { x: (b.x - a.x) / len, y: (b.y - a.y) / len };
+        if (d.arrows === "each" && len >= 30) arrowMark(`arrow-${id}-${j + 1}`, { x: (a.x + b.x) / 2 + dir.x * 5, y: (a.y + b.y) / 2 + dir.y * 5 }, dir, style.colour);
+        if (d.arrows === "end" && j === own.length - 1) arrowMark(`arrow-${id}-end`, { x: b.x - dir.x * 4, y: b.y - dir.y * 4 }, dir, style.colour);
+      });
+      return;
+    }
+    if (d.shape === "dimension") {
+      const g = dimensionGeometry(d.a, d.b, d.offset, d.side, 3 / unit, 5 / unit);
+      const cid = `dim-${safeId(name)}`;
+      connectors.push({ id: cid, from: framed(g.line[0]), to: framed(g.line[1]), arrow: "both", stroke: style.colour, strokeWidth: style.width });
+      placer.addInk(cid, [at(g.line[0]), at(g.line[1])]);
+      g.extensions.forEach((e, k) => lineMark(`${id}-ext${k + 1}`, [at(e[0]), at(e[1])], { colour: style.colour, width: 1, dashed: false }));
+      const shows = answers || o.given;
+      const len = vec.distance(d.a, d.b);
+      const text = shows ? `${o.label === null ? "" : `${o.label} = `}${measuredLabel(len, locale)}${unitSuffix}` : o.label;
+      dimNotes.push({ id: cid, a: at(g.line[0]), b: at(g.line[1]), outward: { x: g.normal[0], y: -g.normal[1] }, text });
+      return;
+    }
+    if (d.shape === "axis") {
+      const e = vec.scale(vec.sub(d.q, d.p), d.extend);
+      const p2 = at(vec.sub(d.p, e));
+      const q2 = at(vec.add(d.q, e));
+      // Dashed only where it extends past the segment: along the segment itself it would smear over that segment's own edge.
+      const pA = at(d.p);
+      const qA = at(d.q);
+      lineMark(id, [p2, pA], style);
+      lineMark(`${id}-b`, [qA, q2], style);
+      nameRuns.set(name, { id, pts: [p2, pA] });
+      const axisDir = unitTo(p2, q2);
+      const ends: [Point, Point][] = [];
+      if (d.arrows === "first" || d.arrows === "both") ends.push([p2, { x: -axisDir.x, y: -axisDir.y }]);
+      if (d.arrows === "last" || d.arrows === "both") ends.push([q2, axisDir]);
+      ends.forEach(([end, out], k) => {
+        const w = { x: -out.y, y: out.x };
+        const A = 17;
+        const B = 7;
+        const t0 = -0.2 * Math.PI;
+        const t1 = 1.2 * Math.PI;
+        const at2 = (t: number): Point => ({ x: end.x + w.x * A * Math.cos(t) + out.x * B * Math.sin(t), y: end.y + w.y * A * Math.cos(t) + out.y * B * Math.sin(t) });
+        const ts = Array.from({ length: 41 }, (_, j) => (d.turn === 1 ? t0 + ((t1 - t0) * j) / 40 : t1 - ((t1 - t0) * j) / 40));
+        const pts = ts.map(at2);
+        lineMark(`${id}-turn${k + 1}`, pts, { colour: style.colour, width: 1.6, dashed: false });
+        const last = pts[pts.length - 1]!;
+        arrowMark(`arrow-${id}-turn${k + 1}`, last, unitTo(pts[pts.length - 3]!, last), style.colour);
+      });
+    }
+  };
+
   // ---- 1. fills, under everything ----
   for (const name of model.order) {
     const o = objects.get(name)!;
-    if (o.kind !== "polygon" || o.style.hidden || o.fill === null) continue;
-    const pts = o.pts.map(at);
-    marks.push({ id: `fill-${safeId(name)}`, from: pts[0]!, segments: pts.slice(1).map((p) => ({ line: p })), close: true, fill: o.fill, stroke: "none", strokeWidth: 0 });
+    if (o.style.hidden || (o.kind !== "polygon" && o.kind !== "circle" && o.kind !== "shape")) continue;
+    const region = regionOf(o);
+    if (region === null) continue;
+    const fill = o.fill ?? null;
+    const hatch = o.hatch ?? null;
+    const wanted = needFill.has(name);
+    if (fill === null && hatch === null && !wanted) continue;
+    const fid = `fill-${safeId(name)}`;
+    const pts = region.poly;
+    marks.push({ id: fid, from: framed(pts[0]!), segments: pts.slice(1).map((p) => ({ line: framed(p) })), close: true, fill: fill ?? "none", stroke: "none", strokeWidth: 0 });
+    if (wanted) placer.addInk(fid, [...pts.map(at), at(pts[0]!)]);
+    if (hatch !== null) hatchMarks(fid, pts.map(at), hatch, o.style.colour);
   }
 
   // ---- 2. every line, circle and curve ----
@@ -1483,6 +2034,8 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
         const wn = o.vertices[(j + 1) % o.vertices.length]!;
         measuredRun(`side-${safeId(name)}-${safeId(vn)}-${safeId(wn)}`, o.pts[j]!, o.pts[(j + 1) % o.pts.length]!, o.style);
       });
+    } else if (o.kind === "shape") {
+      drawShape(name, o, id);
     } else {
       const samples = sampleConic(o.conic, reach);
       let k = 0;
@@ -1499,6 +2052,8 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
       }
     }
   }
+  // A radius an annotation asked for (a circle's own has no run until then).
+  for (const s of segments) if (s.extra !== undefined) measuredRun(s.id, s.a, s.b, s.extra);
   for (const e of extraLines) {
     const clipped = clipLine(e.line.point, e.line.direction, -Infinity, Infinity, view);
     if (clipped === null) continue;
@@ -1662,7 +2217,7 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
     const a = at(n.seg.a);
     const b = at(n.seg.b);
     const l = Math.sqrt(vec.lengthSquared(vec.sub(n.seg.b, n.seg.a)));
-    const text = answers ? `${n.name === null ? "" : `${n.name} = `}${measuredLabel(l, locale)}${unitSuffix}` : n.name!;
+    const text = answers || n.given ? `${n.name === null ? "" : `${n.name} = `}${measuredLabel(l, locale)}${unitSuffix}` : n.name!;
     const style = { size: 13, weight: 600, colour: INK };
     const { w, h } = board.extent(text, style);
     const ref = n.seg.poly === null ? centroid : polygonCentre.get(n.seg.poly)!;
@@ -1670,6 +2225,106 @@ export function expandConstruction(input: ConstructionInput): FigureSpec {
     const nrm = { x: -(b.y - a.y), y: b.x - a.x };
     const side = nrm.x * (mid.x - ref.x) + nrm.y * (mid.y - ref.y) >= 0 ? 1 : -1;
     place({ kind: "element", id: n.seg.id }, text, style, besideRun(a, b, w, h, LENGTH_TS, side));
+  }
+
+  // Areas, arc lengths and sector angles beside their shapes (ADR 0067).
+  const interiorPoints = (poly: Point[], count: number): Point[] => {
+    const xsP = poly.map((p) => p.x);
+    const ysP = poly.map((p) => p.y);
+    const x0 = Math.min(...xsP);
+    const x1 = Math.max(...xsP);
+    const y0 = Math.min(...ysP);
+    const y1 = Math.max(...ysP);
+    const inside = (x: number, y: number): boolean => {
+      let c = false;
+      for (let i = 0, j = poly.length - 1; i < poly.length; j = i, i += 1) {
+        const a = poly[i]!;
+        const b = poly[j]!;
+        if (a.y > y !== b.y > y && x < ((b.x - a.x) * (y - a.y)) / (b.y - a.y) + a.x) c = !c;
+      }
+      return c;
+    };
+    const cand: { p: Point; d: number }[] = [];
+    for (let i = 0; i <= 28; i += 1) {
+      for (let j = 0; j <= 28; j += 1) {
+        const p = { x: x0 + ((x1 - x0) * i) / 28, y: y0 + ((y1 - y0) * j) / 28 };
+        if (inside(p.x, p.y)) cand.push({ p, d: distanceToPolygon(p, poly) });
+      }
+    }
+    cand.sort((a, b) => b.d - a.d);
+    const out: Point[] = [];
+    for (const c of cand) {
+      if (out.every((q) => Math.hypot(q.x - c.p.x, q.y - c.p.y) > 12)) out.push(c.p);
+      if (out.length >= count) break;
+    }
+    return out;
+  };
+  for (const n of shapeNotes) {
+    const o = objects.get(n.target)!;
+    const style = { size: 13, weight: 600, colour: n.colour };
+    const { w, h } = board.extent(n.text, style);
+    const TS = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8];
+    if (n.kind === "angle" && o.kind === "shape" && o.data.shape === "sector") {
+      const d = o.data;
+      const apex = at(d.c);
+      const rPx = d.r * unit;
+      if (d.span <= Math.PI * 0.97) {
+        // The angle at the apex is drawn as a swept arc (measured by sweep-matches-its-label), its value beyond it.
+        const rr = Math.max(22, Math.min(46, 0.3 * rPx));
+        const onArc = (t: number, r: number): Point => ({ x: apex.x + Math.cos(t) * r, y: apex.y - Math.sin(t) * r });
+        const aid = `angle-${safeId(n.target)}`;
+        const arcPts = Array.from({ length: 25 }, (_, k) => onArc(d.a0 + (d.span * k) / 24, rr));
+        connectors.push({ id: aid, from: arcPts[0]!, to: arcPts[24]!, curve: { kind: "sweep", centre: apex }, arrow: "none", stroke: n.colour, strokeWidth: 1.5 });
+        placer.addInk(aid, arcPts);
+        const sp: Point[] = [];
+        for (const extra of [0, 3, 7, 12, 18]) {
+          for (const df of [0, 0.2, -0.2, 0.35, -0.35]) {
+            const t = d.a0 + d.span / 2 + df * d.span;
+            const reachBox = Math.abs(Math.cos(t)) * (w / 2) + Math.abs(Math.sin(t)) * (h / 2);
+            sp.push(onArc(t, rr + reachBox + 4 + extra));
+          }
+        }
+        place({ kind: "element", id: aid }, n.text, style, sp);
+        continue;
+      }
+      const spots: Point[] = [];
+      for (const f of [0.5, 0.4, 0.6, 0.32, 0.7, 0.25, 0.8]) {
+        for (const df of [0, 0.18, -0.18, 0.36, -0.36]) {
+          const t = d.a0 + d.span / 2 + df * d.span;
+          spots.push({ x: apex.x + Math.cos(t) * f * rPx, y: apex.y - Math.sin(t) * f * rPx });
+        }
+      }
+      place({ kind: "element", id: `o-${safeId(n.target)}` }, n.text, style, spots);
+      continue;
+    }
+    if (n.kind === "arc" && (o.kind === "circle" || (o.kind === "shape" && (o.data.shape === "sector" || o.data.shape === "semicircle")))) {
+      const centre = o.kind === "circle" ? o.circle.center : o.data.shape === "sector" ? o.data.c : (o.data as { c: Vec2 }).c;
+      const pts =
+        o.kind === "circle"
+          ? circlePts(o.circle)
+          : (() => {
+              const arcPiece = shapePieces(o.data as ShapeData)!.find((pc): pc is Extract<Piece, { kind: "arc" }> => pc.kind === "arc")!;
+              return sampleArc(arcPiece.c, arcPiece.r, arcPiece.a0, arcPiece.span).map(at);
+            })();
+      place({ kind: "element", id: o.kind === "circle" ? `o-${safeId(n.target)}` : `o-${safeId(n.target)}-arc` }, n.text, style, besidePolyline(pts, w, h, TS, at(centre)));
+      continue;
+    }
+    // area: inside where there is room (a hatch leaves none), then beside the outline.
+    const region = regionOf(o)!;
+    const poly = region.poly.map(at);
+    const mean = { x: poly.reduce((s, p) => s + p.x, 0) / poly.length, y: poly.reduce((s, p) => s + p.y, 0) / poly.length };
+    const spots = [...interiorPoints(poly, 8), ...besidePolyline([...poly, poly[0]!], w, h, TS, mean)];
+    place({ kind: "element", id: `fill-${safeId(n.target)}` }, n.text, style, spots);
+  }
+
+  // Dimension lines: the measured length centred beside its own line, on the side away from what it measures.
+  for (const n of dimNotes) {
+    if (n.text === null) continue;
+    const style = { size: 13, weight: 600, colour: INK };
+    const { w, h } = board.extent(n.text, style);
+    const nrm = { x: -(n.b.y - n.a.y), y: n.b.x - n.a.x };
+    const side = nrm.x * n.outward.x + nrm.y * n.outward.y >= 0 ? 1 : -1;
+    place({ kind: "element", id: n.id }, n.text, style, besideRun(n.a, n.b, w, h, [0.5, 0.44, 0.56, 0.38, 0.62, 0.3, 0.7], side));
   }
 
   // Names of lines, circles and conics that asked for one.
@@ -1750,3 +2405,55 @@ export function validateConstructionInput(raw: Record<string, unknown>): void {
 
 // Keep the Block type referenced for readers of the emitted spec.
 export type { Block };
+
+// ---- regions of the extension shapes (ADR 0067) ----------------------------------------
+
+/** A region an object encloses: its outline sampled in plane units, its exact area, and the pieces when it has arcs. */
+export type Region = { poly: Vec2[]; area: number; pieces?: Piece[]; arcLength?: number };
+
+/** The outline pieces of a sector, semicircle, annular sector or region -- null for a shape that is not one closed chain of pieces. */
+export function shapePieces(d: ShapeData): Piece[] | null {
+  if (d.shape === "sector") return sectorPieces(d.c, d.r, d.a0, d.span);
+  if (d.shape === "semicircle") return semicirclePieces(d.a, d.b, d.side).pieces;
+  if (d.shape === "region") return d.pieces;
+  if (d.shape === "ring" && d.span !== undefined && d.a0 !== undefined) return annularSectorPieces(d.c, d.rIn, d.rOut, d.a0, d.span);
+  return null;
+}
+
+/** What an object encloses, computed from its definition: Green's theorem over the pieces, or the closed form of a disc and a ring. */
+export function regionOf(o: ConstructionObject): Region | null {
+  if (o.kind === "polygon") {
+    let twice = 0;
+    o.pts.forEach((p, i) => {
+      const q = o.pts[(i + 1) % o.pts.length]!;
+      twice += p[0] * q[1] - q[0] * p[1];
+    });
+    return { poly: o.pts, area: Math.abs(twice) / 2 };
+  }
+  if (o.kind === "circle") {
+    return { poly: sampleArc(o.circle.center, o.circle.radius, 0, TAU).slice(0, -1), area: Math.PI * o.circle.radius ** 2, arcLength: TAU * o.circle.radius };
+  }
+  if (o.kind !== "shape") return null;
+  const d = o.data;
+  if (d.shape === "ring" && d.span === undefined) {
+    return { poly: ringOutline(d.c, d.rIn, d.rOut), area: Math.PI * (d.rOut ** 2 - d.rIn ** 2) };
+  }
+  const pieces = shapePieces(d);
+  if (pieces === null) return null;
+  return { poly: samplePieces(pieces), area: piecesArea(pieces), pieces, arcLength: piecesArcLength(pieces) };
+}
+
+/** The distance from a point to the nearest edge of a closed polygon. */
+function distanceToPolygon(p: { x: number; y: number }, poly: { x: number; y: number }[]): number {
+  let best = Infinity;
+  for (let i = 0; i < poly.length; i += 1) {
+    const a = poly[i]!;
+    const b = poly[(i + 1) % poly.length]!;
+    const vx = b.x - a.x;
+    const vy = b.y - a.y;
+    const l2 = vx * vx + vy * vy;
+    const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - a.x) * vx + (p.y - a.y) * vy) / l2));
+    best = Math.min(best, Math.hypot(p.x - (a.x + t * vx), p.y - (a.y + t * vy)));
+  }
+  return best;
+}

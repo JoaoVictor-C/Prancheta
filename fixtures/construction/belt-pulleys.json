@@ -1,0 +1,20 @@
+{
+  "preset": "construction",
+  "title": "Correia em volta de duas polias",
+  "unit": "cm",
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [15, 0] },
+    { "name": "pa", "circle": { "center": "A", "radius": 6 }, "fill": "#E7D7B0", "colour": "#181B21" },
+    { "name": "pb", "circle": { "center": "B", "radius": 9 }, "fill": "#E7D7B0", "colour": "#181B21" },
+    { "name": "belt", "belt": { "circles": ["pa", "pb"], "tangents": "external", "touch": ["T1", "U1", "T2", "U2"] }, "label": "correia" },
+    { "name": "rA", "segment": ["A", "T1"], "dashed": true },
+    { "name": "rB", "segment": ["B", "U1"], "dashed": true }
+  ],
+  "annotations": [
+    { "length": "belt.t1" },
+    { "length": "belt.t2" },
+    { "length": "rA", "name": "r", "given": true },
+    { "length": "rB", "name": "R", "given": true }
+  ]
+}

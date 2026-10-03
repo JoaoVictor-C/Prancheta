@@ -1,0 +1,23 @@
+{
+  "preset": "circuit",
+  "title": "fio resistivo com derivações e amperímetro",
+  "nodes": {
+    "T1": [0, 3], "P": [3, 3], "T2": [6, 3],
+    "Q": [0, 0], "R": [6, 0],
+    "G1": [0, -2], "G2": [6, -2],
+    "M": { "at": "C", "dy": 2 }
+  },
+  "components": [
+    { "id": "L1", "kind": "lamp", "from": "T1", "to": "P", "value": 3 },
+    { "id": "L2", "kind": "lamp", "from": "P", "to": "T2", "value": 6 },
+    { "kind": "wire", "from": "Q", "to": "T1" },
+    { "kind": "wire", "from": "R", "to": "T2" },
+    { "id": "W1", "kind": "potentiometer", "from": "Q", "to": "R", "value": 24, "taps": { "equal": ["A", "B", "C", "D", "E"] } },
+    { "kind": "wire", "from": "Q", "to": "G1" },
+    { "kind": "wire", "from": "R", "to": "G2" },
+    { "id": "E1", "kind": "battery", "from": "G1", "to": "G2", "value": 12 },
+    { "kind": "wire", "from": "P", "to": "M" },
+    { "id": "A1", "kind": "ammeter", "from": "M", "to": "C" }
+  ],
+  "ground": "G1"
+}

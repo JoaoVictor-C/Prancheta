@@ -1,0 +1,10 @@
+{
+  "preset": "solid",
+  "title": "tronco de pirâmide quadrangular regular",
+  "unit": "cm",
+  "camera": { "kind": "orthographic", "azimuth": 25, "elevation": 22 },
+  "solids": [
+    { "kind": "frustum", "sides": 4, "edge": 8, "topEdge": 4, "height": 6, "labels": true,
+      "show": ["edge", "topEdge", "height", "slant"], "readings": ["measures", "volume", "area"] }
+  ]
+}

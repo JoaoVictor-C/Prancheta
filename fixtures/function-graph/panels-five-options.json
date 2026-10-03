@@ -1,0 +1,19 @@
+{
+  "preset": "function-graph",
+  "title": "Velocidade de uma gota de chuva: cinco opções",
+  "axes": { "schematic": true },
+  "x": { "range": [0, 10], "unit": 22, "name": "t" },
+  "y": { "range": [0, 6], "unit": 20, "name": "v" },
+  "columns": 2,
+  "panels": [
+    { "functions": [{ "id": "v", "expr": "0.5x", "domain": [0, 10] }] },
+    {
+      "functions": [{ "id": "v", "expr": "4.5(1 - exp(-0.5x))", "domain": [0, 10] }],
+      "guides": [{ "y": 4.5, "colour": "soft" }],
+      "y": { "ticks": [{ "at": 4.5, "label": "v_L" }] }
+    },
+    { "functions": [{ "id": "v", "expr": "3", "domain": [0, 10] }] },
+    { "series": [{ "id": "v", "points": [[0, 0], [4, 5], [10, 1.5]] }] },
+    { "series": [{ "id": "v", "points": [[0, 5], [10, 1]], "arrows": [0.5] }] }
+  ]
+}

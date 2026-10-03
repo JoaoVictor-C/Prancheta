@@ -1,0 +1,21 @@
+{
+  "preset": "data-table",
+  "title": "Propriedades de algumas espécies químicas",
+  "columns": [
+    { "header": "Espécie" },
+    { "header": "Massa molar", "unit": "g/mol" },
+    { "header": "Densidade", "unit": "g/cm^3" },
+    { "header": "Concentração", "unit": "mol/L" },
+    { "header": "Origem" }
+  ],
+  "rows": [
+    ["CO_2", 44, 0.00198, "4,0 · 10^-4", "queima de combustíveis"],
+    ["H_2O", 18, 1, "55,5", "chuva"],
+    ["CH_4", 16, 0.00072, "1,8 · 10^-6", "decomposição de matéria orgânica"],
+    ["C_6H_12O_6", 180, 1.54, "0,1", "fotossíntese"],
+    ["SO_4^{2-}", 96, 2.7, "2,5 · 10^-3", "sais minerais"],
+    ["Ca^2+", 40, 1.55, "1,2 · 10^-3", "rochas calcárias"]
+  ],
+  "stub": true,
+  "highlight": [{ "row": 4, "col": 3 }]
+}

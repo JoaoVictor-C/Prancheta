@@ -1,0 +1,15 @@
+{
+  "preset": "data-table",
+  "columns": [
+    { "header": "Setor", "align": "center" },
+    { "header": "Quantidade de funcionários", "id": "n", "align": "center" },
+    { "header": "Salário (em real)", "id": "s", "align": "center", "format": { "decimals": 2, "grouping": "space" } },
+    { "header": "Folha mensal (em real)", "from": "n*s", "align": "center", "format": { "decimals": 2, "grouping": "space" } }
+  ],
+  "rows": [
+    ["Produção", 60, 1800],
+    ["Administração", 20, 6500],
+    ["Vendas", 20, 3250]
+  ],
+  "totals": { "by": { "n": "sum", "D": "sum" } }
+}

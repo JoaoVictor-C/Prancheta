@@ -1,0 +1,21 @@
+{
+  "preset": "construction",
+  "title": "Planta de uma sala com cotas",
+  "unit": "m",
+  "objects": [
+    { "A": [0, 0], "label": false },
+    { "B": [6, 0], "label": false },
+    { "C": [6, 3], "label": false },
+    { "D": [0, 3], "label": false },
+    { "name": "sala", "polygon": ["A", "B", "C", "D"], "fill": "#E3EFE0" },
+    { "P1": [1, 1.5], "label": false, "dot": false },
+    { "P2": [2, 1.5], "label": false, "dot": false },
+    { "P3": [3, 1.5], "label": false, "dot": false },
+    { "name": "c1", "circle": { "center": "P1", "radius": 0.15 }, "fill": "#2F7FC1", "colour": "#1D4E89" },
+    { "name": "c2", "circle": { "center": "P2", "radius": 0.15 }, "fill": "#2F7FC1", "colour": "#1D4E89" },
+    { "name": "c3", "circle": { "center": "P3", "radius": 0.15 }, "fill": "#2F7FC1", "colour": "#1D4E89" },
+    { "name": "largura", "dimension": { "from": "A", "to": "B", "offset": 0.7, "side": -1 }, "given": true },
+    { "name": "altura", "dimension": { "from": "B", "to": "C", "offset": 0.7, "side": -1 }, "given": true },
+    { "name": "vao", "dimension": { "from": "P2", "to": "P3", "offset": 0.8, "side": 1 }, "label": "x" }
+  ]
+}

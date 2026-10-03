@@ -313,3 +313,113 @@ export function solveMna(input: MnaInput): MnaSolution {
   vlike.forEach((e, k) => current.set(e.id, -x[n + k]! + 0));
   return { potential, current, ground, merged };
 }
+
+// ---- diodes: piecewise-linear states, solved until consistent ----------------------------------------
+
+/**
+ * A diode (or LED) of forward drop `vf`: `a` is the anode, `b` the cathode,
+ * and conventional current is allowed from `a` to `b` only.
+ *
+ * The model is the piecewise-linear one a physics course uses. ON: the
+ * diode holds exactly `vf` volts (V_a − V_b = vf) and conducts i ≥ 0; OFF: it
+ * conducts nothing, and the circuit must leave it V_a − V_b ≤ vf. `vf = 0` is
+ * the ideal diode.
+ */
+export type MnaDiode = { id: string; a: string; b: string; vf: number };
+
+export type DiodeState = {
+  on: boolean;
+  /** Current through the diode from anode to cathode (0 when off). */
+  current: number;
+  /** V_a − V_b, or undefined when a terminal touches nothing that conducts. */
+  drop: number | undefined;
+};
+
+export type DiodeSolution = MnaSolution & { diodes: Map<string, DiodeState> };
+
+const MAX_DIODES = 14;
+
+/**
+ * Solve a netlist that contains diodes. The states are not guessed and
+ * iterated: EVERY on/off assignment is solved (2ⁿ systems, n ≤ 14) and kept
+ * only if it is self-consistent -- each ON diode carries i ≥ 0 and each OFF
+ * one sees V_a − V_b ≤ vf. Exactly one consistent assignment is the answer.
+ * None, or two that differ electrically, is refused: the circuit has no
+ * single reading, and a figure printing one would pick it silently. An
+ * assignment that is the same electrically (a diode exactly at its knee
+ * carries 0 either way) is not an ambiguity.
+ */
+export function solveWithDiodes(input: MnaInput, diodes: MnaDiode[]): DiodeSolution {
+  if (diodes.length === 0) return { ...solveMna(input), diodes: new Map() };
+  if (diodes.length > MAX_DIODES) throw new CircuitError(`${diodes.length} diodes: this solver tries every on/off state and stops at ${MAX_DIODES}`);
+  for (const d of diodes) {
+    if (!Number.isFinite(d.vf) || d.vf < 0) throw new CircuitError(`${d.id}: a forward voltage must be zero or positive, got ${d.vf}`);
+  }
+  type Candidate = { mask: number; sol: MnaSolution; states: Map<string, DiodeState>; ons: number };
+  const good: Candidate[] = [];
+  let firstError: CircuitError | undefined;
+  let solved = 0;
+  for (let mask = 0; mask < 1 << diodes.length; mask += 1) {
+    const elements = [...input.elements];
+    diodes.forEach((d, k) => {
+      if ((mask >> k) & 1) elements.push({ id: d.id, kind: "V", a: d.b, b: d.a, value: d.vf });
+    });
+    let sol: MnaSolution;
+    try {
+      sol = solveMna({ ...input, elements });
+    } catch (e) {
+      if (e instanceof CircuitError) {
+        firstError ??= e;
+        continue;
+      }
+      throw e;
+    }
+    solved += 1;
+    let scale = 1;
+    for (const p of sol.potential.values()) scale = Math.max(scale, Math.abs(p));
+    for (const c of sol.current.values()) scale = Math.max(scale, Math.abs(c));
+    const tol = 1e-9 * scale;
+    const states = new Map<string, DiodeState>();
+    let consistent = true;
+    diodes.forEach((d, k) => {
+      const on = ((mask >> k) & 1) === 1;
+      const va = sol.potential.get(d.a);
+      const vb = sol.potential.get(d.b);
+      const drop = va === undefined || vb === undefined ? undefined : va - vb;
+      if (on) {
+        // The V element's current runs cathode → anode inside it; the diode's own is the opposite.
+        const i = -(sol.current.get(d.id) ?? 0) + 0;
+        if (i < -tol) consistent = false;
+        states.set(d.id, { on: true, current: i, drop });
+      } else {
+        if (drop !== undefined && drop > d.vf + tol) consistent = false;
+        states.set(d.id, { on: false, current: 0, drop });
+      }
+    });
+    if (consistent) good.push({ mask, sol, states, ons: diodes.filter((_, k) => (mask >> k) & 1).length });
+  }
+  if (solved === 0) throw firstError!;
+  const names = diodes.map((d) => d.id);
+  if (good.length === 0) {
+    throw new CircuitError(`no on/off state of ${list(names)} is consistent: the diodes cannot all agree with the currents and drops they would produce, so the circuit has no steady reading`);
+  }
+  const same = (x: Candidate, y: Candidate): boolean => {
+    let scale = 1;
+    for (const p of x.sol.potential.values()) scale = Math.max(scale, Math.abs(p));
+    const tol = 1e-8 * scale;
+    for (const [n, p] of x.sol.potential) {
+      const q = y.sol.potential.get(n);
+      if (q !== undefined && Math.abs(p - q) > tol) return false;
+    }
+    for (const d of diodes) if (Math.abs(x.states.get(d.id)!.current - y.states.get(d.id)!.current) > tol) return false;
+    return true;
+  };
+  good.sort((p, q) => p.ons - q.ons);
+  const pick = good[0]!;
+  const other = good.find((g) => !same(pick, g));
+  if (other !== undefined) {
+    const describe = (c: Candidate): string => names.map((n) => `${n} ${c.states.get(n)!.on ? "on" : "off"}`).join(", ");
+    throw new CircuitError(`the diodes' states are ambiguous: both (${describe(pick)}) and (${describe(other)}) are self-consistent, so the figure cannot print one reading without choosing -- add a path that decides it`);
+  }
+  return { ...pick.sol, diodes: pick.states };
+}

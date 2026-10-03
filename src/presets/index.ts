@@ -76,6 +76,10 @@ import { expandVenn, validateVennInput } from "./venn/preset.ts";
 import type { VennInput } from "./venn/preset.ts";
 import { expandAcidBase, validateAcidBaseInput } from "./acid-base/preset.ts";
 import type { AcidBaseInput } from "./acid-base/preset.ts";
+import { expandDataTable, validateDataTableInput } from "./data-table/preset.ts";
+import type { DataTableInput } from "./data-table/preset.ts";
+import { expandGenetics, validateGeneticsInput } from "./genetics/preset.ts";
+import type { GeneticsInput } from "./genetics/preset.ts";
 
 /**
  * Every preset input may also name a style pack and a theme. They are declared
@@ -109,7 +113,7 @@ export const ANSWER_AWARE: readonly string[] = [
   "value-table", "sign-chart", "number-line", "vectors", "unit-circle",
   "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map",
   "circuit", "optics", "automaton", "truth-table", "logic-circuit",
-  "statistics", "distribution", "probability-tree", "venn", "acid-base",
+  "statistics", "distribution", "probability-tree", "venn", "acid-base", "data-table", "genetics",
 ];
 
 export type PresetInput = (
@@ -142,6 +146,8 @@ export type PresetInput = (
   | ({ preset: "probability-tree" } & ProbabilityTreeInput)
   | ({ preset: "venn" } & VennInput)
   | ({ preset: "acid-base" } & AcidBaseInput)
+  | ({ preset: "data-table" } & DataTableInput)
+  | ({ preset: "genetics" } & GeneticsInput)
 ) &
   CommonPresetOptions;
 
@@ -221,6 +227,10 @@ function expandPreset(input: PresetInput): FigureSpec {
       return expandVenn(input);
     case "acid-base":
       return expandAcidBase(input);
+    case "data-table":
+      return expandDataTable(input);
+    case "genetics":
+      return expandGenetics(input);
   }
 }
 
@@ -316,6 +326,10 @@ function validateOwn(preset: PresetInput["preset"], raw: Record<string, unknown>
       return validateVennInput(raw);
     case "acid-base":
       return validateAcidBaseInput(raw);
+    case "data-table":
+      return validateDataTableInput(raw);
+    case "genetics":
+      return validateGeneticsInput(raw);
   }
 }
 
@@ -351,7 +365,9 @@ export function isPresetInput(value: unknown): value is PresetInput {
     preset === "distribution" ||
     preset === "probability-tree" ||
     preset === "venn" ||
-    preset === "acid-base"
+    preset === "acid-base" ||
+    preset === "data-table" ||
+    preset === "genetics"
   );
 }
 
@@ -385,6 +401,8 @@ export type {
   ProbabilityTreeInput,
   VennInput,
   AcidBaseInput,
+  DataTableInput,
+  GeneticsInput,
 };
 export type { PresetId };
 

@@ -12,9 +12,9 @@ import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join } from "node:path";
 
-import { CircuitError, gaussSolve, solveMna } from "../src/presets/circuit/mna.ts";
+import { CircuitError, gaussSolve, solveMna, solveWithDiodes } from "../src/presets/circuit/mna.ts";
 import type { MnaElement } from "../src/presets/circuit/mna.ts";
-import { analyseBranches, currentName, displayName, expandCircuit, quantity, solveCircuit, validateCircuitInput } from "../src/presets/circuit/preset.ts";
+import { analyseBranches, currentName, displayName, expandCircuit, parseQty, prepare, quantity, solveCircuit, validateCircuitInput } from "../src/presets/circuit/preset.ts";
 import type { CircuitInput } from "../src/presets/circuit/preset.ts";
 import { SpecError } from "../src/ir/types.ts";
 import type { Block, FigureSpec, Mark, Point, Scene } from "../src/ir/types.ts";
@@ -147,13 +147,19 @@ test("wires make one node of their ends; power balances in every fixture", () =>
   for (const f of fixtures) {
     const input = load(f);
     const sol = solveCircuit(input);
+    // Every element of the netlist, internal resistances and diode drops included: delivered = dissipated.
     let supplied = 0;
     let dissipated = 0;
+    for (const e of sol.net.elements) {
+      const i = sol.current.get(e.id) ?? 0;
+      if (e.kind === "R") dissipated += i * i * e.value;
+      if (e.kind === "V") supplied += e.value * i;
+      if (e.kind === "I") supplied += e.value * (sol.potential.get(e.b)! - sol.potential.get(e.a)!);
+    }
     for (const c of input.components) {
-      const i = sol.current.get(c.id ?? "") ?? 0;
-      if (c.kind === "resistor" || c.kind === "lamp") dissipated += i * i * c.value!;
-      if (c.kind === "battery" || c.kind === "voltage-source") supplied += c.value! * i;
-      if (c.kind === "current-source") supplied += c.value! * (sol.potential.get(c.to)! - sol.potential.get(c.from)!);
+      if (c.kind !== "led" && c.kind !== "diode") continue;
+      const st = sol.diodes.get(c.id ?? "")!;
+      if (st.on) dissipated += (c.vf ?? 0) * st.current;
     }
     assertNear(supplied, dissipated, `${f}: power`, 1e-9);
   }
@@ -413,7 +419,7 @@ const answerIds = (spec: FigureSpec): string[] =>
 
 fixtures.forEach((filename) => {
   test(`answers:false ${filename}: no current, reading, U, V or P is drawn, and every check passes`, async () => {
-    const input = { ...load(filename), answers: false, show: { ...load(filename).show, voltages: [["A", "B"]] as [string, string][], nodeVoltages: true, power: true } };
+    const input = { ...load(filename), answers: false, show: { ...load(filename).show, voltages: [Object.keys(load(filename).nodes).slice(0, 2)] as [string, string][], nodeVoltages: true, power: true } };
     const spec = expandCircuit(input);
     assert.deepEqual(answerIds(spec), [], filename);
     // Nothing but givens: values of components (Ω, V, A of a source), names and node letters.
@@ -433,4 +439,172 @@ test("answers:false keeps the ground, the meter letters and the given values; an
   const shown = expandCircuit(input);
   assert.ok(answerIds(shown).some((id) => id.endsWith("-reading")));
   assert.deepEqual(expandCircuit({ ...input, answers: true }), shown);
+});
+
+// ---- ADR 0069: diodes, real sources, symbols, taps, load boxes ---------------------------------------------
+
+test("diode: an LED with a series resistor conducts (6 V, 2 V, 200 Ω → 20 mA) and is drawn lit", () => {
+  const input = load("led-series-resistor.json");
+  const sol = solveCircuit(input);
+  assertNear(sol.current.get("D1"), 0.02, "D1");
+  assertNear(sol.current.get("R1"), 0.02, "R1");
+  assert.equal(sol.diodes.get("D1")!.on, true);
+  assertNear(sol.potential.get("B")! - sol.potential.get("C")!, 2, "the LED holds V_f");
+  const spec = expandCircuit(input);
+  assert.equal(textOf(spec, "current-1-label"), "i = 20 mA");
+  assert.ok(panelLines(spec).includes("D₁: aceso, i = 20 mA"), panelLines(spec).join(" | "));
+  assert.equal(marksOf(spec).find((m) => m.id === "D1")!.fill, "#F2C94C");
+});
+
+test("diode: reversed, or starved below its V_f, it is off and the circuit carries nothing", () => {
+  const input = load("led-series-resistor.json");
+  const reversed: CircuitInput = { ...input, components: input.components.map((c) => (c.id === "D1" ? { ...c, from: "C", to: "B" } : c)) };
+  const r = solveCircuit(reversed);
+  assert.equal(r.diodes.get("D1")!.on, false);
+  assertNear(r.current.get("R1"), 0, "R1");
+  assertNear(r.diodes.get("D1")!.drop, -6, "the LED blocks the whole battery");
+  const weak: CircuitInput = { ...input, components: input.components.map((c) => (c.id === "E1" ? { ...c, value: 1.5 } : c)) };
+  assert.equal(solveCircuit(weak).diodes.get("D1")!.on, false, "1,5 V < V_f = 2 V");
+  assert.ok(panelLines(expandCircuit(reversed)).includes("D₁: apagado"));
+});
+
+test("diode: two LEDs in parallel branches each get their own current (30 and 20 mA, 50 mA from the source)", () => {
+  const s = solveCircuit(load("led-two-branches.json"));
+  assertNear(s.current.get("R1"), 0.03, "R1");
+  assertNear(s.current.get("R2"), 0.02, "R2");
+  assertNear(s.current.get("E1"), 0.05, "E1");
+});
+
+test("diodes: the ideal diode forward and reverse; a negative V_f is refused", () => {
+  const net = { nodes: ["g", "a", "b"], elements: [Vs("E1", "g", "a", 10), R("R1", "b", "g", 5)] };
+  const fwd = solveWithDiodes(net, [{ id: "D1", a: "a", b: "b", vf: 0 }]);
+  assertNear(fwd.diodes.get("D1")!.current, 2, "anode → cathode through an ideal diode");
+  assert.equal(fwd.diodes.get("D1")!.on, true);
+  const rev = solveWithDiodes(net, [{ id: "D1", a: "b", b: "a", vf: 0 }]);
+  assert.equal(rev.diodes.get("D1")!.on, false);
+  assertNear(rev.diodes.get("D1")!.drop, -10, "the diode blocks 10 V");
+  assert.throws(() => solveWithDiodes(net, [{ id: "D1", a: "a", b: "b", vf: -1 }]), /forward voltage/);
+});
+
+test("diodes: no self-consistent state is refused, not guessed", () => {
+  // 2 A is forced into node a, whose only way out is a diode that points INTO it: on, it would carry -2 A;
+  // off, the current source is in series with an open circuit.
+  const net = { nodes: ["g", "a"], elements: [Is("I1", "g", "a", 2)] };
+  assert.throws(() => solveWithDiodes(net, [{ id: "D1", a: "g", b: "a", vf: 0 }]), /no on\/off state of D1 is consistent/);
+});
+
+test("non-ideal source: U = ε − r·i, 12 V and 0,5 Ω into 2,5 Ω gives 4 A and 10 V", () => {
+  const input = load("source-internal-resistance.json");
+  const sol = solveCircuit(input);
+  assertNear(sol.current.get("E1"), 4, "E1");
+  assertNear(sol.potential.get("A")! - sol.potential.get("E")!, 10, "terminal voltage");
+  const spec = expandCircuit(input);
+  assert.ok(panelLines(spec).includes("UE1 = ε − r·i = 12 − 0,5 · 4 = 10 V"), panelLines(spec).join(" | "));
+  assert.equal(textOf(spec, "label-E1-r"), "r = 0,5 Ω");
+  assert.ok(marksOf(spec).some((m) => m.id === "E1-box" && m.lineStyle === "dashed"));
+  // Shorted by a wire, a real source drives ε/r, not infinity.
+  const shorted: CircuitInput = { ...input, components: input.components.map((c) => (c.id === "R1" ? { kind: "wire", from: "B", to: "C" } : c)) as CircuitInput["components"] };
+  assertNear(solveCircuit(shorted).current.get("E1"), 24, "short-circuit current ε/r");
+});
+
+test("symbolic: R in series with 2R ∥ 3R from E → i = 5E/(11R), 3E/(11R), 2E/(11R)", () => {
+  const input = load("symbolic-series-parallel.json");
+  const sol = solveCircuit(input);
+  assert.deepEqual(sol.net.symbolic, { r: "R", e: "E" });
+  assertNear(sol.current.get("R1"), 5 / 11, "R1 in units of E/R");
+  assertNear(sol.current.get("R2"), 3 / 11, "R2");
+  assertNear(sol.current.get("R3"), 2 / 11, "R3");
+  const spec = expandCircuit(input);
+  assert.deepEqual([1, 2, 3].map((k) => textOf(spec, `current-${k}-label`)), ["i₁ = 5E/(11R)", "i₂ = 3E/(11R)", "i₃ = 2E/(11R)"]);
+  assert.equal(textOf(spec, "label-R2"), "2R");
+  assert.ok(panelLines(spec).includes("UBF = VB − VF = 6E/11"), panelLines(spec).join(" | "));
+  assert.ok(panelLines(spec).some((l) => l.startsWith("PR1 = 25E2/(121R)")), panelLines(spec).join(" | "));
+});
+
+test("symbolic: parseQty reads R, 2R, 0,2 R_c and refuses the rest", () => {
+  assert.deepEqual(parseQty("R", "x"), { coef: 1, sym: "R" });
+  assert.deepEqual(parseQty("2R", "x"), { coef: 2, sym: "R" });
+  assert.deepEqual(parseQty("0,2 R_c", "x"), { coef: 0.2, sym: "R_{c}" });
+  assert.deepEqual(parseQty(5, "x"), { coef: 5 });
+  assert.throws(() => parseQty("12", "x"), SpecError);
+  assert.throws(() => parseQty("R+1", "x"), SpecError);
+});
+
+test("symbolic: a subscripted symbol is drawn with a real subscript; what cannot be scaled is refused", () => {
+  const base = load("symbolic-series-parallel.json");
+  const edit = (id: string, patch: Record<string, unknown>): CircuitInput => ({ ...base, components: base.components.map((c) => (c.id === id ? { ...c, ...patch } : c)) });
+  const spec = expandCircuit(edit("R2", { value: "0,2 R" }));
+  assert.equal(textOf(spec, "label-R2"), "0,2 R");
+  const sub: CircuitInput = { ...base, components: base.components.map((c) => (c.kind === "resistor" ? { ...c, value: String(c.value).replace("R", "R_c") } : c)) };
+  const subSpec = expandCircuit(sub);
+  const label = blocksOf(subSpec).find((b) => b.id === "label-R2")!;
+  assert.deepEqual(label.runs, [{ text: "2R" }, { text: "c", script: "sub" }]);
+  const bad = (input: CircuitInput, pattern: RegExp): void => assert.throws(() => solveCircuit(input), (e: unknown) => e instanceof SpecError && pattern.test(e.message), pattern.source);
+  bad(edit("R2", { value: 4 }), /mix symbols and numbers/);
+  bad(edit("R2", { value: "2S" }), /more than one resistance symbol/);
+  bad(edit("E1", { value: 12 }), /EMFs mix symbols and numbers/);
+  bad(edit("E1", { value: "R" }), /both use the symbol R/);
+});
+
+test("potentiometer: a tap at x = 0,25 is placed by the preset and splits the wire 25 Ω / 75 Ω", () => {
+  const input = load("potentiometer-divider.json");
+  assert.deepEqual(prepare(input).nodes.W, [1, 2], "a quarter of the way from Q (0, 2) to R (4, 2)");
+  const sol = solveCircuit(input);
+  assertNear(sol.net.resistance.get("P1.1"), 25, "upper part");
+  assertNear(sol.net.resistance.get("P1.2"), 75, "lower part");
+  // 25 + (75 ∥ 150) = 75 Ω: 0,16 A from the 12 V; the load sees 12 − 0,16·25 = 8 V.
+  assertNear(sol.current.get("E1"), 0.16, "E1");
+  assertNear(sol.potential.get("W")! - sol.potential.get("M")!, 8, "U_WM");
+  assert.ok(panelLines(expandCircuit(input)).some((l) => l.startsWith("UWM = VW − VM = 8 V")));
+});
+
+test("potentiometer: taps and relative nodes are derived and validated", () => {
+  const input = load("tapped-wire-ammeter.json");
+  const prep = prepare(input);
+  assert.deepEqual(prep.nodes.C, [3, 0]);
+  assert.deepEqual(prep.nodes.M, [3, 2]);
+  assert.deepEqual(["A", "B", "C", "D", "E"].map((n) => prep.nodes[n]![0]), [1, 2, 3, 4, 5]);
+  const edit = (patch: Record<string, unknown>): CircuitInput => ({ ...input, components: input.components.map((c) => (c.id === "W1" ? { ...c, ...patch } : c)) });
+  assert.throws(() => expandCircuit(edit({ taps: [{ node: "A", at: 1.2 }] })), /strictly between/);
+  assert.throws(() => expandCircuit(edit({ taps: [{ node: "A", at: 0.5 }, { node: "B", at: "1/2" }] })), /same place/);
+  assert.throws(() => expandCircuit({ ...input, nodes: { ...input.nodes, A: [1, 0] } }), /also in "nodes"/);
+});
+
+test("tapped wire: with the ammeter on tap C it reads 0,25 A, and a different tap reads differently", () => {
+  const input = load("tapped-wire-ammeter.json");
+  // Ground Q; wire 24 Ω across 12 V, 2 V per Ω-quarter: V(C) = 6 V. L1 = 3 Ω, L2 = 6 Ω from the rails Q (0 V) and R (12 V).
+  // Node P: (0 − V_P)/3 + (12 − V_P)/6 + I_A = 0 with V_P = V_C = 6 V → I_A = 6/3 − 6/6 − 0 ... solved by the netlist: 0,25 A.
+  assertNear(Math.abs(solveCircuit(input).current.get("A1")!), 0.25, "A1 on C");
+  const onTap = (tap: string): number => {
+    const comps = input.components.map((c) => (c.id === "A1" ? { ...c, to: tap } : c));
+    return Math.abs(solveCircuit({ ...input, nodes: { ...input.nodes, M: { at: tap, dy: 2 } }, components: comps }).current.get("A1")!);
+  };
+  const reads = ["A", "B", "C", "D", "E"].map(onTap);
+  assert.ok(reads.some((r) => !near(r, reads[2]!, 1e-6)), "another tap reads differently");
+});
+
+test("load box: a rated 960 W / 120 V appliance is 15 Ω, and the circuit carries 7,5 A", () => {
+  const input = load("household-load-box.json");
+  const sol = solveCircuit(input);
+  assertNear(sol.net.resistance.get("L1"), 15, "R = U²/P");
+  assertNear(sol.current.get("L1"), 7.5, "i");
+  assertNear(sol.potential.get("B")! - sol.potential.get("C")!, 112.5, "U_BC");
+  const spec = expandCircuit(input);
+  assert.equal(textOf(spec, "label-L1-name"), "aparelho");
+  assert.equal(textOf(spec, "label-L1"), "960 W, 120 V");
+  assert.equal(textOf(spec, "current-1-label"), "i = 7,5 A");
+  assert.throws(() => validateCircuitInput({ ...(input as unknown as Record<string, unknown>), components: input.components.map((c) => (c.id === "L1" ? { ...c, value: 15 } : c)) }), /either "value" or "rated"/);
+});
+
+test("answers:false keeps the givens of the new symbols and hides what they solve", () => {
+  const led = expandCircuit({ ...load("led-series-resistor.json"), answers: false });
+  assert.equal(marksOf(led).find((m) => m.id === "D1")!.fill, "#FCFBF7", "an LED is not drawn lit when that is the question");
+  assert.ok(blocksOf(led).some((b) => b.label === "Vf = 2 V"));
+  assert.deepEqual(answerIds(led), []);
+  const src = expandCircuit({ ...load("source-internal-resistance.json"), answers: false, show: { terminal: true, power: true } });
+  assert.deepEqual(answerIds(src), []);
+  assert.ok(blocksOf(src).some((b) => b.label === "r = 0,5 Ω"));
+  const sym = expandCircuit({ ...load("symbolic-series-parallel.json"), answers: false });
+  assert.deepEqual(answerIds(sym), []);
+  assert.ok(blocksOf(sym).some((b) => b.label === "2R"));
 });

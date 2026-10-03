@@ -1,0 +1,13 @@
+{
+  "preset": "circuit",
+  "title": "LED com resistor em série",
+  "nodes": { "A": [0, 2], "B": [2, 2], "C": [4, 2], "D": [4, 0], "E": [0, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "E", "to": "A", "value": 6 },
+    { "id": "R1", "kind": "resistor", "from": "A", "to": "B", "value": 200 },
+    { "id": "D1", "kind": "led", "from": "B", "to": "C", "vf": 2 },
+    { "kind": "wire", "from": "C", "to": "D" },
+    { "kind": "wire", "from": "D", "to": "E" }
+  ],
+  "show": { "voltages": [["A", "B"]] }
+}

@@ -1,0 +1,8 @@
+{
+  "preset": "solid",
+  "title": "cubo e sua planificação",
+  "unit": "cm",
+  "solids": [
+    { "kind": "cube", "edge": 3, "labels": true, "show": ["edge"], "net": true, "readings": ["area"] }
+  ]
+}

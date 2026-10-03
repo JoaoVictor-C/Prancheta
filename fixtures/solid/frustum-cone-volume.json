@@ -1,0 +1,9 @@
+{
+  "preset": "solid",
+  "title": "tronco de cone: geratriz e volume",
+  "unit": "cm",
+  "solids": [
+    { "kind": "frustum", "radius": 7, "topRadius": 4, "height": 4, "labels": true,
+      "show": ["radius", "topRadius", "height", "slant"], "readings": ["measures", "volume", "area"] }
+  ]
+}

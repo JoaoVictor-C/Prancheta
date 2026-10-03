@@ -1,0 +1,14 @@
+{
+  "preset": "function-graph",
+  "title": "Temperatura média mensal em Vila Serena",
+  "x": { "categories": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"], "unit": 48, "name": "Mês" },
+  "y": { "range": [10, 30], "step": 5, "unit": 12, "name": "Temperatura (°C)" },
+  "series": [
+    {
+      "id": "temp",
+      "values": [26.4, 26.9, 25.8, 23.1, 19.7, 17.2, 16.5, 18.0, 19.9, 22.3, 24.1, 25.6],
+      "markers": "circle",
+      "valueLabels": true
+    }
+  ]
+}

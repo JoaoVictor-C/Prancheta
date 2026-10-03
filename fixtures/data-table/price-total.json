@@ -1,0 +1,19 @@
+{
+  "preset": "data-table",
+  "title": "Compra de material escolar",
+  "columns": [
+    { "header": "Produto" },
+    { "header": "Quantidade", "id": "q" },
+    { "header": "Preço unitário", "unit": "R$", "id": "p", "format": "money" },
+    { "header": "Total", "unit": "R$", "from": "q*p", "format": "money" }
+  ],
+  "rows": [
+    ["Caderno universitário", 4, 18.9],
+    ["Caneta esferográfica", 12, 2.5],
+    ["Lápis de cor (caixa)", 3, 14.75],
+    ["Régua de 30 cm", 2, 4.2],
+    ["Borracha", 6, 1.35]
+  ],
+  "stub": true,
+  "totals": { "by": { "q": "sum", "D": "sum" } }
+}

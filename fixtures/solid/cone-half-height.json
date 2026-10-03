@@ -1,0 +1,9 @@
+{
+  "preset": "solid",
+  "title": "taça cônica cheia até a metade da altura",
+  "unit": "cm",
+  "solids": [
+    { "kind": "cone", "apex": "down", "radius": 4, "height": 10, "labels": true,
+      "liquid": { "height": 5 }, "show": ["radius", "height", "level"], "readings": ["volume"] }
+  ]
+}

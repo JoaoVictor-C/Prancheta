@@ -31,7 +31,7 @@
  * measuring, checking and repair downstream do not know it exists.
  */
 
-import type { FigureSpec, LineStyle, Mark, Point } from "../../ir/types.ts";
+import type { Block, FigureSpec, LineStyle, Mark, Point } from "../../ir/types.ts";
 import { SpecError, parseSpec } from "../../ir/types.ts";
 import { ExprError, compile, compileTree, constantValue, derivative, parse, parseEquation, parseIn, pretty } from "../../math/expr.ts";
 import type { Node } from "../../math/expr.ts";
@@ -41,8 +41,8 @@ import { NumericError, riemann } from "../../math/numeric.ts";
 import type { RiemannRule } from "../../math/numeric.ts";
 import type { Locale } from "../../locale/format.ts";
 import * as v from "../validate.ts";
-import { Board } from "./board.ts";
-import type { Box } from "./board.ts";
+import { Board, lineBox } from "./board.ts";
+import type { Box, LabelOptions } from "./board.ts";
 import { clipRuns, sampleParametric } from "./curves.ts";
 import type { Rect } from "./curves.ts";
 import {
@@ -59,6 +59,13 @@ import { distanceToPolyline, pointInPolygon } from "../../geometry/hit.ts";
 import { atInfinity, classify, coincides, describeLimit, sameLine, snapExact, verticalsAndHoles, writeExact } from "./asymptotes.ts";
 import type { Exact, Hole, SideResult, Slant } from "./asymptotes.ts";
 import type { Printed } from "../../locale/write.ts";
+import { alongPolyline, edgeOf, measure } from "./measured.ts";
+import { composePanels, panelInput } from "./panels.ts";
+import type { Interpolation, Measured } from "./measured.ts";
+import { niceStep, widenToTicks, fitUnits, ticksIn } from "../shared/scale.ts";
+import { labelWidth as labelWidthOf } from "../shared/text.ts";
+import { hasScripts, rich, runsWidth } from "../shared/panel.ts";
+import { runsText } from "../../ir/types.ts";
 
 // ---- input ---------------------------------------------------------------
 
@@ -84,10 +91,16 @@ export type PointRef =
   | { of: string; theta: Bound };
 
 export type AxisInput = {
-  /** [min, max] shown, in axis units. */
+  /**
+   * [min, max] shown, in axis units. May be left out on a category axis
+   * (it is then [0,5; n + 0,5]) and on a y axis drawn for series or bars (it
+   * is then fitted to the data, widened to whole steps).
+   */
   range: [number, number];
-  /** Pixels per axis unit. */
+  /** Pixels per axis unit. Or give `length`; with neither, the unit is fitted (ADR 0066). */
   unit: number;
+  /** The axis's length in pixels, instead of `unit`: what keeps five panels the same size whatever their ranges. */
+  length?: number;
   /** Lattice spacing. Default 1. */
   step?: number;
   /** Print every nth lattice number. Default 1. */
@@ -96,6 +109,79 @@ export type AxisInput = {
   name?: string;
   /** Numbers that must be printed on this axis even off the lattice -- an intercept the text cites. */
   require?: number[];
+  /**
+   * An axis without numbers (ADR 0066): a qualitative graph's P against T,
+   * the "Tempo" of a five-option question. It prints no lattice number and
+   * says so to `axis-number-present`, which fails an axis that prints none
+   * WITHOUT saying so.
+   */
+  schematic?: boolean;
+  /**
+   * Symbolic ticks: a place on the axis named by text ("T", "P_0", "t_1").
+   * The label is typed and claims nothing numeric -- a number is refused --
+   * and it declares the place it names, so `label-nearest-its-place` holds it
+   * beside its tick. `_0` / `_{10}` set real subscripts.
+   */
+  ticks?: TickInput[];
+  /**
+   * A category axis: one name per category, at x = 1, 2, … n. Series give
+   * `values` (one per category) and bars stand on it. Numberless by nature,
+   * so declared as such, and every name declares its place.
+   */
+  categories?: string[];
+  /** The colour of this axis's numbers and name: a dual-axis chart colours each axis to its series. */
+  colour?: string;
+};
+
+export type TickInput = { at: number; label: string };
+
+/** Arrows on a curve: where along its drawn length (0 to 1), and whether against the drawing order. */
+export type ArrowsInput = number[] | { at: number[]; reverse?: boolean };
+
+/**
+ * A measured series (ADR 0066): a curve through given points, on the same
+ * plane, under the same labelling rules, as an expression's curve.
+ */
+export type SeriesInput = StrokeInput & {
+  id: string;
+  /** The data, [x, y] in the order drawn. */
+  points?: XY[];
+  /** On a category axis instead: one value per category. */
+  values?: number[];
+  /** "linear" (default), "smooth" (monotone cubic, never overshoots), "step", or "none" (markers only). */
+  interpolate?: Interpolation;
+  /** A marker at every data point: true or "circle", "square". Default false (true for "none"). */
+  markers?: boolean | "circle" | "square";
+  /**
+   * Each data point's value printed beside it, through the locale formatter:
+   * true for every point, a list of indices for some, or an object.
+   */
+  valueLabels?: boolean | number[] | { at?: number[]; decimals?: number; suffix?: string; towards?: Dir[] };
+  /** Which y axis the values are read on: "y" (default) or "y2" (the right axis). */
+  axis?: "y" | "y2";
+  arrows?: ArrowsInput;
+  label?: CurveLabelInput;
+  legend?: string;
+};
+
+/** Grouped bars on a category axis; each entry is one series of bars, one value per category. */
+export type BarsInput = {
+  id: string;
+  values: number[];
+  colour?: string;
+  legend?: string;
+  /** Print each bar's value above it. */
+  valueLabels?: boolean;
+};
+
+/** The axes as a whole. */
+export type AxesInput = {
+  /** Both axes schematic. Per axis: `x.schematic`, `y.schematic`. */
+  schematic?: boolean;
+  /** Draw the lattice. Default: unless every axis is schematic. */
+  grid?: boolean;
+  /** Arrowheads at the axes' positive ends. Default: when an axis is schematic. */
+  arrows?: boolean;
 };
 
 export type StrokeInput = {
@@ -131,6 +217,8 @@ export type FunctionInput = StrokeInput & {
   implicit?: string;
   label?: CurveLabelInput;
   legend?: string;
+  /** Arrows on the curve showing the direction it is travelled (ADR 0066): increasing x, or `reverse`. */
+  arrows?: ArrowsInput;
   /** Mark computed roots and local extrema, each declared to lie on this curve (ADR 0025). */
   features?: ("roots" | "extrema")[];
   /**
@@ -194,8 +282,8 @@ export type PointInput = {
   /** A template: "P{coords}" prints "P(3; 9)" from the computed point. */
   label?: string;
   towards?: Dir[];
-  /** Dashed guides from the point to both axes. */
-  guides?: boolean;
+  /** Dashed guides from the point to both axes; "x" only down (or up) to the x axis, "y" only across to the y axis. */
+  guides?: boolean | "x" | "y";
   /** Label size. Default 14. */
   size?: number;
 };
@@ -298,7 +386,30 @@ export type FunctionGraphInput = {
   labels?: LabelInput[];
   areas?: AreaInput[];
   riemann?: RiemannInput[];
+  /** Measured series: curves through given points (ADR 0066). */
+  series?: SeriesInput[];
+  /** Grouped bars on a category axis (ADR 0066). */
+  bars?: BarsInput[];
+  /** A second y axis on the right, for a series on another scale; its unit is fitted to the y axis's height. */
+  y2?: AxisInput;
+  axes?: AxesInput;
   legend?: LegendInput;
+  /**
+   * Labelled panels (A)–(E) of small graphs in one figure (ADR 0066): each a
+   * function-graph of its own, every field it leaves out taken from this
+   * input, laid out `columns` across on cells of one size.
+   */
+  panels?: PanelInput[];
+  /** Panels per row. Default 2. */
+  columns?: number;
+};
+
+export type PanelInput = Partial<Omit<FunctionGraphInput, "panels" | "columns" | "x" | "y" | "y2">> & {
+  /** The panel's letter. Default A, B, C… in order. */
+  label?: string;
+  x?: Partial<AxisInput>;
+  y?: Partial<AxisInput>;
+  y2?: Partial<AxisInput>;
 };
 
 // ---- palette -------------------------------------------------------------
@@ -389,13 +500,17 @@ type Curve = {
   interval?: [number, number];
   /** Implicit: the level set, as polylines in axis units, found by contour. */
   paths?: { points: Resolved[]; closed: boolean }[];
+  /** A measured series (ADR 0066): its given points and how they are joined. */
+  measured?: Measured;
+  /** Read on the right axis: its values are mapped onto the plane, so a point read off it would print the wrong number. */
+  onY2?: boolean;
   /** Parametric, polar, implicit: what `{expr}` prints. */
   display?: string;
 };
 
 type Resolved = { x: number; y: number };
 
-type LegendRow = { text: string; colour: string; width: number; lineStyle: LineStyle | undefined; fill?: string };
+type LegendRow = { text: string; colour: string; width: number; lineStyle: LineStyle | undefined; fill?: string; textColour?: string };
 
 /**
  * A label that names a region or a sum (ADR 0036). It `annotates` the closed
@@ -449,6 +564,9 @@ type AsymptoteLine = {
 const TINT_ALPHA = "1C";
 const tint = (colour: string): string => `${colour}${TINT_ALPHA}`;
 
+/** Bar fills, in order: the palette's darker inks, so a value label on paper beside them reads, and they read apart. */
+const BAR_COLOURS = ["#E07B54", "#1F7A4D", "#1D4E89", "#8A5A00"];
+
 const LEFT = 46;
 const RIGHT = 40;
 const TOP = 30;
@@ -471,7 +589,7 @@ class Build {
   readonly seriesColour = new Map<string, { colour: string; width: number; lineStyle: LineStyle | undefined }>();
   readonly guideMarks: Mark[] = [];
   readonly tickBoxes: Box[] = [];
-  readonly required = { x: new Set<number>(), y: new Set<number>() };
+  readonly required: { x: Set<number>; y: Set<number>; y2?: Set<number> } = { x: new Set<number>(), y: new Set<number>() };
   /** Every shaded region and Riemann outline, in canvas px: what the legend keeps off. */
   readonly regionsPx: Point[][] = [];
   /** Labels of regions and sums, placed once every other mark exists. */
@@ -487,6 +605,13 @@ class Build {
   /** Where a graph with asymptotes or holes is broken while sampling: never joined across a pole. */
   readonly graphBreaks = new Map<string, number[]>();
 
+  /** The right axis (ADR 0066): its range, unit and step, when there is one. */
+  readonly y2: { range: [number, number]; unit: number; step: number } | undefined;
+  /** Every mark drawn for a series, in drawing order: what its arrows are set along. */
+  readonly seriesRuns = new Map<string, Point[][]>();
+  /** Labels naming a data point (value labels), placed after the curve labels. */
+  readonly valueLabelsPending: { text: string; at: Point; colour: string; towards: Dir[] }[] = [];
+
   constructor(input: FunctionGraphInput) {
     this.input = input;
     this.locale = input.locale ?? "pt-BR";
@@ -496,11 +621,29 @@ class Build {
     this.uy = input.y.unit;
     this.sx = input.x.step ?? 1;
     this.sy = input.y.step ?? 1;
-    const W = Math.round(LEFT + (this.xr[1] - this.xr[0]) * this.ux + RIGHT);
-    const H = Math.round(TOP + (this.yr[1] - this.yr[0]) * this.uy + BOTTOM);
+    let right = RIGHT;
+    if (input.y2 !== undefined) {
+      const span = input.y2.range[1] - input.y2.range[0];
+      const step = input.y2.step ?? niceStep(span, 6);
+      this.y2 = { range: input.y2.range, unit: ((this.yr[1] - this.yr[0]) * this.uy) / span, step };
+      // Room for the right axis's numbers beside it.
+      const widest = Math.max(
+        0,
+        ...ticksIn(input.y2.range[0], input.y2.range[1], step).map((v) => labelWidthOf(formatNumber(v, this.locale), 11)),
+      );
+      right = Math.max(RIGHT, Math.ceil(widest + 22));
+    }
+    if (this.schematic("x") && (input.x.name ?? "x") !== "") {
+      right = Math.max(right, Math.ceil(labelWidthOf(input.x.name ?? "x", 15, 0.1, 600) + 36));
+    }
+    const W = Math.round(LEFT + (this.xr[1] - this.xr[0]) * this.ux + right);
+    // Room above the plot for the axis names set there (ADR 0066).
+    const top = this.measuredMode && ((input.y.name ?? "y") !== "" || (input.y2?.name ?? "") !== "") ? TOP + 16 : TOP;
+    const bottom = this.measuredMode && !this.schematic("x") && (input.x.name ?? "x") !== "" ? BOTTOM + 34 : BOTTOM;
+    const H = Math.round(top + (this.yr[1] - this.yr[0]) * this.uy + bottom);
     this.board = new Board(W, H, PAPER);
     this.ox = LEFT - this.xr[0] * this.ux;
-    this.oy = TOP + this.yr[1] * this.uy;
+    this.oy = top + this.yr[1] * this.uy;
   }
 
   at(u: number, w: number): Point {
@@ -518,6 +661,383 @@ class Build {
 
   fmt(value: number, decimals?: number): string {
     return formatNumber(value, this.locale, decimals === undefined ? {} : { decimals });
+  }
+
+  // ---- axes without numbers, measured series (ADR 0066) -------------------
+
+  /** Declared schematic: the axis prints no number, and says so. */
+  schematic(axis: "x" | "y"): boolean {
+    return this.input.axes?.schematic === true || this.input[axis].schematic === true;
+  }
+
+  /** An axis that prints no lattice number: schematic, or a category axis. */
+  numberless(axis: "x" | "y"): boolean {
+    return this.schematic(axis) || (this.input[axis].categories !== undefined);
+  }
+
+  /** Any of this ADR's features in use: only then are edge axes drawn, so every older figure is unchanged. */
+  get measuredMode(): boolean {
+    const i = this.input;
+    return (
+      (i.series ?? []).length > 0 ||
+      (i.bars ?? []).length > 0 ||
+      i.y2 !== undefined ||
+      this.numberless("x") ||
+      this.numberless("y") ||
+      (i.x.ticks ?? []).length > 0 ||
+      (i.y.ticks ?? []).length > 0 ||
+      i.axes?.arrows === true
+    );
+  }
+
+  /** A value read on the right axis, stated on the plane's own y. */
+  fromY2(v: number): number {
+    const y2 = this.y2!;
+    return this.yr[0] + ((v - y2.range[0]) * (this.yr[1] - this.yr[0])) / (y2.range[1] - y2.range[0]);
+  }
+
+  /** Where the right axis runs, in canvas px. */
+  get rightEdge(): number {
+    return this.at(this.xr[1], 0).x;
+  }
+
+  /**
+   * A label set with real sub/superscripts (ADR 0062) when its text has
+   * any (`P_0`, `t_{1}`, `m^2`), searched clear of ink like any other.
+   */
+  richPlace(text: string, cx: number, cy: number, dirs: Point[], o: LabelOptions & { steps?: number }): Block {
+    const marked = text.replace(/([_^])([A-Za-z0-9])(?![A-Za-z0-9{])/g, "$1{$2}");
+    const runs = rich(marked);
+    const plain = runsText(runs);
+    if (!hasScripts(runs)) return this.board.place(plain, cx, cy, dirs, o);
+    const width = runsWidth(runs, o.size ?? 13, o.weight ?? 400);
+    const block = this.board.place(plain, cx, cy, dirs, { ...o, width });
+    block.runs = runs;
+    return block;
+  }
+
+  /** An arrowhead at an axis's positive end, its base on the end of the line. */
+  axisArrow(end: Point, dir: Point, id: string): void {
+    const n = { x: -dir.y, y: dir.x };
+    const tip = { x: end.x + dir.x * 10, y: end.y + dir.y * 10 };
+    const b1 = { x: end.x + n.x * 4.5, y: end.y + n.y * 4.5 };
+    const b2 = { x: end.x - n.x * 4.5, y: end.y - n.y * 4.5 };
+    this.board.poly([tip, b1, b2], { stroke: AXIS, width: 1, fill: AXIS, close: true, id });
+  }
+
+  /** A filled marker in canvas px, declared to lie on its series. */
+  marker(c: Point, shape: "circle" | "square", colour: string, id: string, series: string): void {
+    if (shape === "circle") {
+      this.board.circle(c, 4.2, { fill: colour, id, on: [series] });
+    } else {
+      const r = 4;
+      const corners = [
+        { x: c.x - r, y: c.y - r },
+        { x: c.x + r, y: c.y - r },
+        { x: c.x + r, y: c.y + r },
+        { x: c.x - r, y: c.y + r },
+      ];
+      this.board.marks.push({ id, from: corners[0]!, segments: corners.slice(1).map((p) => ({ line: p })), close: true, fill: colour, stroke: "none", strokeWidth: 0, on: [series] });
+      this.board.trace([...corners, corners[0]!], colour, 1, id);
+    }
+    this.board.reserve(c.x, c.y, 11, 11);
+  }
+
+  /**
+   * A filled arrowhead on a curve at `at`, pointing along `dir`. Its
+   * centroid is the point on the curve, so `feature-on-its-curve` holds the
+   * arrow to the curve it claims.
+   */
+  arrowhead(at: Point, dir: Point, colour: string, id: string, on?: string): void {
+    const n = { x: -dir.y, y: dir.x };
+    const tip = { x: at.x + dir.x * 8, y: at.y + dir.y * 8 };
+    const back = { x: at.x - dir.x * 4, y: at.y - dir.y * 4 };
+    const b1 = { x: back.x + n.x * 5.5, y: back.y + n.y * 5.5 };
+    const b2 = { x: back.x - n.x * 5.5, y: back.y - n.y * 5.5 };
+    this.board.marks.push({
+      id,
+      from: tip,
+      segments: [{ line: b1 }, { line: b2 }],
+      close: true,
+      fill: colour,
+      stroke: "none",
+      strokeWidth: 0,
+      ...(on === undefined ? {} : { on: [on] }),
+    });
+    this.board.trace([tip, b1, b2, tip], colour, 1, id);
+  }
+
+  /** Every measured series as a curve: its pieces where it is a function of x, its path always. */
+  seriesCurve(s: SeriesInput, path: string): Curve {
+    const cats = this.input.x.categories;
+    const raw: XY[] =
+      s.points ?? (s.values ?? []).map((v, i) => [i + 1, v] as XY);
+    if (s.values !== undefined && cats === undefined) {
+      throw new SpecError(`${path}.values gives one value per category, and x has no "categories"; give "points" [[x, y], …]`);
+    }
+    if (s.values !== undefined && cats !== undefined && s.values.length !== cats.length) {
+      throw new SpecError(`${path}.values has ${s.values.length} value(s) for ${cats.length} categories`);
+    }
+    const onY2 = s.axis === "y2";
+    if (onY2 && this.y2 === undefined) throw new SpecError(`${path}.axis is "y2", and the figure declares no "y2" axis`);
+    const ry = onY2 ? this.y2!.range : this.yr;
+    raw.forEach(([x, y], i) => {
+      if (x < this.xr[0] - 1e-9 || x > this.xr[1] + 1e-9 || y < ry[0] - 1e-9 || y > ry[1] + 1e-9) {
+        throw new SpecError(
+          `${path}: point ${i + 1} (${x}, ${y}) lies outside the plotted range; widen the ${onY2 ? "y2" : "x or y"} range -- ` +
+            `a measured point is never clipped silently`,
+        );
+      }
+    });
+    const interpolate = s.interpolate ?? "linear";
+    const points = raw.map(([x, y]) => ({ x, y: onY2 ? this.fromY2(y) : y }));
+    const m = measure(points, interpolate);
+    if ((interpolate === "smooth" || interpolate === "step") && !m.isFunction) {
+      throw new SpecError(`${path}: a "${interpolate}" series needs x to run one way, strictly; these points turn back`);
+    }
+    const curve: Curve = {
+      id: s.id,
+      series: s.id,
+      colour: colourOf(s.colour, COLOURS.key!, `${path}.colour`),
+      width: s.width ?? 2.4,
+      lineStyle: s.style === "solid" ? undefined : s.style,
+      kind: "graph",
+      at: () => Number.NaN,
+      pieces: m.pieces,
+      measured: m,
+      ...(onY2 ? { onY2: true } : {}),
+    };
+    curve.at = (x) => this.valueOn(curve, x);
+    return curve;
+  }
+
+  /** The measured series, drawn as their own polylines (vertices at the data), then markers. */
+  seriesStrokes(): void {
+    for (const [i, s] of (this.input.series ?? []).entries()) {
+      const curve = this.curveById(s.id, `series[${i}]`);
+      const m = curve.measured!;
+      if (m.interpolate !== "none" && m.path.length > 1) {
+        const px = m.path.map((p) => this.at(p.x, p.y));
+        this.board.poly(px, {
+          id: s.id,
+          stroke: curve.colour,
+          width: curve.width,
+          ...(curve.lineStyle === undefined ? {} : { lineStyle: curve.lineStyle }),
+          series: curve.series,
+        });
+        this.seriesRuns.set(s.id, [px]);
+      } else {
+        // Markers only: an invisible-free series still needs ink that names
+        // it, so the markers carry the series.
+        this.seriesRuns.set(s.id, [m.points.map((p) => this.at(p.x, p.y))]);
+      }
+    }
+  }
+
+  /** Markers and value labels of every series, after the guides so they paint over them. */
+  seriesDots(): void {
+    for (const [i, s] of (this.input.series ?? []).entries()) {
+      const path = `series[${i}]`;
+      const curve = this.curveById(s.id, path);
+      const m = curve.measured!;
+      const shape = s.markers === "square" ? "square" : s.markers === false ? null : s.markers === undefined ? (m.interpolate === "none" ? "circle" : null) : "circle";
+      m.points.forEach((p, k) => {
+        const c = this.at(p.x, p.y);
+        if (shape !== null) {
+          this.markerCentres.push(c);
+          // A markers-only series has no line, so its markers ARE the series.
+          if (m.interpolate === "none") {
+            this.board.circle(c, 4.2, { fill: curve.colour, id: `${s.id}-marker-${k + 1}` });
+            const mark = this.board.marks[this.board.marks.length - 1]!;
+            mark.series = curve.series;
+            this.board.reserve(c.x, c.y, 11, 11);
+          } else {
+            this.marker(c, shape, curve.colour, `${s.id}-marker-${k + 1}`, curve.series);
+          }
+        }
+      });
+      if (s.valueLabels === undefined || s.valueLabels === false) continue;
+      const o = typeof s.valueLabels === "object" && !Array.isArray(s.valueLabels) ? s.valueLabels : {};
+      const which = Array.isArray(s.valueLabels) ? s.valueLabels : o.at ?? m.points.map((_, k) => k);
+      const given: XY[] = s.points ?? (s.values ?? []).map((v, k) => [k + 1, v] as XY);
+      for (const k of which) {
+        if (!Number.isInteger(k) || k < 0 || k >= m.points.length) {
+          throw new SpecError(`${path}.valueLabels: ${k} is not the index of a point (0 to ${m.points.length - 1})`);
+        }
+        const p = m.points[k]!;
+        // The ORIGINAL value, as given -- on the right axis too.
+        const text = `${this.fmt(given[k]![1], o.decimals)}${o.suffix ?? ""}`;
+        this.valueLabelsPending.push({ text, at: this.at(p.x, p.y), colour: curve.colour, towards: o.towards ?? ["U", "D", "NE", "NW", "SE", "SW", "R", "L"] });
+      }
+    }
+  }
+
+  /**
+   * Value labels: each names its data point (a place), so it is held beside
+   * it -- and a spot is taken only where that point is nearer the label than
+   * any ink that does not pass through it, the measure
+   * `label-nearest-its-place` applies. The first such clear spot in the
+   * directions asked wins; with none, the least bad spot `place` finds.
+   */
+  valueLabels(): void {
+    const b = this.board;
+    const size = 12.5;
+    for (const v of this.valueLabelsPending) {
+      const w = b.measure(v.text, size, 0.1, 600);
+      const h = Math.ceil(lineBox(size));
+      const through = (s: { ax: number; ay: number; bx: number; by: number }): boolean =>
+        segmentPointDistance(s, v.at) < 0.5;
+      const rivals = b.ink.filter((s) => !through(s));
+      let spot: Point | null = null;
+      search: for (const d of dirsOf(v.towards, ["U"])) {
+        // Straight above or below, the box may also slide sideways while it
+        // still spans the point: off the axis beside the first category.
+        const shifts = d.x === 0 ? [0, 4, -4, 8, -8, 12, -12, 16, -16].filter((t) => Math.abs(t) < w / 2 - 2) : [0];
+        for (let k = 0; k <= 10; k += 1) {
+          for (const shift of shifts) {
+            const gap = 4 + 2 * k;
+            // Beside the point in that direction: the box's near edge `gap` from it.
+            const x = v.at.x + Math.sign(d.x) * (w / 2 + gap) + shift;
+            const y = v.at.y + Math.sign(d.y) * (h / 2 + gap);
+            const box = b.box(x, y, w, h);
+            if (x - w / 2 < 4 || x + w / 2 > b.W - 4 || y - h / 2 < 4 || y + h / 2 > b.H - 4) continue;
+            if (!b.clear(box, 1)) continue;
+            const toPlace = rectPointDistance(box, v.at);
+            if (toPlace > Math.max(w, h)) continue;
+            if (rivals.some((s) => rectSegmentDistance(box, s) < toPlace + 1)) continue;
+            // Other data points' markers: dots, which the ink record does not hold.
+            if (this.markerCentres.some((c) => (c.x !== v.at.x || c.y !== v.at.y) && rectPointDistance(box, c) - 5 < toPlace + 1)) continue;
+            spot = { x, y };
+            break search;
+          }
+        }
+      }
+      const o = { size, weight: 600, colour: v.colour, annotatesPlace: v.at };
+      if (spot !== null) b.label(v.text, spot.x, spot.y, { ...o, width: w });
+      else b.place(v.text, v.at.x, v.at.y - h / 2 - 5, dirsOf(v.towards, ["U"]), { ...o, steps: 8 });
+    }
+  }
+
+  /** Arrows along curves that ask for them: functions (increasing x) and series (their drawing order). */
+  curveArrows(): void {
+    const items: { id: string; arrows: ArrowsInput; path: string }[] = [
+      ...(this.input.functions ?? []).flatMap((f, i) => (f.arrows === undefined ? [] : [{ id: f.id, arrows: f.arrows, path: `functions[${i}]` }])),
+      ...(this.input.series ?? []).flatMap((s, i) => (s.arrows === undefined ? [] : [{ id: s.id, arrows: s.arrows, path: `series[${i}]` }])),
+    ];
+    for (const item of items) {
+      const curve = this.curveById(item.id, item.path);
+      const at = Array.isArray(item.arrows) ? item.arrows : item.arrows.at;
+      const reverse = !Array.isArray(item.arrows) && item.arrows.reverse === true;
+      let runs = this.seriesRuns.get(item.id);
+      if (runs === undefined) {
+        runs = this.polylines()
+          .filter((r) => this.board.marks.find((m) => m.id === r.id)?.series === curve.series)
+          .map((r) => r.pts);
+      }
+      const pts = runs.flat();
+      if (pts.length < 2) throw new SpecError(`${item.path}.arrows: ${item.id} draws nothing to set an arrow on`);
+      const ordered = reverse ? [...pts].reverse() : pts;
+      at.forEach((f, k) => {
+        const hit = alongPolyline(ordered, f);
+        if (hit === null) return;
+        this.arrowhead(hit.at, hit.dir, curve.colour, `${item.id}-arrow-${k + 1}`, curve.series);
+      });
+    }
+  }
+
+  /**
+   * Grouped bars on the category axis: a bar's height IS its value, from
+   * zero, so a y range that does not include zero is refused -- a truncated
+   * bar is a different number drawn.
+   */
+  barsDraw(): void {
+    const groups = this.input.bars ?? [];
+    if (groups.length === 0) return;
+    const cats = this.input.x.categories;
+    if (cats === undefined) throw new SpecError(`bars stand on a category axis; give x "categories"`);
+    if (this.yr[0] > 0 || this.yr[1] < 0) {
+      throw new SpecError(`bars: the y range [${this.yr.join(", ")}] leaves out zero, and a bar's length is its value from zero`);
+    }
+    const width = 0.72;
+    const each = width / groups.length;
+    groups.forEach((g, j) => {
+      const path = `bars[${j}]`;
+      if (g.values.length !== cats.length) throw new SpecError(`${path}.values has ${g.values.length} value(s) for ${cats.length} categories`);
+      const colour = colourOf(g.colour, BAR_COLOURS[j % BAR_COLOURS.length]!, `${path}.colour`);
+      g.values.forEach((v, i) => {
+        if (v < this.yr[0] - 1e-9 || v > this.yr[1] + 1e-9) throw new SpecError(`${path}.values[${i}] = ${v} lies outside the y range`);
+        const x0 = i + 1 - width / 2 + j * each;
+        const id = `${g.id}-${i + 1}`;
+        const px = this.region(id, [
+          { x: x0, y: 0 },
+          { x: x0 + each, y: 0 },
+          { x: x0 + each, y: v },
+          { x: x0, y: v },
+        ], colour);
+        this.regionsPx.push(px);
+        // The bar is ink a label search must keep off.
+        this.board.trace([...px, px[0]!], colour, 1, id);
+        if (g.valueLabels === true) {
+          const top = this.at(i + 1 - width / 2 + (j + 0.5) * each, v);
+          this.barLabels.push({ text: this.fmt(v), at: top, owner: id, colour: INK });
+        }
+      });
+      if (g.legend !== undefined) {
+        // A bar's fill is a surface colour, not an ink: the row's text is ink.
+        this.regionLegend.push({ text: this.fill(g.legend, {}, `${path}.legend`), colour, width: 1, lineStyle: undefined, fill: colour, textColour: INK });
+      }
+    });
+  }
+
+  readonly barLabels: { text: string; at: Point; owner: string; colour: string }[] = [];
+  /** Every series marker's centre: what a value label must stay farther from than its own point. */
+  readonly markerCentres: Point[] = [];
+
+  /** A bar's value above it, naming the bar. */
+  barValueLabels(): void {
+    for (const l of this.barLabels) {
+      const { h } = this.board.extent(l.text, { size: 12 });
+      this.board.place(l.text, l.at.x, l.at.y - h / 2 - 2, [DIRS.U], { size: 12, weight: 600, colour: l.colour, annotates: l.owner, steps: 6 });
+    }
+  }
+
+  /**
+   * Symbolic ticks and category names: a short tick on the axis, and the
+   * typed name of the place beside it, declared to name that place.
+   */
+  symbolicTicks(): void {
+    const b = this.board;
+    for (const axis of ["x", "y"] as const) {
+      const a = this.input[axis];
+      const ticks: TickInput[] = [
+        ...(a.categories ?? []).map((label, i) => ({ at: i + 1, label })),
+        ...(a.ticks ?? []),
+      ];
+      const colour = colourOf(a.colour, SOFT, `${axis}.colour`);
+      ticks.forEach((t, i) => {
+        const c = axis === "x" ? this.at(t.at, this.baseY) : this.at(this.baseX, t.at);
+        const id = `${axis}-symbol-${i + 1}`;
+        const half = 4;
+        const isCategory = axis === "x" && i < (a.categories ?? []).length;
+        if (!isCategory) b.poly(axis === "x" ? [{ x: c.x, y: c.y - half }, { x: c.x, y: c.y + half }] : [{ x: c.x - half, y: c.y }, { x: c.x + half, y: c.y }], {
+          stroke: AXIS,
+          width: 1.6,
+          id: `${id}-tick`,
+        });
+        const size = 13;
+        const { h } = b.extent(t.label, { size });
+        const w = b.measure(t.label, size, 0.1, 600);
+        const start = axis === "x" ? { x: c.x, y: c.y + (isCategory ? 3 : 7) + h / 2 } : { x: c.x - 8 - w / 2, y: c.y };
+        this.richPlace(t.label, start.x, start.y, axis === "x" ? [DIRS.D, DIRS.SE, DIRS.SW] : [DIRS.L, DIRS.NW, DIRS.SW], {
+          size,
+          weight: 600,
+          colour,
+          id,
+          annotatesPlace: c,
+          steps: 4,
+        });
+      });
+    }
   }
 
   // ---- references ---------------------------------------------------------
@@ -547,6 +1067,12 @@ class Build {
         `${path}: {of, x} reads the value of a function at x, and ${ref.of} is ${this.kindName(curve)}, ` +
           `which has no single point at an x${this.readHint(curve)}`,
       );
+    }
+    if (curve.onY2 === true) {
+      throw new SpecError(`${path}: ${ref.of} is read on the right axis; a point read off it would print the plane's y, not its own value -- use its "valueLabels"`);
+    }
+    if (curve.measured !== undefined && curve.pieces.length === 0) {
+      throw new SpecError(`${path}: ${ref.of} is a series whose x does not run one way, so it has no single point at an x`);
     }
     const y = this.valueOn(curve, ref.x, ref.side);
     if (!Number.isFinite(y)) {
@@ -586,14 +1112,17 @@ class Build {
     if (known !== undefined) return known;
     const fi = (this.input.functions ?? []).findIndex((f) => f.id === id);
     const li = (this.input.lines ?? []).findIndex((l) => l.id === id);
-    if (fi < 0 && li < 0) {
-      const ids = [...(this.input.functions ?? []), ...(this.input.lines ?? [])].map((c) => c.id);
-      v.knownId(id, new Set(ids), path, "a function or line");
+    const si = (this.input.series ?? []).findIndex((l) => l.id === id);
+    if (fi < 0 && li < 0 && si < 0) {
+      const ids = [...(this.input.functions ?? []), ...(this.input.lines ?? []), ...(this.input.series ?? [])].map((c) => c.id);
+      v.knownId(id, new Set(ids), path, "a function, line or series");
     }
     const curve = this.once(`curve ${id}`, path, () =>
       fi >= 0
         ? this.functionCurve(this.input.functions![fi]!, `functions[${fi}]`)
-        : this.lineCurve(this.input.lines![li]!, `lines[${li}]`),
+        : li >= 0
+          ? this.lineCurve(this.input.lines![li]!, `lines[${li}]`)
+          : this.seriesCurve(this.input.series![si]!, `series[${si}]`),
     );
     this.curves.set(id, curve);
     if (!this.seriesColour.has(curve.series)) {
@@ -661,7 +1190,7 @@ class Build {
         if (field === "") return formatPoint(p.x, p.y, this.locale, opts);
         if (field === "x" || field === "y") return this.fmt(p[field], decimals);
       }
-      const isCurve = [...(this.input.functions ?? []), ...(this.input.lines ?? [])].some((c) => c.id === name);
+      const isCurve = [...(this.input.functions ?? []), ...(this.input.lines ?? []), ...(this.input.series ?? [])].some((c) => c.id === name);
       if (isCurve && (field === "slope" || field === "expr" || field === "eq")) {
         return this.curveField(this.curveById(name, path), field, path, decimals);
       }
@@ -721,24 +1250,95 @@ class Build {
       }
       return out;
     };
-    for (const value of [...lattice(input.x, this.sx), ...(input.x.require ?? [])]) this.required.x.add(value);
-    for (const value of [...lattice(input.y, this.sy), ...(input.y.require ?? [])]) this.required.y.add(value);
+    // An axis without numbers requires none: it prints none, and says so below.
+    if (!this.numberless("x")) for (const value of [...lattice(input.x, this.sx), ...(input.x.require ?? [])]) this.required.x.add(value);
+    if (!this.numberless("y")) for (const value of [...lattice(input.y, this.sy), ...(input.y.require ?? [])]) this.required.y.add(value);
+    // With no x numbers there is no "0" at the origin to stand for both
+    // axes; a numbered y axis prints its own (a bar chart's baseline).
+    if (this.numberless("x") && !this.numberless("y") && this.yr[0] <= 0 && this.yr[1] >= 0) this.required.y.add(0);
+    const gridShown = input.axes?.grid ?? !(this.numberless("x") && this.numberless("y"));
     this.board.frames.push({
       id: "plane",
       origin: { x: this.ox, y: this.oy },
       xUnit: this.ux,
       yUnit: this.uy,
       grid: {
-        x: { from: this.xr[0], to: this.xr[1], step: this.sx, origin: 0, require: [...this.required.x] },
+        // A category axis rules no line across its categories: the only
+        // vertical line is its own edge (ADR 0066).
+        x:
+          input.x.categories === undefined
+            ? { from: this.xr[0], to: this.xr[1], step: this.sx, origin: 0, require: [...this.required.x] }
+            : { from: this.xr[0], to: this.xr[1], step: 2 * (this.xr[1] - this.xr[0]), origin: this.xr[0], require: [] },
         y: { from: this.yr[0], to: this.yr[1], step: this.sy, origin: 0, require: [...this.required.y] },
         axes: true,
         labels: false,
-        stroke: GRID,
+        stroke: gridShown ? GRID : "none",
         axisStroke: AXIS,
         labelColor: FAINT,
         lineStyle: "dashed",
       },
     });
+    // An axis that prints no number DECLARES it (ADR 0066): a zero-ink mark
+    // `<frame>-schematic-<axis>`, grid furniture, which `axis-number-present`
+    // reads. The stand-in for a `GridAxis.schematic` the core does not have.
+    for (const axis of ["x", "y"] as const) {
+      if (!this.numberless(axis)) continue;
+      const p = axis === "x" ? this.at(this.xr[1], this.baseY) : this.at(this.baseX, this.yr[1]);
+      this.board.marks.push({
+        id: `plane-schematic-${axis}`,
+        gridOf: "plane",
+        from: p,
+        segments: [{ line: p }],
+        close: false,
+        fill: "none",
+        stroke: "none",
+        strokeWidth: 0,
+      });
+    }
+    if (this.y2 !== undefined) {
+      const y2 = this.y2;
+      const required = this.input.y2!.schematic === true
+        ? []
+        : [...ticksIn(y2.range[0], y2.range[1], y2.step), ...(this.input.y2!.require ?? [])];
+      this.required.y2 = new Set(required);
+      // A frame of its own, only to carry the right axis's required numbers
+      // to `axis-number-present`: no lines drawn, no numbers printed by it.
+      // Its x step is wide so the check's reach across the axis covers a
+      // number set beside the right edge.
+      this.board.frames.push({
+        id: "plane-y2",
+        origin: { x: this.rightEdge, y: this.at(0, this.fromY2(0)).y },
+        xUnit: 1,
+        yUnit: y2.unit,
+        grid: {
+          x: { from: 0, to: 0, step: 60, origin: 0 },
+          y: { from: y2.range[0], to: y2.range[1], step: y2.step, origin: 0, require: [...required] },
+          axes: false,
+          labels: false,
+          stroke: "none",
+        },
+      });
+    }
+    if (this.measuredMode) {
+      // Where zero is outside a range, the axis is ruled at the low edge:
+      // a chart of 250 to 600 tonnes still stands on a line.
+      if (this.baseY !== 0) {
+        this.board.poly([this.at(this.xr[0], this.baseY), this.at(this.xr[1], this.baseY)], { stroke: AXIS, width: 2, id: "axis-edge-x" });
+      }
+      if (this.baseX !== 0) {
+        this.board.poly([this.at(this.baseX, this.yr[0]), this.at(this.baseX, this.yr[1])], { stroke: AXIS, width: 2, id: "axis-edge-y" });
+      }
+      if (this.y2 !== undefined) {
+        const colour = colourOf(this.input.y2!.colour, AXIS, "y2.colour");
+        this.board.poly([this.at(this.xr[1], this.yr[0]), this.at(this.xr[1], this.yr[1])], { stroke: colour, width: 2, id: "axis-y2" });
+      }
+    }
+    if (input.axes?.arrows ?? (this.schematic("x") || this.schematic("y"))) {
+      const ex = this.at(this.xr[1], this.baseY);
+      const ey = this.at(this.baseX, this.yr[1]);
+      this.axisArrow(ex, { x: 1, y: 0 }, "axis-arrow-x");
+      this.axisArrow(ey, { x: 0, y: -1 }, "axis-arrow-y");
+    }
     // The axes are drawn by the core grid, not by this board, so the search
     // below would not see them. They are claimed as INK for the legend and
     // for labels: a legend over an axis was one of the defects this exists
@@ -1185,10 +1785,10 @@ class Build {
 
   guides(): void {
     for (const [i, p] of (this.input.points ?? []).entries()) {
-      if (p.guides !== true) continue;
+      if (p.guides === undefined || p.guides === false) continue;
       const at = this.resolve(p.at, `points[${i}].at`);
-      this.guide(this.at(at.x, this.baseY), this.at(at.x, at.y), SOFT, 1.1);
-      this.guide(this.at(this.baseX, at.y), this.at(at.x, at.y), SOFT, 1.1);
+      if (p.guides !== "y") this.guide(this.at(at.x, this.baseY), this.at(at.x, at.y), SOFT, 1.1);
+      if (p.guides !== "x") this.guide(this.at(this.baseX, at.y), this.at(at.x, at.y), SOFT, 1.1);
     }
     for (const [i, g] of (this.input.guides ?? []).entries()) {
       const colour = colourOf(g.colour, SOFT, `guides[${i}].colour`);
@@ -1261,7 +1861,7 @@ class Build {
       }
       return out.sort((p, q) => p[2] - q[2]).map(([px, py]) => [px, py]);
     };
-    const tryTick = (text: string, id: string, cands: [number, number][], spread: () => [number, number][] = () => []): void => {
+    const tryTick = (text: string, id: string, cands: [number, number][], spread: () => [number, number][] = () => [], colour = FAINT): void => {
       // Sized to the line box the browser will actually set (11px at a 1.45
       // line height), not to the glyphs: `text-clear-of-ink` measures the
       // line box, and a number cleared by a tighter estimate was reported
@@ -1290,7 +1890,7 @@ class Build {
         cands.find(fits) ??
         (cutsCurve(cands[0]!) ? (spread().find(roomy) ?? spread().find(fits)) : undefined);
       const [x, y] = hit ?? cands[0]!;
-      const block = b.label(text, x, y, { size, colour: FAINT, width: w, id, gridOf: "plane", ...(hit ? {} : { fill: PAPER }) });
+      const block = b.label(text, x, y, { size, colour, width: w, id, gridOf: id.startsWith("tick-y2") ? "plane-y2" : "plane", ...(hit ? {} : { fill: PAPER }) });
       this.tickBoxes.push(b.box(x, y, block.width!, block.height!));
     };
     // Every 2px up to the limit itself: a number that fits only at the last
@@ -1304,7 +1904,10 @@ class Build {
     };
     const halfX = (this.sx * this.ux) / 2;
     const halfY = (this.sy * this.uy) / 2;
-    const origin = this.baseX === 0 && this.baseY === 0;
+    // The "0" at the origin belongs to the x axis's numbers: an x axis
+    // without numbers prints none (ADR 0066).
+    const origin = this.baseX === 0 && this.baseY === 0 && !this.numberless("x");
+    const xZero = !this.numberless("x") && !(this.baseX === 0 && this.baseY === 0);
     if (origin) {
       const o = this.at(0, 0);
       const reach = Math.min(halfX, halfY);
@@ -1313,7 +1916,7 @@ class Build {
         around(o.x, o.y, reach, reach).filter(([x, y]) => Math.abs(x - o.x) >= 8 && Math.abs(y - o.y) >= 11),
       );
     }
-    const xs = [...this.required.x, ...(origin ? [] : this.xr[0] <= 0 && 0 <= this.xr[1] ? [0] : [])].sort((p, q) => p - q);
+    const xs = [...this.required.x, ...(xZero && this.xr[0] <= 0 && 0 <= this.xr[1] ? [0] : [])].sort((p, q) => p - q);
     xs.forEach((value, i) => {
       const c = this.at(value, this.baseY);
       tryTick(this.fmt(value), `tick-x-${i}`, [...walk(c.x, c.y + 14, 0, 1, halfY), ...walk(c.x, c.y - 14, 0, -1, halfY)], () =>
@@ -1321,14 +1924,27 @@ class Build {
       );
     });
     const ys = [...this.required.y].sort((p, q) => p - q);
+    const yColour = colourOf(this.input.y.colour, FAINT, "y.colour");
     ys.forEach((value, i) => {
       const c = this.at(this.baseX, value);
       const t = this.fmt(value);
       const half = (b.measure(t, size) - 8) / 2;
       tryTick(t, `tick-y-${i}`, [...walk(c.x - 8 - half, c.y, -1, 0, halfX - half), ...walk(c.x + 8 + half, c.y, 1, 0, halfX - half)], () =>
         around(c.x, c.y, 8 + halfX, halfY / 2).filter(([x]) => Math.abs(x - c.x) >= 8 + half),
+        yColour,
       );
     });
+    // The right axis's numbers, beside it, outside the plot, in its colour.
+    if (this.y2 !== undefined) {
+      const colour = colourOf(this.input.y2!.colour, FAINT, "y2.colour");
+      [...(this.required.y2 ?? [])].sort((p, q) => p - q).forEach((value, i) => {
+        const y = this.at(0, this.fromY2(value)).y;
+        const t = this.fmt(value);
+        const half = (b.measure(t, size) - 8) / 2;
+        const x = this.rightEdge + 8 + half;
+        tryTick(t, `tick-y2-${i}`, walk(x, y, 1, 0, 8), () => [], colour);
+      });
+    }
   }
 
   /**
@@ -1370,9 +1986,10 @@ class Build {
   }
 
   curveLabels(): void {
-    const all: [FunctionInput | LineInput, string][] = [
+    const all: [FunctionInput | LineInput | SeriesInput, string][] = [
       ...(this.input.functions ?? []).map((f, i) => [f, `functions[${i}]`] as [FunctionInput, string]),
       ...(this.input.lines ?? []).map((l, i) => [l, `lines[${i}]`] as [LineInput, string]),
+      ...(this.input.series ?? []).map((l, i) => [l, `series[${i}]`] as [SeriesInput, string]),
     ];
     for (const [item, path] of all) {
       if (item.label === undefined) continue;
@@ -1474,23 +2091,56 @@ class Build {
     // An axis name names its axis, but the axis is grid furniture the
     // resolver draws after this preset returns, so there is no id to name
     // yet; it is declared free-standing instead (ADR 0035).
-    const o = { size: 15, weight: 600, colour: SOFT, serif: true, freeStanding: true };
+    const o = { size: 15, weight: 600, colour: SOFT, serif: true, freeStanding: true as const };
+    const of = (axis: "x" | "y" | "y2") => {
+      const c = this.input[axis]?.colour;
+      return c === undefined ? o : { ...o, colour: colourOf(c, SOFT, `${axis}.colour`) };
+    };
     if (xn !== "") {
       const ex = this.at(this.xr[1], this.baseY);
-      this.board.place(xn, ex.x + 14, ex.y - 12, [DIRS.R, DIRS.U], o);
+      if (this.schematic("x")) {
+        // At the arrow's tip: a qualitative graph names its axis where it points.
+        const { w } = this.board.extent(xn, { size: 15, weight: 600 });
+        this.placeName(xn, ex.x + 16 + w / 2, ex.y + 14, [DIRS.R, DIRS.D, DIRS.U], of("x"));
+      } else if (this.measuredMode) {
+        // Under the axis's numbers or names, centred, as a chart sets it (ADR 0066).
+        const mid = this.at((this.xr[0] + this.xr[1]) / 2, this.yr[0]);
+        this.placeName(xn, mid.x, mid.y + 44, [DIRS.D, DIRS.R, DIRS.L], of("x"));
+      } else {
+        this.placeName(xn, ex.x + 14, ex.y - 12, [DIRS.R, DIRS.U], of("x"));
+      }
     }
     if (yn !== "") {
       const ey = this.at(this.baseX, this.yr[1]);
-      this.board.place(yn, ey.x + 16, ey.y + 4, [DIRS.R, DIRS.D], o);
+      if (this.measuredMode) {
+        // Above the axis, outside the plot (ADR 0066): a chart's data runs
+        // to its top corner, where a name inside would sit on it.
+        const { w } = this.board.extent(yn, { size: 15, weight: 600 });
+        this.placeName(yn, ey.x - 10 + w / 2, ey.y - 24, [DIRS.R, DIRS.U], of("y"));
+      } else {
+        this.placeName(yn, ey.x + 16, ey.y + 4, [DIRS.R, DIRS.D], of("y"));
+      }
     }
+    const y2n = this.input.y2?.name ?? "";
+    if (this.y2 !== undefined && y2n !== "") {
+      const { w } = this.board.extent(y2n, { size: 15, weight: 600 });
+      this.placeName(y2n, this.rightEdge + 10 - w / 2, this.at(0, this.yr[1]).y - 24, [DIRS.L, DIRS.U], of("y2"));
+    }
+  }
+
+  /** An axis name; with real subscripts when it has any ("NO_x (ppm)"). */
+  placeName(text: string, cx: number, cy: number, dirs: Point[], o: LabelOptions): void {
+    if (/[_^]/.test(text)) this.richPlace(text, cx, cy, dirs, o);
+    else this.board.place(text, cx, cy, dirs, o);
   }
 
   /** Legend rows in declaration order: functions first, then lines, one per series. */
   legendRows(): LegendRow[] {
     const rows: LegendRow[] = [];
-    const all: [FunctionInput | LineInput, string][] = [
+    const all: [FunctionInput | LineInput | SeriesInput, string][] = [
       ...(this.input.functions ?? []).map((f, i) => [f, `functions[${i}]`] as [FunctionInput, string]),
       ...(this.input.lines ?? []).map((l, i) => [l, `lines[${i}]`] as [LineInput, string]),
+      ...(this.input.series ?? []).map((l, i) => [l, `series[${i}]`] as [SeriesInput, string]),
     ];
     for (const [item, path] of all) {
       if (item.legend === undefined) continue;
@@ -1609,7 +2259,7 @@ class Build {
       b.label(row.text, origin.x + 34 + widths[i]! / 2, yy, {
         size,
         weight: 600,
-        colour: row.colour,
+        colour: row.textColour ?? row.colour,
         width: widths[i]!,
         align: "start",
         id: `legend-${i + 1}`,
@@ -1629,7 +2279,17 @@ class Build {
         `${path}: ${id} is ${this.kindName(curve)}; ${what} is taken under the graph of a function y = f(x) or a line`,
       );
     }
+    if (curve.measured !== undefined && (curve.pieces.length === 0 || curve.onY2 === true)) {
+      throw new SpecError(
+        `${path}: ${id} is a series ${curve.onY2 === true ? "read on the right axis, on another scale" : "that is no function of x"}; ${what} is taken under a series on the y axis whose x runs one way`,
+      );
+    }
     return curve;
+  }
+
+  /** A region's edge along a curve: a measured series' own vertices, else sampled from the expression. */
+  edge(curve: Curve, a: number, b: number): XYPoint[] {
+    return curve.measured !== undefined ? edgeOf(curve.measured, curve.at, a, b) : sampleEdge(curve.at, a, b, this.ux, this.uy);
   }
 
   /** The x interval a graph or line is drawn over, within the plotted range. */
@@ -1831,14 +2491,14 @@ class Build {
           : { id: `${id}-total`, text: this.fillValues(captionTemplate, totals, `${path}.total`), colour: INK };
       parts.forEach((part, k) => {
         const partId = several ? `${id}-${k + 1}` : id;
-        const top = sampleEdge(f.at, part.from, part.to, this.ux, this.uy);
+        const top = this.edge(f, part.from, part.to);
         const bottom =
           g === undefined
             ? [
                 { x: part.to, y: 0 },
                 { x: part.from, y: 0 },
               ]
-            : sampleEdge(g.at, part.from, part.to, this.ux, this.uy).reverse();
+            : this.edge(g, part.from, part.to).reverse();
         const vertices = [...top, ...bottom];
         this.insideY(vertices, path);
         const colour = part.sign > 0 ? positive : negative;
@@ -2577,6 +3237,41 @@ class Build {
   }
 }
 
+type Seg = { ax: number; ay: number; bx: number; by: number };
+
+function segmentPointDistance(s: Seg, p: Point): number {
+  const dx = s.bx - s.ax;
+  const dy = s.by - s.ay;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 === 0 ? 0 : Math.max(0, Math.min(1, ((p.x - s.ax) * dx + (p.y - s.ay) * dy) / len2));
+  return Math.hypot(p.x - (s.ax + t * dx), p.y - (s.ay + t * dy));
+}
+
+function rectPointDistance(b: Box, p: Point): number {
+  const dx = Math.max(Math.abs(p.x - b.x) - b.hw, 0);
+  const dy = Math.max(Math.abs(p.y - b.y) - b.hh, 0);
+  return Math.hypot(dx, dy);
+}
+
+/** Distance from a box to a segment: 0 when they meet, else the nearest of the segment's points and the box's corners. */
+function rectSegmentDistance(b: Box, s: Seg): number {
+  const n = 24;
+  let best = Infinity;
+  for (let i = 0; i <= n; i += 1) {
+    const t = i / n;
+    best = Math.min(best, rectPointDistance(b, { x: s.ax + (s.bx - s.ax) * t, y: s.ay + (s.by - s.ay) * t }));
+  }
+  for (const c of [
+    { x: b.x - b.hw, y: b.y - b.hh },
+    { x: b.x + b.hw, y: b.y - b.hh },
+    { x: b.x + b.hw, y: b.y + b.hh },
+    { x: b.x - b.hw, y: b.y + b.hh },
+  ]) {
+    best = Math.min(best, segmentPointDistance(s, c));
+  }
+  return best;
+}
+
 /** A Bound as a number: itself, or its expression evaluated ("2pi" → 6.283…). */
 function bound(value: Bound, path: string): number {
   if (typeof value === "number") return v.finite(value, path);
@@ -2655,10 +3350,59 @@ export function findFeatures(
  * the drawing are formatted from the same number.
  */
 export function functionGraphPoints(input: FunctionGraphInput): Map<string, { x: number; y: number }> {
-  const g = new Build(input);
+  if (input.panels !== undefined) return new Map();
+  const g = new Build(normaliseFunctionGraph(input));
   const out = new Map<string, { x: number; y: number }>();
   for (const [i, p] of (input.points ?? []).entries()) {
     if (p.id !== undefined) out.set(p.id, g.pointById(p.id, `points[${i}]`));
+  }
+  return out;
+}
+
+/**
+ * What an input may leave to its data (ADR 0066), filled in: a category
+ * axis's range, a y range fitted to its series and bars (widened to whole
+ * steps of 1, 2 or 5 × 10ᵏ), and a unit from `length` or fitted to a target
+ * size. Every input that states its range and unit comes back unchanged.
+ */
+export function normaliseFunctionGraph(input: FunctionGraphInput): FunctionGraphInput {
+  const out: FunctionGraphInput = { ...input, x: { ...input.x }, y: { ...input.y }, ...(input.y2 === undefined ? {} : { y2: { ...input.y2 } }) };
+  const cats = out.x.categories;
+  if (out.x.range === undefined && cats !== undefined) out.x.range = [0.5, cats.length + 0.5];
+  const seriesPoints = (axis: "y" | "y2"): XY[] =>
+    (out.series ?? [])
+      .filter((s) => (s.axis ?? "y") === axis)
+      .flatMap((s) => s.points ?? (s.values ?? []).map((v, i) => [i + 1, v] as XY));
+  if (out.x.range === undefined) {
+    const xs = [...seriesPoints("y"), ...seriesPoints("y2")].map((p) => p[0]);
+    if (xs.length > 1) {
+      const lo = Math.min(...xs);
+      const hi = Math.max(...xs);
+      const step = out.x.step ?? niceStep(hi - lo || 1, 8);
+      out.x.range = widenToTicks(lo, hi, step);
+      out.x.step ??= step;
+    }
+  }
+  const fit = (axis: AxisInput, values: number[], fromZero: boolean): void => {
+    if (axis.range !== undefined || values.length === 0) return;
+    let lo = Math.min(...values, ...(fromZero ? [0] : []));
+    let hi = Math.max(...values, ...(fromZero ? [0] : []));
+    if (lo === hi) {
+      lo -= 1;
+      hi += 1;
+    }
+    const step = axis.step ?? niceStep(hi - lo, 6);
+    axis.range = widenToTicks(lo, hi, step);
+    axis.step ??= step;
+  };
+  fit(out.y, [...seriesPoints("y").map((p) => p[1]), ...(out.bars ?? []).flatMap((b) => b.values)], (out.bars ?? []).length > 0);
+  if (out.y2 !== undefined) fit(out.y2, seriesPoints("y2").map((p) => p[1]), false);
+  if (out.x.range !== undefined && out.y.range !== undefined) {
+    const sx = out.x.range[1] - out.x.range[0];
+    const sy = out.y.range[1] - out.y.range[0];
+    const fitted = fitUnits(sx, sy, { equal: false, targetWidth: 480, targetHeight: 300 });
+    if (out.x.unit === undefined) out.x.unit = out.x.length !== undefined ? out.x.length / sx : fitted.xUnit;
+    if (out.y.unit === undefined) out.y.unit = out.y.length !== undefined ? out.y.length / sy : fitted.yUnit;
   }
   return out;
 }
@@ -2679,24 +3423,33 @@ export function expandFunctionGraph(input: FunctionGraphInput): FigureSpec {
  * round trip into pixels.
  */
 export function functionGraphIR(input: FunctionGraphInput): FigureSpec {
-  const g = new Build(input);
+  if (input.panels !== undefined) return composePanels(input, (one) => functionGraphIR(one));
+  const g = new Build(normaliseFunctionGraph(input));
   g.frame();
   // Regions and sums first: they paint beneath the curves they lie under.
   g.areas();
   g.riemannSums();
   // Asymptotes under the curves that approach them (ADR 0038).
   g.asymptotes();
+  // Bars beneath every curve; measured series with the other curves.
+  g.barsDraw();
   g.strokes();
+  g.seriesStrokes();
   g.guides();
   g.features();
+  g.curveArrows();
+  g.seriesDots();
   g.dots();
   g.ticks();
   g.breakGuides();
+  g.symbolicTicks();
   // A hole's label before the curve labels: it names a place, and a curve
   // label can sit anywhere along its curve.
   g.holeLabels();
   g.curveLabels();
   g.pointLabels();
+  g.valueLabels();
+  g.barValueLabels();
   g.asymptoteLabels();
   g.regionLabelsPlace();
   g.freeLabels();
@@ -2791,25 +3544,80 @@ export function validateFunctionGraphInput(raw: Record<string, unknown>): void {
   const path = "function-graph";
   v.optionalString(raw, "title", path);
   v.optionalEnum(raw, "locale", path, LOCALES);
-  for (const axis of ["x", "y"] as const) {
-    if (raw[axis] === undefined) v.object(raw[axis], `${path}.${axis}`);
-    const a = v.object(raw[axis], `${path}.${axis}`);
-    range(a, "range", `${path}.${axis}`, true);
-    const unit = v.requiredNumber(a, "unit", `${path}.${axis}`);
-    if (unit <= 0) throw new SpecError(`${path}.${axis}.unit must be positive (pixels per unit)`);
-    const step = v.optionalNumber(a, "step", `${path}.${axis}`);
-    if (step !== undefined && step <= 0) throw new SpecError(`${path}.${axis}.step must be positive`);
-    const every = v.optionalNumber(a, "labelEvery", `${path}.${axis}`);
-    if (every !== undefined && (every < 1 || !Number.isInteger(every))) {
-      throw new SpecError(`${path}.${axis}.labelEvery must be a positive integer`);
+  if (raw.panels !== undefined) {
+    validatePanels(raw, path);
+    return;
+  }
+  const schematicAll = raw.axes !== undefined && (raw.axes as Record<string, unknown>).schematic === true;
+  if (raw.axes !== undefined) {
+    const o = v.object(raw.axes, `${path}.axes`);
+    for (const key of Object.keys(o)) {
+      if (!["schematic", "grid", "arrows"].includes(key)) throw new SpecError(`${path}.axes.${key} is not known; axes take schematic, grid and arrows`);
     }
-    v.optionalString(a, "name", `${path}.${axis}`);
+    v.optionalBoolean(o, "schematic", `${path}.axes`);
+    v.optionalBoolean(o, "grid", `${path}.axes`);
+    v.optionalBoolean(o, "arrows", `${path}.axes`);
+  }
+  const hasData = (optionalList(raw, "series", path)).length > 0 || (optionalList(raw, "bars", path)).length > 0;
+  for (const axis of ["x", "y", "y2"] as const) {
+    if (raw[axis] === undefined) {
+      if (axis === "y2") continue;
+      v.object(raw[axis], `${path}.${axis}`);
+    }
+    const at = `${path}.${axis}`;
+    const a = v.object(raw[axis], at);
+    const categories = a.categories;
+    if (categories !== undefined) {
+      if (axis !== "x") throw new SpecError(`${at}.categories: categories stand on the x axis`);
+      const list = v.nonEmptyArray(a, "categories", at, "category names");
+      list.forEach((c, i) => {
+        if (typeof c !== "string" || c.trim() === "") throw new SpecError(`${at}.categories[${i}] must be a non-empty name`);
+      });
+    }
+    // A range may be left to the data: on a category axis, on a y axis
+    // drawn for series or bars, and on an x axis drawn for series.
+    range(a, "range", at, !(categories !== undefined || (hasData && axis !== "x") || (axis === "x" && hasData)));
+    const unit = v.optionalNumber(a, "unit", at);
+    if (unit !== undefined && unit <= 0) throw new SpecError(`${at}.unit must be positive (pixels per unit)`);
+    const length = v.optionalNumber(a, "length", at);
+    if (length !== undefined && length <= 0) throw new SpecError(`${at}.length must be positive (pixels)`);
+    if (unit !== undefined && length !== undefined) throw new SpecError(`${at} gives both "unit" and "length"; one decides the other`);
+    if (axis === "y2" && (unit !== undefined || length !== undefined)) {
+      throw new SpecError(`${at}: the right axis runs the y axis's height, so its unit is derived, never given`);
+    }
+    const step = v.optionalNumber(a, "step", at);
+    if (step !== undefined && step <= 0) throw new SpecError(`${at}.step must be positive`);
+    const every = v.optionalNumber(a, "labelEvery", at);
+    if (every !== undefined && (every < 1 || !Number.isInteger(every))) {
+      throw new SpecError(`${at}.labelEvery must be a positive integer`);
+    }
+    v.optionalString(a, "name", at);
+    v.optionalString(a, "colour", at);
+    v.optionalBoolean(a, "schematic", at);
+    const numberless = schematicAll || a.schematic === true || categories !== undefined;
     if (a.require !== undefined) {
-      const r = v.array(a, "require", `${path}.${axis}`, "numbers");
-      const [lo, hi] = a.range as [number, number];
+      if (numberless) {
+        throw new SpecError(`${at}.require asks for numbers on an axis declared ${categories !== undefined ? "a category axis" : "schematic"}, which prints none`);
+      }
+      const r = v.array(a, "require", at, "numbers");
+      const rr = a.range as [number, number] | undefined;
       r.forEach((value, i) => {
-        const n = v.finite(value, `${path}.${axis}.require[${i}]`);
-        if (n < lo || n > hi) throw new SpecError(`${path}.${axis}.require[${i}] is ${n}, outside the axis range [${lo}, ${hi}]`);
+        const n = v.finite(value, `${at}.require[${i}]`);
+        if (rr !== undefined && (n < rr[0] || n > rr[1])) throw new SpecError(`${at}.require[${i}] is ${n}, outside the axis range [${rr[0]}, ${rr[1]}]`);
+      });
+    }
+    if (a.ticks !== undefined) {
+      if (axis === "y2") throw new SpecError(`${at}.ticks: symbolic ticks go on x or y`);
+      v.array(a, "ticks", at, "ticks").forEach((t, i) => {
+        const w = `${at}.ticks[${i}]`;
+        const o = v.object(t, w);
+        v.requiredNumber(o, "at", w);
+        const label = v.requiredString(o, "label", w);
+        // A number on an axis is printed by a numbered axis from its value,
+        // never typed beside a tick (ADR 0066).
+        if (parseNumber(label.trim(), "pt-BR") !== null || parseNumber(label.trim(), "en") !== null) {
+          throw new SpecError(`${w}.label is the number ${JSON.stringify(label)}; a number on an axis is printed by the axis -- leave the axis numbered, or name the place with a symbol ("T", "P_0")`);
+        }
       });
     }
   }
@@ -2937,7 +3745,57 @@ export function validateFunctionGraphInput(raw: Record<string, unknown>): void {
     curveLabel(o, at);
     v.optionalString(o, "legend", at);
   }
-  v.unique(ids, "function or line");
+  for (const [i, sr] of (optionalList(raw, "series", path)).entries()) {
+    const at = `${path}.series[${i}]`;
+    const o = v.object(sr, at);
+    ids.push({ id: v.requiredString(o, "id", at), at });
+    if ((o.points === undefined) === (o.values === undefined)) {
+      throw new SpecError(`${at} needs exactly one of "points" [[x, y], …] or "values" (one per category)`);
+    }
+    if (o.points !== undefined) {
+      const pts = v.nonEmptyArray(o, "points", at, "points");
+      pts.forEach((p, j) => {
+        if (!Array.isArray(p) || p.length !== 2) throw new SpecError(`${at}.points[${j}] must be [x, y]`);
+        v.finite(p[0], `${at}.points[${j}][0]`);
+        v.finite(p[1], `${at}.points[${j}][1]`);
+      });
+    } else {
+      v.nonEmptyArray(o, "values", at, "numbers").forEach((x, j) => v.finite(x, `${at}.values[${j}]`));
+    }
+    v.optionalEnum(o, "interpolate", at, ["linear", "smooth", "step", "none"]);
+    if (o.markers !== undefined && typeof o.markers !== "boolean" && o.markers !== "circle" && o.markers !== "square") {
+      throw new SpecError(`${at}.markers must be true, false, "circle" or "square"`);
+    }
+    if (o.valueLabels !== undefined && typeof o.valueLabels !== "boolean") {
+      if (Array.isArray(o.valueLabels)) o.valueLabels.forEach((k, j) => v.finite(k, `${at}.valueLabels[${j}]`));
+      else {
+        const l = v.object(o.valueLabels, `${at}.valueLabels`);
+        if (l.at !== undefined) v.array(l, "at", `${at}.valueLabels`, "indices").forEach((k, j) => v.finite(k, `${at}.valueLabels.at[${j}]`));
+        const d = v.optionalNumber(l, "decimals", `${at}.valueLabels`);
+        if (d !== undefined && (!Number.isInteger(d) || d < 0 || d > 6)) throw new SpecError(`${at}.valueLabels.decimals must be an integer 0..6`);
+        v.optionalString(l, "suffix", `${at}.valueLabels`);
+        dirs(l, `${at}.valueLabels`);
+      }
+    }
+    v.optionalEnum(o, "axis", at, ["y", "y2"]);
+    if (o.axis === "y2" && raw.y2 === undefined) throw new SpecError(`${at}.axis is "y2", and the figure declares no "y2" axis`);
+    arrowsShape(o, at);
+    stroke(o, at);
+    curveLabel(o, at);
+    v.optionalString(o, "legend", at);
+  }
+  for (const [i, f] of (optionalList(raw, "functions", path)).entries()) arrowsShape(f as Record<string, unknown>, `${path}.functions[${i}]`);
+  for (const [i, b] of (optionalList(raw, "bars", path)).entries()) {
+    const at = `${path}.bars[${i}]`;
+    const o = v.object(b, at);
+    ids.push({ id: v.requiredString(o, "id", at), at });
+    v.nonEmptyArray(o, "values", at, "numbers").forEach((x, j) => v.finite(x, `${at}.values[${j}]`));
+    v.optionalString(o, "colour", at);
+    v.optionalString(o, "legend", at);
+    v.optionalBoolean(o, "valueLabels", at);
+    if ((raw.x as Record<string, unknown>).categories === undefined) throw new SpecError(`${at}: bars stand on a category axis; give x "categories"`);
+  }
+  v.unique(ids, "function, line, series or bars");
   const pointIds: { id: string; at: string }[] = [];
   for (const [i, p] of (optionalList(raw, "points", path)).entries()) {
     const at = `${path}.points[${i}]`;
@@ -2950,7 +3808,9 @@ export function validateFunctionGraphInput(raw: Record<string, unknown>): void {
     v.optionalString(o, "colour", at);
     v.optionalString(o, "label", at);
     dirs(o, at);
-    v.optionalBoolean(o, "guides", at);
+    if (o.guides !== undefined && typeof o.guides !== "boolean" && o.guides !== "x" && o.guides !== "y") {
+      throw new SpecError(`${at}.guides must be true, false, "x" or "y"`);
+    }
     v.optionalNumber(o, "size", at);
   }
   v.unique(pointIds, "point");
@@ -3055,6 +3915,42 @@ export function validateFunctionGraphInput(raw: Record<string, unknown>): void {
     }
   }
   // The dry run: references, expressions, templates and colours.
+  expandFunctionGraph(raw as unknown as FunctionGraphInput);
+}
+
+/** `arrows`: a list of fractions of the curve's drawn length, or {at, reverse}. */
+function arrowsShape(o: Record<string, unknown>, path: string): void {
+  if (o.arrows === undefined) return;
+  const list = Array.isArray(o.arrows) ? o.arrows : (v.object(o.arrows, `${path}.arrows`).at as unknown);
+  if (!Array.isArray(list) || list.length === 0) throw new SpecError(`${path}.arrows must be a list of positions along the curve, 0 to 1, or {at, reverse}`);
+  list.forEach((f, j) => {
+    const n = v.finite(f, `${path}.arrows[${j}]`);
+    if (n < 0 || n > 1) throw new SpecError(`${path}.arrows[${j}] is ${n}; a position along the curve runs from 0 to 1`);
+  });
+  if (!Array.isArray(o.arrows)) v.optionalBoolean(o.arrows as Record<string, unknown>, "reverse", `${path}.arrows`);
+}
+
+/** A set of panels: each validated as the figure it is, with the set's fields filled in. */
+function validatePanels(raw: Record<string, unknown>, path: string): void {
+  const panels = v.nonEmptyArray(raw, "panels", path, "panels");
+  const columns = v.optionalNumber(raw, "columns", path);
+  if (columns !== undefined && (!Number.isInteger(columns) || columns < 1)) throw new SpecError(`${path}.columns must be a positive integer`);
+  const letters = new Set<string>();
+  panels.forEach((p, i) => {
+    const o = v.object(p, `${path}.panels[${i}]`);
+    if (o.panels !== undefined) throw new SpecError(`${path}.panels[${i}] holds panels of its own; a set is one level deep`);
+    const label = v.optionalString(o, "label", `${path}.panels[${i}]`);
+    const letter = label ?? String.fromCharCode(65 + i);
+    if (letters.has(letter)) throw new SpecError(`${path}.panels[${i}] repeats the letter ${letter}`);
+    if (!/^[A-Za-z0-9]{1,3}$/.test(letter)) throw new SpecError(`${path}.panels[${i}].label must be a short letter, like "A"`);
+    letters.add(letter);
+    try {
+      validateFunctionGraphInput(panelInput(raw as unknown as FunctionGraphInput, o as PanelInput) as unknown as Record<string, unknown>);
+    } catch (error) {
+      if (error instanceof SpecError) throw new SpecError(`${path}.panels[${i}] (${letter}): ${error.message}`);
+      throw error;
+    }
+  });
   expandFunctionGraph(raw as unknown as FunctionGraphInput);
 }
 

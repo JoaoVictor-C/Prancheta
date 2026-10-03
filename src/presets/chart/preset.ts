@@ -22,6 +22,8 @@ import { palette, theme } from "../../theme.ts";
 import { mostReadableOn } from "../../colour/contrast.ts";
 import * as v from "../validate.ts";
 import { SpecError } from "../../ir/types.ts";
+import { expandFunctionGraph, validateFunctionGraphInput } from "../function-graph/preset.ts";
+import type { FunctionGraphInput } from "../function-graph/preset.ts";
 
 export type ChartCategory = {
   label: string;
@@ -85,6 +87,23 @@ export type ChartInput = {
   radius?: number;
   /** chartType "donut" only: the hole's radius as a fraction of `radius`. Default 0.55. */
   holeRatio?: number;
+  /**
+   * A ruled, numbered y axis with gridlines (ADR 0066), the way an exam
+   * prints a bar chart. Bar mode only. With it -- or with `overlay` -- the
+   * chart is drawn on function-graph's plane: the categories become its
+   * category axis, each series a set of bars, and the y axis is numbered and
+   * held by `axis-number-present`. `range` and `step` are fitted to the data
+   * when left out.
+   */
+  yAxis?: { name?: string; range?: [number, number]; step?: number };
+  /** The category axis's name, on a ruled chart. */
+  xName?: string;
+  /**
+   * Line series drawn over the bars, one value per category (a demand line
+   * over stock bars). `axis: "y2"` reads one on a right axis, `y2Axis`.
+   */
+  overlay?: { label: string; values: number[]; colour?: string; axis?: "y" | "y2" }[];
+  y2Axis?: { name?: string; range?: [number, number]; step?: number };
 };
 
 // Drawn from the same canonical palette every other preset uses (theme.ts) —
@@ -170,6 +189,9 @@ export function expandChart(input: ChartInput): FigureSpec {
         }
       : null;
 
+  if (chartType === "bar" && (input.yAxis !== undefined || input.overlay !== undefined)) {
+    return expandFunctionGraph(ruledChart(input, series));
+  }
   if (chartType === "line" || chartType === "scatter") {
     return buildSeriesChart(input, series, chartType, legend);
   }
@@ -428,6 +450,62 @@ export function expandChart(input: ChartInput): FigureSpec {
   };
 
   return { version: 1, title: input.title, root };
+}
+
+/**
+ * A ruled bar chart (ADR 0066): the bars, and any line drawn over them, on
+ * function-graph's plane rather than in flex layout -- a line over bars
+ * needs one coordinate system for both, and a numbered y axis with
+ * gridlines is what that plane already draws, checks and never drops a
+ * number from. Nothing is duplicated: this is a translation of the chart's
+ * input into the plane's, and the bars are function-graph's `bars`.
+ */
+export function ruledChart(input: ChartInput, series: string[]): FunctionGraphInput {
+  if ((input.orientation ?? "vertical") !== "vertical" || (input.stacking ?? "grouped") !== "grouped") {
+    throw new SpecError("chart: a ruled chart (yAxis or overlay) draws vertical grouped bars; stacked or horizontal bars keep the plain chart");
+  }
+  const categories = input.categories.map((c) => c.label);
+  const n = categories.length;
+  const unit = Math.max(70, Math.min(140, 520 / n));
+  const bars = series.map((name, si) => ({
+    id: `bars-${si + 1}`,
+    values: input.categories.map((c) => c.values[si]!),
+    ...(name === "" ? {} : { legend: name }),
+    ...(input.showValues === true ? { valueLabels: true } : {}),
+  }));
+  const overlay = (input.overlay ?? []).map((o, i) => ({
+    id: `overlay-${i + 1}`,
+    values: o.values,
+    colour: o.colour ?? "key",
+    markers: "square" as const,
+    legend: o.label,
+    ...(o.axis === "y2" ? { axis: "y2" as const } : {}),
+    // Its own dash pattern: a legend tells it apart by colour alone, and two
+    // overlays would otherwise share a stroke.
+    ...(i > 0 ? { style: (["dashed", "dotted", "dashdot"] as const)[(i - 1) % 3] } : {}),
+  }));
+  const yAxis = input.yAxis ?? {};
+  return {
+    title: input.title ?? "chart",
+    x: { categories, unit, name: input.xName ?? "" } as FunctionGraphInput["x"],
+    y: {
+      ...(yAxis.range === undefined ? {} : { range: yAxis.range }),
+      ...(yAxis.step === undefined ? {} : { step: yAxis.step }),
+      length: 300,
+      name: yAxis.name ?? "",
+    } as FunctionGraphInput["y"],
+    ...(input.y2Axis === undefined
+      ? {}
+      : {
+          y2: {
+            ...(input.y2Axis.range === undefined ? {} : { range: input.y2Axis.range }),
+            ...(input.y2Axis.step === undefined ? {} : { step: input.y2Axis.step }),
+            name: input.y2Axis.name ?? "",
+          } as FunctionGraphInput["y2"],
+        }),
+    bars,
+    ...(overlay.length === 0 ? {} : { series: overlay }),
+  };
 }
 
 /**
@@ -846,6 +924,25 @@ export function validateChartInput(input: Record<string, unknown>, path = "chart
     v.optionalNumber(input, key, path);
   }
   v.optionalBoolean(input, "showValues", path);
+  const ruledAxis = (key: string): void => {
+    if (input[key] === undefined) return;
+    const o = v.object(input[key], `${path}.${key}`);
+    v.optionalString(o, "name", `${path}.${key}`);
+    v.optionalNumber(o, "step", `${path}.${key}`);
+    if (o.range !== undefined) {
+      if (!Array.isArray(o.range) || o.range.length !== 2) throw new SpecError(`${path}.${key}.range must be [min, max]`);
+      const a = v.finite(o.range[0], `${path}.${key}.range[0]`);
+      const b = v.finite(o.range[1], `${path}.${key}.range[1]`);
+      if (!(a < b)) throw new SpecError(`${path}.${key}.range must have min < max`);
+    }
+  };
+  ruledAxis("yAxis");
+  ruledAxis("y2Axis");
+  v.optionalString(input, "xName", path);
+  const ruled = input.yAxis !== undefined || input.overlay !== undefined;
+  if (ruled && (input.chartType ?? "bar") !== "bar") {
+    throw new SpecError(`${path}: yAxis and overlay rule a BAR chart; a line chart of measured data is function-graph's "series" (ADR 0066)`);
+  }
 
   const categories = v.nonEmptyArray(input, "categories", path, "categories");
   const first = v.object(categories[0], `${path}.categories[0]`);
@@ -875,6 +972,24 @@ export function validateChartInput(input: Record<string, unknown>, path = "chart
     }
   }
 
+  if (input.overlay !== undefined) {
+    v.nonEmptyArray(input, "overlay", path, "line series").forEach((raw, i) => {
+      const at = `${path}.overlay[${i}]`;
+      const o = v.object(raw, at);
+      v.requiredString(o, "label", at);
+      v.optionalString(o, "colour", at);
+      v.optionalEnum(o, "axis", at, ["y", "y2"] as const);
+      if (o.axis === "y2" && input.y2Axis === undefined) throw new SpecError(`${at}.axis is "y2", and the chart declares no y2Axis`);
+      const values = v.nonEmptyArray(o, "values", at, "numbers");
+      values.forEach((x, j) => v.finite(x, `${at}.values[${j}]`));
+      if (values.length !== categories.length) {
+        throw new SpecError(`${at}.values has ${values.length} value(s) for ${categories.length} categories`);
+      }
+    });
+  }
+  if (input.y2Axis !== undefined && !((input.overlay ?? []) as Record<string, unknown>[]).some((o) => o.axis === "y2")) {
+    throw new SpecError(`${path}.y2Axis: no overlay is read on it`);
+  }
   if (input.series !== undefined) {
     const series = v.array(input, "series", path, "series names");
     for (const [i, name] of series.entries()) {
@@ -891,5 +1006,13 @@ export function validateChartInput(input: Record<string, unknown>, path = "chart
           `has nothing to draw.`,
       );
     }
+  }
+  // A ruled chart is drawn by function-graph: validated by it, so the two
+  // cannot disagree about what the chart means.
+  if (ruled) {
+    const typed = input as unknown as ChartInput;
+    const count = typed.categories[0]!.values.length;
+    const names = typed.series ?? (count === 1 ? [""] : Array.from({ length: count }, (_, i) => `Series ${i + 1}`));
+    validateFunctionGraphInput(ruledChart(typed, names) as unknown as Record<string, unknown>);
   }
 }

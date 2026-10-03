@@ -1,0 +1,19 @@
+{
+  "preset": "construction",
+  "title": "Meias-pizzas sobre os lados de um triângulo",
+  "objects": [
+    { "A": [0, 0] },
+    { "B": [4, 0] },
+    { "C": [0, 3] },
+    { "name": "T", "polygon": ["A", "B", "C"], "fill": "#DADDE3" },
+    { "name": "s1", "semicircle": { "on": ["A", "B"], "away": "C" }, "fill": "#BFDDF0" },
+    { "name": "s2", "semicircle": { "on": ["A", "C"], "away": "B" }, "fill": "#F2C7C0" },
+    { "name": "s3", "semicircle": { "on": ["B", "C"], "away": "A" }, "fill": "#CFE8C8" }
+  ],
+  "annotations": [
+    { "angle": ["B", "A", "C"] },
+    { "area": "s1", "name": "S₁" },
+    { "area": "s2", "name": "S₂" },
+    { "area": "s3", "name": "S₃" }
+  ]
+}

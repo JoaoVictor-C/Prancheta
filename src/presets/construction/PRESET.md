@@ -158,7 +158,58 @@ A top-level `unit` (`"m"`, `"cm"`) is printed after every length, on the
 drawing and in the panel, and set on the frame, so `length-matches-its-label`
 compares the unit as well as the number.
 
+## Extensions: sectors, rings, belts, regions, dimensions, paths (ADR 0067)
+
+More objects, each computed from the objects it names, never from a typed
+measure. All take `label`, `colour`, `dashed`, `hidden`, `answer`; the shapes
+that enclose a region also take `fill` (a tint) and `hatch` (`true`, or
+`{ "angle": 45, "gap": 6, "colour": "#..." }`: parallel lines clipped to the
+region, a hole left bare). `fill` and `hatch` also work on a `circle` and a
+`polygon`.
+
+| object | definition |
+| --- | --- |
+| `"sector": { "center": "O", "through": "A", "angle": 72 }` | the sector from ray OA counter-clockwise by 72° (negative: clockwise). Or `"to": "B"` instead of `angle` (OA to OB), or `"radius": 5, "from": 30` (degrees). Drawn as ONE closed outline, so `sweep-matches-its-label` measures its angle |
+| `"ring": { "center": "O", "inner": 3, "outer": 5 }` | an annulus; with `"from": 40, "angle": 50` an annular sector (the band along a track) |
+| `"semicircle": { "on": ["A", "B"], "side": 1 }` | the half-disc on AB as diameter, `1` = left of A→B. `"away": "C"` (a point or a polygon) bulges away from it: the half-pizzas on a triangle's sides |
+| `"belt": { "circles": ["pa", "pb"], "tangents": "external", "touch": ["T1", "U1", "T2", "U2"] }` | the belt round two circles: `"external"` or `"crossed"` tangents computed from the circles, plus the wrapped arcs. `touch` names the four tangent points (circle 1 then circle 2 on the first tangent, then on the second) so radii and angles can be drawn from them. Its length is a reading |
+| `"region": { "start": "A", "then": [ { "arc": { "center": "M", "to": "B", "ccw": true } }, { "arc": { "center": "K", "to": "A", "ccw": false } } ] }` | a region bounded by straight pieces (`{ "line": "P" }`) and circle arcs about a named point or circle (`to` must be on that circle, `ccw` says which way round); the boundary must close. A lune, a circular segment, a stadium. This is the "polygon plus circle segments" form of a union or difference; no boolean operation on shapes is attempted |
+| `"path": { "through": ["A", "B", "C"], "arrows": "each" }` | a polyline through named points with a solid arrowhead at the middle of each step (`"end"`: only at the end, `"none"`); `"closed": true`. Its steps are measured segments named `walk.1`, `walk.2`… |
+| `"dimension": { "from": "A", "to": "B", "offset": 0.7, "side": -1 }` | an architectural dimension line (cota): a line parallel to AB at `offset`, arrowheads at both ends, two extension lines, the length printed centred beside it and measured by `length-matches-its-label`. `"side"`: `1` left of A→B, `-1` right. `"label": "x"` names the quantity (`x = 1,5 m`) |
+| `"rotationAxis": { "through": ["P", "S"], "extend": 0.3, "arrows": "both" }` | a dashed axis past both ends of PS (by 30 % of its length) with a curved turn arrow at each end asked for (`"first"`, `"last"`, `"both"`, `"none"`; `"turn": -1` reverses). `label` names it (`eixo`) |
+
+`circumcircle` and `incircle` also take a polygon of four points (or four
+names): a rectangle's or square's circumcircle, a square's, rhombus's or
+kite's incircle. A quadrilateral with no such circle is refused by name.
+
+A top-level `"grid": true` (or `{ "step": 2 }`) lays an unnumbered square
+lattice under the figure -- the "malha quadriculada" of a path question. Not
+together with `axes`.
+
+Annotations added: `{ "area": "S" }` (`A = 15,71 cm²`, measured by
+`area-matches-its-label` against the region's own outline), `{ "arc": "S" }`
+(`ℓ = 6,28 cm`, of a sector, semicircle or circle), `{ "angle": "S" }` (a
+sector's angle as a measured arc), `{ "radius": "C", "which": "inner", "at": 135 }`
+(a radius drawn from the centre with its length, `r` or `R` unless `name` says
+otherwise; `which` picks a ring's radius), and `"given": true` on any of these,
+`length` and `angle`. `length` also names the runs a shape owns: `"belt.t1"`,
+`"belt.t2"`, `"S.r1"`, `"walk.3"`.
+
+An arc's length cannot be measured by a check (none reads a curved run), so
+`{ "arc" }` prints a computed number that `length-matches-its-label` reports as
+not applicable, never as a pass. Everything else printed is measured.
+
+Worked examples in `fixtures/construction/`: `sector-area`, `ring`,
+`annular-sector`, `belt-pulleys`, `hippocrates-lunes`, `semicircles-on-sides`,
+`square-circles`, `floor-plan-dimensions`, `grid-path`,
+`trapezoid-rotation-axis`.
+
 ## Refusals
+
+Also refused by name: a sector of 0° or 360°, a ring whose inner radius is not
+smaller, a belt of nested or overlapping circles, a region whose boundary does
+not close or whose arc ends are not on one circle, a semicircle with no side, a
+path step of length zero, a quadrilateral with no circle of the kind asked.
 
 Every construction that cannot be carried out is refused by name, never drawn
 approximately: an undefined object (with a "did you mean"), two parallel lines
@@ -193,6 +244,13 @@ triangle with sides 3000 and 4000, one with sides 3 and 4 and one with sides
 narrower than 48 px (ADR 0034).
 
 ## answers: false
+
+The extensions follow the same rule (ADR 0067): an `area`, `arc`, `radius`,
+sector `angle` or dimension prints a measured number, so with `answers: false`
+it prints only its `name` (or nothing, or `?` for an unnamed angle) -- unless it
+says `"given": true`, the exercise's own datum (a pulley's radius, a room's
+width), which stays. A belt's length reading and every other panel line are
+empty. Hatches, fills and the shapes themselves stay.
 
 `"answers": false` draws what an exercise **gives**. A construction figure *is*
 its objects, so the drawing stays; what goes is every **measured number**:

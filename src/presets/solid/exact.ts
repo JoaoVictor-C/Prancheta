@@ -169,3 +169,60 @@ export function equalsText(e: Exact, locale: Locale = "pt-BR"): string {
   const p = print(e, locale);
   return `${p.exact ? "=" : "≈"} ${p.text}`;
 }
+
+// ---- division, cube roots and typed volumes (ADR 0068) ----------------------------
+
+/**
+ * a / b, exact when b is ONE term c·√r (times π or not) and the quotient's π
+ * power is 0 or 1: 1/(c√r) = √r/(c·r). A sum in the denominator, or π², is
+ * carried numerically. Division by zero throws.
+ */
+export function div(a: Exact, b: Exact): Exact {
+  const bv = valueOf(b);
+  if (bv === 0) throw new RangeError("division by zero");
+  const numeric = (): Exact => approx(valueOf(a) / bv);
+  if (a.kind === "approx" || b.kind === "approx" || b.terms.length !== 1) return numeric();
+  if (a.terms.length === 0) return a;
+  const pi = a.pi - b.pi;
+  if (pi < 0 || pi > 1) return numeric();
+  const t = b.terms[0]!;
+  if (!safe(t.c.p * t.r, t.c.q)) return numeric();
+  const inv: Exact = norm({ kind: "exact", terms: [{ r: t.r, c: frac(t.c.q, t.c.p * t.r) }], pi: 0 });
+  const m = mul({ kind: "exact", terms: a.terms, pi: 0 }, inv);
+  if (m.kind === "approx") return numeric();
+  return norm({ kind: "exact", terms: m.terms, pi: pi as 0 | 1 });
+}
+
+/** ∛a: exact only for a rational whose numerator and denominator are both perfect cubes (∛(1/8) = 1/2). */
+export function cbrt(a: Exact): Exact {
+  const v = valueOf(a);
+  if (a.kind === "exact" && a.terms.length === 0) return a;
+  if (a.kind === "exact" && a.pi === 0 && a.terms.length === 1 && a.terms[0]!.r === 1) {
+    const { p, q } = a.terms[0]!.c;
+    const cp = Math.round(Math.cbrt(Math.abs(p)));
+    const cq = Math.round(Math.cbrt(q));
+    if (cp ** 3 === Math.abs(p) && cq ** 3 === q) return norm({ kind: "exact", terms: [{ r: 1, c: frac(Math.sign(p) * cp, cq) }], pi: 0 });
+  }
+  return approx(Math.cbrt(v));
+}
+
+/** Is this value exactly zero, or exactly a rational (no root, no π)? */
+export function isRational(e: Exact): boolean {
+  return e.kind === "exact" && e.pi === 0 && e.terms.every((t) => t.r === 1);
+}
+
+/**
+ * A typed volume: a number (37,5), or a string with π as a student writes it ("18π", "9π/2", "3/2 π", "12,5").
+ * Null when the string is none of these.
+ */
+export function parseTyped(raw: number | string): Exact | null {
+  if (typeof raw === "number") return Number.isFinite(raw) ? rat(raw) : null;
+  const m = /^\s*(\d+(?:[.,]\d+)?)?\s*(?:\/\s*(\d+))?\s*(π|pi)?\s*(?:\/\s*(\d+))?\s*$/i.exec(raw);
+  if (m === null || (m[1] === undefined && m[3] === undefined)) return null;
+  if (m[2] !== undefined && m[4] !== undefined) return null;
+  const num = m[1] === undefined ? 1 : Number(m[1].replace(",", "."));
+  const den = Number(m[2] ?? m[4] ?? 1);
+  if (!(den > 0)) return null;
+  const base = div(rat(num), rat(den));
+  return m[3] === undefined ? base : mul(base, PI);
+}

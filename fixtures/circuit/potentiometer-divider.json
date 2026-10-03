@@ -1,0 +1,14 @@
+{
+  "preset": "circuit",
+  "title": "divisor de tensão com cursor em x = 0,25",
+  "nodes": { "Q": [0, 2], "R": [4, 2], "S": [4, 0], "M": [1, 0], "E": [0, 0] },
+  "components": [
+    { "id": "E1", "kind": "battery", "from": "E", "to": "Q", "value": 12 },
+    { "id": "P1", "kind": "potentiometer", "from": "Q", "to": "R", "value": 100, "taps": [{ "node": "W", "at": 0.25 }] },
+    { "kind": "wire", "from": "R", "to": "S" },
+    { "kind": "wire", "from": "S", "to": "M" },
+    { "kind": "wire", "from": "M", "to": "E" },
+    { "id": "RL", "kind": "resistor", "from": "W", "to": "M", "value": 150 }
+  ],
+  "show": { "voltages": [["W", "M"]] }
+}

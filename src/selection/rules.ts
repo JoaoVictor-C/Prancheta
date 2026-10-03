@@ -1049,6 +1049,65 @@ export const RULES: Rule[] = [
     statement:
       "A chart draws values it is handed; the pH along a titration is the root of a balance at every volume.",
   },
+
+  // --- table -----------------------------------------------------------------
+  {
+    id: "S-table-favours-data-table",
+    axis: "structure",
+    when: "table",
+    preset: "data-table",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "Rows and columns of given values are drawn by data-table: numbers written pt-BR and aligned on the comma, derived columns and totals computed from the data, blanks to fill.",
+  },
+  {
+    id: "S-table-disqualifies-labelled-blocks",
+    axis: "structure",
+    when: "table",
+    preset: "labelled-blocks",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A stack of blocks has no columns: a table's meaning is which value sits in which row and column.",
+  },
+
+  // --- genetics --------------------------------------------------------------
+  {
+    id: "S-genetics-favours-genetics",
+    axis: "structure",
+    when: "genetics",
+    preset: "genetics",
+    effect: "favour",
+    weight: 4,
+    priority: 55,
+    statement:
+      "A Punnett square or a pedigree is drawn by genetics: gametes, cells and ratios computed from the genotypes, a pedigree laid out by generation and checked against its mode of inheritance.",
+  },
+  {
+    id: "S-genetics-disqualifies-graph",
+    axis: "structure",
+    when: "genetics",
+    preset: "graph",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A pedigree is not nodes and edges: two parents per child, marriages and generations carry the inheritance a graph layout would lose.",
+  },
+  {
+    id: "S-genetics-disqualifies-mindmap",
+    axis: "structure",
+    when: "genetics",
+    preset: "mindmap",
+    effect: "disqualify",
+    weight: 0,
+    priority: 90,
+    statement:
+      "A family tree has two parents per child; a mindmap has one root and one parent per node.",
+  },
 ];
 
 export function ruleById(id: string): Rule | undefined {

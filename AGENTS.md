@@ -96,8 +96,8 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `vectors` | Vectors in the plane with sums, multiples, components, projections and angles derived from them. | yes |
 | `unit-circle` | The trigonometric circle: points from angles, cos and sin as projections, exact notable values, symmetric angles. | yes |
 | `construction` | Plane and analytic geometry built from definitions: intersections, perpendiculars, bisectors, tangents, triangle centres and conics, with every length and angle computed. | yes |
-| `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed. | yes |
-| `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere -- from their dimensions: hidden edges dashed, silhouettes computed, diagonals, slant heights, volumes and areas exact. | yes |
+| `space` | Points, vectors, lines and planes in R³ on three axes: intersections, distances and angles computed, what is behind a plane dashed; gridded coordinate planes, blocks with their orthogonal projections, and paths with arrows and exact lengths. | yes |
+| `solid` | School solids -- cube, box, prisms, pyramids, cylinder, cone, sphere, frustums, hemispheres, stairs and polyhedra from face data -- from their dimensions: hidden edges by real visibility, bores, liquid to a level, inscribed and stacked solids, nets; diagonals, slant heights, volumes and areas exact. | yes |
 | `surface` | Surfaces z = f(x, y) as a shaded mesh on three axes: hidden parts by depth, level curves on the surface and projected to a floor, a point with its tangent plane printed exact. | yes |
 | `revolution` | Solids of revolution from a region and an axis: discs, washers or shells, silhouette computed, hidden parts dashed, the slice's R(x), r(x) and dx, and the volume integral exact (8π, 2π/15). | yes |
 | `field` | Slope fields, vector fields and level curves: dy/dx = f(x, y), (P, Q), f(x, y) = c, with solution and flow curves integrated by RK4 and gradients computed; and the field lines and equipotentials of point charges, seeded in proportion to each charge. | yes |
@@ -113,6 +113,8 @@ Get-CimInstance Win32_Process -Filter "Name='node.exe'" |
 | `probability-tree` | Probability trees from branch probabilities or an urn, in exact fractions: path products, an event's probability as a sum of highlighted paths, and Bayes conditionals computed from the leaves. | yes |
 | `venn` | Venn diagrams of two or three sets in a universe: a set expression shaded by evaluating it on every region, survey data solved by inclusion–exclusion and printed in each region, and elements listed where they belong. | yes |
 | `acid-base` | Acid–base equilibrium figures, every point computed: titration curves (pH against volume of titrant, by charge balance, with initial, half-equivalence and equivalence points, indicator bands and a verdict), species-distribution diagrams (α against pH, crossings at pH = pKa), and the pH scale with substances given by pH, [H⁺] or [OH⁻]. | yes |
+| `data-table` | Tables of given data: a header row with units (and grouped headers), pt-BR numbers aligned on the decimal comma, real sub/superscripts, highlights and blanks to fill; derived columns and totals rows computed, hidden under answers: false. | yes |
+| `genetics` | Punnett squares and pedigrees: gametes, cells and phenotype ratios as exact fractions; family trees laid out by generation, checked against a mode of inheritance, with each individual's possible genotypes and requested probabilities exact. | yes |
 
 ## Figure modules
 
@@ -271,6 +273,8 @@ resources:
 | `prancheta://preset/probability-tree` | probability-tree preset |
 | `prancheta://preset/venn` | venn preset |
 | `prancheta://preset/acid-base` | acid-base preset |
+| `prancheta://preset/data-table` | data-table preset |
+| `prancheta://preset/genetics` | genetics preset |
 | `prancheta://modules` | Figure modules: the repertoire and the protocol |
 | `prancheta://module/crystal` | crystal module |
 | `prancheta://module/dendrogram` | dendrogram module |
