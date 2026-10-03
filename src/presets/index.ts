@@ -110,7 +110,7 @@ export type CommonPresetOptions = {
  * option rather than ignoring it.
  */
 export const ANSWER_AWARE: readonly string[] = [
-  "value-table", "sign-chart", "number-line", "vectors", "unit-circle",
+  "chart", "function-graph", "value-table", "sign-chart", "number-line", "vectors", "unit-circle",
   "construction", "space", "solid", "surface", "revolution", "field", "sequence", "linear-map",
   "circuit", "optics", "automaton", "truth-table", "logic-circuit",
   "statistics", "distribution", "probability-tree", "venn", "acid-base", "data-table", "genetics",

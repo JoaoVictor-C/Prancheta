@@ -520,6 +520,10 @@ A slice under 6% carries no inline share — there is no room to set one legibly
 
 `yAxis: {name, range, step}` and/or `overlay: [{label, values, colour, axis}]` (with `y2Axis` for an overlay on a right axis), plus `xName`, draw a vertical grouped bar chart the way an exam prints one. The y axis is numbered and ruled, and a line runs over the bars (stock bars and a demand line). Such a chart is not drawn here. It is translated into `function-graph`'s plane (`ruledChart`): the categories become its category axis, each series a set of `bars`, each overlay a `series`. That plane already numbers, rules and checks an axis, and a line over bars needs one coordinate system for both. Bars without these fields are unchanged. A **line chart of measured data** is function-graph's `series`, not this preset's line mode, which stays the minimal axis-less path below; `yAxis` on `chartType: "line"` is refused with that pointer. Fixture: [`fixtures/chart-bars-overlay.json`](../../../fixtures/chart-bars-overlay.json).
 
+## answers: false
+
+The question's figure (ADR 0071). The data stay: every bar, slice and point, and each value printed on a grouped bar, since those values are given. What the chart computes is not printed: a pie's or donut's percentages, on the slices and in the legend, which then names only the categories, and a stacked bar's total.
+
 ## Conventions
 
 - Bar length is a straight linear scale against the largest value in the data — no log scale, no truncated axis. A bar chart's whole claim is that length is proportional to value; anything else needs a different chart type and a label saying so.
@@ -693,6 +697,17 @@ A literal pair such as `(2; 5)` or `(2, 5)` in label text is **refused**: it is 
 - **Bars.** `bars: [{id, values, legend, valueLabels}]`, grouped on a category axis, height = value from zero (a range without zero is refused). A bar chart is authored through `chart` (`yAxis`, `overlay`), which expands to this.
 - **Schematic axes.** `axes: {schematic: true}` or `x.schematic` / `y.schematic`: no numbers, no lattice (`axes.grid` to keep it), arrowheads (`axes.arrows`). `ticks: [{at: 2, label: "T"}, {at: 5, label: "P_0"}]` names places on any axis, with real subscripts; a number typed as a label is refused. `guides: "x" | "y"` on a point draws one guide. `arrows: [0.5]` (or `{at, reverse}`) on a function or series sets arrowheads along it.
 - **Panels.** `panels: [{…}, …]` with `columns` (default 2): each panel a function-graph whose missing fields come from the set (one scale for all), lettered (A), (B)… (`label` to rename). Ids are prefixed `pA-`, `pB-`…
+
+## answers: false
+
+The question's figure (ADR 0071). Everything drawn stays: curves, shaded
+regions, Riemann rectangles, series and their given values, a function's
+formula. Nothing the figure computes is printed: area, sum and integral values
+and their total captions, slopes, a line's equation, the coordinates of a point
+read off a curve, asymptotes (neither line nor equation). A label is cut at its
+first computed placeholder: `P{coords}` prints `P`, `A₁ = {area}` prints `A₁`,
+and one that was all answer is not drawn. A typed point's coordinates are given
+and stay. A point label cut to its name takes the closest clear side.
 
 ## What the checks hold it to
 

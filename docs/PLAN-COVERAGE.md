@@ -158,6 +158,7 @@ about rectangles, not projected faces).
 | circuit symbols (LED and diode, internal resistance, symbolic values, potentiometer taps, load box) | [0069](decisions/0069-circuit-symbols.md) | done 2026-10-02; Phase 6 item 5 |
 | genetics: `genetics` preset (Punnett squares, pedigrees with exact probabilities) | [0070](decisions/0070-genetics.md) | done 2026-10-02; Phase 6 complete |
 | ENEM audit re-scored after Phase 6 | [AUDIT-ENEM](AUDIT-ENEM.md) | done 2026-10-02; day 2: 64 % of drawable figures covered (was 19 %), 22 % partial |
+| `answers: false` on function-graph and chart (computed values hidden on question figures) | [0071](decisions/0071-answers-on-graphs-and-charts.md) | done 2026-10-03; sheet `graph` figures now honour it too |
 
 Selection gained three structure values — `interval`, `vector`, `angle` — each
 with its rules and a paragraph in SELECTION.md; value-table is offered at the
