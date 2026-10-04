@@ -50,7 +50,20 @@ export type FigureSpec = {
  * what every renderer (the mirror's <sub>/<sup>, the SVG's positioned
  * tspans, outline glyphs, a sheet's HTML) can reproduce exactly.
  */
-export type TextRun = { text: string; script?: "sub" | "sup" };
+export type TextRun = {
+  text: string;
+  script?: "sub" | "sup";
+  /**
+   * Overrides the block's `fontStyle` for this piece (ADR 0078): a textbook
+   * label sets its variables italic and its digits and units upright, as in
+   * "m₁ = 4 kg", so the style belongs to the run, not only to the label.
+   */
+  fontStyle?: FontStyle;
+};
+
+/** Upright or italic. Italic is measured by its ink, not its advance (ADR 0078). */
+export type FontStyle = "normal" | "italic";
+export const FONT_STYLES: readonly FontStyle[] = ["normal", "italic"];
 
 export type ReadingEmphasis = "normal" | "strong" | "soft" | "accent";
 
@@ -741,6 +754,12 @@ export type Block = {
   /** Font weight. Default 400 (normal). Common values: 400, 600, 700. */
   fontWeight?: number;
   /**
+   * "italic" sets the whole label italic; a run's own `fontStyle` overrides
+   * it (ADR 0078). An italic glyph leans past its advance box, so the mirror
+   * measures italic text by its ink and every check sees what is drawn.
+   */
+  fontStyle?: FontStyle;
+  /**
    * Tracking in px. Negative tightens, which is what display sizes want.
    * Applied in the HTML mirror as well as the SVG, so the width Chromium
    * measures is the width that gets drawn.
@@ -1099,6 +1118,8 @@ export type PlacedText = {
   fontFamily: string;
   fontSize: number;
   fontWeight?: number;
+  /** Carried from Block.fontStyle; present only when italic. */
+  fontStyle?: "italic";
   /** Tracking in px, carried from Block.letterSpacing. */
   letterSpacing?: number;
   fill: string;
@@ -1151,6 +1172,8 @@ export type PlacedRun = {
   y: number;
   fontSize: number;
   script?: "sub" | "sup";
+  /** Present only when it differs from upright. */
+  fontStyle?: "italic";
 };
 
 export type Rect = { x: number; y: number; width: number; height: number };
@@ -1211,11 +1234,16 @@ function validateRunList(input: unknown, path: string): void {
     if (typeof raw !== "object" || raw === null) throw new SpecError(`${at} must be an object {text, script?}`);
     const run = raw as Record<string, unknown>;
     for (const key of Object.keys(run)) {
-      if (key !== "text" && key !== "script") throw new SpecError(`${at}.${key} is not a field of a run; a run is {text, script?}`);
+      if (key !== "text" && key !== "script" && key !== "fontStyle") {
+        throw new SpecError(`${at}.${key} is not a field of a run; a run is {text, script?, fontStyle?}`);
+      }
     }
     if (typeof run.text !== "string" || run.text === "") throw new SpecError(`${at}.text must be a non-empty string`);
     if (run.script !== undefined && run.script !== "sub" && run.script !== "sup") {
       throw new SpecError(`${at}.script must be "sub" or "sup", got ${JSON.stringify(run.script)}`);
+    }
+    if (run.fontStyle !== undefined && !FONT_STYLES.includes(run.fontStyle as FontStyle)) {
+      throw new SpecError(`${at}.fontStyle must be "normal" or "italic", got ${JSON.stringify(run.fontStyle)}`);
     }
     if (run.script !== undefined && /[\r\n]/.test(run.text)) throw new SpecError(`${at}: a ${run.script}script cannot contain a line break`);
   });
@@ -1601,6 +1629,9 @@ function validateNode(
       throw new SpecError(
         `${path}.verticalAlign must be "start", "center" or "end", got ${JSON.stringify(node.verticalAlign)}`,
       );
+    }
+    if (node.fontStyle !== undefined && !FONT_STYLES.includes(node.fontStyle as FontStyle)) {
+      throw new SpecError(`${path}.fontStyle must be "normal" or "italic", got ${JSON.stringify(node.fontStyle)}`);
     }
     // ADR 0035. Free-standing is a stated choice, so it takes one spelling,
     // and it cannot sit beside a claim: a label either names something (and

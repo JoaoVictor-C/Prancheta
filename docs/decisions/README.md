@@ -5,7 +5,7 @@
 Architecture decision records, oldest first. Each one says what was decided, why, and what it
 cost. A new one takes the next free number; how to write one is in [CONTRIBUTING.md](../../CONTRIBUTING.md#writing-an-adr).
 
-Next free number: **0077**.
+Next free number: **0079**.
 
 | # | decision | status |
 | --- | --- | --- |
@@ -85,3 +85,5 @@ Next free number: **0077**.
 | [0074](0074-physics-kinds.md) | Physics kinds: one file each, solved, drawn to one scale | Accepted |
 | [0075](0075-keeping-the-docs-true.md) | Keeping the docs true: generated tables, a plans folder, and a preset that ships complete | Accepted |
 | [0076](0076-one-expansion-and-no-dead-code.md) | One expansion per figure, no dead code, and an audit of every test and ADR | Accepted; see [0018](0018-preset-input-validation.md), [0009](0009-termination-for-translation-repair.md) |
+| [0077](0077-an-angle-label-inside-its-angle.md) | An angle label inside its angle | Accepted; see [0019](0019-derived-geometry-and-annotation.md) |
+| [0078](0078-italic-measured-by-its-ink.md) | Italic, measured by its ink | Accepted; see [0062](0062-rich-text-and-the-reading-panel.md) |
