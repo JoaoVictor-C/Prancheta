@@ -45,6 +45,8 @@ export type MeasuredText = {
   fontFamily: string;
   fontSize: number;
   fontWeight?: number;
+  /** Read back from computed style; present only when italic (ADR 0078). */
+  fontStyle?: "italic";
   /** Tracking in px, read back from the mirror so measure and draw agree. */
   letterSpacing?: number;
   color: string;
@@ -66,7 +68,7 @@ export type MeasuredLine = {
    */
   baselineUncertain: boolean;
   /** Present only for a rich label (ADR 0062): the line in pieces of one script each, where each was laid out. */
-  runs?: { text: string; x: number; y: number; fontSize: number; script?: "sub" | "sup" }[];
+  runs?: { text: string; x: number; y: number; fontSize: number; script?: "sub" | "sup"; fontStyle?: "italic" }[];
 };
 
 /**
@@ -76,6 +78,32 @@ export type MeasuredLine = {
 export function measureInPage(): PageMeasurement {
   const round = (n: number): number => Math.round(n * 100) / 100;
   const fontWarnings: string[] = [];
+  // ADR 0078: an italic glyph leans past its advance box -- the "f" of a
+  // variable reaches right of where the next character starts -- and the
+  // advance box is all a Range reports. Italic text is measured by its INK
+  // as well, read from canvas metrics at the exact computed font, and the
+  // line's box is the union of the two, so every check sees what is drawn.
+  // Upright text is left on its advance box: measured, its overhang in the
+  // repertoire's faces stays within a pixel, and changing every box in the
+  // product for that would buy nothing.
+  const inkCanvas = document.createElement("canvas").getContext("2d");
+  const inkExtent = (
+    text: string,
+    style: CSSStyleDeclaration,
+    fontSize: number,
+  ): { left: number; right: number; ascent: number; descent: number } | null => {
+    if (inkCanvas === null) return null;
+    inkCanvas.font = `italic ${style.fontWeight} ${fontSize}px ${style.fontFamily}`;
+    (inkCanvas as unknown as { letterSpacing: string }).letterSpacing =
+      style.letterSpacing === "normal" ? "0px" : style.letterSpacing;
+    const m = inkCanvas.measureText(text);
+    return {
+      left: m.actualBoundingBoxLeft,
+      right: m.actualBoundingBoxRight,
+      ascent: m.actualBoundingBoxAscent,
+      descent: m.actualBoundingBoxDescent,
+    };
+  };
 
   const root = document.getElementById("pr-root");
   if (!root) throw new Error("pr-root missing");
@@ -168,6 +196,7 @@ export function measureInPage(): PageMeasurement {
     const style = getComputedStyle(span);
     const fontSize = parseFloat(style.fontSize) || 0;
     const fontWeight = parseFloat(style.fontWeight) || undefined;
+    const italic = style.fontStyle === "italic";
     // Read back rather than carried forward: whatever Chromium actually
     // applied is what it measured, so the two can never drift apart.
     const tracked = parseFloat(style.letterSpacing);
@@ -280,11 +309,24 @@ export function measureInPage(): PageMeasurement {
       }
 
       const anchorX = anchor === "center" ? (left + right) / 2 : anchor === "end" ? right : left;
+      // The anchor stays on the advance -- that is where the text is drawn
+      // from -- and only the box grows to the ink.
+      let [inkLeft, inkRight, inkTop, inkBottom] = [left, right, top, bottom];
+      if (italic) {
+        const ink = inkExtent(text, style, fontSize);
+        if (ink !== null) {
+          const baseline = top + baselineOffset;
+          inkLeft = Math.min(left, left - ink.left);
+          inkRight = Math.max(right, left + ink.right);
+          inkTop = Math.min(top, baseline - ink.ascent);
+          inkBottom = Math.max(bottom, baseline + ink.descent);
+        }
+      }
       lines.push({
         text,
         x: round(anchorX),
         y: round(top + baselineOffset),
-        box: { x: round(left), y: round(top), width: round(right - left), height: round(height) },
+        box: { x: round(inkLeft), y: round(inkTop), width: round(inkRight - inkLeft), height: round(inkBottom - inkTop) },
         baselineUncertain: uncertain,
       });
     }
@@ -295,6 +337,7 @@ export function measureInPage(): PageMeasurement {
       fontFamily: style.fontFamily,
       fontSize: round(fontSize),
       fontWeight,
+      ...(italic ? { fontStyle: "italic" as const } : {}),
       letterSpacing,
       color: style.color,
       anchor,
@@ -314,7 +357,7 @@ export function measureInPage(): PageMeasurement {
    */
   function measureRich(span: HTMLElement, ownerId: string): MeasuredText | null {
     type Script = "sub" | "sup" | "";
-    type Ch = { ch: string; left: number; right: number; top: number; bottom: number; script: Script };
+    type Ch = { ch: string; left: number; right: number; top: number; bottom: number; script: Script; italic: boolean };
     const style = getComputedStyle(span);
     const fontSize = parseFloat(style.fontSize) || 0;
     const fontWeight = parseFloat(style.fontWeight) || undefined;
@@ -332,6 +375,7 @@ export function measureInPage(): PageMeasurement {
       const holder = node.parentElement;
       const tag = holder?.getAttribute("data-pr-script");
       const script: Script = tag === "sub" || tag === "sup" ? tag : "";
+      const italic = holder !== null && getComputedStyle(holder).fontStyle === "italic";
       if (script !== "" && holder !== null && !examples.has(script)) examples.set(script, holder);
       const content = node.textContent ?? "";
       for (let i = 0; i < content.length; i += 1) {
@@ -342,7 +386,7 @@ export function measureInPage(): PageMeasurement {
         const r = rects[rects.length - 1]!;
         if (r.width === 0 && r.height === 0) continue;
         if (r.width === 0 && /\s/.test(content[i]!)) continue;
-        chars.push({ ch: content[i]!, left: r.left, right: r.right, top: r.top, bottom: r.bottom, script });
+        chars.push({ ch: content[i]!, left: r.left, right: r.right, top: r.top, bottom: r.bottom, script, italic });
       }
     }
     if (chars.length === 0) return null;
@@ -436,7 +480,8 @@ export function measureInPage(): PageMeasurement {
         if (Math.abs(c.bottom - c.top - m.height) > 1) uncertain = true;
         const last = pieces[pieces.length - 1];
         const script = c.script === "" ? undefined : c.script;
-        if (last !== undefined && last.script === script) last.text += c.ch;
+        const fontStyle = c.italic ? ("italic" as const) : undefined;
+        if (last !== undefined && last.script === script && last.fontStyle === fontStyle) last.text += c.ch;
         else {
           pieces.push({
             text: c.ch,
@@ -444,6 +489,7 @@ export function measureInPage(): PageMeasurement {
             y: round(g.base + m.shift),
             fontSize: round(m.size),
             ...(script === undefined ? {} : { script }),
+            ...(fontStyle === undefined ? {} : { fontStyle }),
           });
         }
       }
@@ -451,11 +497,22 @@ export function measureInPage(): PageMeasurement {
         fontWarnings.push(`line "${text.slice(0, 24)}" rendered with different metrics than the probe; a fallback font was used`);
       }
       const anchorX = anchor === "center" ? (left + right) / 2 : anchor === "end" ? right : left;
+      // Each italic piece's ink joins the line's box (ADR 0078).
+      let [inkLeft, inkRight, inkTop, inkBottom] = [left, right, top, bottom];
+      for (const piece of pieces) {
+        if (piece.fontStyle !== "italic") continue;
+        const ink = inkExtent(piece.text, style, piece.fontSize);
+        if (ink === null) continue;
+        inkLeft = Math.min(inkLeft, piece.x - ink.left);
+        inkRight = Math.max(inkRight, piece.x + ink.right);
+        inkTop = Math.min(inkTop, piece.y - ink.ascent);
+        inkBottom = Math.max(inkBottom, piece.y + ink.descent);
+      }
       lines.push({
         text,
         x: round(anchorX),
         y: round(g.base),
-        box: { x: round(left), y: round(top), width: round(right - left), height: round(bottom - top) },
+        box: { x: round(inkLeft), y: round(inkTop), width: round(inkRight - inkLeft), height: round(inkBottom - inkTop) },
         baselineUncertain: uncertain,
         runs: pieces,
       });
@@ -467,6 +524,7 @@ export function measureInPage(): PageMeasurement {
       fontFamily: style.fontFamily,
       fontSize: round(fontSize),
       fontWeight,
+      ...(style.fontStyle === "italic" ? { fontStyle: "italic" as const } : {}),
       letterSpacing,
       color: style.color,
       anchor,

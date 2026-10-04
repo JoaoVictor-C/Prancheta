@@ -423,6 +423,7 @@ export function toLaidOutFigure(
       fontFamily,
       fontSize: text.fontSize,
       fontWeight: text.fontWeight,
+      ...(text.fontStyle === undefined ? {} : { fontStyle: text.fontStyle }),
       letterSpacing: text.letterSpacing,
       fill: text.color,
       anchor: text.anchor,

@@ -338,6 +338,7 @@ function renderBlock(
     node.fontSize !== undefined ? `font-size: ${node.fontSize}px` : "",
     node.fontFamily !== undefined ? `font-family: ${node.fontFamily}` : "",
     node.fontWeight !== undefined ? `font-weight: ${node.fontWeight}` : "",
+    node.fontStyle === "italic" ? "font-style: italic" : "",
     // Tracking goes into the MIRROR, not just the SVG. Chromium measures the
     // tracked run, so advance widths stay honest and text-fits-box keeps
     // meaning what it says. Emitting it only at draw time would make the
@@ -373,7 +374,7 @@ function renderBlock(
   const content =
     node.runs === undefined
       ? escapeHtml(node.label ?? "")
-      : node.runs.map((run) => runHtml(run.text, run.script)).join("");
+      : node.runs.map((run) => runHtml(run.text, run.script, run.fontStyle)).join("");
   const rich = node.runs === undefined ? "" : ' data-pr-rich="1"';
   const label =
     node.label === undefined || node.label === ""
@@ -396,9 +397,15 @@ export const SCRIPT_STYLE = {
   sup: "font-size: 0.7em; vertical-align: 0.55em; line-height: 1",
 } as const;
 
-export function runHtml(text: string, script: "sub" | "sup" | undefined): string {
-  if (script === undefined) return escapeHtml(text);
-  return `<${script} data-pr-script="${script}" style="${SCRIPT_STYLE[script]}">${escapeHtml(text)}</${script}>`;
+export function runHtml(text: string, script: "sub" | "sup" | undefined, fontStyle?: "normal" | "italic"): string {
+  // A run's own style is written only when it states one (ADR 0078); otherwise
+  // it inherits the block's, so a label without fontStyle is byte-identical.
+  const style = fontStyle === undefined ? "" : `font-style: ${fontStyle}`;
+  if (script === undefined) {
+    return style === "" ? escapeHtml(text) : `<span style="${style}">${escapeHtml(text)}</span>`;
+  }
+  const css = style === "" ? SCRIPT_STYLE[script] : `${SCRIPT_STYLE[script]}; ${style}`;
+  return `<${script} data-pr-script="${script}" style="${css}">${escapeHtml(text)}</${script}>`;
 }
 
 export function escapeHtml(value: string): string {

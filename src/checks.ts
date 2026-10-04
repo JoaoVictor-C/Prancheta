@@ -1580,7 +1580,13 @@ function sectorDegrees(sector: PlacedMark): number {
  * no angle or percentage is large enough to carry a thousands separator.
  */
 function statedDegrees(text: string): number | null {
-  const trimmed = text.trim().replace(/−/g, "-").replace(/(\d),(\d)/g, "$1.$2");
+  // "θ = 30°" states the value as surely as "30°" does: a leading name and
+  // equals sign (a name without digits) are read past (ADR 0077).
+  const trimmed = text
+    .trim()
+    .replace(/^[^=\d]+=\s*/u, "")
+    .replace(/−/g, "-")
+    .replace(/(\d),(\d)/g, "$1.$2");
   const share = /^\s*([+-]?\d+(?:\.\d+)?)\s*%\s*$/.exec(trimmed);
   if (share !== null) {
     const percent = Number(share[1]);
@@ -1622,6 +1628,118 @@ function distancePointToSegment(point: Point, a: Point, b: Point): number {
   return Math.hypot(point.x - (a.x + t * vx), point.y - (a.y + t * vy));
 }
 
+function nearestPointOnPolyline(point: Point, points: Point[]): Point {
+  if (points.length === 1) return points[0]!;
+  let best = points[0]!;
+  let bestDistance = Infinity;
+  for (let i = 1; i < points.length; i += 1) {
+    const a = points[i - 1]!;
+    const b = points[i]!;
+    const vx = b.x - a.x;
+    const vy = b.y - a.y;
+    const lengthSquared = vx * vx + vy * vy;
+    const t =
+      lengthSquared === 0 ? 0 : Math.max(0, Math.min(1, ((point.x - a.x) * vx + (point.y - a.y) * vy) / lengthSquared));
+    const candidate = { x: a.x + t * vx, y: a.y + t * vy };
+    const distance = Math.hypot(point.x - candidate.x, point.y - candidate.y);
+    if (distance < bestDistance) {
+      bestDistance = distance;
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/** How near an arm a rival's nearest point must lie to count as drawn along it, in px. */
+const ANGLE_ARM_BAND = 10;
+
+/**
+ * The angle an arc marks: its vertex, its radius, and the directions of its
+ * two arms, with the arc's own middle direction to say which way round it runs.
+ */
+type AngleSector = { vertex: Point; radius: number; from: number; span: number; arms: [Point, Point] };
+
+/**
+ * The sweeps that mark an ANGLE (ADR 0077): a sweep with no arrowhead whose two
+ * ends both land on other drawn ink, which is what an angle mark is -- an arc
+ * from one arm to the other. A rotation arrow (α round a pulley) carries an
+ * arrowhead, so it never qualifies wherever its ends happen to land.
+ *
+ * The vertex is the circumcentre of the drawn arc's first, middle and last
+ * points rather than the authored `centre`, which is scene-local: what is
+ * measured is what is drawn.
+ */
+function angleSectors(
+  figure: LaidOutFigure,
+  candidates: { id: string; distance: (from: Point) => number }[],
+): Map<string, AngleSector> {
+  const sectors = new Map<string, AngleSector>();
+  for (const element of figure.elements) {
+    if (element.kind !== "connector" || element.curve?.kind !== "sweep" || element.arrow !== "none") continue;
+    const points = element.points;
+    if (points.length < 3) continue;
+    const first = points[0]!;
+    const middle = points[Math.floor(points.length / 2)]!;
+    const last = points[points.length - 1]!;
+    const vertex = circumcentre(first, middle, last);
+    if (vertex === null) continue;
+    const landsOnInk = (end: Point) =>
+      candidates.some((candidate) => candidate.id !== element.id && candidate.distance(end) <= ANGLE_ARM_BAND);
+    if (!landsOnInk(first) || !landsOnInk(last)) continue;
+    const direction = (p: Point) => Math.atan2(p.y - vertex.y, p.x - vertex.x);
+    const turn = (a: number, b: number) => (((b - a) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    const a0 = direction(first);
+    // Which way round: the arc passes through its middle point.
+    const forward = turn(a0, direction(middle)) < turn(a0, direction(last));
+    const from = forward ? a0 : direction(last);
+    const span = forward ? turn(a0, direction(last)) : turn(direction(last), a0);
+    sectors.set(element.id, {
+      vertex,
+      radius: Math.hypot(first.x - vertex.x, first.y - vertex.y),
+      from,
+      span,
+      arms: [first, last],
+    });
+  }
+  return sectors;
+}
+
+function circumcentre(a: Point, b: Point, c: Point): Point | null {
+  const d = 2 * (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y));
+  if (Math.abs(d) < 1e-9) return null;
+  const a2 = a.x * a.x + a.y * a.y;
+  const b2 = b.x * b.x + b.y * b.y;
+  const c2 = c.x * c.x + c.y * c.y;
+  return {
+    x: (a2 * (b.y - c.y) + b2 * (c.y - a.y) + c2 * (a.y - b.y)) / d,
+    y: (a2 * (c.x - b.x) + b2 * (a.x - c.x) + c2 * (b.x - a.x)) / d,
+  };
+}
+
+/** Is this label centre inside the angle, near enough its vertex to read as naming it? */
+function insideAngle(angle: AngleSector, point: Point): boolean {
+  const reach = Math.max(2.5 * angle.radius, angle.radius + 60);
+  if (Math.hypot(point.x - angle.vertex.x, point.y - angle.vertex.y) > reach) return false;
+  const turn = (((Math.atan2(point.y - angle.vertex.y, point.x - angle.vertex.x) - angle.from) % (2 * Math.PI)) +
+    2 * Math.PI) % (2 * Math.PI);
+  return turn <= angle.span;
+}
+
+/** Does this point lie within the band along either arm -- the ray from the vertex through an arc end? */
+function onAnArm(angle: AngleSector, point: Point): boolean {
+  return angle.arms.some((end) => {
+    const dx = end.x - angle.vertex.x;
+    const dy = end.y - angle.vertex.y;
+    const length = Math.hypot(dx, dy);
+    const along = ((point.x - angle.vertex.x) * dx + (point.y - angle.vertex.y) * dy) / length;
+    const off =
+      along <= 0
+        ? Math.hypot(point.x - angle.vertex.x, point.y - angle.vertex.y)
+        : Math.abs((point.x - angle.vertex.x) * dy - (point.y - angle.vertex.y) * dx) / length;
+    return off <= ANGLE_ARM_BAND;
+  });
+}
+
 /**
  * Is every annotation nearer to the element it names than to any other?
  *
@@ -1660,8 +1778,13 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
   // own centre -- so a box and a connector are compared on the same terms. A
   // connector measured by its BOUNDING BOX would beat every box in the figure
   // whenever it ran diagonally, since that box is mostly empty space.
-  const candidates: { id: string; distance: (from: Point) => number; encloses: (r: Rect) => boolean }[] =
-    [];
+  const candidates: {
+    id: string;
+    distance: (from: Point) => number;
+    encloses: (r: Rect) => boolean;
+    /** The rival's nearest point to a label centre; polylines only, for the angle relief. */
+    nearest?: (from: Point) => Point;
+  }[] = [];
   const named = new Set(annotations.map((annotation) => annotation.annotates!));
   for (const [id, box] of boxes) {
     if (box.gridOf !== undefined) continue;
@@ -1698,8 +1821,10 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
       id: element.id,
       distance: (from) => distancePointToPolyline(from, points),
       encloses: () => false,
+      nearest: (from) => nearestPointOnPolyline(from, points),
     });
   }
+  const angles = angleSectors(figure, candidates);
 
   const misattributed: string[] = [];
   for (const annotation of annotations) {
@@ -1709,9 +1834,14 @@ function annotationNearestItsOwner(figure: LaidOutFigure, boxes: Map<string, Pla
     const rect = checkRect(annotation);
     const centre = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
     const toOwner = owner.distance(centre);
+    const angle = angles.get(target);
+    const inAngle = angle !== undefined && insideAngle(angle, centre);
     for (const candidate of candidates) {
       if (candidate.id === annotation.id || candidate.id === target) continue;
       if (candidate.encloses(rect)) continue;
+      // ADR 0077: inside its own angle, a label is not misread as naming the
+      // arms (or the hatching and extension lines drawn along them).
+      if (inAngle && candidate.nearest !== undefined && onAnArm(angle!, candidate.nearest(centre))) continue;
       const distance = candidate.distance(centre);
       if (distance < toOwner - EPSILON) {
         misattributed.push(

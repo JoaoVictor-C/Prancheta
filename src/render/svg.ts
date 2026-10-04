@@ -802,7 +802,10 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
 
   const drawn = text.lines
     .map((line) => {
-      if (fontEmbed === "outline") {
+      // The bundled outline face has no italic (ADR 0078): italic text is
+      // drawn as <text> in the installed face the mirror measured.
+      const italic = text.fontStyle === "italic" || (line.runs?.some((run) => run.fontStyle === "italic") ?? false);
+      if (fontEmbed === "outline" && !italic) {
         const outlineFont = loadOutlineFont();
         if (!lineNeedsTextFallback(outlineFont, line.text)) {
           return line.runs === undefined
@@ -817,6 +820,7 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
       const fontWeight = text.fontWeight !== undefined && text.fontWeight !== 400
         ? ` font-weight="${num(text.fontWeight)}"`
         : "";
+      const fontStyle = text.fontStyle === "italic" ? ' font-style="italic"' : "";
       const tracking =
         text.letterSpacing !== undefined && text.letterSpacing !== 0
           ? ` letter-spacing="${num(text.letterSpacing)}"`
@@ -830,18 +834,21 @@ function textToSvg(text: PlacedText, defs: DefsRegistry, fontEmbed: FontEmbedMod
         const spans = line.runs
           .map((run) => {
             const size = run.fontSize === text.fontSize ? "" : ` font-size="${num(run.fontSize)}"`;
-            return `<tspan x="${num(run.x)}" y="${num(run.y)}"${size}>${escapeText(run.text)}</tspan>`;
+            // A run states its style whenever it differs from the label's.
+            const runItalic = run.fontStyle === "italic";
+            const style = runItalic === (text.fontStyle === "italic") ? "" : ` font-style="${runItalic ? "italic" : "normal"}"`;
+            return `<tspan x="${num(run.x)}" y="${num(run.y)}"${size}${style}>${escapeText(run.text)}</tspan>`;
           })
           .join("");
         return (
           `<text data-pr-id="${attr(text.id)}" ` +
-          `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight}${tracking} ` +
+          `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight}${fontStyle}${tracking} ` +
           `fill="${attr(text.fill)}" text-anchor="start" xml:space="preserve">${spans}</text>`
         );
       }
       return (
         `<text data-pr-id="${attr(text.id)}" x="${num(line.x)}" y="${num(line.y)}" ` +
-        `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight}${tracking} ` +
+        `font-family="${attr(text.fontFamily)}" font-size="${num(text.fontSize)}"${fontWeight}${fontStyle}${tracking} ` +
         `fill="${attr(text.fill)}" text-anchor="${anchor}" ` +
         `xml:space="preserve">${escapeText(line.text)}</text>`
       );
