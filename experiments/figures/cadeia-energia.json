@@ -1,0 +1,1124 @@
+{
+  "version": 1,
+  "title": "Cadeia de energia: do gás à mola",
+  "canvas": {
+    "padding": 16,
+    "constraints": {
+      "allowOverlap": true,
+      "allowConnectorCrossing": true,
+      "allowCurvedConnectors": true
+    }
+  },
+  "root": {
+    "type": "scene",
+    "layout": "absolute",
+    "width": 1202,
+    "height": 439,
+    "marks": [
+      {
+        "id": "ground",
+        "from": {
+          "x": 33.5,
+          "y": 381.7
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1172,
+              "y": 381.7
+            }
+          }
+        ],
+        "close": false,
+        "stroke": "#d8d8d0",
+        "strokeWidth": 2
+      },
+      {
+        "id": "structure",
+        "from": {
+          "x": 50,
+          "y": 381.7
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 50,
+              "y": 134.2
+            }
+          },
+          {
+            "line": {
+              "x": 215,
+              "y": 134.2
+            }
+          },
+          {
+            "line": {
+              "x": 221.88,
+              "y": 134.7
+            }
+          },
+          {
+            "line": {
+              "x": 228.75,
+              "y": 136.15
+            }
+          },
+          {
+            "line": {
+              "x": 235.63,
+              "y": 138.45
+            }
+          },
+          {
+            "line": {
+              "x": 242.5,
+              "y": 141.53
+            }
+          },
+          {
+            "line": {
+              "x": 249.38,
+              "y": 145.3
+            }
+          },
+          {
+            "line": {
+              "x": 256.25,
+              "y": 149.67
+            }
+          },
+          {
+            "line": {
+              "x": 263.13,
+              "y": 154.55
+            }
+          },
+          {
+            "line": {
+              "x": 270,
+              "y": 159.87
+            }
+          },
+          {
+            "line": {
+              "x": 276.88,
+              "y": 165.52
+            }
+          },
+          {
+            "line": {
+              "x": 283.75,
+              "y": 171.44
+            }
+          },
+          {
+            "line": {
+              "x": 290.63,
+              "y": 177.53
+            }
+          },
+          {
+            "line": {
+              "x": 297.5,
+              "y": 183.7
+            }
+          },
+          {
+            "line": {
+              "x": 304.38,
+              "y": 189.87
+            }
+          },
+          {
+            "line": {
+              "x": 311.25,
+              "y": 195.96
+            }
+          },
+          {
+            "line": {
+              "x": 318.13,
+              "y": 201.88
+            }
+          },
+          {
+            "line": {
+              "x": 325,
+              "y": 207.53
+            }
+          },
+          {
+            "line": {
+              "x": 331.88,
+              "y": 212.85
+            }
+          },
+          {
+            "line": {
+              "x": 338.75,
+              "y": 217.73
+            }
+          },
+          {
+            "line": {
+              "x": 345.63,
+              "y": 222.1
+            }
+          },
+          {
+            "line": {
+              "x": 352.5,
+              "y": 225.87
+            }
+          },
+          {
+            "line": {
+              "x": 359.38,
+              "y": 228.95
+            }
+          },
+          {
+            "line": {
+              "x": 366.25,
+              "y": 231.25
+            }
+          },
+          {
+            "line": {
+              "x": 373.13,
+              "y": 232.7
+            }
+          },
+          {
+            "line": {
+              "x": 380,
+              "y": 233.2
+            }
+          },
+          {
+            "line": {
+              "x": 611,
+              "y": 233.2
+            }
+          },
+          {
+            "line": {
+              "x": 611,
+              "y": 381.7
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#34342f",
+        "stroke": "#d8d8d0",
+        "strokeWidth": 1.5
+      },
+      {
+        "id": "loop",
+        "from": {
+          "x": 479,
+          "y": 233.2
+        },
+        "segments": [
+          {
+            "arc": {
+              "x": 545,
+              "y": 167.2
+            },
+            "centre": {
+              "x": 479,
+              "y": 167.2
+            }
+          },
+          {
+            "arc": {
+              "x": 479,
+              "y": 101.2
+            },
+            "centre": {
+              "x": 479,
+              "y": 167.2
+            }
+          },
+          {
+            "arc": {
+              "x": 413,
+              "y": 167.2
+            },
+            "centre": {
+              "x": 479,
+              "y": 167.2
+            }
+          },
+          {
+            "arc": {
+              "x": 479,
+              "y": 233.2
+            },
+            "centre": {
+              "x": 479,
+              "y": 167.2
+            }
+          }
+        ],
+        "close": false,
+        "stroke": "#d8d8d0",
+        "strokeWidth": 2.5
+      },
+      {
+        "id": "plate-l",
+        "from": {
+          "x": 611.82,
+          "y": 332.2
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 618.42,
+              "y": 332.2
+            }
+          },
+          {
+            "line": {
+              "x": 618.42,
+              "y": 233.2
+            }
+          },
+          {
+            "line": {
+              "x": 611.82,
+              "y": 233.2
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#b8742a",
+        "stroke": "#e0a860",
+        "strokeWidth": 1
+      },
+      {
+        "id": "plate-r",
+        "from": {
+          "x": 949.25,
+          "y": 332.2
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 955.85,
+              "y": 332.2
+            }
+          },
+          {
+            "line": {
+              "x": 955.85,
+              "y": 233.2
+            }
+          },
+          {
+            "line": {
+              "x": 949.25,
+              "y": 233.2
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#b8742a",
+        "stroke": "#e0a860",
+        "strokeWidth": 1
+      },
+      {
+        "id": "cart-body",
+        "from": {
+          "x": 843.32,
+          "y": 370.15
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 945.62,
+              "y": 370.15
+            }
+          },
+          {
+            "line": {
+              "x": 945.62,
+              "y": 335.5
+            }
+          },
+          {
+            "line": {
+              "x": 843.32,
+              "y": 335.5
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#245c48",
+        "stroke": "none"
+      },
+      {
+        "id": "cart",
+        "from": {
+          "x": 843.32,
+          "y": 335.5
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 843.32,
+              "y": 370.15
+            }
+          },
+          {
+            "line": {
+              "x": 945.62,
+              "y": 370.15
+            }
+          },
+          {
+            "line": {
+              "x": 945.62,
+              "y": 335.5
+            }
+          }
+        ],
+        "close": false,
+        "stroke": "#8fd3b6",
+        "strokeWidth": 2.5
+      },
+      {
+        "id": "coil",
+        "from": {
+          "x": 917.57,
+          "y": 361.9
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 934.07,
+              "y": 361.9
+            }
+          },
+          {
+            "line": {
+              "x": 934.07,
+              "y": 345.4
+            }
+          },
+          {
+            "line": {
+              "x": 917.57,
+              "y": 345.4
+            }
+          }
+        ],
+        "close": true,
+        "stroke": "#f0e0a0",
+        "strokeWidth": 2
+      },
+      {
+        "id": "coil-2",
+        "from": {
+          "x": 919.88,
+          "y": 359.59
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 931.76,
+              "y": 359.59
+            }
+          },
+          {
+            "line": {
+              "x": 931.76,
+              "y": 347.71
+            }
+          },
+          {
+            "line": {
+              "x": 919.88,
+              "y": 347.71
+            }
+          }
+        ],
+        "close": true,
+        "stroke": "#f0e0a0",
+        "strokeWidth": 1.2
+      },
+      {
+        "id": "field",
+        "from": {
+          "x": 1003.7,
+          "y": 380.05
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1053.2,
+              "y": 380.05
+            }
+          },
+          {
+            "line": {
+              "x": 1053.2,
+              "y": 323.95
+            }
+          },
+          {
+            "line": {
+              "x": 1003.7,
+              "y": 323.95
+            }
+          }
+        ],
+        "close": true,
+        "stroke": "#9a9a94",
+        "strokeWidth": 1.2,
+        "lineStyle": "dashed"
+      },
+      {
+        "id": "wall",
+        "from": {
+          "x": 1152.2,
+          "y": 381.7
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1162.1,
+              "y": 381.7
+            }
+          },
+          {
+            "line": {
+              "x": 1162.1,
+              "y": 312.4
+            }
+          },
+          {
+            "line": {
+              "x": 1152.2,
+              "y": 312.4
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#55554f",
+        "stroke": "#d8d8d0",
+        "strokeWidth": 1
+      },
+      {
+        "id": "spring",
+        "from": {
+          "x": 1152.2,
+          "y": 353.65
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1143.95,
+              "y": 353.65
+            }
+          },
+          {
+            "line": {
+              "x": 1140.65,
+              "y": 346.22
+            }
+          },
+          {
+            "line": {
+              "x": 1134.05,
+              "y": 361.07
+            }
+          },
+          {
+            "line": {
+              "x": 1127.45,
+              "y": 346.22
+            }
+          },
+          {
+            "line": {
+              "x": 1120.85,
+              "y": 361.07
+            }
+          },
+          {
+            "line": {
+              "x": 1114.25,
+              "y": 346.22
+            }
+          },
+          {
+            "line": {
+              "x": 1107.65,
+              "y": 361.07
+            }
+          },
+          {
+            "line": {
+              "x": 1104.35,
+              "y": 353.65
+            }
+          },
+          {
+            "line": {
+              "x": 1096.1,
+              "y": 353.65
+            }
+          }
+        ],
+        "close": false,
+        "stroke": "#d8d8d0",
+        "strokeWidth": 2
+      },
+      {
+        "id": "spring-cap",
+        "from": {
+          "x": 1096.1,
+          "y": 363.55
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 1096.1,
+              "y": 343.75
+            }
+          }
+        ],
+        "close": false,
+        "stroke": "#d8d8d0",
+        "strokeWidth": 3
+      },
+      {
+        "id": "cyl",
+        "from": {
+          "x": 142.4,
+          "y": 71.5
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 59.9,
+              "y": 71.5
+            }
+          },
+          {
+            "line": {
+              "x": 59.9,
+              "y": 114.4
+            }
+          },
+          {
+            "line": {
+              "x": 142.4,
+              "y": 114.4
+            }
+          }
+        ],
+        "close": false,
+        "stroke": "#9cc0f0",
+        "strokeWidth": 2.5
+      },
+      {
+        "id": "flame0",
+        "from": {
+          "x": 61.55,
+          "y": 134.2
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 84.65,
+              "y": 134.2
+            }
+          },
+          {
+            "line": {
+              "x": 73.1,
+              "y": 117.7
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#7a3020",
+        "stroke": "#e08a60",
+        "strokeWidth": 1
+      },
+      {
+        "id": "flame1",
+        "from": {
+          "x": 89.6,
+          "y": 134.2
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 112.7,
+              "y": 134.2
+            }
+          },
+          {
+            "line": {
+              "x": 101.15,
+              "y": 117.7
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#7a3020",
+        "stroke": "#e08a60",
+        "strokeWidth": 1
+      },
+      {
+        "id": "flame2",
+        "from": {
+          "x": 117.65,
+          "y": 134.2
+        },
+        "segments": [
+          {
+            "line": {
+              "x": 140.75,
+              "y": 134.2
+            }
+          },
+          {
+            "line": {
+              "x": 129.2,
+              "y": 117.7
+            }
+          }
+        ],
+        "close": true,
+        "fill": "#7a3020",
+        "stroke": "#e08a60",
+        "strokeWidth": 1
+      }
+    ],
+    "children": [
+      {
+        "type": "block",
+        "id": "gas",
+        "x": 61.55,
+        "y": 73.15,
+        "width": 79.2,
+        "height": 39.6,
+        "padding": 0,
+        "fill": "#1f4a8a",
+        "stroke": "none",
+        "textColor": "#e8eefc",
+        "fontSize": 17,
+        "textAlign": "center",
+        "verticalAlign": "center",
+        "label": "gás"
+      },
+      {
+        "type": "block",
+        "id": "piston",
+        "x": 142.4,
+        "y": 64.9,
+        "width": 8.25,
+        "height": 66,
+        "padding": 0,
+        "fill": "#6a6a64",
+        "stroke": "#d8d8d0",
+        "strokeWidth": 1,
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "sphere",
+        "shape": "circle",
+        "x": 150.65,
+        "y": 111.1,
+        "width": 23.1,
+        "height": 23.1,
+        "padding": 0,
+        "fill": "#4a3fa8",
+        "stroke": "#b8b0f0",
+        "strokeWidth": 1.5,
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "wheel-a",
+        "shape": "circle",
+        "x": 856.52,
+        "y": 370.15,
+        "width": 11.55,
+        "height": 11.55,
+        "padding": 0,
+        "fill": "#0f1115",
+        "stroke": "#d8d8d0",
+        "strokeWidth": 1.5,
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "wheel-b",
+        "shape": "circle",
+        "x": 920.87,
+        "y": 370.15,
+        "width": 11.55,
+        "height": 11.55,
+        "padding": 0,
+        "fill": "#0f1115",
+        "stroke": "#d8d8d0",
+        "strokeWidth": 1.5,
+        "label": ""
+      },
+      {
+        "type": "block",
+        "id": "x0",
+        "x": 1005.75,
+        "y": 354.68,
+        "width": 19,
+        "height": 26,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 15,
+        "label": "×",
+        "annotates": "field",
+        "textColor": "#9a9a94"
+      },
+      {
+        "type": "block",
+        "id": "x1",
+        "x": 1005.75,
+        "y": 324.15,
+        "width": 19,
+        "height": 26,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 15,
+        "label": "×",
+        "annotates": "field",
+        "textColor": "#9a9a94"
+      },
+      {
+        "type": "block",
+        "id": "x2",
+        "x": 1032.15,
+        "y": 354.68,
+        "width": 19,
+        "height": 26,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 15,
+        "label": "×",
+        "annotates": "field",
+        "textColor": "#9a9a94"
+      },
+      {
+        "type": "block",
+        "id": "x3",
+        "x": 1032.15,
+        "y": 324.15,
+        "width": 19,
+        "height": 26,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 15,
+        "label": "×",
+        "annotates": "field",
+        "textColor": "#9a9a94"
+      },
+      {
+        "type": "block",
+        "id": "lab-Q",
+        "x": 62.650000000000006,
+        "y": 138.7,
+        "width": 77,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "calor Q",
+        "annotates": "flame1"
+      },
+      {
+        "type": "block",
+        "id": "lab-m",
+        "x": 161.75,
+        "y": 79.1,
+        "width": 58,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "m, +q",
+        "annotates": "sphere"
+      },
+      {
+        "type": "block",
+        "id": "lab-r",
+        "x": 469.2,
+        "y": 127,
+        "width": 20,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "r",
+        "annotates": "r-line"
+      },
+      {
+        "type": "block",
+        "id": "lab-h",
+        "x": 357.3,
+        "y": 169.7,
+        "width": 20,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "h",
+        "annotates": "h-dim"
+      },
+      {
+        "type": "block",
+        "id": "lab-E",
+        "x": 676.9,
+        "y": 298.4,
+        "width": 20,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "E",
+        "annotates": "E1"
+      },
+      {
+        "type": "block",
+        "id": "lab-plus",
+        "x": 619.13,
+        "y": 231.2,
+        "width": 20,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "+",
+        "annotates": "plate-l"
+      },
+      {
+        "type": "block",
+        "id": "lab-minus",
+        "x": 956.55,
+        "y": 231.2,
+        "width": 20,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "−",
+        "annotates": "plate-r"
+      },
+      {
+        "type": "block",
+        "id": "lab-M",
+        "x": 817.32,
+        "y": 339.65,
+        "width": 20,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "M",
+        "annotates": "cart-body"
+      },
+      {
+        "type": "block",
+        "id": "lab-coil",
+        "x": 853.82,
+        "y": 393.7,
+        "width": 144,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "bobina N, ℓ, ρ",
+        "annotates": "coil-lead"
+      },
+      {
+        "type": "block",
+        "id": "lab-B",
+        "x": 1008.95,
+        "y": 289.45,
+        "width": 39,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "B ⊗",
+        "annotates": "field"
+      },
+      {
+        "type": "block",
+        "id": "lab-k",
+        "x": 1114.15,
+        "y": 393.7,
+        "width": 20,
+        "height": 28,
+        "padding": 0,
+        "fill": "none",
+        "stroke": "none",
+        "wrap": "none",
+        "textAlign": "center",
+        "fontSize": 17,
+        "label": "k",
+        "annotates": "spring-lead"
+      }
+    ],
+    "connectors": [
+      {
+        "id": "r-line",
+        "from": {
+          "x": 479,
+          "y": 167.2
+        },
+        "to": {
+          "x": 525.67,
+          "y": 120.53
+        },
+        "arrow": "none",
+        "stroke": "#9a9a94",
+        "strokeWidth": 1.2,
+        "lineStyle": "dashed"
+      },
+      {
+        "id": "h-ext",
+        "from": {
+          "x": 215,
+          "y": 134.2
+        },
+        "to": {
+          "x": 389.9,
+          "y": 134.2
+        },
+        "arrow": "none",
+        "stroke": "#9a9a94",
+        "strokeWidth": 1,
+        "lineStyle": "dotted"
+      },
+      {
+        "id": "h-dim",
+        "from": {
+          "x": 383.3,
+          "y": 134.2
+        },
+        "to": {
+          "x": 383.3,
+          "y": 233.2
+        },
+        "arrow": "both",
+        "arrowStyle": "open",
+        "stroke": "#9a9a94",
+        "strokeWidth": 1.2
+      },
+      {
+        "id": "E1",
+        "from": {
+          "x": 653.9,
+          "y": 290.4
+        },
+        "to": {
+          "x": 719.9,
+          "y": 290.4
+        },
+        "arrow": "end",
+        "stroke": "#e0a860",
+        "strokeWidth": 1.5
+      },
+      {
+        "id": "E2",
+        "from": {
+          "x": 653.9,
+          "y": 334.4
+        },
+        "to": {
+          "x": 719.9,
+          "y": 334.4
+        },
+        "arrow": "end",
+        "stroke": "#e0a860",
+        "strokeWidth": 1.5
+      },
+      {
+        "id": "coil-lead",
+        "from": {
+          "x": 925.82,
+          "y": 391.7
+        },
+        "to": {
+          "x": 925.82,
+          "y": 361.9
+        },
+        "arrow": "none",
+        "stroke": "#9a9a94",
+        "strokeWidth": 1
+      },
+      {
+        "id": "spring-lead",
+        "from": {
+          "x": 1124.15,
+          "y": 391.7
+        },
+        "to": {
+          "x": 1124.15,
+          "y": 361.9
+        },
+        "arrow": "none",
+        "stroke": "#9a9a94",
+        "strokeWidth": 1
+      }
+    ]
+  }
+}

@@ -1,0 +1,2525 @@
+{
+  "name": "cadeia-energia",
+  "title": "Física — Uma cadeia de energia",
+  "subtitle": "Do gás à mola: termodinâmica, rolamento, eletrostática, colisão, indução e oscilações num só sistema",
+  "locale": "pt-BR",
+  "footer": "Física · Cadeia de energia",
+  "contentsNote": "<p style=\"margin:4pt 0 0\">Todos os números do enunciado, da figura e do gabarito vêm dos mesmos parâmetros. Use \\(g =  {{= g : 1}} \\ \\text{m/s}^2\\) e \\(R =  {{= Rg : 3}} \\ \\text{J}\\,\\text{mol}^{-1}\\,\\text{K}^{-1}\\).</p>",
+  "params": {
+    "g": 9.8,
+    "Rg": 8.314,
+    "ng": 0.2,
+    "T0": 300,
+    "eta": 0.4,
+    "ms": 0.5,
+    "qs": 0.002,
+    "Ef": 1500,
+    "hr": 0.6,
+    "rl": 0.4,
+    "Hq": 0.6,
+    "Mc": 2,
+    "Nt": 25,
+    "Bf": 0.8,
+    "ls": 0.1,
+    "rho": 0.5,
+    "kmola": 300,
+    "Lb": 0.3,
+    "K0": "0.7*ms*g*rl + ms*g*2*rl - ms*g*hr",
+    "W": "K0/eta",
+    "Q": "5*W/2",
+    "dT": "W/(ng*Rg)",
+    "v0": "sqrt(K0/(0.7*ms))",
+    "vt": "sqrt(g*rl)",
+    "vb": "sqrt((K0 + ms*g*hr)/(0.7*ms))",
+    "Nb": "ms*(g + vb^2/rl)",
+    "tq": "sqrt(2*Hq/g)",
+    "ax": "qs*Ef/ms",
+    "xl": "vb*tq + ax*tq^2/2",
+    "vx": "vb + ax*tq",
+    "vy": "g*tq",
+    "Kt": "ms*(vx^2 + vy^2)/2",
+    "Kr": "ms*vb^2/5",
+    "Kb": "Kt + Kr",
+    "Vc": "ms*vx/(ms + Mc)",
+    "Ka": "(ms + Mc)*Vc^2/2",
+    "perda": "1 - Ka/Kb",
+    "fem": "Nt*Bf*ls*Vc",
+    "Ic": "fem/rho",
+    "Fm": "Nt*Bf*Ic*ls",
+    "bk": "Nt^2*Bf^2*ls^2/rho",
+    "Jb": "bk*ls",
+    "pc": "(ms + Mc)*Vc",
+    "V1": "Vc - 2*Jb/(ms + Mc)",
+    "p1": "(ms + Mc)*V1",
+    "xm": "V1*sqrt((ms + Mc)/kmola)",
+    "tc": "pi*sqrt((ms + Mc)/kmola)",
+    "dfora": "(p1 - Jb)/bk"
+  },
+  "sections": [
+    {
+      "title": "A montagem",
+      "exercises": [
+        {
+          "id": "1",
+          "level": "mid",
+          "statement": "<p>Um gás ideal monoatômico (\\(n =  {{= ng : 1}} \\) mol, \\(T_0 =  {{= T0 : 0}} \\) K) é aquecido lentamente a pressão constante e empurra um pistão de massa desprezível. O pistão lança uma esfera maciça (\\(m =  {{= ms : 1}} \\) kg, raio \\(a\\) desprezível frente às outras medidas, carga \\(q = + {{= qs*1000 : 0}} \\) mC), que já sai rolando sem deslizar. Ela desce uma rampa de altura \\(h =  {{= hr : 1}} \\) m até o trilho e percorre um loop vertical de raio \\(r =  {{= rl : 1}} \\) m.</p><p>Depois do loop, o trilho termina numa borda. A esfera cai \\( {{= Hq : 1}} \\) m entre duas placas verticais, num campo uniforme \\(E =  {{= Ef : 0}} \\) N/C que aponta no sentido do movimento, e cai dentro de um carrinho (\\(M =  {{= Mc : 0}} \\) kg) em repouso num piso sem atrito, onde fica presa.</p><p>O carrinho leva uma bobina quadrada (\\(N =  {{= Nt : 0}} \\) espiras, lado \\(\\ell =  {{= ls : 1}} \\) m, resistência total \\(\\rho =  {{= rho : 1}} \\ \\Omega\\)). Ela atravessa uma região de largura \\( {{= Lb : 1}} \\) m com \\(B =  {{= Bf : 1}} \\) T entrando na página. Depois, o carrinho bate numa mola de \\(k =  {{= kmola : 0}} \\) N/m.</p>{{figure}}<p><b>Termodinâmica.</b> O pistão converte \\( {{= eta*100 : 0}} \\%\\) do trabalho do gás em energia cinética da esfera. Qual é o menor calor \\(Q\\) que faz a esfera passar pelo topo do loop?</p>",
+          "figure": {
+            "spec": {
+              "version": 1,
+              "title": "Cadeia de energia: do gás à mola",
+              "canvas": {
+                "padding": 16,
+                "constraints": {
+                  "allowOverlap": true,
+                  "allowConnectorCrossing": true,
+                  "allowCurvedConnectors": true
+                },
+                "theme": "print"
+              },
+              "root": {
+                "type": "scene",
+                "layout": "absolute",
+                "width": 771,
+                "height": 322,
+                "marks": [
+                  {
+                    "id": "ground",
+                    "from": {
+                      "x": 19.5,
+                      "y": 262.9
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 744,
+                          "y": 262.9
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 2
+                  },
+                  {
+                    "id": "structure",
+                    "from": {
+                      "x": 30,
+                      "y": 262.9
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 30,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 135,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 139.38,
+                          "y": 105.72
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 143.75,
+                          "y": 106.64
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 148.13,
+                          "y": 108.11
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 152.5,
+                          "y": 110.07
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 156.88,
+                          "y": 112.46
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 161.25,
+                          "y": 115.24
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 165.63,
+                          "y": 118.35
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 170,
+                          "y": 121.73
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 174.38,
+                          "y": 125.33
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 178.75,
+                          "y": 129.1
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 183.13,
+                          "y": 132.97
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 187.5,
+                          "y": 136.9
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 191.87,
+                          "y": 140.83
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 196.25,
+                          "y": 144.7
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 200.63,
+                          "y": 148.47
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 205,
+                          "y": 152.07
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 209.38,
+                          "y": 155.45
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 213.75,
+                          "y": 158.56
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 218.12,
+                          "y": 161.34
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 222.5,
+                          "y": 163.73
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 226.88,
+                          "y": 165.69
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 231.25,
+                          "y": 167.16
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 235.63,
+                          "y": 168.08
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 240,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 387,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 387,
+                          "y": 262.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#e6e4de",
+                    "stroke": "#222222",
+                    "strokeWidth": 1.5
+                  },
+                  {
+                    "id": "loop",
+                    "from": {
+                      "x": 303,
+                      "y": 168.4
+                    },
+                    "segments": [
+                      {
+                        "arc": {
+                          "x": 345,
+                          "y": 126.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      },
+                      {
+                        "arc": {
+                          "x": 303,
+                          "y": 84.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      },
+                      {
+                        "arc": {
+                          "x": 261,
+                          "y": 126.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      },
+                      {
+                        "arc": {
+                          "x": 303,
+                          "y": 168.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 2.5
+                  },
+                  {
+                    "id": "plate-l",
+                    "from": {
+                      "x": 387.52,
+                      "y": 231.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 391.72,
+                          "y": 231.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 391.72,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 387.52,
+                          "y": 168.4
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#d89a50",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "plate-r",
+                    "from": {
+                      "x": 602.25,
+                      "y": 231.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 606.45,
+                          "y": 231.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 606.45,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 602.25,
+                          "y": 168.4
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#d89a50",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "cart-body",
+                    "from": {
+                      "x": 534.84,
+                      "y": 255.55
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 255.55
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 233.5
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 534.84,
+                          "y": 233.5
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#d3ebe0",
+                    "stroke": "none"
+                  },
+                  {
+                    "id": "cart",
+                    "from": {
+                      "x": 534.84,
+                      "y": 233.5
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 534.84,
+                          "y": 255.55
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 255.55
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 233.5
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#1f6b50",
+                    "strokeWidth": 2.5
+                  },
+                  {
+                    "id": "coil",
+                    "from": {
+                      "x": 582.09,
+                      "y": 250.3
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 592.59,
+                          "y": 250.3
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 592.59,
+                          "y": 239.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 582.09,
+                          "y": 239.8
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "stroke": "#7a5c00",
+                    "strokeWidth": 2
+                  },
+                  {
+                    "id": "coil-2",
+                    "from": {
+                      "x": 583.56,
+                      "y": 248.83
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 591.12,
+                          "y": 248.83
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 591.12,
+                          "y": 241.27
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 583.56,
+                          "y": 241.27
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "stroke": "#7a5c00",
+                    "strokeWidth": 1.2
+                  },
+                  {
+                    "id": "field",
+                    "from": {
+                      "x": 636.9,
+                      "y": 261.85
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 668.4,
+                          "y": 261.85
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 668.4,
+                          "y": 198.85
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 636.9,
+                          "y": 198.85
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "stroke": "#666666",
+                    "strokeWidth": 1.2,
+                    "lineStyle": "dashed"
+                  },
+                  {
+                    "id": "wall",
+                    "from": {
+                      "x": 731.4,
+                      "y": 262.9
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 737.7,
+                          "y": 262.9
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 737.7,
+                          "y": 218.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 731.4,
+                          "y": 218.8
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#9a9a9a",
+                    "stroke": "#222222",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "spring",
+                    "from": {
+                      "x": 731.4,
+                      "y": 245.05
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 726.15,
+                          "y": 245.05
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 724.05,
+                          "y": 240.32
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 719.85,
+                          "y": 249.77
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 715.65,
+                          "y": 240.32
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 711.45,
+                          "y": 249.77
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 707.25,
+                          "y": 240.32
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 703.05,
+                          "y": 249.77
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 700.95,
+                          "y": 245.05
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 695.7,
+                          "y": 245.05
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 2
+                  },
+                  {
+                    "id": "spring-cap",
+                    "from": {
+                      "x": 695.7,
+                      "y": 251.35
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 695.7,
+                          "y": 238.75
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 3
+                  },
+                  {
+                    "id": "cyl",
+                    "from": {
+                      "x": 88.8,
+                      "y": 65.5
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 36.3,
+                          "y": 65.5
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 36.3,
+                          "y": 92.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 88.8,
+                          "y": 92.8
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#2a5ca8",
+                    "strokeWidth": 2.5
+                  },
+                  {
+                    "id": "flame0",
+                    "from": {
+                      "x": 37.35,
+                      "y": 105.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 52.05,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 44.7,
+                          "y": 94.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#f3c4ac",
+                    "stroke": "#b04a20",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "flame1",
+                    "from": {
+                      "x": 55.2,
+                      "y": 105.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 69.9,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 62.55,
+                          "y": 94.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#f3c4ac",
+                    "stroke": "#b04a20",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "flame2",
+                    "from": {
+                      "x": 73.05,
+                      "y": 105.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 87.75,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 80.4,
+                          "y": 94.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#f3c4ac",
+                    "stroke": "#b04a20",
+                    "strokeWidth": 1
+                  }
+                ],
+                "children": [
+                  {
+                    "type": "block",
+                    "id": "gas",
+                    "x": 37.35,
+                    "y": 66.55,
+                    "width": 50.4,
+                    "height": 25.2,
+                    "padding": 0,
+                    "fill": "#d3e0f5",
+                    "stroke": "none",
+                    "textColor": "#1a3a70",
+                    "fontSize": 19,
+                    "textAlign": "center",
+                    "verticalAlign": "center",
+                    "label": "gás"
+                  },
+                  {
+                    "type": "block",
+                    "id": "piston",
+                    "x": 88.8,
+                    "y": 61.3,
+                    "width": 5.25,
+                    "height": 42,
+                    "padding": 0,
+                    "fill": "#b0b0b0",
+                    "stroke": "#222222",
+                    "strokeWidth": 1,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "sphere",
+                    "shape": "circle",
+                    "x": 94.05,
+                    "y": 90.7,
+                    "width": 14.700000000000001,
+                    "height": 14.700000000000001,
+                    "padding": 0,
+                    "fill": "#8f86dc",
+                    "stroke": "#3d3585",
+                    "strokeWidth": 1.5,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "wheel-a",
+                    "shape": "circle",
+                    "x": 543.24,
+                    "y": 255.55,
+                    "width": 7.3500000000000005,
+                    "height": 7.3500000000000005,
+                    "padding": 0,
+                    "fill": "#ffffff",
+                    "stroke": "#222222",
+                    "strokeWidth": 1.5,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "wheel-b",
+                    "shape": "circle",
+                    "x": 584.19,
+                    "y": 255.55,
+                    "width": 7.3500000000000005,
+                    "height": 7.3500000000000005,
+                    "padding": 0,
+                    "fill": "#ffffff",
+                    "stroke": "#222222",
+                    "strokeWidth": 1.5,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "x0",
+                    "x": 643.15,
+                    "y": 231.21,
+                    "width": 19,
+                    "height": 26,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 15,
+                    "label": "×",
+                    "annotates": "field",
+                    "textColor": "#666666"
+                  },
+                  {
+                    "type": "block",
+                    "id": "x1",
+                    "x": 643.15,
+                    "y": 203.49,
+                    "width": 19,
+                    "height": 26,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 15,
+                    "label": "×",
+                    "annotates": "field",
+                    "textColor": "#666666"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-Q",
+                    "x": 20.049999999999997,
+                    "y": 109.9,
+                    "width": 85,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "calor Q",
+                    "annotates": "flame1"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-m",
+                    "x": 96.75,
+                    "y": 57.7,
+                    "width": 64,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "m, +q",
+                    "annotates": "sphere"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-r",
+                    "x": 287.9,
+                    "y": 90,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "r",
+                    "annotates": "r-line"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-h",
+                    "x": 215.6,
+                    "y": 121.9,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "h",
+                    "annotates": "h-dim"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-E",
+                    "x": 424.8,
+                    "y": 203.8,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "E",
+                    "annotates": "E1"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-plus",
+                    "x": 393.13,
+                    "y": 165.4,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "+",
+                    "annotates": "plate-l"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-minus",
+                    "x": 607.85,
+                    "y": 165.4,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "−",
+                    "annotates": "plate-r"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-M",
+                    "x": 508.34000000000003,
+                    "y": 230.05,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "M",
+                    "annotates": "cart-body"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-coil",
+                    "x": 507.84000000000003,
+                    "y": 274.9,
+                    "width": 159,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "bobina N, ℓ, ρ",
+                    "annotates": "coil-lead"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-B",
+                    "x": 631.65,
+                    "y": 162.35,
+                    "width": 42,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "B ⊗",
+                    "annotates": "field"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-k",
+                    "x": 703.05,
+                    "y": 274.9,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "k",
+                    "annotates": "spring-lead"
+                  }
+                ],
+                "connectors": [
+                  {
+                    "id": "r-line",
+                    "from": {
+                      "x": 303,
+                      "y": 126.4
+                    },
+                    "to": {
+                      "x": 332.7,
+                      "y": 96.7
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1.2,
+                    "lineStyle": "dashed"
+                  },
+                  {
+                    "id": "h-ext",
+                    "from": {
+                      "x": 135,
+                      "y": 105.4
+                    },
+                    "to": {
+                      "x": 246.3,
+                      "y": 105.4
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1,
+                    "lineStyle": "dotted"
+                  },
+                  {
+                    "id": "h-dim",
+                    "from": {
+                      "x": 242.1,
+                      "y": 105.4
+                    },
+                    "to": {
+                      "x": 242.1,
+                      "y": 168.4
+                    },
+                    "arrow": "both",
+                    "arrowStyle": "open",
+                    "stroke": "#666666",
+                    "strokeWidth": 1.2
+                  },
+                  {
+                    "id": "E1",
+                    "from": {
+                      "x": 414.3,
+                      "y": 196.8
+                    },
+                    "to": {
+                      "x": 456.3,
+                      "y": 196.8
+                    },
+                    "arrow": "end",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1.5
+                  },
+                  {
+                    "id": "E2",
+                    "from": {
+                      "x": 414.3,
+                      "y": 240.8
+                    },
+                    "to": {
+                      "x": 456.3,
+                      "y": 240.8
+                    },
+                    "arrow": "end",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1.5
+                  },
+                  {
+                    "id": "coil-lead",
+                    "from": {
+                      "x": 587.34,
+                      "y": 272.9
+                    },
+                    "to": {
+                      "x": 587.34,
+                      "y": 250.3
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "spring-lead",
+                    "from": {
+                      "x": 713.55,
+                      "y": 272.9
+                    },
+                    "to": {
+                      "x": 713.55,
+                      "y": 250.3
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1
+                  }
+                ]
+              }
+            },
+            "caption": "A montagem, em escala. Os números são os do enunciado."
+          },
+          "answer": "\\(Q \\approx  {{= Q : 1}} \\) J",
+          "solution": "<p>No topo, o mínimo é a normal nula: \\(mg = mv_t^2/r\\), então \\(v_t^2 = gr\\). Rolando sem deslizar, a energia cinética total é \\(\\tfrac{7}{10}mv^2\\). Do lançamento (altura \\(h\\) acima do trilho) ao topo (altura \\(2r\\)):</p>$$K_0 = \\tfrac{7}{10}m\\,gr + mg\\,2r - mgh =  {{= K0 : 2}} \\ \\text{J}.$$<p>Esse valor é \\( {{= eta*100 : 0}} \\%\\) do trabalho do gás: \\(W = K_0/ {{= eta : 1}}  =  {{= W : 2}} \\) J. A pressão constante, num gás monoatômico, \\(W = nR\\,\\Delta T\\) e \\(Q = \\tfrac{5}{2}nR\\,\\Delta T = \\tfrac{5}{2}W\\):</p>$$Q = \\tfrac{5}{2}\\cdot  {{= W : 2}}  \\approx  {{= Q : 1}} \\ \\text{J}\\qquad(\\Delta T \\approx  {{= dT : 2}} \\ \\text{K}).$$<p>Repare: se \\(h\\) fosse maior que \\(2{,}7\\,r =  {{= 2.7*rl : 2}} \\) m, a esfera passaria pelo loop sem lançamento algum e \\(Q\\) seria zero.</p>"
+        },
+        {
+          "id": "2",
+          "level": "mid",
+          "statement": "<p><b>Rolamento e movimento circular.</b> Com o \\(Q\\) do exercício 1, qual é a força normal sobre a esfera no ponto mais baixo do loop? E no topo?</p>",
+          "answer": "\\(N_{\\text{baixo}} = \\tfrac{34}{7}mg \\approx  {{= Nb : 1}} \\) N; \\(N_{\\text{topo}} = 0\\)",
+          "solution": "<p>No topo, \\(N = 0\\) por construção. Do topo ao ponto mais baixo, a esfera desce \\(2r\\):</p>$$\\tfrac{7}{10}mv_b^2 = \\tfrac{7}{10}m\\,gr + mg\\,2r \\;\\Rightarrow\\; v_b^2 = \\tfrac{27}{7}gr,\\quad v_b \\approx  {{= vb : 2}} \\ \\text{m/s}.$$$$N_b = m\\Big(g + \\frac{v_b^2}{r}\\Big) = mg\\Big(1 + \\frac{27}{7}\\Big) = \\frac{34}{7}mg \\approx  {{= Nb : 1}} \\ \\text{N}.$$<p>É o análogo do clássico \\(6mg\\) de um bloco que desliza: parte da energia está na rotação, então a esfera passa mais devagar.</p>"
+        }
+      ]
+    },
+    {
+      "title": "A queda e o carrinho",
+      "exercises": [
+        {
+          "id": "3",
+          "level": "mid",
+          "statement": "<p><b>Projétil e eletrostática.</b> A esfera sai da borda com a velocidade do trilho e cai entre as placas. A que distância horizontal da borda ela cai no carrinho? Despreze efeitos da rotação no voo.</p>",
+          "answer": "\\(x \\approx  {{= xl : 2}} \\) m",
+          "solution": "<p>Na vertical, só a gravidade: \\(t = \\sqrt{2H/g} \\approx  {{= tq : 3}} \\) s. Na horizontal, a força elétrica dá \\(a_x = qE/m =  {{= ax : 0}} \\ \\text{m/s}^2\\), no sentido do movimento:</p>$$x = v_b\\,t + \\tfrac{1}{2}a_x t^2 =  {{= vb : 2}} \\cdot  {{= tq : 3}}  + \\tfrac{1}{2}\\cdot  {{= ax : 0}} \\cdot  {{= tq : 3}} ^2 \\approx  {{= xl : 2}} \\ \\text{m}.$$<p>Ao chegar: \\(v_x \\approx  {{= vx : 2}} \\) m/s e \\(v_y \\approx  {{= vy : 2}} \\) m/s.</p>{{figure}}",
+          "solutionFigure": {
+            "spec": {
+              "version": 1,
+              "title": "Cadeia de energia: resolução",
+              "canvas": {
+                "padding": 16,
+                "constraints": {
+                  "allowOverlap": true,
+                  "allowConnectorCrossing": true,
+                  "allowCurvedConnectors": true
+                },
+                "theme": "print"
+              },
+              "root": {
+                "type": "scene",
+                "layout": "absolute",
+                "width": 771,
+                "height": 322,
+                "marks": [
+                  {
+                    "id": "ground",
+                    "from": {
+                      "x": 19.5,
+                      "y": 262.9
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 744,
+                          "y": 262.9
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 2
+                  },
+                  {
+                    "id": "structure",
+                    "from": {
+                      "x": 30,
+                      "y": 262.9
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 30,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 135,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 139.38,
+                          "y": 105.72
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 143.75,
+                          "y": 106.64
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 148.13,
+                          "y": 108.11
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 152.5,
+                          "y": 110.07
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 156.88,
+                          "y": 112.46
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 161.25,
+                          "y": 115.24
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 165.63,
+                          "y": 118.35
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 170,
+                          "y": 121.73
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 174.38,
+                          "y": 125.33
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 178.75,
+                          "y": 129.1
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 183.13,
+                          "y": 132.97
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 187.5,
+                          "y": 136.9
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 191.87,
+                          "y": 140.83
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 196.25,
+                          "y": 144.7
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 200.63,
+                          "y": 148.47
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 205,
+                          "y": 152.07
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 209.38,
+                          "y": 155.45
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 213.75,
+                          "y": 158.56
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 218.12,
+                          "y": 161.34
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 222.5,
+                          "y": 163.73
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 226.88,
+                          "y": 165.69
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 231.25,
+                          "y": 167.16
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 235.63,
+                          "y": 168.08
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 240,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 387,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 387,
+                          "y": 262.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#e6e4de",
+                    "stroke": "#222222",
+                    "strokeWidth": 1.5
+                  },
+                  {
+                    "id": "loop",
+                    "from": {
+                      "x": 303,
+                      "y": 168.4
+                    },
+                    "segments": [
+                      {
+                        "arc": {
+                          "x": 345,
+                          "y": 126.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      },
+                      {
+                        "arc": {
+                          "x": 303,
+                          "y": 84.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      },
+                      {
+                        "arc": {
+                          "x": 261,
+                          "y": 126.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      },
+                      {
+                        "arc": {
+                          "x": 303,
+                          "y": 168.4
+                        },
+                        "centre": {
+                          "x": 303,
+                          "y": 126.4
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 2.5
+                  },
+                  {
+                    "id": "plate-l",
+                    "from": {
+                      "x": 387.52,
+                      "y": 231.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 391.72,
+                          "y": 231.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 391.72,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 387.52,
+                          "y": 168.4
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#d89a50",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "plate-r",
+                    "from": {
+                      "x": 602.25,
+                      "y": 231.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 606.45,
+                          "y": 231.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 606.45,
+                          "y": 168.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 602.25,
+                          "y": 168.4
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#d89a50",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "cart-body",
+                    "from": {
+                      "x": 534.84,
+                      "y": 255.55
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 255.55
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 233.5
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 534.84,
+                          "y": 233.5
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#d3ebe0",
+                    "stroke": "none"
+                  },
+                  {
+                    "id": "cart",
+                    "from": {
+                      "x": 534.84,
+                      "y": 233.5
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 534.84,
+                          "y": 255.55
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 255.55
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 599.94,
+                          "y": 233.5
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#1f6b50",
+                    "strokeWidth": 2.5
+                  },
+                  {
+                    "id": "coil",
+                    "from": {
+                      "x": 582.09,
+                      "y": 250.3
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 592.59,
+                          "y": 250.3
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 592.59,
+                          "y": 239.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 582.09,
+                          "y": 239.8
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "stroke": "#7a5c00",
+                    "strokeWidth": 2
+                  },
+                  {
+                    "id": "coil-2",
+                    "from": {
+                      "x": 583.56,
+                      "y": 248.83
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 591.12,
+                          "y": 248.83
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 591.12,
+                          "y": 241.27
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 583.56,
+                          "y": 241.27
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "stroke": "#7a5c00",
+                    "strokeWidth": 1.2
+                  },
+                  {
+                    "id": "field",
+                    "from": {
+                      "x": 636.9,
+                      "y": 261.85
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 668.4,
+                          "y": 261.85
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 668.4,
+                          "y": 198.85
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 636.9,
+                          "y": 198.85
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "stroke": "#666666",
+                    "strokeWidth": 1.2,
+                    "lineStyle": "dashed"
+                  },
+                  {
+                    "id": "wall",
+                    "from": {
+                      "x": 731.4,
+                      "y": 262.9
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 737.7,
+                          "y": 262.9
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 737.7,
+                          "y": 218.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 731.4,
+                          "y": 218.8
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#9a9a9a",
+                    "stroke": "#222222",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "spring",
+                    "from": {
+                      "x": 731.4,
+                      "y": 245.05
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 726.15,
+                          "y": 245.05
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 724.05,
+                          "y": 240.32
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 719.85,
+                          "y": 249.77
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 715.65,
+                          "y": 240.32
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 711.45,
+                          "y": 249.77
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 707.25,
+                          "y": 240.32
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 703.05,
+                          "y": 249.77
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 700.95,
+                          "y": 245.05
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 695.7,
+                          "y": 245.05
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 2
+                  },
+                  {
+                    "id": "spring-cap",
+                    "from": {
+                      "x": 695.7,
+                      "y": 251.35
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 695.7,
+                          "y": 238.75
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#222222",
+                    "strokeWidth": 3
+                  },
+                  {
+                    "id": "cyl",
+                    "from": {
+                      "x": 88.8,
+                      "y": 65.5
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 36.3,
+                          "y": 65.5
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 36.3,
+                          "y": 92.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 88.8,
+                          "y": 92.8
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#2a5ca8",
+                    "strokeWidth": 2.5
+                  },
+                  {
+                    "id": "flame0",
+                    "from": {
+                      "x": 37.35,
+                      "y": 105.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 52.05,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 44.7,
+                          "y": 94.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#f3c4ac",
+                    "stroke": "#b04a20",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "flame1",
+                    "from": {
+                      "x": 55.2,
+                      "y": 105.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 69.9,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 62.55,
+                          "y": 94.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#f3c4ac",
+                    "stroke": "#b04a20",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "flame2",
+                    "from": {
+                      "x": 73.05,
+                      "y": 105.4
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 87.75,
+                          "y": 105.4
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 80.4,
+                          "y": 94.9
+                        }
+                      }
+                    ],
+                    "close": true,
+                    "fill": "#f3c4ac",
+                    "stroke": "#b04a20",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "path",
+                    "from": {
+                      "x": 387,
+                      "y": 161.05
+                    },
+                    "segments": [
+                      {
+                        "line": {
+                          "x": 391.81,
+                          "y": 161.12
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 396.7,
+                          "y": 161.33
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 401.67,
+                          "y": 161.68
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 406.74,
+                          "y": 162.17
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 411.88,
+                          "y": 162.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 417.12,
+                          "y": 163.57
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 422.44,
+                          "y": 164.48
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 427.84,
+                          "y": 165.53
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 433.33,
+                          "y": 166.72
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 438.91,
+                          "y": 168.05
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 444.57,
+                          "y": 169.52
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 450.32,
+                          "y": 171.13
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 456.15,
+                          "y": 172.88
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 462.07,
+                          "y": 174.77
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 468.08,
+                          "y": 176.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 474.17,
+                          "y": 178.97
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 480.35,
+                          "y": 181.28
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 486.61,
+                          "y": 183.73
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 492.96,
+                          "y": 186.32
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 499.39,
+                          "y": 189.05
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 505.91,
+                          "y": 191.92
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 512.51,
+                          "y": 194.93
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 519.21,
+                          "y": 198.08
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 525.98,
+                          "y": 201.37
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 532.84,
+                          "y": 204.8
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 539.79,
+                          "y": 208.37
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 546.83,
+                          "y": 212.08
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 553.95,
+                          "y": 215.93
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 561.15,
+                          "y": 219.92
+                        }
+                      },
+                      {
+                        "line": {
+                          "x": 568.44,
+                          "y": 224.05
+                        }
+                      }
+                    ],
+                    "close": false,
+                    "stroke": "#666666",
+                    "strokeWidth": 1.5,
+                    "lineStyle": "dashed"
+                  }
+                ],
+                "children": [
+                  {
+                    "type": "block",
+                    "id": "gas",
+                    "x": 37.35,
+                    "y": 66.55,
+                    "width": 50.4,
+                    "height": 25.2,
+                    "padding": 0,
+                    "fill": "#d3e0f5",
+                    "stroke": "none",
+                    "textColor": "#1a3a70",
+                    "fontSize": 19,
+                    "textAlign": "center",
+                    "verticalAlign": "center",
+                    "label": "gás"
+                  },
+                  {
+                    "type": "block",
+                    "id": "piston",
+                    "x": 88.8,
+                    "y": 61.3,
+                    "width": 5.25,
+                    "height": 42,
+                    "padding": 0,
+                    "fill": "#b0b0b0",
+                    "stroke": "#222222",
+                    "strokeWidth": 1,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "sphere",
+                    "shape": "circle",
+                    "x": 94.05,
+                    "y": 90.7,
+                    "width": 14.700000000000001,
+                    "height": 14.700000000000001,
+                    "padding": 0,
+                    "fill": "#8f86dc",
+                    "stroke": "#3d3585",
+                    "strokeWidth": 1.5,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "wheel-a",
+                    "shape": "circle",
+                    "x": 543.24,
+                    "y": 255.55,
+                    "width": 7.3500000000000005,
+                    "height": 7.3500000000000005,
+                    "padding": 0,
+                    "fill": "#ffffff",
+                    "stroke": "#222222",
+                    "strokeWidth": 1.5,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "wheel-b",
+                    "shape": "circle",
+                    "x": 584.19,
+                    "y": 255.55,
+                    "width": 7.3500000000000005,
+                    "height": 7.3500000000000005,
+                    "padding": 0,
+                    "fill": "#ffffff",
+                    "stroke": "#222222",
+                    "strokeWidth": 1.5,
+                    "label": ""
+                  },
+                  {
+                    "type": "block",
+                    "id": "x0",
+                    "x": 643.15,
+                    "y": 231.21,
+                    "width": 19,
+                    "height": 26,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 15,
+                    "label": "×",
+                    "annotates": "field",
+                    "textColor": "#666666"
+                  },
+                  {
+                    "type": "block",
+                    "id": "x1",
+                    "x": 643.15,
+                    "y": 203.49,
+                    "width": 19,
+                    "height": 26,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 15,
+                    "label": "×",
+                    "annotates": "field",
+                    "textColor": "#666666"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-Q",
+                    "x": 20.049999999999997,
+                    "y": 109.9,
+                    "width": 85,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "calor Q",
+                    "annotates": "flame1"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-m",
+                    "x": 96.75,
+                    "y": 57.7,
+                    "width": 64,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "m, +q",
+                    "annotates": "sphere"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-r",
+                    "x": 287.9,
+                    "y": 90,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "r",
+                    "annotates": "r-line"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-h",
+                    "x": 215.6,
+                    "y": 121.9,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "h",
+                    "annotates": "h-dim"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-E",
+                    "x": 424.8,
+                    "y": 203.8,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "E",
+                    "annotates": "E1"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-plus",
+                    "x": 393.13,
+                    "y": 165.4,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "+",
+                    "annotates": "plate-l"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-minus",
+                    "x": 607.85,
+                    "y": 165.4,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "−",
+                    "annotates": "plate-r"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-M",
+                    "x": 508.34000000000003,
+                    "y": 230.05,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "M",
+                    "annotates": "cart-body"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-coil",
+                    "x": 507.84000000000003,
+                    "y": 274.9,
+                    "width": 159,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "bobina N, ℓ, ρ",
+                    "annotates": "coil-lead"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-B",
+                    "x": 631.65,
+                    "y": 162.35,
+                    "width": 42,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "B ⊗",
+                    "annotates": "field"
+                  },
+                  {
+                    "type": "block",
+                    "id": "lab-k",
+                    "x": 703.05,
+                    "y": 274.9,
+                    "width": 21,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "k",
+                    "annotates": "spring-lead"
+                  },
+                  {
+                    "type": "block",
+                    "id": "ans-x",
+                    "x": 419.22,
+                    "y": 110.55,
+                    "width": 117,
+                    "height": 30,
+                    "padding": 0,
+                    "fill": "none",
+                    "stroke": "none",
+                    "wrap": "none",
+                    "textAlign": "center",
+                    "fontSize": 19,
+                    "label": "x = 1,73 m",
+                    "annotates": "x-dim",
+                    "textColor": "#9a5c00"
+                  }
+                ],
+                "connectors": [
+                  {
+                    "id": "r-line",
+                    "from": {
+                      "x": 303,
+                      "y": 126.4
+                    },
+                    "to": {
+                      "x": 332.7,
+                      "y": 96.7
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1.2,
+                    "lineStyle": "dashed"
+                  },
+                  {
+                    "id": "h-ext",
+                    "from": {
+                      "x": 135,
+                      "y": 105.4
+                    },
+                    "to": {
+                      "x": 246.3,
+                      "y": 105.4
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1,
+                    "lineStyle": "dotted"
+                  },
+                  {
+                    "id": "h-dim",
+                    "from": {
+                      "x": 242.1,
+                      "y": 105.4
+                    },
+                    "to": {
+                      "x": 242.1,
+                      "y": 168.4
+                    },
+                    "arrow": "both",
+                    "arrowStyle": "open",
+                    "stroke": "#666666",
+                    "strokeWidth": 1.2
+                  },
+                  {
+                    "id": "E1",
+                    "from": {
+                      "x": 414.3,
+                      "y": 196.8
+                    },
+                    "to": {
+                      "x": 456.3,
+                      "y": 196.8
+                    },
+                    "arrow": "end",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1.5
+                  },
+                  {
+                    "id": "E2",
+                    "from": {
+                      "x": 414.3,
+                      "y": 240.8
+                    },
+                    "to": {
+                      "x": 456.3,
+                      "y": 240.8
+                    },
+                    "arrow": "end",
+                    "stroke": "#8a5010",
+                    "strokeWidth": 1.5
+                  },
+                  {
+                    "id": "coil-lead",
+                    "from": {
+                      "x": 587.34,
+                      "y": 272.9
+                    },
+                    "to": {
+                      "x": 587.34,
+                      "y": 250.3
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "spring-lead",
+                    "from": {
+                      "x": 713.55,
+                      "y": 272.9
+                    },
+                    "to": {
+                      "x": 713.55,
+                      "y": 250.3
+                    },
+                    "arrow": "none",
+                    "stroke": "#666666",
+                    "strokeWidth": 1
+                  },
+                  {
+                    "id": "x-dim",
+                    "from": {
+                      "x": 387,
+                      "y": 143.05
+                    },
+                    "to": {
+                      "x": 568.44,
+                      "y": 143.05
+                    },
+                    "arrow": "both",
+                    "arrowStyle": "open",
+                    "stroke": "#9a5c00",
+                    "strokeWidth": 1.2
+                  }
+                ]
+              }
+            },
+            "caption": "A trajetória calculada e o ponto de queda."
+          }
+        },
+        {
+          "id": "4",
+          "level": "mid",
+          "statement": "<p><b>Colisão.</b> A esfera fica presa no carrinho. Qual é a velocidade do carrinho logo depois, e que fração da energia cinética se perde? Não esqueça a energia de rotação.</p>",
+          "answer": "\\(V \\approx  {{= Vc : 2}} \\) m/s; perde-se \\(\\approx  {{= perda*100 : 1}} \\%\\)",
+          "solution": "<p>O piso não tem atrito, então só o momento horizontal se conserva (o impulso vertical vem do piso):</p>$$V = \\frac{m\\,v_x}{m + M} = \\frac{ {{= ms : 1}} \\cdot  {{= vx : 2}} }{ {{= ms + Mc : 1}} } \\approx  {{= Vc : 2}} \\ \\text{m/s}.$$<p>Antes, há translação \\(\\tfrac12 m(v_x^2 + v_y^2) \\approx  {{= Kt : 2}} \\) J e rotação \\(\\tfrac15 m v_b^2 \\approx  {{= Kr : 2}} \\) J (o giro não muda no voo), num total de \\( {{= Kb : 2}} \\) J. Depois, \\(\\tfrac12(m + M)V^2 \\approx  {{= Ka : 2}} \\) J:</p>$$1 - \\frac{ {{= Ka : 2}} }{ {{= Kb : 2}} } \\approx  {{= perda*100 : 1}} \\%.$$"
+        },
+        {
+          "id": "5",
+          "level": "hard",
+          "statement": "<p><b>Indução.</b> Ao entrar na região de campo, quais são a fem máxima, a corrente e a força de frenagem sobre a bobina? Use o impulso \\(\\int F\\,dt = N^2B^2\\ell^3/\\rho\\) por borda atravessada para obter a velocidade depois de a bobina sair inteira do campo.</p>",
+          "answer": "\\(\\varepsilon \\approx  {{= fem : 2}} \\) V, \\(I \\approx  {{= Ic : 2}} \\) A, \\(F \\approx  {{= Fm : 2}} \\) N; depois \\(V' \\approx  {{= V1 : 2}} \\) m/s",
+          "solution": "<p>Só a borda dianteira está no campo: \\(\\varepsilon = NB\\ell V \\approx  {{= fem : 2}} \\) V, \\(I = \\varepsilon/\\rho \\approx  {{= Ic : 2}} \\) A e \\(F = NBI\\ell = \\dfrac{N^2B^2\\ell^2}{\\rho}V \\approx  {{= Fm : 2}} \\) N, contra o movimento.</p><p>Como \\(F\\,dt = \\dfrac{N^2B^2\\ell^2}{\\rho}\\,dx\\), o momento cai linearmente com a distância: atravessar uma borda (\\(\\ell\\)) custa exatamente \\(J = N^2B^2\\ell^3/\\rho =  {{= Jb : 2}} \\) N·s, sem aproximação. Com a bobina inteira dentro, o fluxo não varia e não há força. Entrar e sair custa \\(2J\\):</p>$$V' = V - \\frac{2J}{m + M} =  {{= Vc : 2}}  - \\frac{ {{= 2*Jb : 1}} }{ {{= ms + Mc : 1}} } \\approx  {{= V1 : 2}} \\ \\text{m/s}.$$<p>Isso só funciona porque o momento \\((m + M)V \\approx  {{= pc : 2}} \\) N·s é maior que \\(2J\\).</p>"
+        },
+        {
+          "id": "6",
+          "level": "hard",
+          "statement": "<p><b>Oscilações.</b> Qual é a compressão máxima da mola e quanto tempo dura o contato? Na volta, o carrinho atravessa de novo a região de campo? Com que velocidade final?</p>",
+          "answer": "\\(x_{\\max} \\approx  {{= xm*100 : 1}} \\) cm, \\(t \\approx  {{= tc : 3}} \\) s; não atravessa: para com \\( {{= dfora*100 : 1}} \\) cm da bobina fora do campo, velocidade final \\(0\\)",
+          "solution": "<p>Sem atrito, a energia cinética vira elástica: \\(x_{\\max} = V'\\sqrt{(m + M)/k} \\approx  {{= xm*100 : 1}} \\) cm. O contato é meio período: \\(t = \\pi\\sqrt{(m + M)/k} \\approx  {{= tc : 3}} \\) s. O carrinho volta com a mesma velocidade, \\( {{= V1 : 2}} \\) m/s.</p><p>Na volta ele leva \\((m + M)V' \\approx  {{= p1 : 2}} \\) N·s, menos que os \\(2J =  {{= 2*Jb : 1}} \\) N·s para atravessar. Ele entra inteiro (\\(J\\)) e para enquanto sai, depois de avançar:</p>$$d = \\frac{(m + M)V' - J}{N^2B^2\\ell^2/\\rho} = \\frac{ {{= p1 - Jb : 3}} }{ {{= bk : 0}} } \\approx  {{= dfora*100 : 1}} \\ \\text{cm}.$$<p>A velocidade final é zero, com a bobina parada sobre a borda do campo: \\( {{= dfora*100 : 1}} \\) cm fora, \\( {{= (ls - dfora)*100 : 1}} \\) cm dentro. Essa é a última parte da energia que se converte em calor no resistor.</p>"
+        }
+      ]
+    }
+  ]
+}
