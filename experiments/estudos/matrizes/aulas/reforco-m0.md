@@ -36,3 +36,10 @@ direita e 4 para cima". As figuras são
 3. (médio) Escreva (5, −2) como αe₁ + βe₂. Depois ache α e β com α(1, 1) + β(1, −1) = (5, −2).
 4. (médio) Para que valor de k os vetores (k, 2) e (3, −6) são perpendiculares?
 5. (difícil, justificar) Mostre que u·u = \|u\|². Use isso para provar que, se u·v = 0, então \|u + v\|² = \|u\|² + \|v\|².
+
+**Correção (parcial)**
+- **Q1, certa:** (5, −8), (2, −10) e 5.
+- **Q2, certa:** 5, ângulo agudo.
+- **Q3, meio ponto.** A 1ª parte está certa: 5e₁ + (−2)e₂. Na 2ª, você tentou adivinhar inteiros, mas a resposta é α = 3/2 e β = 7/2. Ela sai do sistema α + β = 5 e α − β = −2, que abre o bloco 2.
+- **Q4, certa:** k = 4.
+- **Q5:** pendente. O aluno perguntou o que é u; resposta: um vetor qualquer, u = (u₁, u₂).
