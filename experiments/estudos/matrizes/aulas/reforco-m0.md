@@ -42,4 +42,40 @@ direita e 4 para cima". As figuras são
 - **Q2, certa:** 5, ângulo agudo.
 - **Q3, meio ponto.** A 1ª parte está certa: 5e₁ + (−2)e₂. Na 2ª, você tentou adivinhar inteiros, mas a resposta é α = 3/2 e β = 7/2. Ela sai do sistema α + β = 5 e α − β = −2, que abre o bloco 2.
 - **Q4, certa:** k = 4.
-- **Q5:** pendente. O aluno perguntou o que é u; resposta: um vetor qualquer, u = (u₁, u₂).
+- **Q5, meio ponto.**
+  - A 1ª parte está certa: u·u = u₁² + u₂² = |u|². Faltou só escrever |u|² = (√(u₁² + u₂²))².
+  - A 2ª parte está errada. Uma soma pode dar zero sem nenhuma parcela zero: a = (2, 1) e b = (−1, 2) dão −2 + 2 = 0. Além disso, um exemplo não prova o caso geral.
+  - A prova: |u + v|² = (u₁ + v₁)² + (u₂ + v₂)² = |u|² + |v|² + 2u·v, que é |u|² + |v|² quando u·v = 0.
+
+**Bloco 1: 4,0 / 5 (80%).**
+
+## Bloco 2: Sistemas 2×2
+
+**Intuição.** Um sistema 2×2 pode ser lido de dois jeitos:
+- **pelas linhas:** cada equação é uma reta, e a solução é onde elas se encontram
+  ([`../figuras/aula-00-q5-q6-retas.png`](../figuras/aula-00-q5-q6-retas.png));
+- **pelas colunas:** a solução diz quanto de cada vetor-coluna é preciso para
+  chegar ao lado direito ([`../figuras/reforco-m0-colunas.png`](../figuras/reforco-m0-colunas.png)).
+
+**Definição.** Seja o sistema ax + by = e, cx + dy = f.
+
+| caso | geometria | teste |
+| --- | --- | --- |
+| SPD (uma solução) | retas concorrentes | a/c ≠ b/d, ou seja, ad − bc ≠ 0 |
+| SPI (infinitas) | retas coincidentes | a/c = b/d = e/f |
+| SI (nenhuma) | retas paralelas distintas | a/c = b/d ≠ e/f |
+
+**Exemplo resolvido.** Resolver 2x + 3y = 7 e x − y = 1.
+1. Classificar: 2·(−1) − 3·1 = −5 ≠ 0, então é SPD.
+2. Eliminar y: multiplicando a 2ª equação por 3, fica 3x − 3y = 3. Somando com a 1ª: 5x = 10, logo x = 2, e daí y = x − 1 = 1.
+3. Conferir: 4 + 3 = 7 ✓ e 2 − 1 = 1 ✓. Pelas colunas: 2·(2, 1) + 1·(3, −1) = (7, 1) ✓.
+
+**Sua vez:**
+1. (fácil) Resolva por adição: 3x + y = 9 e x − y = −1.
+2. (fácil) Classifique sem resolver e justifique:
+   - (a) x − 2y = 3 e −2x + 4y = −6
+   - (b) 4x + 6y = 2 e 6x + 9y = 5
+   - (c) x + y = 2 e x − y = 0
+3. (médio) Para que valores de m o sistema x + my = 3, 2x + 4y = 5 é SPD? Existe m que o torne SPI?
+4. (médio) Escreva (4, 7) como combinação de (1, 2) e (1, 3).
+5. (difícil, justificar) Mostre que, se ad − bc ≠ 0, o sistema ax + by = e, cx + dy = f tem uma única solução, e ache fórmulas para x e y.

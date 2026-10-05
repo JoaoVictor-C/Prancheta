@@ -59,6 +59,7 @@ nas revisões.
 | 8 | 05/10 | M0 Q9 | escrever 1·4 + 2·5 + 3·6 com Σ | Σ i . i+3, sem limites e sem parênteses | sem parênteses vira i² + 3; faltou i = 1 até 3: Σ_{i=1}^{3} i(i + 3) | 0 | aberto |
 | 9 | 05/10 | M0 Q10 | 1·4 + 2·5 + 3·6 em Python | `np.sum(a, b)`, que dá TypeError | `np.sum` soma os elementos de **um** array, e o 2º argumento é o eixo; o certo é `np.dot(a, b)`, `np.array(a) @ np.array(b)` ou `sum(x*y for x, y in zip(a, b))` | 0 | aberto |
 | 10 | 05/10 | Reforço M0, B1 Q3 | α(1, 1) + β(1, −1) = (5, −2) | tentou adivinhar inteiros (1 e 4, 2 e 3), e nenhum par serviu | igualar componente a componente dá um **sistema**: α + β = 5 e α − β = −2, logo α = 3/2 e β = 7/2 | 0 | aberto |
+| 11 | 05/10 | Reforço M0, B1 Q5 | provar \|u + v\|² = \|u\|² + \|v\|² quando u·v = 0 | concluiu que cada produto u₁v₁, u₂v₂ tem fator zero, e generalizou a partir de um exemplo | **produto** zero implica fator zero; **soma** zero não (−2 + 2 = 0). Um exemplo não prova o caso geral; é preciso expandir (u₁ + v₁)² + (u₂ + v₂)² | 0 | aberto |
 
 ## Diário das sessões
 

@@ -1,0 +1,12 @@
+{
+  "preset": "vectors",
+  "title": "O sistema α + β = 5, α − β = −2 visto pelas colunas: 3/2·a + 7/2·b = (5, −2)",
+  "locale": "pt-BR",
+  "vectors": [
+    { "name": "a", "components": [1, 1] },
+    { "name": "b", "components": [1, -1] },
+    { "name": "m", "scale": "a", "factor": 1.5 },
+    { "name": "n", "scale": "b", "factor": 3.5 },
+    { "name": "t", "sum": ["m", "n"], "construction": "parallelogram" }
+  ]
+}
