@@ -57,25 +57,25 @@ direita e 4 para cima". As figuras são
 - **pelas colunas:** a solução diz quanto de cada vetor-coluna é preciso para
   chegar ao lado direito ([`../figuras/reforco-m0-colunas.png`](../figuras/reforco-m0-colunas.png)).
 
-**Definição.** Seja o sistema ax + by = e, cx + dy = f.
+**Definição.** Seja o sistema
 
-| caso | geometria | teste |
-| --- | --- | --- |
-| SPD (uma solução) | retas concorrentes | a/c ≠ b/d, ou seja, ad − bc ≠ 0 |
-| SPI (infinitas) | retas coincidentes | a/c = b/d = e/f |
-| SI (nenhuma) | retas paralelas distintas | a/c = b/d ≠ e/f |
+$$\begin{cases} ax + by = e \\ cx + dy = f \end{cases}$$
 
-**Exemplo resolvido.** Resolver 2x + 3y = 7 e x − y = 1.
-1. Classificar: 2·(−1) − 3·1 = −5 ≠ 0, então é SPD.
-2. Eliminar y: multiplicando a 2ª equação por 3, fica 3x − 3y = 3. Somando com a 1ª: 5x = 10, logo x = 2, e daí y = x − 1 = 1.
-3. Conferir: 4 + 3 = 7 ✓ e 2 − 1 = 1 ✓. Pelas colunas: 2·(2, 1) + 1·(3, −1) = (7, 1) ✓.
+- **SPD** (uma solução, retas concorrentes): $\dfrac{a}{c} \neq \dfrac{b}{d}$, ou seja, $ad - bc \neq 0$.
+- **SPI** (infinitas soluções, retas coincidentes): $\dfrac{a}{c} = \dfrac{b}{d} = \dfrac{e}{f}$.
+- **SI** (nenhuma solução, retas paralelas distintas): $\dfrac{a}{c} = \dfrac{b}{d} \neq \dfrac{e}{f}$.
+
+**Exemplo resolvido.** Resolver $\begin{cases} 2x + 3y = 7 \\ x - y = 1 \end{cases}$
+1. Classificar: $ad - bc = 2\cdot(-1) - 3\cdot 1 = -5 \neq 0$, então é SPD.
+2. Eliminar $y$: multiplicando a 2ª equação por 3, fica $3x - 3y = 3$. Somando com a 1ª: $5x = 10$, logo $x = 2$, e daí $y = x - 1 = 1$.
+3. Conferir: $2\cdot 2 + 3\cdot 1 = 7$ ✓ e $2 - 1 = 1$ ✓. Pelas colunas: $2\begin{pmatrix}2\\1\end{pmatrix} + 1\begin{pmatrix}3\\-1\end{pmatrix} = \begin{pmatrix}7\\1\end{pmatrix}$ ✓.
 
 **Sua vez:**
-1. (fácil) Resolva por adição: 3x + y = 9 e x − y = −1.
+1. (fácil) Resolva por adição: $\begin{cases} 3x + y = 9 \\ x - y = -1 \end{cases}$
 2. (fácil) Classifique sem resolver e justifique:
-   - (a) x − 2y = 3 e −2x + 4y = −6
-   - (b) 4x + 6y = 2 e 6x + 9y = 5
-   - (c) x + y = 2 e x − y = 0
-3. (médio) Para que valores de m o sistema x + my = 3, 2x + 4y = 5 é SPD? Existe m que o torne SPI?
-4. (médio) Escreva (4, 7) como combinação de (1, 2) e (1, 3).
-5. (difícil, justificar) Mostre que, se ad − bc ≠ 0, o sistema ax + by = e, cx + dy = f tem uma única solução, e ache fórmulas para x e y.
+   - (a) $\begin{cases} x - 2y = 3 \\ -2x + 4y = -6 \end{cases}$
+   - (b) $\begin{cases} 4x + 6y = 2 \\ 6x + 9y = 5 \end{cases}$
+   - (c) $\begin{cases} x + y = 2 \\ x - y = 0 \end{cases}$
+3. (médio) Para que valores de $m$ o sistema $\begin{cases} x + my = 3 \\ 2x + 4y = 5 \end{cases}$ é SPD? Existe $m$ que o torne SPI?
+4. (médio) Escreva $(4, 7)$ como combinação de $(1, 2)$ e $(1, 3)$.
+5. (difícil, justificar) Mostre que, se $ad - bc \neq 0$, o sistema $\begin{cases} ax + by = e \\ cx + dy = f \end{cases}$ tem uma única solução, e ache fórmulas para $x$ e $y$.

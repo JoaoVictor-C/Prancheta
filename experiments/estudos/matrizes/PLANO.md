@@ -50,6 +50,8 @@ Prancheta, que também gera versões com números novos para refazer.
    até ser acertado duas vezes seguidas.
 6. **Toda sessão termina com commit e push** do `PROGRESSO.md`. O container
    da nuvem é temporário.
+7. **Toda matemática é escrita em LaTeX**, nas mensagens e nos arquivos:
+   `$...$` no meio do texto e `$$...$$` em destaque (pedido do estudante em 05/10/2026).
 
 ## Os módulos
 
