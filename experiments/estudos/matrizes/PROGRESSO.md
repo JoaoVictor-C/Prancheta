@@ -5,9 +5,15 @@ O plano está em [`PLANO.md`](PLANO.md). Este arquivo é atualizado e enviado
 
 ## Onde estamos
 
-- **Módulo atual:** 0, Diagnóstico
-- **Próxima atividade:** Aula 0, diagnóstico. Perguntas enviadas em 05/10, aguardando as respostas.
-- **Atraso em relação ao calendário:** 0 dias
+- **Módulo atual:** 0, Diagnóstico (reprovado com 40%, em reforço)
+- **Próxima atividade:** **Reforço M0** (previsto para 06/10), atacando os erros 1 a 9 do caderno:
+  1. vetores: sinal ao subtrair, multiplicação por escalar, norma (Pitágoras), combinação linear (α e β são números), produto escalar e o sinal do ângulo;
+  2. sistemas 2×2 como duas retas: se cortam (SPD), coincidem (SPI) ou são paralelas (SI), e como classificar comparando as equações;
+  3. somatório: índice, limites e parênteses; Σ aᵢbᵢ é o produto escalar;
+  4. laboratório: listas e `zip`, depois `np.array`, `*`, `np.sum`, `np.dot`, `@` e `np.linalg.norm`.
+
+  No fim da sessão vem o **checkpoint M0-bis**: 10 questões novas no mesmo formato. Com 80% ou mais, segue a Aula 1.1.
+- **Atraso em relação ao calendário:** +1 dia (o reforço empurra a Aula 1.1 de 06/10 para 07/10)
 
 ## Como retomar numa sessão nova
 
@@ -23,7 +29,8 @@ Figuras: `node src/cli.ts render <spec>.json --out experiments/estudos/matrizes/
 
 | módulo | data | nota | passou (≥ 80%)? | observação |
 | --- | --- | --- | --- | --- |
-| 0 Diagnóstico | | | | |
+| 0 Diagnóstico | 05/10 | 4,0/10 (40%) | não | vetores 25%, sistemas 50%, somatório 75%, programação 0%. Correção em `aulas/aula-00-diagnostico.md` |
+| 0 M0-bis | | | | |
 | 1 O que é uma matriz | | | | |
 | 2 Operações | | | | |
 | 3 Matriz como transformação | | | | |
@@ -42,9 +49,19 @@ nas revisões.
 
 | # | data | módulo/aula | questão | o que aconteceu | causa | acertos seguidos | status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 05/10 | M0 Q1 | 2u − v com u = (3, −1), v = (−2, 4) | respondeu (4, 2); o certo é (8, −6) | somou v em vez de subtrair: 6 − (−2) = 8 e −2 − 4 = −6 | 0 | aberto |
+| 2 | 05/10 | M0 Q2 | norma de (3, 4) | respondeu 1; o certo é 5 | não conhecia \|w\| = √(x² + y²), que é Pitágoras | 0 | aberto |
+| 3 | 05/10 | M0 Q3 | a = (2, 3) como αe₁ + βe₂ | ideia certa, notação errada: (2,0)(1,0) + (0,3)(0,1) | α e β são **números** (2 e 3), não vetores; "vetor vezes vetor" não foi definido | 0 | aberto |
+| 4 | 05/10 | M0 Q4 | produto escalar de (1, 2) e (3, −1) | respondeu (3, −2) | multiplicou componente a componente e não somou: o produto escalar é **um número**, 3 − 2 = 1 | 0 | aberto |
+| 5 | 05/10 | M0 Q4 | o que o produto escalar diz sobre o ângulo | não sabia | positivo: agudo; zero: reto; negativo: obtuso | 0 | aberto |
+| 6 | 05/10 | M0 Q6 | classificar sistemas e justificar | (a) certo, sem justificar; (b) "impossível saber" | não comparou as equações: em (b), dividindo a 1ª por 2, fica x + 2y = 3 contra x + 2y = 4, então não há solução (SI) | 0 | aberto |
+| 7 | 05/10 | M0 Q7 | geometria de um sistema 2×2 | não sabia | cada equação é uma reta; a solução é o ponto comum (SPD), a reta inteira (SPI) ou nada (paralelas, SI) | 0 | aberto |
+| 8 | 05/10 | M0 Q9 | escrever 1·4 + 2·5 + 3·6 com Σ | Σ i . i+3, sem limites e sem parênteses | sem parênteses vira i² + 3; faltou i = 1 até 3: Σ_{i=1}^{3} i(i + 3) | 0 | aberto |
+| 9 | 05/10 | M0 Q10 | 1·4 + 2·5 + 3·6 em Python | `np.sum(a, b)`, que dá TypeError | `np.sum` soma os elementos de **um** array, e o 2º argumento é o eixo; o certo é `np.dot(a, b)`, `np.array(a) @ np.array(b)` ou `sum(x*y for x, y in zip(a, b))` | 0 | aberto |
 
 ## Diário das sessões
 
 | data | atividade | o que foi feito |
 | --- | --- | --- |
 | 05/10/2026 | Planejamento | Perfil definido (curiosidade > programação/ML > faculdade; 3 a 4 h por dia, todos os dias). Plano e calendário fixados. Figura de prévia: [`figuras/demo-2112.png`](figuras/demo-2112.png). |
+| 05/10/2026 | Aula 0, diagnóstico | Nota 4,0/10 (40%), abaixo dos 80%, então vem o reforço. 9 erros no caderno. Contato anterior com matrizes: já teve, mas lembra pouco; NumPy: já usou, sem fluência. |

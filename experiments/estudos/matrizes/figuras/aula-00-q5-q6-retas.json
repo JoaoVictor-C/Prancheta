@@ -1,0 +1,15 @@
+{
+  "preset": "function-graph",
+  "title": "Q5: as retas se cortam (uma solução). Q6b: as retas são paralelas (nenhuma)",
+  "x": { "range": [-1, 6], "unit": 70 },
+  "y": { "range": [-1.5, 5], "unit": 70 },
+  "functions": [
+    { "id": "f", "expr": "5 - x", "label": { "text": "x + y = 5", "at": 0.6, "towards": ["R", "U"] } },
+    { "id": "g", "expr": "x - 1", "colour": "warm", "label": { "text": "x − y = 1", "at": 5.2, "towards": ["L", "U"] } },
+    { "id": "p", "expr": "(3 - x)/2", "colour": "purple", "dash": "dashed", "label": { "text": "2x + 4y = 6", "at": 4.5, "towards": ["D"] } },
+    { "id": "q", "expr": "(4 - x)/2", "colour": "ochre", "dash": "dotted", "label": { "text": "x + 2y = 4", "at": 0.5, "towards": ["U"] } }
+  ],
+  "points": [
+    { "id": "S", "at": { "of": "f", "x": 3 }, "label": "S{coords}", "towards": ["R", "NE"], "guides": true }
+  ]
+}

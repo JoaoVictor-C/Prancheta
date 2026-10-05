@@ -34,3 +34,34 @@ certo esconde o que precisa ser ensinado. Mostre as contas.
 ## E. Sobre você (não vale nota)
 
 11. Que contato você já teve com matrizes: nenhum, escola (ensino médio) ou faculdade?
+
+---
+
+## Correção (05/10/2026)
+
+**Nota: 4,0 / 10 (40%).** Ficou abaixo dos 80%, então a próxima sessão é um
+reforço do Módulo 0, com um checkpoint novo (M0-bis) no fim.
+
+| questão | resposta | correta | pontos |
+| --- | --- | --- | --- |
+| 1 | u + v = (1, 3); 2u − v = (4, 2) | (1, 3) e **(8, −6)** | 0,5 |
+| 2 | 1 | **5** = √(3² + 4²) | 0 |
+| 3 | (2,0)(1,0) + (0,3)(0,1) | **a = 2e₁ + 3e₂** (α = 2, β = 3) | 0,5 |
+| 4 | (3, −2); não sei | **1·3 + 2·(−1) = 1**; positivo, logo o ângulo é agudo | 0 |
+| 5 | x = 3, y = 2 | x = 3, y = 2 | 1 |
+| 6a | infinitas | infinitas: a 1ª equação é o dobro da 2ª | 0,5 |
+| 6b | impossível saber | **nenhuma**: dividindo a 1ª por 2, x + 2y = 3, e não pode ser 3 e 4 ao mesmo tempo | 0 |
+| 7 | não sei | a solução é o **ponto de encontro** das retas; em (a) as retas coincidem, em (b) são paralelas | 0 |
+| 8 | 16 | 16 | 1 |
+| 9 | Σ i . i+3 | **Σ_{i=1}^{3} i(i + 3)** | 0,5 |
+| 10 | `np.sum(a, b)` | `np.dot(a, b)` = 32 (`np.sum(a, b)` dá TypeError) | 0 |
+
+**Por área:** vetores 1,0/4 · sistemas 1,5/3 · somatório 1,5/2 · programação 0/1.
+
+**O que liga os erros:** as questões 4, 9 e 10 são a mesma conta.
+1·4 + 2·5 + 3·6 é o produto escalar de (1, 2, 3) com (4, 5, 6), e esse é o
+coração do produto de matrizes. Na Q4 você fez a primeira metade (multiplicar
+componente a componente) e parou antes de somar.
+
+Figuras da correção: [`../figuras/aula-00-q1-vetores.png`](../figuras/aula-00-q1-vetores.png)
+e [`../figuras/aula-00-q5-q6-retas.png`](../figuras/aula-00-q5-q6-retas.png).

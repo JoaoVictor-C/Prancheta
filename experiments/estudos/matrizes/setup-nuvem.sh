@@ -11,6 +11,7 @@
 
 ROOT="$(git rev-parse --show-toplevel)"
 [ -d "$ROOT/node_modules/playwright-core" ] || (cd "$ROOT" && npm ci --no-audit --no-fund)
+python3 -c "import numpy" 2>/dev/null || python3 -m pip install -q numpy  # laboratório das aulas
 
 REV="$(node -e "const b=require('$ROOT/node_modules/playwright-core/browsers.json').browsers;console.log(b.find(x=>x.name==='chromium-headless-shell').revision)")"
 SHELL_BIN="$(ls -d /opt/pw-browsers/chromium_headless_shell-*/chrome-linux/headless_shell 2>/dev/null | head -1)"

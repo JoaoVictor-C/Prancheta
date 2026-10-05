@@ -1,0 +1,12 @@
+{
+  "preset": "vectors",
+  "title": "Q1: w = 2u e d = 2u − v = w + (−v)",
+  "locale": "pt-BR",
+  "vectors": [
+    { "name": "u", "components": [3, -1], "at": [-4, -6] },
+    { "name": "v", "components": [-2, 4] },
+    { "name": "w", "scale": "u", "factor": 2 },
+    { "name": "−v", "scale": "v", "factor": -1 },
+    { "name": "d", "sum": ["w", "−v"], "construction": "parallelogram" }
+  ]
+}
