@@ -50,8 +50,11 @@ Prancheta, que também gera versões com números novos para refazer.
    até ser acertado duas vezes seguidas.
 6. **Toda sessão termina com commit e push** do `PROGRESSO.md`. O container
    da nuvem é temporário.
-7. **Toda matemática é escrita em LaTeX**, nas mensagens e nos arquivos:
-   `$...$` no meio do texto e `$$...$$` em destaque (pedido do estudante em 05/10/2026).
+7. **Toda matemática é escrita em LaTeX** (pedido do estudante em 05/10/2026).
+   - **Nas mensagens:** só LaTeX em bloco, `$$...$$` numa linha própria, porque o
+     LaTeX dentro da linha não funciona no app do Claude. No meio do texto vai
+     Unicode simples (x², ≠, √2, aᵢⱼ, θ), nunca `$...$`.
+   - **Nos arquivos `.md`:** pode usar `$...$` no texto, porque o GitHub renderiza.
 
 ## Os módulos
 
