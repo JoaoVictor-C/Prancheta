@@ -1,0 +1,9 @@
+{
+  "preset": "vectors",
+  "title": "A norma é a hipotenusa: |w| = √(3² + 4²) = 5",
+  "locale": "pt-BR",
+  "vectors": [
+    { "name": "w", "components": [3, 4] },
+    { "decompose": "w" }
+  ]
+}

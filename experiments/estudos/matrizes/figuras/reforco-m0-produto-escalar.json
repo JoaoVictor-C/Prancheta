@@ -1,0 +1,12 @@
+{
+  "preset": "vectors",
+  "title": "a·b = 0 (reto), b·c = 5 (agudo), a·c = −5 (obtuso: 90° + 45°)",
+  "locale": "pt-BR",
+  "vectors": [
+    { "name": "a", "components": [2, 1] },
+    { "name": "b", "components": [-1, 2] },
+    { "name": "c", "components": [-3, 1] },
+    { "angleBetween": ["a", "b"] },
+    { "angleBetween": ["b", "c"] }
+  ]
+}
