@@ -83,11 +83,11 @@ $$\begin{cases} ax + by = e \\ cx + dy = f \end{cases}$$
 **Correção (06/10)**
 - **Q1, certa:** $x = 2$, $y = 3$.
 - **Q2, certa,** com as três justificativas: (a) SPI, (b) SI, (c) SPD.
-- **Q3, meio ponto.** SPD para $m \neq 2$ está certo. Mas com $m = 2$ o sistema é **SI**, não SPI: $\frac{1}{2} = \frac{2}{4} \neq \frac{3}{5}$. Nunca é SPI.
+- **Q3, certa.** SPD para $m \neq 2$; com $m = 2$ é SI, porque $\frac{1}{2} = \frac{2}{4} \neq \frac{3}{5}$, e nunca é SPI. O \"SPI\" da resposta foi erro de digitação, corrigido pelo aluno.
 - **Q4, certa:** $\alpha = 5$, $\beta = -1$.
 - **Q5, errou.** Calculou $ad - bc$ para um sistema específico em vez do geral. A prova é a regra de Cramer: $x = \frac{ed - bf}{ad - bc}$ e $y = \frac{af - ce}{ad - bc}$.
 
-**Bloco 2: 3,5 / 5 (70%).**
+**Bloco 2: 4,0 / 5 (80%).**
 
 ## Bloco 3: Somatório
 

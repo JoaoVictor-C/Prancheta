@@ -60,7 +60,6 @@ nas revisões.
 | 9 | 05/10 | M0 Q10 | 1·4 + 2·5 + 3·6 em Python | `np.sum(a, b)`, que dá TypeError | `np.sum` soma os elementos de **um** array, e o 2º argumento é o eixo; o certo é `np.dot(a, b)`, `np.array(a) @ np.array(b)` ou `sum(x*y for x, y in zip(a, b))` | 0 | aberto |
 | 10 | 05/10 | Reforço M0, B1 Q3 | α(1, 1) + β(1, −1) = (5, −2) | tentou adivinhar inteiros (1 e 4, 2 e 3), e nenhum par serviu | igualar componente a componente dá um **sistema**: α + β = 5 e α − β = −2, logo α = 3/2 e β = 7/2 | 1 | aberto |
 | 11 | 05/10 | Reforço M0, B1 Q5 | provar \|u + v\|² = \|u\|² + \|v\|² quando u·v = 0 | concluiu que cada produto u₁v₁, u₂v₂ tem fator zero, e generalizou a partir de um exemplo | **produto** zero implica fator zero; **soma** zero não (−2 + 2 = 0). Um exemplo não prova o caso geral; é preciso expandir (u₁ + v₁)² + (u₂ + v₂)². **Repetiu em 06/10** (B2 Q5: provou com um sistema específico) | 0 | aberto |
-| 12 | 06/10 | Reforço M0, B2 Q3 | x + my = 3, 2x + 4y = 5 com m = 2 | disse SPI | ad − bc = 0 só diz que **não é SPD**; falta comparar e/f: 1/2 = 2/4 ≠ 3/5, então é SI. Na Q2b fez certo | 0 | aberto |
 
 ## Diário das sessões
 
@@ -68,4 +67,4 @@ nas revisões.
 | --- | --- | --- |
 | 05/10/2026 | Planejamento | Perfil definido (curiosidade > programação/ML > faculdade; 3 a 4 h por dia, todos os dias). Plano e calendário fixados. Figura de prévia: [`figuras/demo-2112.png`](figuras/demo-2112.png). |
 | 05/10/2026 | Aula 0, diagnóstico | Nota 4,0/10 (40%), abaixo dos 80%, então vem o reforço. 9 erros no caderno. Contato anterior com matrizes: já teve, mas lembra pouco; NumPy: já usou, sem fluência. |
-| 05–06/10 | Reforço M0, blocos 1 e 2 | B1 (vetores) 4,0/5, B2 (sistemas) 3,5/5. Erros 1–6 e 10 com 1 acerto; entraram os erros 11 e 12. Regra nova: LaTeX só em bloco nas mensagens. |
+| 05–06/10 | Reforço M0, blocos 1 e 2 | B1 (vetores) 4,0/5, B2 (sistemas) 4,0/5. Erros 1–6 e 10 com 1 acerto; entrou o erro 11 (o "SPI" da B2 Q3 foi erro de digitação, então o erro 12 saiu). Regra nova: LaTeX só em bloco nas mensagens. |
