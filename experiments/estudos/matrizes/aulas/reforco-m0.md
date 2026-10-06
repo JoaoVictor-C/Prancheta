@@ -79,3 +79,38 @@ $$\begin{cases} ax + by = e \\ cx + dy = f \end{cases}$$
 3. (médio) Para que valores de $m$ o sistema $\begin{cases} x + my = 3 \\ 2x + 4y = 5 \end{cases}$ é SPD? Existe $m$ que o torne SPI?
 4. (médio) Escreva $(4, 7)$ como combinação de $(1, 2)$ e $(1, 3)$.
 5. (difícil, justificar) Mostre que, se $ad - bc \neq 0$, o sistema $\begin{cases} ax + by = e \\ cx + dy = f \end{cases}$ tem uma única solução, e ache fórmulas para $x$ e $y$.
+
+**Correção (06/10)**
+- **Q1, certa:** $x = 2$, $y = 3$.
+- **Q2, certa,** com as três justificativas: (a) SPI, (b) SI, (c) SPD.
+- **Q3, meio ponto.** SPD para $m \neq 2$ está certo. Mas com $m = 2$ o sistema é **SI**, não SPI: $\frac{1}{2} = \frac{2}{4} \neq \frac{3}{5}$. Nunca é SPI.
+- **Q4, certa:** $\alpha = 5$, $\beta = -1$.
+- **Q5, errou.** Calculou $ad - bc$ para um sistema específico em vez do geral. A prova é a regra de Cramer: $x = \frac{ed - bf}{ad - bc}$ e $y = \frac{af - ce}{ad - bc}$.
+
+**Bloco 2: 3,5 / 5 (70%).**
+
+## Bloco 3: Somatório
+
+**Intuição.** $\sum$ é um laço `for` escrito em matemática:
+$\sum_{i=1}^{n} f(i)$ equivale a `sum(f(i) for i in range(1, n + 1))`.
+A figura é [`../figuras/reforco-m0-somatorio-quadrados.png`](../figuras/reforco-m0-somatorio-quadrados.png):
+$\sum_{k=1}^{4}(2k - 1) = 16 = 4^2$.
+
+**Propriedades:**
+- linearidade: $\sum (a_i + b_i) = \sum a_i + \sum b_i$;
+- constante para fora: $\sum c\,a_i = c\sum a_i$;
+- soma de constante: $\sum_{i=1}^{n} c = n\,c$;
+- o índice é mudo: $\sum_i a_i = \sum_k a_k$.
+
+O produto escalar é $u \cdot v = \sum_{i} u_i v_i$, e o produto de matrizes vai ser $(AB)_{ij} = \sum_k a_{ik} b_{kj}$.
+
+**Exemplos resolvidos:**
+- $\sum_{k=1}^{4}(k^2 - 1) = 0 + 3 + 8 + 15 = 26$. Pelas propriedades: $30 - 4 = 26$.
+- $2\cdot 5 + 4\cdot 6 + 6\cdot 7 = \sum_{k=1}^{3} 2k(k + 4)$.
+
+**Sua vez:**
+1. (fácil) Calcule $\sum_{i=1}^{5}(3i - 2)$.
+2. (fácil) Calcule $\sum_{j=2}^{4} 5$.
+3. (médio) Escreva com $\sum$: (a) $1\cdot 2 + 2\cdot 3 + \dots + 10\cdot 11$; (b) $3 + 5 + 7 + \dots + 21$.
+4. (médio) Com $u = (2, -1, 3)$ e $v = (4, 0, -2)$, escreva $u \cdot v$ com $\sum$ e calcule.
+5. (difícil) Prove que $\sum_{i=1}^{n}(a_i + b_i)^2 = \sum a_i^2 + 2\sum a_i b_i + \sum b_i^2$. Conclua o Pitágoras do bloco 1 em $n$ dimensões.
