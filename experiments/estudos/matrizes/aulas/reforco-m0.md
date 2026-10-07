@@ -114,3 +114,40 @@ O produto escalar é $u \cdot v = \sum_{i} u_i v_i$, e o produto de matrizes vai
 3. (médio) Escreva com $\sum$: (a) $1\cdot 2 + 2\cdot 3 + \dots + 10\cdot 11$; (b) $3 + 5 + 7 + \dots + 21$.
 4. (médio) Com $u = (2, -1, 3)$ e $v = (4, 0, -2)$, escreva $u \cdot v$ com $\sum$ e calcule.
 5. (difícil) Prove que $\sum_{i=1}^{n}(a_i + b_i)^2 = \sum a_i^2 + 2\sum a_i b_i + \sum b_i^2$. Conclua o Pitágoras do bloco 1 em $n$ dimensões.
+
+**Correção (07/10)**
+- **Q1, certa:** 35. A observação de que é uma PA de razão 3 está certa: $S_5 = \frac{5(1 + 13)}{2} = 35$.
+- **Q2, certa:** 15.
+- **Q3, meio ponto.** (a) $\sum_{i=1}^{10} i(i + 1)$ está certo, com parênteses. (b) Não foi respondida: $\sum_{i=1}^{10}(2i + 1)$.
+- **Q4, meio ponto.** $\sum_{i=1}^{3} u_i v_i$ está certo, mas faltou calcular: $8 + 0 - 6 = 2$.
+- **Q5, meio ponto.** A prova está certa e geral: expandir o quadrado, usar a linearidade, tirar a constante. Dois deslizes de notação:
+  - faltaram os parênteses em $\sum(a_i^2 + 2a_ib_i + b_i^2)$;
+  - o passo 3 escrito como "$\sum 2 + 2i \Rightarrow 2\sum 2i$" está errado; o certo é $\sum 2x_i = 2\sum x_i$.
+
+  A conclusão não foi feita: com $a_i = u_i$ e $b_i = v_i$, sai $|u + v|^2 = |u|^2 + 2\,u\cdot v + |v|^2$ para qualquer $n$.
+
+**Bloco 3: 3,5 / 5 (70%).**
+
+## Bloco 4: Laboratório (Python e NumPy)
+
+| matemática | NumPy |
+| --- | --- |
+| $u + v$, $k\,u$ | `u + v`, `k * u` |
+| $(u_1 v_1, \dots, u_n v_n)$ | `u * v` (componente a componente) |
+| $u \cdot v = \sum u_i v_i$ | `np.sum(u * v)`, `np.dot(u, v)`, `u @ v` |
+| $\lvert u \rvert$ | `np.linalg.norm(u)`, `np.sqrt(u @ u)` |
+| resolver $Ax = b$ | `np.linalg.solve(A, b)` |
+| $\sum_{i=1}^{n} f(i)$ | `np.sum(f(np.arange(1, n + 1)))` |
+
+Cuidado: com **listas**, `[1, 2] * [3, 4]` dá TypeError e `[1, 2] + [3, 4]` concatena. Só `np.array` faz conta de vetor.
+
+**Sua vez** (mande o código e a saída):
+1. (fácil) Em Python puro, sem NumPy, escreva `def dot(u, v)` com `zip`. Teste com $u = (2, -1, 3)$ e $v = (4, 0, -2)$.
+2. (fácil) Com NumPy, confira a Q1 do bloco 1: $u - v$, $-2v$ e $\lvert u \rvert$ para $u = (4, -3)$ e $v = (-1, 5)$.
+3. (médio) Com `np.arange` e `np.sum`, calcule as duas somas da Q3 do bloco 3.
+4. (médio) Use `np.linalg.solve` na Q1 e na Q4 do bloco 2. Depois rode com o sistema SI da Q2(b) e explique o erro que aparece.
+5. (difícil) Verifique o Pitágoras em 768 dimensões, o tamanho de um embedding de linguagem:
+   - sorteie `u` e `w` com `np.random.randn(768)`;
+   - construa `v = w - (w @ u) / (u @ u) * u`;
+   - confira que `u @ v` é quase 0 e que $\lvert u + v \rvert^2 \approx \lvert u \rvert^2 + \lvert v \rvert^2$;
+   - explique por que `v` sai perpendicular a `u`.
