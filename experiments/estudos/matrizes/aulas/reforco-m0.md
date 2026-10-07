@@ -151,3 +151,9 @@ Cuidado: com **listas**, `[1, 2] * [3, 4]` dá TypeError e `[1, 2] + [3, 4]` con
    - construa `v = w - (w @ u) / (u @ u) * u`;
    - confira que `u @ v` é quase 0 e que $\lvert u + v \rvert^2 \approx \lvert u \rvert^2 + \lvert v \rvert^2$;
    - explique por que `v` sai perpendicular a `u`.
+
+**Correção parcial (07/10).** O código foi rodado aqui.
+- **Q1, certa:** `dot((2, -1, 3), (4, 0, -2))` devolve 2.
+- **Q2, meio ponto.** Usou os vetores da Q1 deste bloco, e não $u = (4, -3)$ e $v = (-1, 5)$. Além disso, `-2v` dá SyntaxError: o certo é `-2 * v`. Com os vetores certos sai `[5 -8]`, `[2 -10]` e `5.0`.
+- **Q3, meio ponto.** `np.arange(10)` vai de 0 a 9, então as somas deram 330 e 100 em vez de 440 e 120; o certo é `np.arange(1, 11)`. A variável `ii` foi criada e nunca usada.
+- **Q4 e Q5:** pendentes.

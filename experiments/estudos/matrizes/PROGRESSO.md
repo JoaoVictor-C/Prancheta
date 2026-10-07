@@ -14,7 +14,7 @@ O plano está em [`PLANO.md`](PLANO.md). Este arquivo é atualizado e enviado
 
   No fim da sessão vem o **checkpoint M0-bis**: 10 questões novas no mesmo formato. Com 80% ou mais, segue a Aula 1.1.
 - **Atraso em relação ao calendário:** +2 dias (o reforço ocupou 05 a 07/10; a Aula 1.1 vai para depois do M0-bis, no mínimo 08/10)
-- **Andamento do reforço:** B1 4,0/5, B2 4,0/5, B3 3,75/5; o B4 (laboratório) foi enviado em 07/10.
+- **Andamento do reforço:** B1 4,0/5, B2 4,0/5, B3 3,75/5; B4 (laboratório): Q1 certa, Q2 e Q3 com meio ponto, Q4 e Q5 pendentes.
 
 ## Como retomar numa sessão nova
 
@@ -61,6 +61,7 @@ nas revisões.
 | 9 | 05/10 | M0 Q10 | 1·4 + 2·5 + 3·6 em Python | `np.sum(a, b)`, que dá TypeError | `np.sum` soma os elementos de **um** array, e o 2º argumento é o eixo; o certo é `np.dot(a, b)`, `np.array(a) @ np.array(b)` ou `sum(x*y for x, y in zip(a, b))` | 0 | aberto |
 | 10 | 05/10 | Reforço M0, B1 Q3 | α(1, 1) + β(1, −1) = (5, −2) | tentou adivinhar inteiros (1 e 4, 2 e 3), e nenhum par serviu | igualar componente a componente dá um **sistema**: α + β = 5 e α − β = −2, logo α = 3/2 e β = 7/2 | 1 | aberto |
 | 11 | 05/10 | Reforço M0, B1 Q5 | provar \|u + v\|² = \|u\|² + \|v\|² quando u·v = 0 | concluiu que cada produto u₁v₁, u₂v₂ tem fator zero, e generalizou a partir de um exemplo | **produto** zero implica fator zero; **soma** zero não (−2 + 2 = 0). Um exemplo não prova o caso geral; é preciso expandir (u₁ + v₁)² + (u₂ + v₂)². **Repetiu em 06/10** (B2 Q5: provou com um sistema específico) | 1 | aberto |
+| 12 | 07/10 | Reforço M0, B4 Q3 | Σ de i = 1 a 10 com NumPy | usou `np.arange(10)`, que vai de 0 a 9, e as somas deram 330 e 100 em vez de 440 e 120 | `np.arange(n)` começa em **0** e para **antes** de n; Σ de i = 1 a 10 é `np.arange(1, 11)`. É o mesmo cuidado com os limites do Σ | 0 | aberto |
 
 ## Diário das sessões
 
