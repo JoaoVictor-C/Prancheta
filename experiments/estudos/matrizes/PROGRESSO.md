@@ -14,7 +14,7 @@ O plano está em [`PLANO.md`](PLANO.md). Este arquivo é atualizado e enviado
 
   No fim da sessão vem o **checkpoint M0-bis**: 10 questões novas no mesmo formato. Com 80% ou mais, segue a Aula 1.1.
 - **Atraso em relação ao calendário:** +2 dias (o reforço ocupou 05 a 07/10; a Aula 1.1 vai para depois do M0-bis, no mínimo 08/10)
-- **Andamento do reforço:** B1 4,0/5, B2 4,0/5, B3 3,5/5; o B4 (laboratório) foi enviado em 07/10.
+- **Andamento do reforço:** B1 4,0/5, B2 4,0/5, B3 3,75/5; o B4 (laboratório) foi enviado em 07/10.
 
 ## Como retomar numa sessão nova
 
@@ -57,7 +57,7 @@ nas revisões.
 | 5 | 05/10 | M0 Q4 | o que o produto escalar diz sobre o ângulo | não sabia | positivo: agudo; zero: reto; negativo: obtuso | 1 | aberto |
 | 6 | 05/10 | M0 Q6 | classificar sistemas e justificar | (a) certo, sem justificar; (b) "impossível saber" | não comparou as equações: em (b), dividindo a 1ª por 2, fica x + 2y = 3 contra x + 2y = 4, então não há solução (SI) | 1 | aberto |
 | 7 | 05/10 | M0 Q7 | geometria de um sistema 2×2 | não sabia | cada equação é uma reta; a solução é o ponto comum (SPD), a reta inteira (SPI) ou nada (paralelas, SI) | 0 | aberto |
-| 8 | 05/10 | M0 Q9 | escrever 1·4 + 2·5 + 3·6 com Σ | Σ i . i+3, sem limites e sem parênteses | sem parênteses vira i² + 3; faltou i = 1 até 3: Σ_{i=1}^{3} i(i + 3). Em 07/10 acertou na B3 Q3a, mas esqueceu os parênteses na B3 Q5 | 0 | aberto |
+| 8 | 05/10 | M0 Q9 | escrever 1·4 + 2·5 + 3·6 com Σ | Σ i . i+3, sem limites e sem parênteses | sem parênteses vira i² + 3; faltou i = 1 até 3: Σ_{i=1}^{3} i(i + 3). Em 07/10 acertou na B3 Q3a, mas esqueceu os parênteses na B3 Q5 e na Q3b (Σ 3 + (2i)) | 0 | aberto |
 | 9 | 05/10 | M0 Q10 | 1·4 + 2·5 + 3·6 em Python | `np.sum(a, b)`, que dá TypeError | `np.sum` soma os elementos de **um** array, e o 2º argumento é o eixo; o certo é `np.dot(a, b)`, `np.array(a) @ np.array(b)` ou `sum(x*y for x, y in zip(a, b))` | 0 | aberto |
 | 10 | 05/10 | Reforço M0, B1 Q3 | α(1, 1) + β(1, −1) = (5, −2) | tentou adivinhar inteiros (1 e 4, 2 e 3), e nenhum par serviu | igualar componente a componente dá um **sistema**: α + β = 5 e α − β = −2, logo α = 3/2 e β = 7/2 | 1 | aberto |
 | 11 | 05/10 | Reforço M0, B1 Q5 | provar \|u + v\|² = \|u\|² + \|v\|² quando u·v = 0 | concluiu que cada produto u₁v₁, u₂v₂ tem fator zero, e generalizou a partir de um exemplo | **produto** zero implica fator zero; **soma** zero não (−2 + 2 = 0). Um exemplo não prova o caso geral; é preciso expandir (u₁ + v₁)² + (u₂ + v₂)². **Repetiu em 06/10** (B2 Q5: provou com um sistema específico) | 1 | aberto |
@@ -69,4 +69,4 @@ nas revisões.
 | 05/10/2026 | Planejamento | Perfil definido (curiosidade > programação/ML > faculdade; 3 a 4 h por dia, todos os dias). Plano e calendário fixados. Figura de prévia: [`figuras/demo-2112.png`](figuras/demo-2112.png). |
 | 05/10/2026 | Aula 0, diagnóstico | Nota 4,0/10 (40%), abaixo dos 80%, então vem o reforço. 9 erros no caderno. Contato anterior com matrizes: já teve, mas lembra pouco; NumPy: já usou, sem fluência. |
 | 05–06/10 | Reforço M0, blocos 1 e 2 | B1 (vetores) 4,0/5, B2 (sistemas) 4,0/5. Erros 1–6 e 10 com 1 acerto; entrou o erro 11 (o "SPI" da B2 Q3 foi erro de digitação, então o erro 12 saiu). Regra nova: LaTeX só em bloco nas mensagens. |
-| 07/10 | Reforço M0, bloco 3 | B3 (somatório) 3,5/5. A prova da Q5 foi geral (erro 11 ganhou 1 acerto), mas sem parênteses (erro 8 segue em 0). Bloco 4 (laboratório) enviado. |
+| 07/10 | Reforço M0, bloco 3 | B3 (somatório) 3,75/5 (Q3b entregue depois, sem parênteses). A prova da Q5 foi geral (erro 11 ganhou 1 acerto), mas sem parênteses (erro 8 segue em 0). Bloco 4 (laboratório) enviado. |

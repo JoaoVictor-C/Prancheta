@@ -118,7 +118,7 @@ O produto escalar é $u \cdot v = \sum_{i} u_i v_i$, e o produto de matrizes vai
 **Correção (07/10)**
 - **Q1, certa:** 35. A observação de que é uma PA de razão 3 está certa: $S_5 = \frac{5(1 + 13)}{2} = 35$.
 - **Q2, certa:** 15.
-- **Q3, meio ponto.** (a) $\sum_{i=1}^{10} i(i + 1)$ está certo, com parênteses. (b) Não foi respondida: $\sum_{i=1}^{10}(2i + 1)$.
+- **Q3, meio ponto.** (a) $\sum_{i=1}^{10} i(i + 1)$ está certo, com parênteses. (b) Respondida depois: $\sum_{i=0}^{9} 3 + (2i)$. Os termos estão certos (de $i = 0$ a $9$ sai $3, 5, \dots, 21$), mas faltaram os parênteses em volta do termo todo, $\sum_{i=0}^{9}(3 + 2i)$. A nota da Q3 passou a 0,75.
 - **Q4, meio ponto.** $\sum_{i=1}^{3} u_i v_i$ está certo, mas faltou calcular: $8 + 0 - 6 = 2$.
 - **Q5, meio ponto.** A prova está certa e geral: expandir o quadrado, usar a linearidade, tirar a constante. Dois deslizes de notação:
   - faltaram os parênteses em $\sum(a_i^2 + 2a_ib_i + b_i^2)$;
@@ -126,7 +126,7 @@ O produto escalar é $u \cdot v = \sum_{i} u_i v_i$, e o produto de matrizes vai
 
   A conclusão não foi feita: com $a_i = u_i$ e $b_i = v_i$, sai $|u + v|^2 = |u|^2 + 2\,u\cdot v + |v|^2$ para qualquer $n$.
 
-**Bloco 3: 3,5 / 5 (70%).**
+**Bloco 3: 3,75 / 5 (75%).**
 
 ## Bloco 4: Laboratório (Python e NumPy)
 
