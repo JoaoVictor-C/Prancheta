@@ -1,0 +1,47 @@
+{
+  "preset": "vectors",
+  "title": "A·(3, −1) = 3a − b = (5, 1), com a = (2, 1) e b = (1, 2) as colunas de A",
+  "locale": "pt-BR",
+  "vectors": [
+    {
+      "name": "a",
+      "components": [
+        2,
+        1
+      ],
+      "at": [
+        -3,
+        2
+      ]
+    },
+    {
+      "name": "b",
+      "components": [
+        1,
+        2
+      ],
+      "at": [
+        -3,
+        -2
+      ]
+    },
+    {
+      "name": "p",
+      "scale": "a",
+      "factor": 3
+    },
+    {
+      "name": "q",
+      "scale": "b",
+      "factor": -1
+    },
+    {
+      "name": "r",
+      "sum": [
+        "p",
+        "q"
+      ],
+      "construction": "parallelogram"
+    }
+  ]
+}
