@@ -1,0 +1,6 @@
+{
+  "preset": "linear-map",
+  "title": "A = [[2, 1], [1, 2]] transformando o plano",
+  "matrix": [[2, 1], [1, 2]],
+  "show": { "grid": true, "basis": true, "unitSquare": true, "eigen": true }
+}
